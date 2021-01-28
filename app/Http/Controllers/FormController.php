@@ -30,11 +30,13 @@ class FormController extends Controller
        $formSections = DB::table('forms')
        ->join('formtypes', 'forms.form_type_id', '=', 'formtypes.id')
        ->join('sections', 'sections.form_id', '=', 'forms.id')
-       ->select('formtypes.name', 'forms.name', 'forms.description', 'sections.name', 'sections.fields')
+       ->select('forms.id','formtypes.name', 'forms.name', 'forms.description', 'sections.name', 'sections.fields')
+       ->where('forms.id', '1' )
        ->get();
 
        return (compact('formSections'));
     }
+
     /**
      * Nicol Ramirez
      * 27-01-2020
