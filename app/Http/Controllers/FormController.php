@@ -25,14 +25,15 @@ class FormController extends Controller
      * 27-01-2020
      * Método para consultar el formulario con sus respectivas secciones
      */
-    public function searchForm()
+    public function searchForm(Request $request)
     {
+       $form_id = $request->get('idform');
+
        $formSections = DB::table('forms')
        ->join('formtypes', 'forms.form_type_id', '=', 'formtypes.id')
        ->join('sections', 'sections.form_id', '=', 'forms.id')
        ->select('forms.id','formtypes.name', 'forms.name', 'forms.description', 'sections.name', 'sections.fields')
-       ->where('forms.id', '1' )
-       ->get();
+       ->where('forms.id', $form_id )->get();
 
        return (compact('formSections'));
     }
@@ -68,6 +69,15 @@ class FormController extends Controller
        
     }
 
+    /**
+     * Nicoll Ramirez 
+     * 28-01-2021
+     * Método para tomar el label del control creado y tomarlo como el name
+     */
+    public function keyControl()
+    {
+
+    }
     
 
     
