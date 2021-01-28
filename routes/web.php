@@ -18,6 +18,6 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
     $router->post('/forms', 'FormController@saveForm');
     $router->get('/formslist', 'FormController@FormsList');
-    $router->get('/searchform', 'FormController@searchForm');
+    $router->get('/searchform/{id}', 'FormController@searchForm');
     
  });

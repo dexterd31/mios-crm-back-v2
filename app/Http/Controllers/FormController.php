@@ -25,17 +25,17 @@ class FormController extends Controller
      * 27-01-2020
      * Método para consultar el formulario con sus respectivas secciones
      */
-    public function searchForm(Request $request)
+    public function searchForm(Request $request, $id)
     {
-       $form_id = $request->get('idform');
 
        $formSections = DB::table('forms')
        ->join('formtypes', 'forms.form_type_id', '=', 'formtypes.id')
        ->join('sections', 'sections.form_id', '=', 'forms.id')
        ->select('forms.id','formtypes.name', 'forms.name', 'forms.description', 'sections.name', 'sections.fields')
-       ->where('forms.id', $form_id )->get();
+       ->where('forms.id', $id )->get();
 
-       return (compact('formSections'));
+
+       return (compact('formSections', 'id'));
     }
 
     /**
