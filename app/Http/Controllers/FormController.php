@@ -31,7 +31,7 @@ class FormController extends Controller
        $formSections = DB::table('forms')
        ->join('formtypes', 'forms.form_type_id', '=', 'formtypes.id')
        ->join('sections', 'sections.form_id', '=', 'forms.id')
-       ->select('forms.id','formtypes.name', 'forms.name', 'forms.description', 'sections.name', 'sections.fields')
+       ->select('forms.id','formtypes.name', 'forms.name', 'forms.description', 'sections.name', json_decode('sections.fields'))
        ->where('forms.id', $id )->get();
 
 
