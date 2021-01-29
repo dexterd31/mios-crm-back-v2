@@ -15,27 +15,31 @@ class FormController extends Controller
      */
     public function FormsList()
     {
-
         $forms = DB::table('forms')->select('key','name','description')->get();
-
         return (compact('forms'));
     }
+
      /**
      * Nicol Ramirez
      * 27-01-2020
      * Método para consultar el formulario con sus respectivas secciones
      */
-    public function searchForm(Request $request, $id)
+    public function searchForm($id)
     {
-
        $formSections = DB::table('forms')
        ->join('formtypes', 'forms.form_type_id', '=', 'formtypes.id')
        ->join('sections', 'sections.form_id', '=', 'forms.id')
-       ->select('forms.id','formtypes.name', 'forms.name', 'forms.description', 'sections.name', json_decode('sections.fields'))
+       ->select('forms.id','formtypes.name', 'forms.name', 'forms.description', 'sections.name','sections.fields')
        ->where('forms.id', $id )->get();
 
-
-       return (compact('formSections', 'id'));
+        foreach($formSections as $form)
+        {
+            $forms[] = ['idform'=>$form->id,
+            'name' =>$form->name,
+            'description' =>$form->description,
+            'fields'=> json_decode($form->fields)];
+        }
+        return $forms;
     }
 
     /**
@@ -45,7 +49,6 @@ class FormController extends Controller
      */
     public function saveForm(Request $request)
     {
-
         $forms = new Form([
             'form_type_id' => $request->input('type'),
             'name' => $request->input('name'),
@@ -54,7 +57,6 @@ class FormController extends Controller
         ]);
        $forms->save();
             
-
        foreach($request->input('sections') as $section){
            $sections = new Section([
                'form_id' => $forms->id,
@@ -65,8 +67,6 @@ class FormController extends Controller
         }
 
         return ('guardado');
-       
-       
     }
 
     /**
@@ -76,9 +76,13 @@ class FormController extends Controller
      */
     public function keyControl()
     {
+        $fields = DB::table('sections')->select('fields')->get();
 
+       /*  foreach($fields as $field){
+            $fields[] = [
+                
+            ]; */
+        //}
+        return $fields;
     }
-    
-
-    
 }
