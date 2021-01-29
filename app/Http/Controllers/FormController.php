@@ -16,7 +16,7 @@ class FormController extends Controller
     public function FormsList()
     {
         $forms = DB::table('forms')->select('key','name','description')->get();
-        return (compact('forms'));
+        return $forms;
     }
 
      /**
