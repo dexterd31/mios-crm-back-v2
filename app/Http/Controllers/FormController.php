@@ -15,7 +15,7 @@ class FormController extends Controller
      */
     public function FormsList()
     {
-        $forms = DB::table('forms')->select('key','name','description')->get();
+        $forms = Form::select('key','name_form','description')->get();
         return $forms;
     }
 
@@ -26,20 +26,19 @@ class FormController extends Controller
      */
     public function searchForm($id)
     {
-       $formSections = DB::table('forms')
-       ->join('formtypes', 'forms.form_type_id', '=', 'formtypes.id')
-       ->join('sections', 'sections.form_id', '=', 'forms.id')
-       ->select('forms.id','formtypes.name', 'forms.name', 'forms.description', 'sections.name','sections.fields')
-       ->where('forms.id', $id )->get();
+        $formsSections = Form::where('id',$id)
+                               ->with('Section')
+                               ->select('id','name_form','description')
+                               ->first();
 
-        foreach($formSections as $form)
-        {
-            $forms[] = ['idform'=>$form->id,
-            'name' =>$form->name,
-            'description' =>$form->description,
-            'fields'=> json_decode($form->fields)];
+        for($i=0; $i<count($formsSections->Section); $i++)
+        {    
+            unset($formsSections->section[$i]['created_at']);
+            unset($formsSections->section[$i]['updated_at']);
+            $formsSections->section[$i]['fields'] = json_decode($formsSections->Section[$i]['fields']);
         }
-        return $forms;
+
+        return response()->json($formsSections); 
     }
 
     /**

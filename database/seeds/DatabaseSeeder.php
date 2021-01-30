@@ -13,5 +13,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call('FormSubTypeSeeder');
          $this->call('FormtypeSeeder');
+         $this->call('FormSeeder');
+         $this->call('SectionSeeder');
     }
 }

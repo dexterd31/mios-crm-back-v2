@@ -15,7 +15,7 @@ class CreateFormSubTypesTable extends Migration
     {
         Schema::create('form_sub_types', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name_subtype');
             $table->string('observation');
             $table->string('key');
             $table->timestamps();

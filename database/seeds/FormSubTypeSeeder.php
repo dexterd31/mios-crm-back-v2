@@ -14,12 +14,12 @@ class FormSubTypeSeeder extends Seeder
     {
         $FormSubType = array(
             [
-                'name' => 'Productos',
+                'name_subtype' => 'Productos',
                 'observation' => 'venta de productos Laika',
                 'key' => '1'
             ],
             [
-                'name' => 'SOAT',
+                'name_subtype' => 'SOAT',
                 'observation' => 'venta de SOAT para carro',
                 'key' => '2'
             ]
@@ -28,7 +28,7 @@ class FormSubTypeSeeder extends Seeder
         foreach ($FormSubType as $subtype)
         {
             $FormSubType = new FormSubType();
-            $FormSubType->name = $subtype['name'];
+            $FormSubType->name_subtype = $subtype['name_subtype'];
             $FormSubType->observation = $subtype['observation'];
             $FormSubType->key = $subtype['key'];
             $FormSubType->save();

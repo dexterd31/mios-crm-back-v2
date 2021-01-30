@@ -8,9 +8,9 @@ class Section extends Model
 {
     protected $table = 'sections';
     protected $PrimaryKey = 'id';
-    protected $fillable = ['form_id', 'name', 'fields'];
+    protected $fillable = ['form_id', 'name_section', 'fields'];
 
     public function Form(){
-        return $this->HasOne('App\Models\Form', 'id');
+        return $this->belongsTo('App\Models\Form', 'id');
     }
 }

@@ -8,7 +8,7 @@ class FormType extends Model
 {
     protected $table = 'formtypes';
     protected $PrimaryKey = 'id';
-    protected $fillable = ['formsubtype_id', 'name', 'description', 'key'];
+    protected $fillable = ['formsubtype_id', 'name_type', 'description', 'key'];
 
     public function FormSubType(){
         return $this->hasMany('App\Models\FormSubType', 'id');

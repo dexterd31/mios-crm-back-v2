@@ -16,7 +16,7 @@ class CreateSectionsTable extends Migration
         Schema::create('sections', function (Blueprint $table) {
             $table->id();
             $table->integer('form_id');
-            $table->string('name');
+            $table->string('name_section');
             $table->json('fields');
             $table->timestamps();
         });
