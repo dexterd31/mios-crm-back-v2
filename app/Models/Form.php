@@ -10,15 +10,15 @@ class Form extends Model
     protected $PrimaryKey = 'id';
     protected $fillable = ['form_type_id', 'name_form', 'description','key'];
 
-    public function FormType(){
+    public function formtype(){
         return $this->hasOne('App\Models\FormType', 'id');
     }
 
-    public function Section(){
+    public function section(){
         return $this->hasMany('App\Models\Section', 'form_id');
     }
 
-    public function Call(){
+    public function call(){
         return $this->hasMany('App\Models\Call', 'form_id');
     }
 }

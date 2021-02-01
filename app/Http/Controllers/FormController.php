@@ -27,15 +27,16 @@ class FormController extends Controller
     public function searchForm($id)
     {
         $formsSections = Form::where('id',$id)
-                               ->with('Section')
+                               ->with('section')
                                ->select('id','name_form','description')
                                ->first();
 
-        for($i=0; $i<count($formsSections->Section); $i++)
+        for($i=0; $i<count($formsSections->section); $i++)
         {    
             unset($formsSections->section[$i]['created_at']);
             unset($formsSections->section[$i]['updated_at']);
-            $formsSections->section[$i]['fields'] = json_decode($formsSections->Section[$i]['fields']);
+            unset($formsSections->section[$i]['form_id']);
+            $formsSections->section[$i]['fields'] = json_decode($formsSections->section[$i]['fields']);
         }
 
         return response()->json($formsSections); 
@@ -50,7 +51,7 @@ class FormController extends Controller
     {
         $forms = new Form([
             'form_type_id' => $request->input('type'),
-            'name' => $request->input('name'),
+            'name_form' => $request->input('name'),
             'description' => $request->input('description'),
             'key' => $request->input('key')
         ]);
@@ -59,7 +60,7 @@ class FormController extends Controller
        foreach($request->input('sections') as $section){
            $sections = new Section([
                'form_id' => $forms->id,
-               'name' => $section['sectionName'],
+               'name_section' => $section['sectionName'],
                'fields' => json_encode($section['fields'])
            ]);
            $sections->save();           
@@ -75,13 +76,6 @@ class FormController extends Controller
      */
     public function keyControl()
     {
-        $fields = DB::table('sections')->select('fields')->get();
-
-       /*  foreach($fields as $field){
-            $fields[] = [
-                
-            ]; */
-        //}
-        return $fields;
+     
     }
 }

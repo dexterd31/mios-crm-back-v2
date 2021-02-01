@@ -10,7 +10,7 @@ class FormSubType extends Model
     protected $PrimaryKey = 'id';
     protected $fillable = ['name_subtype', 'description', 'key'];
 
-    public function FormType(){
+    public function formtype(){
         return $this->BelongsTo('App\Models\FormType', 'formsubtype_id');
     }
 }
