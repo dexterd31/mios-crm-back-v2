@@ -19,7 +19,6 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/saveform', 'FormController@saveForm');
     $router->get('/formslist', 'FormController@FormsList');
     $router->get('/searchform/{id}', 'FormController@searchForm');
-    $router->get('/keycontrol', 'FormController@keyControl');
     
     
  });

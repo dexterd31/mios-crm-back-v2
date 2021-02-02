@@ -57,25 +57,23 @@ class FormController extends Controller
         ]);
        $forms->save();
             
-       foreach($request->input('sections') as $section){
+       foreach($request->input('sections') as $section)
+       {
+
+          $section['fields'][0]['key']=str_replace(' ', '',$section['fields'][0]['label']);
+          $var=$section['fields'];
            $sections = new Section([
                'form_id' => $forms->id,
                'name_section' => $section['sectionName'],
-               'fields' => json_encode($section['fields'])
+               'fields' => json_encode($var),
            ]);
+
            $sections->save();           
         }
 
         return ('guardado');
     }
 
-    /**
-     * Nicoll Ramirez 
-     * 28-01-2021
-     * Método para tomar el label del control creado y tomarlo como el name
-     */
-    public function keyControl()
-    {
-     
-    }
+
+    
 }
