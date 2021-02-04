@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Models\Form;
+use App\Models\FormType;
 use App\Models\Section;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -49,31 +50,40 @@ class FormController extends Controller
      */
     public function saveForm(Request $request)
     {
-        $forms = new Form([
-            'form_type_id' => $request->input('type'),
-            'name_form' => $request->input('name'),
-            'description' => $request->input('description'),
-            'key' => $request->input('key')
-        ]);
-       $forms->save();
-            
-       foreach($request->input('sections') as $section)
-       {
 
-          $section['fields'][0]['key']=str_replace(' ', '',$section['fields'][0]['label']);
-          $var=$section['fields'];
-           $sections = new Section([
-               'form_id' => $forms->id,
-               'name_section' => $section['sectionName'],
-               'fields' => json_encode($var),
-           ]);
+        try{
+            $forms = new Form([
+                'form_type_id' => $request->input('type_form'),
+                'name_form' => $request->input('name_form'),
+                'description' => $request->input('description'),
+                'key' => $request->input('key')
+            ]);
+           $forms->save();
+                
+           foreach($request->input('sections') as $section)
+           {
+              $section['fields'][0]['key']=str_replace(' ', '',$section['fields'][0]['label']);
+              $var=$section['fields'];
+               $sections = new Section([
+                   'form_id' => $forms->id,
+                   'name_section' => $section['sectionName'],
+                   'fields' => json_encode($var),
+               ]);
+               $sections->save();           
+            }
 
-           $sections->save();           
+            return $this->successResponse('Guardado Correctamente');
+    
+        }catch(\Throwable $e){
+            return $this->errorResponse('Error al guardar el formulario',500);
         }
-
-        return ('guardado');
+ 
     }
-
+    
+    public function searchFormType(){
+        $formtype = FormType::select('id','name_type')->get();
+        return $formtype;
+    }
 
     
 }
