@@ -36,7 +36,7 @@ class SectionSeeder extends Seeder
                     'disabled'=> false,
                     'required'=> true,
                     'options'=>[],
-                    'order'=>'1'
+                    'column'=>'1'
                 ])
             ],
             [
@@ -52,7 +52,7 @@ class SectionSeeder extends Seeder
                     'disabled'=> false,
                     'required'=> true,
                     'options'=>[],
-                    'order'=>'1'
+                    'column'=>'1'
                 ],
                 [
                     'type'=> 'text',
@@ -63,7 +63,7 @@ class SectionSeeder extends Seeder
                     'disabled'=> false,
                     'required'=> true,
                     'options'=>[],
-                    'order'=>'1'
+                    'column'=>'1'
                 ])
             ]
         );

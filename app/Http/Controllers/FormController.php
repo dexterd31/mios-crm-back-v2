@@ -5,7 +5,7 @@ use App\Models\Form;
 use App\Models\FormType;
 use App\Models\Section;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+
 
 class FormController extends Controller
 {
@@ -80,10 +80,15 @@ class FormController extends Controller
  
     }
     
+    /**
+     * Nicoll Ramirez
+     * 04-02-2021
+     * Método para consultar el tipo de formulario en el select de creación de formulario
+     */
     public function searchFormType(){
         $formtype = FormType::select('id','name_type')->get();
         return $formtype;
     }
-
+    
     
 }
