@@ -13,4 +13,8 @@ class Section extends Model
     public function Form(){
         return $this->belongsTo('App\Models\Form', 'id');
     }
+    
+    public function formAnswer(){
+        return $this->hasMany('App\Models\FormAnswer','section_id');
+    }
 }

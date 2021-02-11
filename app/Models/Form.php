@@ -8,7 +8,7 @@ class Form extends Model
 {
     protected $table = 'forms';
     protected $PrimaryKey = 'id';
-    protected $fillable = ['form_type_id', 'name_form', 'description','key'];
+    protected $fillable = ['group_id', 'campaign_id', 'form_type_id', 'name_form', 'key'];
 
     public function formtype(){
         return $this->hasOne('App\Models\FormType', 'id');
@@ -21,4 +21,17 @@ class Form extends Model
     public function call(){
         return $this->hasMany('App\Models\Call', 'form_id');
     }
+
+    public function group(){
+        return $this->hasOne('App\Models\Group','id');
+    }
+
+    public function stateform(){
+        return $this->belongsTo('App\Models\StateForm','form_id');
+    }
+
+    public function campaign(){
+        return $this->hasOne('App\Models\Campaing');
+    }
+    
 }

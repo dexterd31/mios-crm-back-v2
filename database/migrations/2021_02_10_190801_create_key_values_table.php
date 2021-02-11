@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateSectionsTable extends Migration
+class CreateKeyValuesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,12 @@ class CreateSectionsTable extends Migration
      */
     public function up()
     {
-        Schema::create('sections', function (Blueprint $table) {
+        Schema::create('key_values', function (Blueprint $table) {
             $table->id();
-            //$table->unsignedBigInteger('form_id');
-            $table->string('name_section');
-            $table->json('fields');
+         //   $table->unsignedBigInteger('client_id')->nullable();
+            $table->string('key');
+            $table->string('value');
+
             $table->timestamps();
         });
     }
@@ -29,6 +30,6 @@ class CreateSectionsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('sections');
+        Schema::dropIfExists('key_values');
     }
 }

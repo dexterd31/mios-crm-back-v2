@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateFormsTable extends Migration
+class CreateStateFormsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,14 +13,14 @@ class CreateFormsTable extends Migration
      */
     public function up()
     {
-        Schema::create('forms', function (Blueprint $table) {
+        Schema::create('state_forms', function (Blueprint $table) {
             $table->id();
-           /*  $table->unsignedBigInteger('group_id')->nullable();
-            $table->unsignedBigInteger('campaign_id')->nullable();
+         /*    $table->unsignedBigInteger('form_answer_id')->nullable();
             $table->unsignedBigInteger('form_type_id')->nullable(); */
-            $table->string('name_form')->nullable();
-            $table->string('key')->nullable();
-
+            $table->boolean('approval');
+            $table->text('observation');
+            $table->datetime('date_update');
+           
             $table->timestamps();
         });
     }
@@ -32,6 +32,6 @@ class CreateFormsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('forms');
+        Schema::dropIfExists('state_forms');
     }
 }

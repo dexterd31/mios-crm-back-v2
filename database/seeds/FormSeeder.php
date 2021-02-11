@@ -13,15 +13,18 @@ class FormSeeder extends Seeder
     {
         $Form = array(
             [
+                'group_id' => '1',
+                'campaign_id' => '1',
                 'form_type_id' => '1',
-                'name_form' => 'Formulario 1',
-                'description' => 'formulario 1 para prueba',
+                'name_form' => 'Laika',
                 'key' => '1'
             ],
             [
+                
+                'group_id' => '1',
+                'campaign_id' => '1',
                 'form_type_id' => '1',
                 'name_form' => 'SOAT',
-                'description' => 'venta de SOAT para carro',
                 'key' => '2'
             ]
         );
@@ -29,9 +32,10 @@ class FormSeeder extends Seeder
         foreach ($Form as $form)
         {
             $Form = new Form();
+            $Form->group_id = $form['group_id'];
+            $Form->campaign_id = $form['campaign_id'];
             $Form->form_type_id = $form['form_type_id'];
             $Form->name_form = $form['name_form'];
-            $Form->description = $form['description'];
             $Form->key = $form['key'];
             $Form->save();
         }
