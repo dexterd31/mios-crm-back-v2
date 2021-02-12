@@ -18,17 +18,10 @@ class FormController extends Controller
      */
     public function FormsList()
     {
-       /*  $forms = DB::table('forms')
-                    ->join('formtypes','forms.form_type_id', '=', 'formtypes.id')
-                    ->select('forms.id','form_type_id','campaign_id','group_id','forms.key','name_form','formtypes.name_type')
-                    ->where('campaign_id','1')
-                    ->where('group_id','1')->get(); */
-
         $forms= Form::where('campaign_id',1)
                     ->where('group_id',1)
                     ->with('formtype')
                     ->get();
-                    // dd($forms[0]);
         for($i=0; $i<count($forms); $i++)
         {    
             unset($forms[$i]->formtype['id']);
@@ -37,7 +30,6 @@ class FormController extends Controller
             unset($forms[$i]->formtype['updated_at']);
             unset($forms[$i]->formtype['created_at']);
         } 
-        // dd($forms);
            
         return $forms;
     }
@@ -81,8 +73,8 @@ class FormController extends Controller
             $groups->save(); */
 
             $forms = new Form([
-                'group_id' => '1',
-                'campaign_id' => $request->input('campaign'),
+                'group_id' => 1,
+                'campaign_id' => 1,
                 'form_type_id' => $request->input('type_form'),
                 'name_form' => $request->input('name_form'),
                 'key' => $request->input('key')
