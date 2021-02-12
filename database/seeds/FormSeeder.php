@@ -13,17 +13,17 @@ class FormSeeder extends Seeder
     {
         $Form = array(
             [
-                'group_id' => '1',
-                'campaign_id' => '1',
-                'form_type_id' => '1',
+                'group_id' => 1,
+                'campaign_id' => 1,
+                'form_type_id' => 1,
                 'name_form' => 'Laika',
                 'key' => '1'
             ],
             [
                 
-                'group_id' => '1',
-                'campaign_id' => '1',
-                'form_type_id' => '1',
+                'group_id' => 1,
+                'campaign_id' => 1,
+                'form_type_id' => 1,
                 'name_form' => 'SOAT',
                 'key' => '2'
             ]

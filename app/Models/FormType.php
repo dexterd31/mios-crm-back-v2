@@ -11,7 +11,7 @@ class FormType extends Model
     protected $fillable = ['name_type', 'description', 'key'];
 
     public function form(){
-        return $this->hasOne('App\Models\Form', 'form_type_id');
+        return $this->hasMany('App\Models\Form', 'form_type_id');
     }
     public function stateform(){
         return $this->belongsTo('App\Models\StateForm', 'form_type_id');
