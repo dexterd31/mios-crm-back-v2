@@ -19,53 +19,108 @@ class SectionSeeder extends Seeder
                 [
                     'type'=> 'text',
                     'controlType'=> 'textbox',
-                    'key'=> 'phone',
-                    'label'=> 'telefono',
+                    'key'=> 'name',
+                    'label'=> 'nombre',
                     'value'=> '',
                     'disabled'=> false,
                     'required'=> true,
                     'options'=>[],
-                    'order'=>'1'
+                    'cols'=>'1'
                 ],
                 [
                     'type'=> 'text',
                     'controlType'=> 'textbox',
-                    'key'=> 'phone',
-                    'label'=> 'telefono',
+                    'key'=> 'lastname',
+                    'label'=> 'apellido',
                     'value'=> '',
                     'disabled'=> false,
                     'required'=> true,
                     'options'=>[],
-                    'column'=>'1'
+                    'cols'=>'1'
                 ])
             ],
             [
-                'form_id' => '2',
-                'name_section' => 'Seccion 2',
+                'form_id' => '1',
+                'name_section' => 'Datos de la mascota',
                 'fields' => array(
                 [
                     'type'=> 'text',
                     'controlType'=> 'textbox',
-                    'key'=> 'phone',
-                    'label'=> 'telefono',
+                    'key'=> 'name',
+                    'label'=> 'nombre',
                     'value'=> '',
                     'disabled'=> false,
                     'required'=> true,
                     'options'=>[],
-                    'column'=>'1'
+                    'cols'=>'1'
                 ],
                 [
                     'type'=> 'text',
                     'controlType'=> 'textbox',
-                    'key'=> 'phone',
-                    'label'=> 'telefono',
+                    'key'=> 'age',
+                    'label'=> 'edad',
                     'value'=> '',
                     'disabled'=> false,
                     'required'=> true,
                     'options'=>[],
-                    'column'=>'1'
+                    'cols'=>'1'
+                ])
+             ],
+             [
+                'form_id' => '2',
+                'name_section' => 'Datos personales',
+                'fields'=> array( 
+                [
+                    'type'=> 'text',
+                    'controlType'=> 'textbox',
+                    'key'=> 'nombre',
+                    'label'=> 'nombre',
+                    'value'=> '',
+                    'disabled'=> false,
+                    'required'=> true,
+                    'options'=>[],
+                    'cols'=>'1'
+                ],
+                [
+                    'type'=> 'text',
+                    'controlType'=> 'textbox',
+                    'key'=> 'apellido',
+                    'label'=> 'apellido',
+                    'value'=> '',
+                    'disabled'=> false,
+                    'required'=> true,
+                    'options'=>[],
+                    'cols'=>'1'
+                ])
+            ],
+            [
+                'form_id' => '2',
+                'name_section' => 'Datos del carro',
+                'fields' => array(
+                [
+                    'type'=> 'text',
+                    'controlType'=> 'textbox',
+                    'key'=> 'placa',
+                    'label'=> 'placa',
+                    'value'=> '',
+                    'disabled'=> false,
+                    'required'=> true,
+                    'options'=>[],
+                    'cols'=>'1'
+                ],
+                [
+                    'type'=> 'text',
+                    'controlType'=> 'textbox',
+                    'key'=> 'marca',
+                    'label'=> 'marca',
+                    'value'=> '',
+                    'disabled'=> false,
+                    'required'=> true,
+                    'options'=>[],
+                    'cols'=>'1'
                 ])
             ]
+
         );
 
         foreach ($Sections as $section)

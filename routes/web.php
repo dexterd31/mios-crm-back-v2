@@ -16,10 +16,14 @@ $router->get('/', function () use ($router) {
 });
 $router->group(['prefix' => 'api'], function () use ($router) {
 
+    //Rutas para creación de formulario dinamico
     $router->post('/saveform', 'FormController@saveForm');
     $router->get('/formslist', 'FormController@FormsList');
     $router->get('/searchform/{id}', 'FormController@searchForm');
     $router->get('/searchformtype', 'FormController@searchFormType');
+    
+    //Rutas para guardar información del formulario
+    $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
     
     
  });

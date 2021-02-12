@@ -11,9 +11,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        $this->call('FormSubTypeSeeder');
-         $this->call('FormtypeSeeder');
-         $this->call('FormSeeder');
+        $this->call('UserSeeder');
+        $this->call('GroupsSeeder');
+        $this->call('CampaingSeeder');
+        $this->call('ChannelSeeder');
+        $this->call('FormtypeSeeder');
+        $this->call('FormSeeder');
          $this->call('SectionSeeder');
+         $this->call('ClientSeeder');
     }
 }

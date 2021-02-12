@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateFormSubTypesTable extends Migration
+class CreateCampaingsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,10 @@ class CreateFormSubTypesTable extends Migration
      */
     public function up()
     {
-        Schema::create('form_sub_types', function (Blueprint $table) {
+        Schema::create('campaings', function (Blueprint $table) {
             $table->id();
-            $table->string('name_subtype');
-            $table->string('observation');
-            $table->string('key');
+            //$table->unsignedBigInteger('group_id')->nullable();
+            $table->string('name_campaign');
             $table->timestamps();
         });
     }
@@ -29,6 +28,6 @@ class CreateFormSubTypesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('form_sub_types');
+        Schema::dropIfExists('campaings');
     }
 }
