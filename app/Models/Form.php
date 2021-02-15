@@ -4,6 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\FormType;
+use App\Models\Section;
+use App\Models\Group;
+use App\Models\StateForm;
+use App\Models\Campaing;
+
+
 
 class Form extends Model
 {
@@ -16,19 +22,19 @@ class Form extends Model
     }
 
     public function section(){
-        return $this->hasMany('App\Models\Section', 'form_id');
+        return $this->hasMany(Section::class, 'form_id');
     }
 
     public function group(){
-        return $this->hasOne('App\Models\Group','id');
+        return $this->hasOne(Group::class,'group_id','id');
     }
 
     public function stateform(){
-        return $this->belongsTo('App\Models\StateForm','form_id');
+        return $this->belongsTo(StateForm::class,'form_id');
     }
 
     public function campaign(){
-        return $this->hasOne('App\Models\Campaing');
+        return $this->hasOne(Campaing::class, 'campaign_id','id');
     }
     
 }
