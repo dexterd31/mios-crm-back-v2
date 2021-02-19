@@ -18,7 +18,7 @@ class ClientSeeder extends Seeder
                 'lastname' => 'Ramirez',
                 'document' => '123456789',
                 'email' => 'nicol@gmail.com',
-                'phone' => '12233243',
+                'phone' => '12233',
                 'basic_information' => array(
                     [
                         'direccion' => 'calle1234343',
@@ -31,7 +31,7 @@ class ClientSeeder extends Seeder
                 'lastname' => 'Rodriguez',
                 'document' => '57891234',
                 'email' => 'juan@gmail.com',
-                'phone' => '3165205775',
+                'phone' => '31652',
                 'basic_information' => array(
                     [
                         'direccion' => 'calle1234343',

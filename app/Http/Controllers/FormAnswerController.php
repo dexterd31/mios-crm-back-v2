@@ -17,8 +17,8 @@ class FormAnswerController extends Controller
      */
     public function saveinfo(Request $request)
     {
-       /*  try
-        {  */
+        try
+        { 
             $sections_array = json_decode($request->sections_array); 
 
             foreach($sections_array as $section){
@@ -32,9 +32,9 @@ class FormAnswerController extends Controller
             }
             return $this->successResponse('Guardado Correctamente');
     
-/*         }catch(\Throwable $e){
+         }catch(\Throwable $e){
             return $this->errorResponse('Error al guardar el formulario',500);
-        }  */    
+        }     
     }
 
       /**

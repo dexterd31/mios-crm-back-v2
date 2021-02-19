@@ -132,6 +132,7 @@ class SectionSeeder extends Seeder
             $Sections = new Section();
             $Sections->form_id = $section['form_id'];
             $Sections->name_section = $section['name_section'];
+            $Sections->type_section = $section['type_section'];
             $Sections->fields = json_encode($section['fields']);
             $Sections->save();
         }

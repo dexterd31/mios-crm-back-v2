@@ -18,7 +18,7 @@ class Relationships extends Migration
             {
                 $table->foreignId('group_id')->constrained('groups'); 
                 $table->foreignId('campaign_id')->constrained('campaings');
-                $table->foreignId('form_type_id')->constrained('formtypes');
+                $table->foreignId('form_type_id')->constrained('form_types');
             });
         Schema::table('campaings', function ($table)
             {
