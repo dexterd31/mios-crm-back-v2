@@ -8,7 +8,7 @@ class Client extends Model
 {
     protected $table = 'clients';
     protected $PrimaryKey = 'id';
-    protected $fillable = ['campaign_id','name_client','lastname','document','email','phone', 'basic_information'];
+    protected $fillable = ['name_client','lastname','document','email','phone', 'basic_information'];
 
     
     public function formanswer(){
