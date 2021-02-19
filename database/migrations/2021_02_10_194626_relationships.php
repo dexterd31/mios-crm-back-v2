@@ -33,11 +33,6 @@ class Relationships extends Migration
                 $table->foreignId('client_id')->constrained('clients');
             });
 
-        Schema::table('clients', function ($table)
-            {
-                $table->foreignId('campaign_id')->constrained('campaings'); 
-            });
-
         Schema::table('state_forms', function ($table)
             {
                 $table->foreignId('form_answer_id')->constrained('form_answers'); 
