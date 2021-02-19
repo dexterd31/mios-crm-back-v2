@@ -17,6 +17,7 @@ class CreateSectionsTable extends Migration
             $table->id();
             //$table->unsignedBigInteger('form_id');
             $table->string('name_section');
+            $table->tinyInteger('type_section');
             $table->json('fields');
             $table->timestamps();
         });

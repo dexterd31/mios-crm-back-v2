@@ -19,5 +19,6 @@ class DatabaseSeeder extends Seeder
         $this->call('FormSeeder');
          $this->call('SectionSeeder');
          $this->call('ClientSeeder');
+         $this->call('GroupUserSeeder');
     }
 }

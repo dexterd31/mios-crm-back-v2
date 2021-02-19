@@ -15,6 +15,7 @@ class SectionSeeder extends Seeder
             [
                 'form_id' => '1',
                 'name_section' => 'Datos personales',
+                'type_section' => 1,
                 'fields'=> array( 
                 [
                     'type'=> 'text',
@@ -42,6 +43,7 @@ class SectionSeeder extends Seeder
             [
                 'form_id' => '1',
                 'name_section' => 'Datos de la mascota',
+                'type_section' => 2,
                 'fields' => array(
                 [
                     'type'=> 'text',
@@ -69,6 +71,7 @@ class SectionSeeder extends Seeder
              [
                 'form_id' => '2',
                 'name_section' => 'Datos personales',
+                'type_section' => 1,
                 'fields'=> array( 
                 [
                     'type'=> 'text',
@@ -96,6 +99,7 @@ class SectionSeeder extends Seeder
             [
                 'form_id' => '2',
                 'name_section' => 'Datos del carro',
+                'type_section' => 2,
                 'fields' => array(
                 [
                     'type'=> 'text',

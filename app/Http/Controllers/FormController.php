@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 use App\Models\Form;
 use App\Models\FormType;
 use App\Models\Section;
-use App\Models\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -66,14 +65,9 @@ class FormController extends Controller
     {
 
         try{
-          /*   $groups = new Group([
-                'user_id' => $request->input('user'),
-                'name_group' => $request->input('name_group')
-            ]);
-            $groups->save(); */
 
             $forms = new Form([
-                'group_id' => 1,
+                'group_id' =>  $request->input('group'),
                 'campaign_id' => 1,
                 'form_type_id' => $request->input('type_form'),
                 'name_form' => $request->input('name_form'),

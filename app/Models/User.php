@@ -10,8 +10,8 @@ class User extends Model
     protected $PrimaryKey = 'id';
     protected $fillable = ['id_rhh','username','status','state'];
 
-    public function group(){
-        return $this->belongsTo('App\Models\Group','user_id');
+    public function groupuser(){
+        return $this->belongsTo('App\Models\GroupUser','user_id');
     }
 
     public function formanswer(){

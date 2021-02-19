@@ -11,19 +11,33 @@ class ClientSeeder extends Seeder
      */
     public function run()
     {
-        $clients = array([
-            'campaign_id' => '1',
-            'name_client' => 'Nicoll',
-            'lastname' => 'Ramirez',
-            'document' => '123456789',
-            'email' => 'nicol@gmail.com',
-            'phone' => '12233243',
-            'basic_information' => array(
-                [
-                    'direccion' => 'calle1234343',
-                    'mascota' => 'lucas'
-                ])   
-        ]);
+        $clients = array(
+            [
+                'campaign_id' => '1',
+                'name_client' => 'Nicoll',
+                'lastname' => 'Ramirez',
+                'document' => '123456789',
+                'email' => 'nicol@gmail.com',
+                'phone' => '12233243',
+                'basic_information' => array(
+                    [
+                        'direccion' => 'calle1234343',
+                        'mascota' => 'lucas'
+                    ])   
+            ],
+            [
+                'campaign_id' => '1',
+                'name_client' => 'Juan',
+                'lastname' => 'Rodriguez',
+                'document' => '57891234',
+                'email' => 'juan@gmail.com',
+                'phone' => '3165205775',
+                'basic_information' => array(
+                    [
+                        'direccion' => 'calle1234343',
+                        'mascota' => 'pato'
+                    ])   
+            ]);
 
         foreach ($clients as $client)
         {

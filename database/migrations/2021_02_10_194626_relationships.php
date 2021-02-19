@@ -13,10 +13,7 @@ class Relationships extends Migration
      */
     public function up()
     {
-        Schema::table('groups', function ($table)
-            {
-                $table->foreignId('user_id')->constrained('users'); 
-            });
+      
         Schema::table('forms', function ($table)
             {
                 $table->foreignId('group_id')->constrained('groups'); 
@@ -60,6 +57,12 @@ class Relationships extends Migration
             });
         Schema::table('uploads', function ($table)
             {
+                $table->foreignId('user_id')->constrained('users'); 
+                
+            });
+        Schema::table('group_users', function ($table)
+            {
+                $table->foreignId('group_id')->constrained('groups'); 
                 $table->foreignId('user_id')->constrained('users'); 
                 
             });

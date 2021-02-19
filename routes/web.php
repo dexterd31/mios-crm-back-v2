@@ -25,5 +25,12 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas para guardar información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
     
+    //Rutas de grupos
+    $router->get('/searchgroup', 'GroupController@searchGroup');
+    $router->post('/savegroup','GroupController@saveGroup');
+    
+    //Rutas para consultar la información de respuestas del formulario
+    $router->get('/filterform', 'FormAnswerController@filterForm');
+    
     
  });
