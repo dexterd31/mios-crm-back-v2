@@ -13,7 +13,6 @@ class ClientSeeder extends Seeder
     {
         $clients = array(
             [
-                'campaign_id' => '1',
                 'name_client' => 'Nicoll',
                 'lastname' => 'Ramirez',
                 'document' => '123456789',
@@ -26,7 +25,6 @@ class ClientSeeder extends Seeder
                     ])   
             ],
             [
-                'campaign_id' => '1',
                 'name_client' => 'Juan',
                 'lastname' => 'Rodriguez',
                 'document' => '57891234',
@@ -42,7 +40,6 @@ class ClientSeeder extends Seeder
         foreach ($clients as $client)
         {
             $clients = new Client();
-            $clients->campaign_id = $client['campaign_id'];
             $clients->name_client = $client['name_client'];
             $clients->lastname = $client['lastname'];
             $clients->document = $client['document'];
