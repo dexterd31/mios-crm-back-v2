@@ -17,7 +17,7 @@ class FormController extends Controller
      */
     public function FormsList()
     {
-        $forms= Form::where('campaign_id',1)
+/*         $forms= Form::where('campaign_id',1)
                     ->where('group_id',1)
                     ->with('formtype')
                     ->get();
@@ -28,8 +28,11 @@ class FormController extends Controller
             unset($forms[$i]->formtype['key']);
             unset($forms[$i]->formtype['updated_at']);
             unset($forms[$i]->formtype['created_at']);
-        } 
+        }  */
            
+        $forms = DB::table('forms')
+        ->join('form_types','forms.form_type_id','=','form_types.id')
+        ->select('name_form','forms.id','name_type')->get();
         return $forms;
     }
 
