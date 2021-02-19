@@ -14,10 +14,6 @@ class Client extends Model
     public function formanswer(){
         return $this->hasMany('App\Models\FormAnswer', 'client_id');
     }
-    
-    public function campaing(){
-        return $this->hasMany('App\Models\Campaing', 'id');
-    }
 
     public function keyvalue(){
         return $this->belongsTo('App\Models\KeyValue','client_id');
