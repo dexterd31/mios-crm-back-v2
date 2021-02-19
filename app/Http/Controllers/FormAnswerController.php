@@ -32,7 +32,7 @@ class FormAnswerController extends Controller
                 'channel_id' => 1,
                 'client_id' => $client->id,
                 'form_id' => $request->input('form_id'),
-                'structure_answer' => json_encode($request->input('answer'))
+                'structure_answer' => json_encode($request->input('sections'))
             ]);
             $form_answer->save();
 
