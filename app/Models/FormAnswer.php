@@ -8,10 +8,10 @@ class FormAnswer extends Model
 {
     protected $table = 'form_answers';
     protected $PrimaryKey = 'id';
-    protected $fillable = ['section_id','user_id', 'client_id','channel_id','structure_answer'];
+    protected $fillable = ['form_id','user_id', 'client_id','channel_id','structure_answer'];
 
-    public function section(){
-       return $this->hasMany('App\Models\Section','id');
+    public function form(){
+       return $this->hasMany('App\Models\Form','id');
     }
 
     public function client(){

@@ -30,4 +30,7 @@ class Form extends Model
         return $this->hasOne('App\Models\Campaing', 'campaign_id','id');
     }
     
+    public function formAnswer(){
+        return $this->belongsTo('App\Models\FormAnswer','form_id');
+    }
 }

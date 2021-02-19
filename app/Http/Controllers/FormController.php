@@ -78,10 +78,11 @@ class FormController extends Controller
            foreach($request->input('sections') as $section)
            {
               $section['fields'][0]['key']=str_replace(' ', '',$section['fields'][0]['label']);
-              $var=$section['fields'];
+              $var = $section['fields'];
                $sections = new Section([
                    'form_id' => $forms->id,
                    'name_section' => $section['sectionName'],
+                   'type_section' => $section['type_section'],
                    'fields' => json_encode($var),
                ]);
                $sections->save();           

@@ -15,7 +15,6 @@ class CreateCampaingsTable extends Migration
     {
         Schema::create('campaings', function (Blueprint $table) {
             $table->id();
-            //$table->unsignedBigInteger('group_id')->nullable();
             $table->string('name_campaign');
             $table->timestamps();
         });
