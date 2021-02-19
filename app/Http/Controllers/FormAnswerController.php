@@ -51,7 +51,8 @@ class FormAnswerController extends Controller
      */
     public function editInfo(Request $request, $id){
         $form_answer = FormAnswer::find($id);
-        $form_answer->structure_answer = $request->answer;
+        $form_answer->structure_answer = json_encode($request->answer);
+        dd($form_answer);
         $form_answer->save();
     }
 

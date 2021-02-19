@@ -67,7 +67,8 @@ class FormController extends Controller
         try{
 
             $forms = new Form([
-                'group_id' =>  $request->input('group'),
+               // 'group_id' =>  $request->input('group'),
+               'group_id' => 1,
                 'campaign_id' => 1,
                 'form_type_id' => $request->input('type_form'),
                 'name_form' => $request->input('name_form'),
