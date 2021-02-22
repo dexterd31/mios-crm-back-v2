@@ -8,7 +8,7 @@ class Client extends Model
 {
     protected $table = 'clients';
     protected $PrimaryKey = 'id';
-    protected $fillable = ['name_client','lastname','document','email','phone', 'basic_information'];
+    protected $fillable = ['document_type_id','first_name','middle_name','first_lastname','second_lastname','document'];
 
     
     public function formanswer(){
@@ -17,5 +17,9 @@ class Client extends Model
 
     public function keyvalue(){
         return $this->belongsTo('App\Models\KeyValue','client_id');
+    }
+
+    public function documenttype(){
+        return $this->HasOne('App\Models\DocumentType','id','document_type_id');
     }
 }

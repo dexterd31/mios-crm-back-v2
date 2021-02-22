@@ -33,4 +33,10 @@ class Form extends Model
     public function formAnswer(){
         return $this->belongsTo('App\Models\FormAnswer','form_id');
     }
+    public function keyvalue(){
+        return $this->hasMany('App\Models\KeyValue','form_id');
+    }
+    public function upload(){
+        return $this->hasMany('App\Models\Upload','form_id');
+    }
 }

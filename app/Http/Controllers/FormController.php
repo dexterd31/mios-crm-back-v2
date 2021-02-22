@@ -57,8 +57,8 @@ class FormController extends Controller
         try{
 
             $forms = new Form([
-               // 'group_id' =>  $request->input('group'),
-               'group_id' => 1,
+               'group_id' =>  $request->input('group_id'),
+               //'group_id' => 1,
                 'campaign_id' => 1,
                 'form_type_id' => $request->input('type_form'),
                 'name_form' => $request->input('name_form'),
@@ -68,7 +68,8 @@ class FormController extends Controller
 
            foreach($request->input('sections') as $section)
            {
-              $section['fields'][0]['key']=str_replace(' ', '',$section['fields'][0]['label']);
+              $section['fields'][0]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][0]['label']);
+              $section['fields'][0]['key'] =  strtolower( str_replace(' ','-',$section['fields'][0]['label']) );
               $var = $section['fields'];
                $sections = new Section([
                    'form_id' => $forms->id,
@@ -76,6 +77,7 @@ class FormController extends Controller
                    'type_section' => $section['type_section'],
                    'fields' => json_encode($var),
                ]);
+               
                $sections->save();           
             }
 
@@ -97,5 +99,12 @@ class FormController extends Controller
         return $formtype;
     }
     
+    public function searchDocumentType(){
+        $documentType = DB::table('document_types')
+        ->select('id','name_type_document')->get();
+
+        return $documentType;
+    }
+
     
 }

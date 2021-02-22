@@ -13,39 +13,33 @@ class ClientSeeder extends Seeder
     {
         $clients = array(
             [
-                'name_client' => 'Nicoll',
-                'lastname' => 'Ramirez',
+                'first_name' => 'Nicoll',
+                'second_name' => 'Natalia',
+                'first_lastname' => 'Ramirez',
+                'second_lastname' => 'Manjarres',
                 'document' => '123456789',
-                'email' => 'nicol@gmail.com',
-                'phone' => '12233',
-                'basic_information' => array(
-                    [
-                        'direccion' => 'calle1234343',
-                        'mascota' => 'lucas'
-                    ])   
+                'document_type_id' => 1,
+               
             ],
             [
-                'name_client' => 'Juan',
-                'lastname' => 'Rodriguez',
+                'first_name' => 'Juan',
+                'second_name' => 'Felipe',
+                'first_lastname' => 'Rodriguez',
+                'second_lastname' => 'Lopez',
                 'document' => '57891234',
-                'email' => 'juan@gmail.com',
-                'phone' => '31652',
-                'basic_information' => array(
-                    [
-                        'direccion' => 'calle1234343',
-                        'mascota' => 'pato'
-                    ])   
+                'document_type_id' => 1,
+               
             ]);
 
         foreach ($clients as $client)
         {
             $clients = new Client();
-            $clients->name_client = $client['name_client'];
-            $clients->lastname = $client['lastname'];
+            $clients->first_name = $client['first_name'];
+            $clients->second_name = $client['second_name'];
+            $clients->first_lastname = $client['first_lastname'];
+            $clients->second_lastname = $client['second_lastname'];
             $clients->document = $client['document'];
-            $clients->email = $client['email'];
-            $clients->phone = $client['phone'];
-            $clients->basic_information = json_encode($client['basic_information']);
+            $clients->document_type_id = $client['document_type_id'];
             $clients->save();
         }
     }

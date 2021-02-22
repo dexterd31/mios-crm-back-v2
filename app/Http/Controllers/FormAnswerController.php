@@ -16,32 +16,32 @@ class FormAnswerController extends Controller
      */
     public function saveinfo(Request $request)
     {
-/*         try
-        {  */
+        try
+        {  
+            $json_body = json_decode($request->getContent());
             $client = new Client([
-                'name_client' => $request->input('name_client'),
-                'lastname' => $request->input('lastname'),
-                'document' => $request->input('document'),
-                'email' => $request->input('email'),
-                'phone' => $request->input('phone'),
-                'basic_information' => json_encode($request->input('info'))
+               /*  'name_client' => $json_body->client->name_client,
+                'lastname' => $json_body->client->lastname, */
+                'unique_id' => $json_body->client->unique_id,
+               /*  'email' => $json_body->client->email,
+                'phone' => $json_body->client->phone, */
+                'basic_information' => json_encode($json_body->client->basic_information)
             ]);
             $client->save(); 
             $form_answer = new FormAnswer([
                 'user_id' => 1,
                 'channel_id' => 1,
                 'client_id' => $client->id,
-                'form_id' => $request->input('form_id'),
-                'structure_answer' => json_encode($request->input('sections'))
+                'form_id' => $json_body->form_id,
+                'structure_answer' => json_encode($json_body->sections)
             ]);
             $form_answer->save();
-
             return 'guardado';
-/*             return $this->successResponse('Guardado Correctamente');
+            return $this->successResponse('Guardado Correctamente');
     
          }catch(\Throwable $e){
             return $this->errorResponse('Error al guardar el formulario',500);
-        }      */
+        }      
     }
 
     /**
