@@ -58,11 +58,10 @@ class FormController extends Controller
 
             $forms = new Form([
                'group_id' =>  $request->input('group_id'),
-               //'group_id' => 1,
                 'campaign_id' => 1,
                 'form_type_id' => $request->input('type_form'),
                 'name_form' => $request->input('name_form'),
-                'key' => $request->input('key')
+                'filters' => json_encode($request->filters)
                 ]);
                 $forms->save();
 
@@ -99,12 +98,7 @@ class FormController extends Controller
         return $formtype;
     }
     
-    public function searchDocumentType(){
-        $documentType = DB::table('document_types')
-        ->select('id','name_type_document')->get();
-
-        return $documentType;
-    }
+   
 
     
 }

@@ -73,5 +73,16 @@ class FormAnswerController extends Controller
         return $filter;
     }
 
+     /**
+     * Nicoll Ramirez
+     * 22-02-2021
+     * Método para consultar el tipo de documento en las respuestas del formulario
+     */
+    public function searchDocumentType(){
+        $documentType = DB::table('document_types')
+        ->select('id','name_type_document')->get();
+
+        return $documentType;
+    }
   
 }
