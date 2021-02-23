@@ -8,7 +8,7 @@ class Form extends Model
 {
     protected $table = 'forms';
     protected $PrimaryKey = 'id';
-    protected $fillable = ['group_id', 'campaign_id', 'form_type_id', 'name_form','filters'];
+    protected $fillable = ['group_id', 'campaign_id', 'form_type_id', 'name_form','filters','state'];
 
     public function formtype(){
         return $this->hasOne('App\Models\FormType', 'id');

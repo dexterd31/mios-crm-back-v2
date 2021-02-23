@@ -65,9 +65,8 @@ class FormAnswerController extends Controller
     {
         $filter = DB::table('form_answers')
                       ->join('clients','form_answers.client_id','=','clients.id')
-                      ->where('clients.document','like','%'.$request->ident_id.'%')
-                      ->where('clients.email','like','%'.$request->phone.'%')
-                      ->where('clients.phone','like','%'.$request->email.'%')
+                      ->where('clients.document','like','%123456789%')
+                      
                       ->get();
 
         return $filter;
