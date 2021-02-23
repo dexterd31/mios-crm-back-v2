@@ -15,9 +15,9 @@ class CreateKeyValuesTable extends Migration
     {
         Schema::create('key_values', function (Blueprint $table) {
             $table->id();
-         //   $table->unsignedBigInteger('client_id')->nullable();
             $table->string('key');
             $table->string('value');
+            $table->integer('description');
 
             $table->timestamps();
         });

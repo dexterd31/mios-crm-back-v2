@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 use App\Models\Form;
 use App\Models\FormType;
 use App\Models\Section;
-use App\Models\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -18,19 +17,9 @@ class FormController extends Controller
      */
     public function FormsList()
     {
-        $forms= Form::where('campaign_id',1)
-                    ->where('group_id',1)
-                    ->with('formtype')
-                    ->get();
-        for($i=0; $i<count($forms); $i++)
-        {    
-            unset($forms[$i]->formtype['id']);
-            unset($forms[$i]->formtype['description']);
-            unset($forms[$i]->formtype['key']);
-            unset($forms[$i]->formtype['updated_at']);
-            unset($forms[$i]->formtype['created_at']);
-        } 
-           
+        $forms = DB::table('forms')
+        ->join('form_types','forms.form_type_id','=','form_types.id')
+        ->select('name_form','forms.id','name_type')->get();
         return $forms;
     }
 
@@ -66,30 +55,28 @@ class FormController extends Controller
     {
 
         try{
-          /*   $groups = new Group([
-                'user_id' => $request->input('user'),
-                'name_group' => $request->input('name_group')
-            ]);
-            $groups->save(); */
 
             $forms = new Form([
-                'group_id' => 1,
+               'group_id' =>  $request->input('group_id'),
                 'campaign_id' => 1,
                 'form_type_id' => $request->input('type_form'),
                 'name_form' => $request->input('name_form'),
-                'key' => $request->input('key')
+                'filters' => json_encode($request->filters)
                 ]);
                 $forms->save();
 
            foreach($request->input('sections') as $section)
            {
-              $section['fields'][0]['key']=str_replace(' ', '',$section['fields'][0]['label']);
-              $var=$section['fields'];
+              $section['fields'][0]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][0]['label']);
+              $section['fields'][0]['key'] =  strtolower( str_replace(' ','-',$section['fields'][0]['label']) );
+              $var = $section['fields'];
                $sections = new Section([
                    'form_id' => $forms->id,
                    'name_section' => $section['sectionName'],
+                   'type_section' => $section['type_section'],
                    'fields' => json_encode($var),
                ]);
+               
                $sections->save();           
             }
 
@@ -111,5 +98,7 @@ class FormController extends Controller
         return $formtype;
     }
     
+   
+
     
 }

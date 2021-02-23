@@ -15,10 +15,6 @@ class CreateFormAnswersTable extends Migration
     {
         Schema::create('form_answers', function (Blueprint $table) {
             $table->id();
-           /*  $table->unsignedBigInteger('section_id')->nullable();
-            $table->unsignedBigInteger('user_id')->nullable();
-            $table->unsignedBigInteger('client_id')->nullable();
-            $table->unsignedBigInteger('channel_id')->nullable(); */
             $table->json('structure_answer');
 
             

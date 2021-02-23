@@ -17,7 +17,41 @@ class FormSeeder extends Seeder
                 'campaign_id' => 1,
                 'form_type_id' => 1,
                 'name_form' => 'Laika',
-                'key' => '1'
+                'filters' => array(
+                    [
+                        'type'=> 'text',
+                        'controlType'=> 'textbox',
+                        'key'=> 'document',
+                        'label'=> 'No. Documento',
+                        'value'=> '',
+                        'disabled'=> false,
+                        'required'=> true,
+                        'options'=>[],
+                        'cols'=>'1'
+                    ],
+                    [
+                        'type'=> 'text',
+                        'controlType'=> 'textbox',
+                        'key'=> 'phone',
+                        'label'=> 'telefono',
+                        'value'=> '',
+                        'disabled'=> false,
+                        'required'=> true,
+                        'options'=>[],
+                        'cols'=>'1'
+                    ],
+                    [
+                        'type'=> 'text',
+                        'controlType'=> 'textbox',
+                        'key'=> 'email',
+                        'label'=> 'Email',
+                        'value'=> '',
+                        'disabled'=> false,
+                        'required'=> true,
+                        'options'=>[],
+                        'cols'=>'1'
+                    ]
+                )
             ],
             [
                 
@@ -25,7 +59,41 @@ class FormSeeder extends Seeder
                 'campaign_id' => 1,
                 'form_type_id' => 1,
                 'name_form' => 'SOAT',
-                'key' => '2'
+                'filters' => array(
+                    [
+                        'type'=> 'text',
+                        'controlType'=> 'textbox',
+                        'key'=> 'document',
+                        'label'=> 'No. Documento',
+                        'value'=> '',
+                        'disabled'=> false,
+                        'required'=> true,
+                        'options'=>[],
+                        'cols'=>'1'
+                    ],
+                    [
+                        'type'=> 'text',
+                        'controlType'=> 'textbox',
+                        'key'=> 'phone',
+                        'label'=> 'telefono',
+                        'value'=> '',
+                        'disabled'=> false,
+                        'required'=> true,
+                        'options'=>[],
+                        'cols'=>'1'
+                    ],
+                    [
+                        'type'=> 'text',
+                        'controlType'=> 'textbox',
+                        'key'=> 'email',
+                        'label'=> 'Email',
+                        'value'=> '',
+                        'disabled'=> false,
+                        'required'=> true,
+                        'options'=>[],
+                        'cols'=>'1'
+                    ]
+                )
             ]
         );
 
@@ -36,7 +104,7 @@ class FormSeeder extends Seeder
             $Form->campaign_id = $form['campaign_id'];
             $Form->form_type_id = $form['form_type_id'];
             $Form->name_form = $form['name_form'];
-            $Form->key = $form['key'];
+            $Form->filters = json_encode($form['filters']);
             $Form->save();
         }
     }

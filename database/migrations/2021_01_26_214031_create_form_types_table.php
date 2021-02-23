@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateCampaingsTable extends Migration
+class CreateFormtypesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,9 +13,11 @@ class CreateCampaingsTable extends Migration
      */
     public function up()
     {
-        Schema::create('campaings', function (Blueprint $table) {
+        Schema::create('form_types', function (Blueprint $table) {
             $table->id();
-            $table->string('name_campaign');
+            $table->string('name_type');
+            $table->string('description');
+            $table->string('key');
             $table->timestamps();
         });
     }
@@ -27,6 +29,6 @@ class CreateCampaingsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('campaings');
+        Schema::dropIfExists('formtypes');
     }
 }

@@ -15,8 +15,6 @@ class CreateStateFormsTable extends Migration
     {
         Schema::create('state_forms', function (Blueprint $table) {
             $table->id();
-         /*    $table->unsignedBigInteger('form_answer_id')->nullable();
-            $table->unsignedBigInteger('form_type_id')->nullable(); */
             $table->boolean('approval');
             $table->text('observation');
             $table->datetime('date_update');

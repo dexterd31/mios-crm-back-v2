@@ -13,15 +13,12 @@ class Relationships extends Migration
      */
     public function up()
     {
-        Schema::table('groups', function ($table)
-            {
-                $table->foreignId('user_id')->constrained('users'); 
-            });
+      
         Schema::table('forms', function ($table)
             {
                 $table->foreignId('group_id')->constrained('groups'); 
                 $table->foreignId('campaign_id')->constrained('campaings');
-                $table->foreignId('form_type_id')->constrained('formtypes');
+                $table->foreignId('form_type_id')->constrained('form_types');
             });
         Schema::table('campaings', function ($table)
             {
@@ -31,14 +28,9 @@ class Relationships extends Migration
         Schema::table('form_answers', function ($table)
             {
                 $table->foreignId('user_id')->constrained('users'); 
-                $table->foreignId('section_id')->constrained('sections');
+                $table->foreignId('form_id')->constrained('forms');
                 $table->foreignId('channel_id')->constrained('channels');
                 $table->foreignId('client_id')->constrained('clients');
-            });
-
-        Schema::table('clients', function ($table)
-            {
-                $table->foreignId('campaign_id')->constrained('campaings'); 
             });
 
         Schema::table('state_forms', function ($table)
@@ -56,12 +48,24 @@ class Relationships extends Migration
         Schema::table('key_values', function ($table)
             {
                 $table->foreignId('client_id')->constrained('clients'); 
+                $table->foreignId('form_id')->constrained('forms'); 
                 
             });
         Schema::table('uploads', function ($table)
             {
                 $table->foreignId('user_id')->constrained('users'); 
+                $table->foreignId('form_id')->constrained('forms'); 
                 
+            });
+        Schema::table('group_users', function ($table)
+            {
+                $table->foreignId('group_id')->constrained('groups'); 
+                $table->foreignId('user_id')->constrained('users'); 
+                
+            });
+        Schema::table('clients', function ($table)
+            {
+                $table->foreignId('document_type_id')->constrained('document_types'); 
             });
 
     

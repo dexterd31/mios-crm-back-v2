@@ -15,11 +15,8 @@ class CreateFormsTable extends Migration
     {
         Schema::create('forms', function (Blueprint $table) {
             $table->id();
-           /*  $table->unsignedBigInteger('group_id')->nullable();
-            $table->unsignedBigInteger('campaign_id')->nullable();
-            $table->unsignedBigInteger('form_type_id')->nullable(); */
             $table->string('name_form')->nullable();
-            $table->string('key')->nullable();
+            $table->json('filters')->nullable();
 
             $table->timestamps();
         });

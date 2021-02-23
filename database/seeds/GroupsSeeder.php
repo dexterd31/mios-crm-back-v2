@@ -14,20 +14,22 @@ class GroupsSeeder extends Seeder
     {
         $groups = array(
             [
-                'user_id' => '1',
-                'name_group' => 'grupo de claro ventas'
+                
+                'name_group' => 'grupo de claro ventas',
+                'description' => 'prueba'
             ],
             [
-                'user_id' => '1',
-                'name_group' => 'grupo de claro compras'
+                
+                'name_group' => 'grupo de claro compras',
+                'description' => 'prueba 2'
             ]
         );
 
         foreach ($groups as $group)
         {
             $Group = new Group();
-            $Group->user_id = $group['user_id'];
             $Group->name_group = $group['name_group'];
+            $Group->description = $group['description'];
             $Group->save();
         }
     }
