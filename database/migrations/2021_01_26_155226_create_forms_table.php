@@ -17,6 +17,7 @@ class CreateFormsTable extends Migration
             $table->id();
             $table->string('name_form')->nullable();
             $table->json('filters')->nullable();
+            $table->tinyInteger('state')->nullable();
 
             $table->timestamps();
         });
