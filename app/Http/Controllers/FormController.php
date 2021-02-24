@@ -104,27 +104,34 @@ class FormController extends Controller
     
     public function editForm(Request $request, $id)
     {
-        $form = Form::find($id);
-        $form->group_id = $request->group_id;
-        $form->form_type_id = $request->type_form;
-        $form->name_form = $request->name_form;
-        $form->filters = json_encode($request->filters);
-        $form->save();
-/* 
-        foreach($request->sections as $section)
-           {
-              $section['fields'][0]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][0]['label']);
-              $section['fields'][0]['key'] =  strtolower( str_replace(' ','-',$section['fields'][0]['label']) );
-              $var = $section['fields'];
-                $sections = Section::find($section->idsection);
-                $section->name_section = $section->sectionName;
-                $section->type_section = $section->type_section;
-                $section->fields = json_encode($var);
-               $sections->save();           
-            } */
+        try
+        {
+            $form = Form::find($id);
+            $form->group_id = $request->group_id;
+            $form->form_type_id = $request->type_form;
+            $form->name_form = $request->name_form;
+            $form->filters = json_encode($request->filters);
+            $form->save();
 
-            return 'editado';
+            foreach($request->sections as $section)
+            {
+                $section['fields'][0]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][0]['label']);
+                $section['fields'][0]['key'] =  strtolower( str_replace(' ','-',$section['fields'][0]['label']) );
+                $var = $section['fields'];
+
+                $result = Section::find($section['id']);
+                $result->name_section = $section['sectionName'];
+                $result->type_section = $section['type_section'];
+                $result->fields = json_encode($var);
+                $result->save();           
+            } 
+
+        return $this->successResponse('Formulario editado Correctamente');
+    
+        }catch(\Throwable $e){
+            return $this->errorResponse('Error al editar el formulario',500);
         }
+    }
 
         /**
          * Nicoll Ramirez
