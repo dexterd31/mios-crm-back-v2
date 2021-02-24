@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\FormAnswer;
 use App\Models\Client;
+use App\Models\KeyValue;
 use Illuminate\Support\Facades\DB;
 
 class FormAnswerController extends Controller
@@ -16,18 +17,36 @@ class FormAnswerController extends Controller
      */
     public function saveinfo(Request $request)
     {
-        try
-        {  
-            $json_body = json_decode($request->getContent());
-            $client = new Client([
-               /*  'name_client' => $json_body->client->name_client,
-                'lastname' => $json_body->client->lastname, */
-                'unique_id' => $json_body->client->unique_id,
-               /*  'email' => $json_body->client->email,
-                'phone' => $json_body->client->phone, */
-                'basic_information' => json_encode($json_body->client->basic_information)
-            ]);
-            $client->save(); 
+        $json_body = json_decode($request->getContent());
+        $client = null; 
+        if($json_body->client_id == null){
+           
+            foreach($json_body->sections as $section)
+            {
+                if(!empty($section->document_type_id)){
+                    $client = new Client([
+                        'document_type_id' => $section->document_type_id,
+                        'first_name' => $section->firstName,
+                        'middle_name' => $section->middleName,
+                        'first_lastname' => $section->lastName,
+                        'second_lastname' => $section->secondLastName,
+                        'document' => $section->document
+                    ]);
+                    $client->save();
+                }else{
+                    foreach($section as $key => $value){
+                        $sect = new KeyValue([
+                            'form_id' => $json_body->form_id,
+                            'client_id' => $client->id,
+                            'key' => $key,
+                            'value' => $value,
+                            'description' => 0
+                        ]);
+                        $sect->save();
+                      
+                    }
+                }
+            }
             $form_answer = new FormAnswer([
                 'user_id' => 1,
                 'channel_id' => 1,
@@ -37,11 +56,16 @@ class FormAnswerController extends Controller
             ]);
             $form_answer->save();
             return 'guardado';
-            return $this->successResponse('Guardado Correctamente');
-    
-         }catch(\Throwable $e){
-            return $this->errorResponse('Error al guardar el formulario',500);
-        }      
+
+        }else{
+            $client = Client::find($json_body->client_id)->first();
+            $formanswer = FormAnswer::where( 'client_id', $json_body->client_id)->first();
+            $formanswer->structure_answer = json_encode($json_body->sections);
+            $formanswer->save();
+
+            return 'editado';
+        }
+     
     }
 
     /**
