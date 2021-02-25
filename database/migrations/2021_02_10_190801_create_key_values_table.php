@@ -17,7 +17,7 @@ class CreateKeyValuesTable extends Migration
             $table->id();
             $table->string('key');
             $table->string('value');
-            $table->integer('description');
+            $table->string('description')->nullable();
 
             $table->timestamps();
         });
