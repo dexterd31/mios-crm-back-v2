@@ -140,9 +140,11 @@ class FormAnswerController extends Controller
      */
     public function filterForm(Request $request)
     {
-     /*    $form_answer = FormAnswer::
+        $form_answer = FormAnswer::with('client')
+        ->select('structure_answer')->first();
+        $form_answer->structure_answer = json_decode($form_answer->structure_answer);
 
-        return $filter; */
+        return $form_answer;
     }
 
      /**
