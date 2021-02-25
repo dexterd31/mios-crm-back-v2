@@ -63,21 +63,35 @@ class FormAnswerController extends Controller
             $formanswer->structure_answer = json_encode($json_body->sections);
             $formanswer->save();
 
-            return 'editado';
-        }
-     
-    }
+            foreach($json_body->sections as $section)
+            {
+                if(!empty($section->document_type_id)){
 
-    /**
-     * Nicol Ramirez
-     * 19-02-2021
-     * Método para editar la información de la gestión del formulario
-     */
-    public function editInfo(Request $request, $id){
-        $form_answer = FormAnswer::find($id);
-        $form_answer->structure_answer = json_encode($request->answer);
-        dd($form_answer);
-        $form_answer->save();
+                    $client->document_type_id = $section->document_type_id;
+                    $client->first_name = $section->firstName;
+                    $client->middle_name = $section->middleName;
+                    $client->first_lastname = $section->lastName;
+                    $client->second_lastname = $section->secondLastName;
+                    $client->document = $section->document;
+                    $client->save();
+                    
+                }/* else{
+                    foreach($section as $key => $value){
+                        $sect->form_id = $json_body->form_id;
+                        $sect->client_id = $client->id;
+                        $sect->key = $key;
+                        $sect->value = $value;
+                        
+    
+                        $sect->save();
+                      
+                    }
+                }
+            }
+
+            return 'editado';
+        } */
+     
     }
 
       /**
@@ -90,7 +104,6 @@ class FormAnswerController extends Controller
         $filter = DB::table('form_answers')
                       ->join('clients','form_answers.client_id','=','clients.id')
                       ->where('clients.document','like','%123456789%')
-                      
                       ->get();
 
         return $filter;
