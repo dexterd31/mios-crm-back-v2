@@ -40,7 +40,7 @@ class FormAnswerController extends Controller
                         foreach($section as $key => $value){
                             $sect = new KeyValue([
                                 'form_id' => $json_body->form_id,
-                                'client_id' => $client->id,
+                                'client_id' => $json_body->$client->id,
                                 'key' => $key,
                                 'value' => $value,
                                 'description' => 0

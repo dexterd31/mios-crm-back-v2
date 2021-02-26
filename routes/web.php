@@ -37,8 +37,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/savegroup','GroupController@saveGroup');
     $router->get('/searchselectgroup','GroupController@searchSelectGroup');
     $router->get('/groupslist','GroupController@groupslist');
-    $router->put('/deletegroup','GroupController@deleteGroup');
-
+    $router->put('/deletegroup/{id}','GroupController@deleteGroup');
 
     // rutas de campañas
     $router->get('/campaigns', 'CampaignController@index');
