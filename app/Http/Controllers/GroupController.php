@@ -73,4 +73,14 @@ class GroupController extends Controller
                     ->select('id','name_group')->get();
         return $groups;
     }
+
+    /**
+     * Nicol Ramirez 
+     * 26-02-2021
+     * Método para consultar el listado de los grupos en la BD
+     */
+    public function groupslist(){
+        $groups = Group::select('name_group','description','state')->get();
+        return $groups;
+    }
 }

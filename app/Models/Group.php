@@ -8,7 +8,7 @@ class Group extends Model
 {
     protected $table = 'groups';
     protected $PrimaryKey = 'id';
-    protected $fillable = ['name_group', 'description'];
+    protected $fillable = ['name_group', 'description','state'];
 
     public function campaign(){
         return $this->belongsTo('App\Models\Campaing', 'group_id');

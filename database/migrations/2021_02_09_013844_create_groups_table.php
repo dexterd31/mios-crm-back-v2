@@ -17,6 +17,7 @@ class CreateGroupsTable extends Migration
             $table->id();
             $table->string('name_group');
             $table->string('description')->nullable();
+            $table->tinyInteger('state')->nullable();
             
             $table->timestamps();
         });
