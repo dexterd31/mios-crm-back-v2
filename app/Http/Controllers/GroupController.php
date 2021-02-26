@@ -79,8 +79,9 @@ class GroupController extends Controller
      * 26-02-2021
      * Método para consultar el listado de los grupos en la BD
      */
-    public function groupslist(){
-        $groups = Group::select('name_group','description','state')->get();
+    public function groupslist(Request $request){
+        $groups = Group::select('name_group','description','state')
+                        ->where('campaign_id',$request->campaign_id)->get();
         return $groups;
     }
 }

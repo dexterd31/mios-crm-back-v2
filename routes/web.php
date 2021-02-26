@@ -27,7 +27,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
-    $router->get('/formanswer/filterform', 'FormAnswerController@filterForm');
+    $router->post('/formanswer/filterform', 'FormAnswerController@filterForm');
     $router->put('/formanswer/editform/{id}', 'FormAnswerController@editInfo');
      //consultar tipo de documento de los clientes
      $router->get('/searchdocumenttype', 'FormAnswerController@searchDocumentType');
@@ -36,10 +36,13 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/searchgroup', 'GroupController@searchGroup');
     $router->post('/savegroup','GroupController@saveGroup');
     $router->get('/searchselectgroup','GroupController@searchSelectGroup');
+    $router->get('/groupslist','GroupController@groupslist');
+
 
     // rutas de campañas
     $router->get('/campaigns', 'CampaignController@index');
     
+
  
     
     
