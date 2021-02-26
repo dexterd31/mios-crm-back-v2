@@ -139,53 +139,48 @@ class FormAnswerController extends Controller
      * Método para filtrar las varias opciones en el formulario
      */
     public function filterForm(Request $request)
-    {   
-        $json_body = json_decode($request->getContent());
-  
-        $formId     = $json_body->form_id;
+    {
+        try {
+            $json_body = json_decode($request->getContent());
 
-        $item1Key   = $json_body->item1_key;
-        $item1value = $json_body->item1_value;
+            $formId     = $json_body->form_id;
 
-        $item2Key   = $json_body->item2_key;
-        $item2value = $json_body->item2_value;
+            $item1value = $json_body->item1_value;
+            $item2value = $json_body->item2_value;
+            $item3value = $json_body->item3_value;
 
-        $item3Key   = $json_body->item3_key;
-        $item3value = $json_body->item3_value;
+            $registers = [];
+            $form_answers = FormAnswer::where('form_id', $formId)->get();
 
-        $registers = [];
-        $form_answers = FormAnswer::where('form_id', $formId )->get();
+            foreach ($form_answers as $form) {
+                $array =  json_decode(json_encode($form->structure_answer, true));
+                $structure_answer =     json_decode($array, TRUE);
+                foreach ($structure_answer as $answer) {
+                    $find = false;
+                    $find2 = false;
+                    $find3 = false;
+                    if (isset($item1value) && strlen($item1value) > 0) {
+                        $find = array_search($item1value, $answer);
+                    }
+                    if (isset($item2value) && strlen($item2value) > 0) {
+                        $find2 = array_search($item2value, $answer);
+                    }
+                    if (isset($item3value) && strlen($item3value) > 0) {
+                        $find3 = array_search($item3value, $answer);
+                    }
 
-        foreach ($form_answers as $form){
-            $array =  json_decode( json_encode( $form->structure_answer, true ));
-            $arr =     json_decode($array,TRUE);   
-            $data = [];
-            foreach($arr as $a){
-                $find = false;
-                $find2 = false;
-                $find3 = false;
-                if (isset($item1value) && strlen($item1value) > 0) {
-                    $find = array_search($item1value, $a);
-                }                    
-                if (isset($item2value) && strlen($item2value) > 0) {
-                    $find2 = array_search($item2value, $a);
-                } 
-                if (isset($item3value) && strlen($item3value) > 0) {
-                    $find3 = array_search($item3value, $a);
-                } 
-
-                if ($find || $find2 || $find3) {
-                    array_push($registers, $arr);              
+                    if ($find || $find2 || $find3) {
+                        array_push($registers, $structure_answer);
+                    }
                 }
             }
-        }
-        return [
-
-            'suceess' => true,
-            
-            'result' => $registers
-            
+            return [
+                'suceess' => true,
+                'result' => $registers
             ];
+        } catch (\Throwable $e) {
+            return $this->errorResponse('Error al buscar la gestion', 500);
+        }
     }
      /**
      * Nicoll Ramirez

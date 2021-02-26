@@ -80,8 +80,22 @@ class GroupController extends Controller
      * Método para consultar el listado de los grupos en la BD
      */
     public function groupslist(Request $request){
-        $groups = Group::select('name_group','description','state')
+        $groups = Group::select('id','name_group','description','state')
                         ->where('campaign_id',$request->campaign_id)->get();
         return $groups;
+    }
+
+    public function deleteGroup(Request $request, $id){
+        try
+        {
+            $group = Group::find($id);
+            $group->state = $request->state;
+            $group->save();
+
+            return $this->successResponse('Grupo desactivado correctamente');
+    
+        }catch(\Throwable $e){
+            return $this->errorResponse('Error al desactivar el Grupo',500);
+        }
     }
 }
