@@ -22,6 +22,6 @@ class CampaignController extends Controller
     {
         $user = $this->ciuService->fetchUser(auth()->user()->id)->data;
         $campaign = $this->nominaService->fetchCampaign($user->rrhh->campaign_id);
-        return $this->successResponse($campaign);
+        return $this->successResponse([$campaign]);
     }
 }
