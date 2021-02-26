@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Contracts\Auth\Factory as Auth;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class Authenticate
 {
@@ -35,7 +36,10 @@ class Authenticate
      */
     public function handle($request, Closure $next, $guard = null)
     {
-        if ($this->auth->guard($guard)->guest()) {
+        try {
+            $token = JWTAuth::getToken();
+            JWTAuth::getPayload($token);
+        } catch (\Throwable $th) {
             return response('Unauthorized.', 401);
         }
 
