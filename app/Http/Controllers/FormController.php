@@ -33,7 +33,7 @@ class FormController extends Controller
     {
         $formsSections = Form::where('id',$id)
                                ->with('section')
-                               ->select('id','name_form','filters')
+                               ->select('*')
                                ->first();
         $formsSections->filters = json_decode($formsSections->filters);
         for($i=0; $i<count($formsSections->section); $i++)

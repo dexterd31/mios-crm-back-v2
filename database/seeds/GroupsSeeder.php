@@ -14,12 +14,13 @@ class GroupsSeeder extends Seeder
     {
         $groups = array(
             [
-                
+                'campaign_id' => 1,
                 'name_group' => 'grupo de claro ventas',
                 'description' => 'prueba'
             ],
+
             [
-                
+                'campaign_id' => 1,
                 'name_group' => 'grupo de claro compras',
                 'description' => 'prueba 2'
             ]
@@ -28,6 +29,7 @@ class GroupsSeeder extends Seeder
         foreach ($groups as $group)
         {
             $Group = new Group();
+            $Group->campaign_id = $group['campaign_id'];
             $Group->name_group = $group['name_group'];
             $Group->description = $group['description'];
             $Group->save();

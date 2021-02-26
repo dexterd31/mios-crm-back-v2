@@ -133,18 +133,60 @@ class FormAnswerController extends Controller
         }
 }
 
-      /**
-     * Nicol Ramirez
-     * 17-02-2020
+ /**
+     * Olme Marin
+     * 26-02-2020
      * Método para filtrar las varias opciones en el formulario
      */
     public function filterForm(Request $request)
-    {
-     /*    $form_answer = FormAnswer::
+    {   
+        $json_body = json_decode($request->getContent());
+  
+        $formId     = $json_body->form_id;
 
-        return $filter; */
+        $item1Key   = $json_body->item1_key;
+        $item1value = $json_body->item1_value;
+
+        $item2Key   = $json_body->item2_key;
+        $item2value = $json_body->item2_value;
+
+        $item3Key   = $json_body->item3_key;
+        $item3value = $json_body->item3_value;
+
+        $registers = [];
+        $form_answers = FormAnswer::where('form_id', $formId )->get();
+
+        foreach ($form_answers as $form){
+            $array =  json_decode( json_encode( $form->structure_answer, true ));
+            $arr =     json_decode($array,TRUE);   
+            $data = [];
+            foreach($arr as $a){
+                $find = false;
+                $find2 = false;
+                $find3 = false;
+                if (isset($item1value) && strlen($item1value) > 0) {
+                    $find = array_search($item1value, $a);
+                }                    
+                if (isset($item2value) && strlen($item2value) > 0) {
+                    $find2 = array_search($item2value, $a);
+                } 
+                if (isset($item3value) && strlen($item3value) > 0) {
+                    $find3 = array_search($item3value, $a);
+                } 
+
+                if ($find || $find2 || $find3) {
+                    array_push($registers, $arr);              
+                }
+            }
+        }
+        return [
+
+            'suceess' => true,
+            
+            'result' => $registers
+            
+            ];
     }
-
      /**
      * Nicoll Ramirez
      * 22-02-2021
