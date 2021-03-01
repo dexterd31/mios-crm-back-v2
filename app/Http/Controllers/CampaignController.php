@@ -20,8 +20,16 @@ class CampaignController extends Controller
 
     public function index(Request $request)
     {
-        $user = $this->ciuService->fetchUser(auth()->user()->id)->data;
-        $campaign = $this->nominaService->fetchCampaign($user->rrhh->campaign_id);
-        return $this->successResponse([$campaign]);
+        // si es admin mostrar todas las campañas
+        if(Gate::allows('admin')){
+            $campaigns = $this->nominaService->fetchCampaigns();
+            return $this->successResponse($campaigns);
+        } else{
+            // si no, solo mostrar la asociada al usuario
+            $user = $this->ciuService->fetchUser(auth()->user()->id)->data;
+            $campaign = $this->nominaService->fetchCampaign($user->rrhh->campaign_id);
+            return $this->successResponse([$campaign]);
+        }
+        
     }
 }
