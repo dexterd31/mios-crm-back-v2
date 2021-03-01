@@ -29,12 +29,12 @@ class CampaignController extends Controller
             } else{
                 // si no, solo mostrar la asociada al usuario
                 $user = $this->ciuService->fetchUser(auth()->user()->id)->data;
-                $campaign = $this->nominaService->fetchCampaign($user->rrhh->campaign_id);
-                
-                if($campaign){
+                try {
+                    $campaign = $this->nominaService->fetchCampaign($user->rrhh->campaign_id);
                     return $this->successResponse([$campaign]);
-                } else {
-                    return $this->successResponse([]);
+                } catch (\Throwable $th) {
+                    // si hay un error, es que la campaña esta desactivada
+                    return $this->successResponse([]);;
                 }
                 
             }
