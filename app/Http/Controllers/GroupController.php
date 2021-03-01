@@ -37,7 +37,8 @@ class GroupController extends Controller
         { */
             $groups = new Group([
                 'name_group' => $request->input('name_group'),
-                'description' => $request->input('description')
+                'description' => $request->input('description'),
+                'state' =>$request->input('state')
             ]);
             $groups->save();
 

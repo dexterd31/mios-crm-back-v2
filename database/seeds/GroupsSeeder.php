@@ -16,13 +16,15 @@ class GroupsSeeder extends Seeder
             [
                 'campaign_id' => 1,
                 'name_group' => 'grupo de claro ventas',
-                'description' => 'prueba'
+                'description' => 'prueba',
+                'state' => 1
             ],
 
             [
                 'campaign_id' => 1,
                 'name_group' => 'grupo de claro compras',
-                'description' => 'prueba 2'
+                'description' => 'prueba 2',
+                'state' => 1
             ]
         );
 
@@ -32,6 +34,8 @@ class GroupsSeeder extends Seeder
             $Group->campaign_id = $group['campaign_id'];
             $Group->name_group = $group['name_group'];
             $Group->description = $group['description'];
+            $Group->state = $group['state'];
+
             $Group->save();
         }
     }
