@@ -19,7 +19,7 @@ class FormController extends Controller
     {
         $forms = DB::table('forms')
         ->join('form_types','forms.form_type_id','=','form_types.id')   
-        ->select('name_form','forms.id','name_type')
+        ->select('name_form','forms.id','name_type','state')
         ->get();
         return $forms;
     }
@@ -33,7 +33,7 @@ class FormController extends Controller
     {
         $formsSections = Form::where('id',$id)
                                ->with('section')
-                               ->select('id','name_form','filters')
+                               ->select('*')
                                ->first();
         $formsSections->filters = json_decode($formsSections->filters);
         for($i=0; $i<count($formsSections->section); $i++)

@@ -2,9 +2,10 @@
 
 namespace App\Providers;
 
-use App\User;
+use Illuminate\Auth\GenericUser;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -31,8 +32,22 @@ class AuthServiceProvider extends ServiceProvider
         // the User instance via an API token or any other method necessary.
 
         $this->app['auth']->viaRequest('api', function ($request) {
-            if ($request->input('api_token')) {
-                return User::where('api_token', $request->input('api_token'))->first();
+            $token = JWTAuth::getToken();
+            $user = new GenericUser(JWTAuth::getPayload($token)->toArray());
+            $user->id = $user->sub;
+            return $user;
+        });
+
+        Gate::define('admin', function ($user) {
+            return in_array('crm::admin', $user->roles);
+        });
+
+        // Validar permiso para las acciones en form_answer
+        Gate::define('form_answer', function($user){
+            if (in_array('crm::admin', $user->roles) || in_array('bpms::solicitante', $user->roles)) {
+                return true;
+            } else {
+                return false;
             }
         });
     }

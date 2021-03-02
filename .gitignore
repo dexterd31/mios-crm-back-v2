@@ -1,6 +1,9 @@
 /vendor
 /.idea
+/auth_keys
 Homestead.json
 Homestead.yaml
 .env
 .phpunit.result.cache
+
+*.lock

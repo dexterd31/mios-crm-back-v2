@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 use App\Models\Group;
 use App\Models\GroupUser;
-use GroupsSeeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
@@ -33,34 +32,31 @@ class GroupController extends Controller
      */
     public function saveGroup(Request $request)
     {
-        /* try
-        { */
+         try
+        { 
             $groups = new Group([
+                'campaign_id' => 1,
                 'name_group' => $request->input('name_group'),
-                'description' => $request->input('description')
+                'description' => $request->input('description'),
+                'state' =>$request->input('state')
             ]);
             $groups->save();
 
-            $usersId = $request->input('users');
-            $userIdsArr = explode(',',$usersId);
-                dd($userIdsArr);
-            foreach( $userIdsArr as $userId )
+           foreach( $request->users as $userId )
             {
-
                 $groupsusers = new GroupUser([
                         'group_id'=> $groups->id,
-                        'user_id' => $userId
+                        'user_id' => $userId['userId']
                     ]);
                 $groupsusers->save();
-            }
+            } 
+
+            return $this->successResponse('Guardado Correctamente');
     
-            return 'guardado';
-           // return $this->successResponse('Guardado Correctamente');
-    
-       /*  }catch(\Throwable $e)
+        }catch(\Throwable $e)
         {
             return $this->errorResponse('Error al guardar el formulario',500);
-        } */
+        } 
     }    
     
     /**
@@ -72,5 +68,65 @@ class GroupController extends Controller
         $groups = DB::table('groups')
                     ->select('id','name_group')->get();
         return $groups;
+    }
+
+    /**
+     * Nicol Ramirez 
+     * 26-02-2021
+     * Método para consultar el listado de los grupos en la BD
+     */
+    public function groupslist(Request $request){
+        $groups = Group::select('id','name_group','description','state')
+                        ->where('campaign_id',$request->campaign_id)->get();
+        return $groups;
+    }
+    /**
+     * Nicol Ramirez
+     * 26-02-2021
+     * Método para desactivar los grupos
+     */
+    public function deleteGroup(Request $request, $id)
+    {
+        try
+        {
+            $group = Group::find($id);
+            $group->state = $request->state;
+            $group->save();
+
+            return $this->successResponse('Grupo desactivado correctamente');
+    
+        }catch(\Throwable $e){
+            return $this->errorResponse('Error al desactivar el Grupo',500);
+        }
+    }
+    
+    /**
+     * Nicoll Ramirez
+     * 01-03-2021
+     * Método para editar los grupos
+     */
+
+    public function updateGroup(Request $request, $id){
+         try
+        { 
+            $groups = Group::find($id);
+            $groups->name_group = $request->name_group;
+            $groups->description = $request->description;
+            $groups->state =$request->state;
+            $groups->save();
+           
+           foreach( $request->users as $userId )
+            {
+                $groupsusers = GroupUser::where('group_id', $id)->first();
+                $groupsusers->user_id = $userId['userId'];
+                $groupsusers->save();
+            } 
+           
+          return $this->successResponse('Grupo editado Correctamente');
+    
+        }catch(\Throwable $e)
+        {
+            return $this->errorResponse('Error al editar el grupo',500);
+        }
     }
 }
