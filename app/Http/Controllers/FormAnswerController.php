@@ -17,46 +17,50 @@ class FormAnswerController extends Controller
      */
     public function saveinfo(Request $request)
     {
-        try
-        {
+        try {
             $json_body = json_decode($request->getContent());
             $client = null; 
             if($json_body->client_id == null){
             
+                $contador=0;
                 foreach($json_body->sections as $section)
                 {
-                    if(!empty($section->document_type_id)){
-                        $client = new Client([
-                            'document_type_id' => $section->document_type_id,
-                            'first_name' => $section->firstName,
-                            'middle_name' => $section->middleName,
-                            'first_lastname' => $section->lastName,
-                            'second_lastname' => $section->secondLastName,
-                            'document' => $section->document
-                        ]);
-                        $client->save();
-                    }else{
+                
+                  if($contador == 0){
+                    $client = new Client([
+                        'document_type_id' => !empty($section->document_type_id) ? $section->document_type_id : 1,
+                        'first_name' => $section->firstName,
+                        'middle_name' => $section->middleName,
+                        'first_lastname' => $section->lastName,
+                        'second_lastname' => $section->secondLastName,
+                        'document' => $section->document
+                    ]);
+                    $client->save();
+                  }
                     
-                        foreach($section as $key => $value){
-                            $sect = new KeyValue([
-                                'form_id' => $json_body->form_id,
-                                'client_id' => $json_body->$client->id,
-                                'key' => $key,
-                                'value' => $value,
-                                'description' => 0
-                            ]);
-                            $sect->save();
-                        }
+                    foreach($section as $key => $value){
+                        $sect = new KeyValue([
+                            'form_id' => $json_body->form_id,
+                            'client_id' => $client->id,
+                            'key' => $key,
+                            'value' => $value,
+                            'description' => null
+                        ]);
+                        
+                        $sect->save();
                     }
+                    $contador ++ ;
                 }
+
                 $form_answer = new FormAnswer([
                     'user_id' => 1,
                     'channel_id' => 1,
                     'client_id' => $client->id,
                     'form_id' => $json_body->form_id,
                     'structure_answer' => json_encode($json_body->sections)
-                ]);
-                $form_answer->save();
+                    ]);
+                    
+                    $form_answer->save();
                 $message = 'Informacion guardada correctamente';
                 
                 
@@ -128,9 +132,9 @@ class FormAnswerController extends Controller
             }
             return $this->successResponse($message);
     
-        }catch(\Throwable $e){
+         }catch(\Throwable $e){
             return $this->errorResponse('Error al guardar el formulario',500);
-        }
+     }
 }
 
  /**
