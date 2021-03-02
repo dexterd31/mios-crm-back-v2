@@ -29,8 +29,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
     $router->post('/formanswer/filterform', 'FormAnswerController@filterForm');
     $router->put('/formanswer/editform/{id}', 'FormAnswerController@editInfo');
-     //consultar tipo de documento de los clientes
-     $router->get('/searchdocumenttype', 'FormAnswerController@searchDocumentType');
+    $router->get('/formanswer/historic/{form_id}/{client_id}', 'FormAnswerController@formAnswerHistoric');
+    //consultar tipo de documento de los clientes
+    $router->get('/searchdocumenttype', 'FormAnswerController@searchDocumentType');
     
     //Rutas de grupos
     $router->get('/searchgroup', 'GroupController@searchGroup');

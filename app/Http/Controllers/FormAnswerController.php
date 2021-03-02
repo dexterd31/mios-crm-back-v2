@@ -155,7 +155,7 @@ class FormAnswerController extends Controller
      */
     public function filterForm(Request $request, MiosHelper $miosHelper)
     {
-        //try {
+        try {
             if (Gate::allows('form_answer')) {
                 $json_body = json_decode($request->getContent());
 
@@ -220,9 +220,9 @@ class FormAnswerController extends Controller
             }
             return response()->json($data, $data['code']);
             
-        // } catch (\Throwable $e) {
-        //     return $this->errorResponse('Error al buscar la gestion', 500);
-        // }
+        } catch (\Throwable $e) {
+            return $this->errorResponse('Error al buscar la gestion', 500);
+        }
     }
     /**
      * Nicoll Ramirez
@@ -236,4 +236,36 @@ class FormAnswerController extends Controller
 
         return $documentType;
     }
+
+    /**
+     * Olme Marin
+     * 02-03-2021
+     * Método para consultar los registro de un cliente en from answer
+    */
+    public function formAnswerHistoric ($form_id, $client_id){
+        try {
+            if (Gate::allows('form_answer')) {
+            
+                $where = [
+                    'form_id' => $form_id,
+                    'client_id' => $client_id
+                ];
+                $form_answers = FormAnswer::where($where)->paginate(10);
+                $data = [
+                    'suceess' => true,
+                    'code' => 200,
+                    'result' => $form_answers,
+                ];
+            } else {
+                $data = [
+                    'suceess' => false,
+                    'code' => 403,
+                    'message' => 'Tú rol no tiene permisos para ejecutar esta acción'
+                ];
+            }
+            return response()->json($data, $data['code']);
+        } catch (\Throwable $e) {
+            return $this->errorResponse('Error al buscar la gestion', 500);
+        }
+    } 
 }
