@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use App\Services\CiuService;
 use App\Services\NominaService;
+use Helpers\MiosHelper;
 
 class FormAnswerController extends Controller
 {
@@ -152,9 +153,9 @@ class FormAnswerController extends Controller
      * 26-02-2020
      * Método para filtrar las varias opciones en el formulario
      */
-    public function filterForm(Request $request)
+    public function filterForm(Request $request, MiosHelper $miosHelper)
     {
-        try {
+        //try {
             if (Gate::allows('form_answer')) {
                 $json_body = json_decode($request->getContent());
 
@@ -200,10 +201,11 @@ class FormAnswerController extends Controller
                         }
                     }
                 }
+                $pagination = $miosHelper->paginate($infoForm, $perPage = 15, $page = null);
                 $data = [
                     'suceess' => true,
                     'code' => 200,
-                    'result' => $infoForm,
+                    'result' => $pagination,
                 ];
             } else {
                 $data = [
@@ -214,9 +216,9 @@ class FormAnswerController extends Controller
             }
             return response()->json($data, $data['code']);
             
-        } catch (\Throwable $e) {
-            return $this->errorResponse('Error al buscar la gestion', 500);
-        }
+        // } catch (\Throwable $e) {
+        //     return $this->errorResponse('Error al buscar la gestion', 500);
+        // }
     }
     /**
      * Nicoll Ramirez
