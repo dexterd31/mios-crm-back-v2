@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use App\Models\Group;
 use App\Models\GroupUser;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
@@ -128,5 +129,10 @@ class GroupController extends Controller
         {
             return $this->errorResponse('Error al editar el grupo',500);
         }
+    }
+
+    public function searchUser(){
+        $users = User::select('username')->get();
+        return $users;
     }
 }
