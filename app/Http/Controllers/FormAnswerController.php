@@ -171,6 +171,8 @@ class FormAnswerController extends Controller
                 foreach ($form_answers as $form) {
                     //Variable para obtener los datos del usuario que realizo la gestion
                     $userData           = $this->ciuService->fetchUser($form->user_id)->data;
+                    $channelId          = $form->channel_id;
+                    $clientiId          = $form->client_id;
                     $created_at         = $form->created_at;
                     $updated_at         = $form->updated_at;
                     $array              =  json_decode(json_encode($form->structure_answer, true));
@@ -193,6 +195,8 @@ class FormAnswerController extends Controller
                         if ($find || $find2 || $find3) {
                             $info = [
                                 'user' => $userData ,
+                                'channel_id' => $channelId,
+                                'client_id' => $clientiId, 
                                 'created_at' => $created_at,
                                 'updated_at' => $updated_at,
                                 'register' => $structure_answer
