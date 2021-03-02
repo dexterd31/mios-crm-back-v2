@@ -8,12 +8,19 @@ use App\Models\Client;
 use App\Models\KeyValue;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use App\Services\CiuService;
+use App\Services\NominaService;
 
 class FormAnswerController extends Controller
 {
-    public function __construct()
+    private $ciuService;
+    private $nominaService;
+
+    public function __construct(CiuService $ciuService, NominaService $nominaService)
     {
         $this->middleware('auth');
+        $this->ciuService = $ciuService;
+        $this->nominaService = $nominaService;
     }
     /**
      * Nicol Ramirez
@@ -157,12 +164,17 @@ class FormAnswerController extends Controller
                 $item2value = $json_body->item2_value;
                 $item3value = $json_body->item3_value;
 
-                $registers = [];
+                $infoForm  = [];
                 $form_answers = FormAnswer::where('form_id', $formId)->get();
 
                 foreach ($form_answers as $form) {
-                    $array =  json_decode(json_encode($form->structure_answer, true));
-                    $structure_answer =     json_decode($array, TRUE);
+                    //Variable para obtener los datos del usuario que realizo la gestion
+                    $userData           = $this->ciuService->fetchUser($form->user_id)->data;
+                    $created_at         = $form->created_at;
+                    $updated_at         = $form->updated_at;
+                    $array              =  json_decode(json_encode($form->structure_answer, true));
+                    $structure_answer   = json_decode($array, TRUE);
+                    
                     foreach ($structure_answer as $answer) {
                         $find = false;
                         $find2 = false;
@@ -178,14 +190,20 @@ class FormAnswerController extends Controller
                         }
 
                         if ($find || $find2 || $find3) {
-                            array_push($registers, $structure_answer);
+                            $info = [
+                                'user' => $userData ,
+                                'created_at' => $created_at,
+                                'updated_at' => $updated_at,
+                                'register' => $structure_answer
+                            ];
+                            array_push($infoForm, $info);
                         }
                     }
                 }
                 $data = [
                     'suceess' => true,
                     'code' => 200,
-                    'result' => $registers
+                    'result' => $infoForm,
                 ];
             } else {
                 $data = [
