@@ -14,15 +14,22 @@ class NominaService
         $this->baseUri = config('services.nomina.base_uri');
     }
 
-    public function fetchCampaign($id){
-        return (object)['name' => 'Claro Ventas', 'description' => 'Claro Ventas', 'id' => 1];
-        //return $this->request('GET', '/api/users/'.$id);
+    public function fetchCampaign($id)
+    {
+        return $this->request('GET', '/api/campaigns/'.$id)->data;
     }
 
-    public function fetchCampaigns(){
-        return array((object)['name' => 'Claro Ventas', 'description' => 'Claro Ventas', 'id' => 1]);
-        //return $this->request('GET', '/api/users/'.$id);
+    public function fetchCampaigns($paginate){
+        return $this->request('GET', '/api/campaigns?paginate='. $paginate)->data;
     }
 
+    public function changeCampaignState($id, $state)
+    {
+        $requestBody = [
+            'state'=>$state,
+
+        ];
+        return $this->request('POST', '/api/campaigns/' .$id.'/updateState', $requestBody);
+    }
     
 }

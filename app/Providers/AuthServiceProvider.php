@@ -37,5 +37,9 @@ class AuthServiceProvider extends ServiceProvider
             $user->id = $user->sub;
             return $user;
         });
+
+        Gate::define('admin', function ($user) {
+            return in_array('crm::admin', $user->roles);
+        });
     }
 }
