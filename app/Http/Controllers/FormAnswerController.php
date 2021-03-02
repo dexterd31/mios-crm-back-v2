@@ -17,7 +17,7 @@ class FormAnswerController extends Controller
      */
     public function saveinfo(Request $request)
     {
-        try {
+         try { 
             $json_body = json_decode($request->getContent());
             $client = null; 
             if($json_body->client_id == null){
@@ -130,11 +130,12 @@ class FormAnswerController extends Controller
                 }
             
             }
-            return $this->successResponse($message);
+          
+             return $this->successResponse($message);
     
          }catch(\Throwable $e){
             return $this->errorResponse('Error al guardar el formulario',500);
-     }
+     } 
 }
 
  /**

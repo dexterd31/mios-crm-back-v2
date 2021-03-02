@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 use App\Models\Group;
 use App\Models\GroupUser;
-use GroupsSeeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
@@ -100,6 +99,7 @@ class GroupController extends Controller
             return $this->errorResponse('Error al desactivar el Grupo',500);
         }
     }
+    
     /**
      * Nicoll Ramirez
      * 01-03-2021
