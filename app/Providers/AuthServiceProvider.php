@@ -41,5 +41,14 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('admin', function ($user) {
             return in_array('crm::admin', $user->roles);
         });
+
+        // Validar permiso para las acciones en form_answer
+        Gate::define('form_answer', function($user){
+            if (in_array('crm::admin', $user->roles) || in_array('bpms::solicitante', $user->roles)) {
+                return true;
+            } else {
+                return false;
+            }
+        });
     }
 }
