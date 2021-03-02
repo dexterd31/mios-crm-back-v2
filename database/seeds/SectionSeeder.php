@@ -20,7 +20,7 @@ class SectionSeeder extends Seeder
                 [
                     'type'=> 'text',
                     'controlType'=> 'textbox',
-                    'key'=> 'fistName',
+                    'key'=> 'firstName',
                     'label'=> 'primer nombre',
                     'value'=> '',
                     'disabled'=> false,
@@ -109,7 +109,7 @@ class SectionSeeder extends Seeder
                     [
                         'type'=> 'text',
                         'controlType'=> 'textbox',
-                        'key'=> 'fistName',
+                        'key'=> 'firstName',
                         'label'=> 'primer nombre',
                         'value'=> '',
                         'disabled'=> false,
