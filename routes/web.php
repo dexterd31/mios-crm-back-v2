@@ -38,6 +38,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/groupslist','GroupController@groupslist');
     $router->put('/deletegroup/{id}','GroupController@deleteGroup');
     $router->put('/updategroup/{id}','GroupController@updateGroup');
+    //consultar usuarios existentes para asignar al grupo
+    $router->get('/searchUser','GroupController@searchUser');
 
     // rutas de campañas
     $router->get('/campaigns', 'CampaignController@index');
