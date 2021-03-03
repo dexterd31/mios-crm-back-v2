@@ -21,8 +21,26 @@ class UserSeeder extends Seeder
 
             ],
             [
-                'id_rhh' => '1',
+                'id_rhh' => '2',
                 'username' => 'juanr',
+                'status' => 'online',
+                'state' => '1'
+            ],
+            [
+                'id_rhh' => '3',
+                'username' => 'camilol',
+                'status' => 'online',
+                'state' => '1'
+            ],
+            [
+                'id_rhh' => '4',
+                'username' => 'karenm',
+                'status' => 'online',
+                'state' => '1'
+            ],
+            [
+                'id_rhh' => '5',
+                'username' => 'karolg',
                 'status' => 'online',
                 'state' => '1'
             ]

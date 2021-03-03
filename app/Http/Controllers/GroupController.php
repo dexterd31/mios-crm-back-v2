@@ -6,9 +6,19 @@ use App\Models\GroupUser;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use App\Services\RrhhService;
 
 class GroupController extends Controller
 {
+    private $rrhhService;
+      /**
+     * middleware de autenticación
+     */
+    public function __construct(RrhhService $rrhhService)
+    {
+        $this->middleware('auth');
+        $this->rrhhService = $rrhhService;
+    }
     /**
      * Nicol Ramirez
      * 16-02-2020
@@ -129,6 +139,12 @@ class GroupController extends Controller
             return $this->errorResponse('Error al editar el grupo',500);
         }
     }
+
+    /**
+     * Nicoll Ramirez 
+     * 03-03-2021
+     * Método para consultar los usarios existentes por campañas
+     */
 
     public function searchUser(){
         $users = User::select('id','username')->get();
