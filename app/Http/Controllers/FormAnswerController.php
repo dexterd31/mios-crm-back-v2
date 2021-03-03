@@ -236,8 +236,8 @@ class FormAnswerController extends Controller
     public function formAnswerHistoric($form_id, $client_id, MiosHelper $miosHelper)
     {
         try {
+            
             $where = [ 'form_id' => $form_id, 'client_id' => $client_id ];
-
             $form_answers = FormAnswer::where($where)->paginate(10);
             $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
 
