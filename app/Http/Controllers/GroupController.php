@@ -37,7 +37,7 @@ class GroupController extends Controller
          try
         { 
             $groups = new Group([
-                'campaign_id' => 1,
+                'campaign_id' => $request->input('campaign_id'),
                 'name_group' => $request->input('name_group'),
                 'description' => $request->input('description'),
                 'state' =>$request->input('state')
