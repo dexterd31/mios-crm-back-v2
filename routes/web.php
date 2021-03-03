@@ -33,7 +33,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/searchdocumenttype', 'FormAnswerController@searchDocumentType');
     
     //Rutas de grupos
-    $router->get('/searchgroup', 'GroupController@searchGroup');
+    $router->get('/searchgroup/{id}', 'GroupController@searchGroup');
     $router->post('/savegroup','GroupController@saveGroup');
     $router->get('/searchselectgroup','GroupController@searchSelectGroup');
     $router->get('/groupslist','GroupController@groupslist');

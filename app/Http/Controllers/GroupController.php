@@ -14,14 +14,13 @@ class GroupController extends Controller
      * 16-02-2020
      * Método para consultar los grupos creados
      */
-    public function searchGroup()
+    public function searchGroup($id)
     {
         $groups = DB::table('group_users')
         ->join('groups','group_users.group_id','=','groups.id')
-        ->join('campaings','campaings.group_id','=','groups.id')
         ->join('users','group_users.user_id','=','users.id')
-        ->where('campaings.id',1)
-        ->select('name_campaign','name_group','groups.description','username')
+        ->where('groups.id',$id)
+        ->select('name_group','groups.description','group_users.user_id','username')
         ->get();
         return $groups;
     }

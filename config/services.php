@@ -7,5 +7,8 @@ return [
     ],
     'nomina' => [
         'base_uri' => env('NOMINA_SERVICES_BASE_URI'),
+    ],
+    'rrhh' => [
+        'base_uri' => env('RRHH_SERVICES_BASE_URI'),
     ]
 ];
