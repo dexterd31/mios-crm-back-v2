@@ -132,7 +132,7 @@ class GroupController extends Controller
     }
 
     public function searchUser(){
-        $users = User::select('username')->get();
+        $users = User::select('id','username')->get();
         return $users;
     }
 }
