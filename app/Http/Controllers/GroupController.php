@@ -24,8 +24,10 @@ class GroupController extends Controller
                     ->where('groups.id',$id)
                     ->select('name_group','groups.description','group_users.user_id','username')->get();
         
-        $users = User::leftjoin('group_users', 'users.id','=','group_users.user_id')
-                        ->where('group_users.user_id', null)->get(); 
+        $users = User::leftjoin('group_users','users.id','=','group_users.user_id')
+                    ->leftjoin('groups','group_users.group_id','=','groups.id')
+                    ->where('group_users.group_id','<>',$id)
+                    ->orWhere('group_users.user_id',null)->get(); 
                     
         return compact('groupusers', 'users');
     }
