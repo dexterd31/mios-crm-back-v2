@@ -18,24 +18,20 @@ class GroupController extends Controller
      */
     public function searchGroup($id)
     {
-        $groupsuser = GroupUser::where('group_id',$id)->get();
-        
-                   
-                  // dd($groupsuser);
+       // $groupsuser = GroupUser::where('group_id',$id)->get();
 
-                    if($groupsuser == true){
+
+                    
                         $groups = DB::table('group_users')
                         ->join('groups','group_users.group_id','=','groups.id')
                         ->join('users','group_users.user_id','=','users.id')
                         ->where('groups.id',$id)
-                        ->select('name_group','groups.description','group_users.user_id','username','groups.id')
+                        ->select('name_group','groups.description','group_users.user_id','username')
                         ->get();
-                        return $groups;
-                    }else{
                         $users = User::join('group_users', 'group_users.user_id','=','users.id')
-                                        ->where('group_users.group_id',!$id)->get();
-                                        return $users;
-                    }
+                                        ->where('group_users.group_id','!=',$id)->get();
+                                        return compact('groups', 'users');
+                    
     }
 
     /**
