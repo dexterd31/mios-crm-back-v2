@@ -18,13 +18,24 @@ class GroupController extends Controller
      */
     public function searchGroup($id)
     {
-        $groups = DB::table('group_users')
-        ->join('groups','group_users.group_id','=','groups.id')
-        ->join('users','group_users.user_id','=','users.id')
-        ->where('groups.id',$id)
-        ->select('name_group','groups.description','group_users.user_id','username')
-        ->get();
-        return $groups;
+        $groupsuser = GroupUser::where('group_id',$id)->get();
+        
+                   
+                  // dd($groupsuser);
+
+                    if($groupsuser == true){
+                        $groups = DB::table('group_users')
+                        ->join('groups','group_users.group_id','=','groups.id')
+                        ->join('users','group_users.user_id','=','users.id')
+                        ->where('groups.id',$id)
+                        ->select('name_group','groups.description','group_users.user_id','username','groups.id')
+                        ->get();
+                        return $groups;
+                    }else{
+                        $users = User::join('group_users', 'group_users.user_id','=','users.id')
+                                        ->where('group_users.group_id',!$id)->get();
+                                        return $users;
+                    }
     }
 
     /**
@@ -109,8 +120,8 @@ class GroupController extends Controller
      */
 
     public function updateGroup(Request $request, $id){
-         try
-        { 
+        /*  try
+        {  */
             $groups = Group::find($id);
             $groups->name_group = $request->name_group;
             $groups->description = $request->description;
@@ -119,17 +130,19 @@ class GroupController extends Controller
            
            foreach( $request->users as $userId )
             {
-                $groupsusers = GroupUser::where('group_id', $id)->first();
+                $groupsusers = GroupUser::where('user_id', $userId)->get();
                 $groupsusers->user_id = $userId['userId'];
-                $groupsusers->save();
+                $groupsusers->update();
             } 
+
+            return 'ok';
            
-          return $this->successResponse('Grupo editado Correctamente');
+/*           return $this->successResponse('Grupo editado Correctamente');
     
         }catch(\Throwable $e)
         {
             return $this->errorResponse('Error al editar el grupo',500);
-        }
+        } */
     }
 
     /**
@@ -139,7 +152,7 @@ class GroupController extends Controller
      */
 
     public function searchUser(){
-     
+
         $users = User::select('id','username')->get();
         return $users;
     }
