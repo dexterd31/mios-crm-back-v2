@@ -18,18 +18,16 @@ class GroupController extends Controller
      */
     public function searchGroup($id)
     {
-        $groups = DB::table('group_users')
+        $groupusers = DB::table('group_users')
                     ->join('groups','group_users.group_id','=','groups.id')
                     ->join('users','group_users.user_id','=','users.id')
                     ->where('groups.id',$id)
                     ->select('name_group','groups.description','group_users.user_id','username')->get();
         
-        $users = User::all();/* join('group_users', 'group_users.user_id','=','users.id')
-                        ->join('groups','group_users.group_id','=','groups.id')
-                        ->where('groups.id','!=',$id)->get(); */
-                      //  ->where('group_users.group_id','!=',$id)->get();
-        
-        return compact('groups', 'users');
+        $users = User::leftjoin('group_users', 'users.id','=','group_users.user_id')
+                        ->where('group_users.user_id', null)->get(); 
+                    
+        return compact('groupusers', 'users');
     }
 
     /**
@@ -126,7 +124,6 @@ class GroupController extends Controller
             foreach($groupsusers as $groupuser)
             {
                 $groupuser->delete();
-
             } 
            foreach( $request->users as $userId )
             { 
@@ -137,8 +134,6 @@ class GroupController extends Controller
                 $groupsus->save();
             } 
 
-         
-           
           return $this->successResponse('Grupo editado Correctamente');
     
         }catch(\Throwable $e)
@@ -153,8 +148,8 @@ class GroupController extends Controller
      * Método para consultar los usarios existentes por campañas
      */
 
-    public function searchUser(){
-
+    public function searchUser()
+    {
         $users = User::select('id','username')->get();
         return $users;
     }
