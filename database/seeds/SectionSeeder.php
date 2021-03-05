@@ -26,7 +26,14 @@ class SectionSeeder extends Seeder
                     'disabled'=> false,
                     'required'=> true,
                     'options'=>[],
-                    'cols'=>'1'
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        [1],
+                        [2]),
+                    'seeRoles' => array(
+                        [3],
+                        [1])
                 ],
                 [
                     'type'=> 'text',
@@ -37,7 +44,14 @@ class SectionSeeder extends Seeder
                     'disabled'=> false,
                     'required'=> true,
                     'options'=>[],
-                    'cols'=>'1'
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        [1],
+                        [2]),
+                    'seeRoles' => array(
+                        [3],
+                        [1])
                 ],
                 [
                     'type'=> 'text',
@@ -48,7 +62,14 @@ class SectionSeeder extends Seeder
                     'disabled'=> false,
                     'required'=> true,
                     'options'=>[],
-                    'cols'=>'1'
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        [1],
+                        [2]),
+                    'seeRoles' => array(
+                        [3],
+                        [1])
                 ],
                 [
                     'type'=> 'text',
@@ -59,7 +80,14 @@ class SectionSeeder extends Seeder
                     'disabled'=> false,
                     'required'=> true,
                     'options'=>[],
-                    'cols'=>'1'
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        [1],
+                        [2]),
+                    'seeRoles' => array(
+                        [3],
+                        [1])
                 ],
                 [
                     'type'=> 'text',
@@ -70,7 +98,14 @@ class SectionSeeder extends Seeder
                     'disabled'=> false,
                     'required'=> true,
                     'options'=>[],
-                    'cols'=>'1'
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        [1],
+                        [2]),
+                    'seeRoles' => array(
+                        [3],
+                        [1])
                 ])
             ],
             [
@@ -87,7 +122,14 @@ class SectionSeeder extends Seeder
                     'disabled'=> false,
                     'required'=> true,
                     'options'=>[],
-                    'cols'=>'1'
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        [1],
+                        [2]),
+                    'seeRoles' => array(
+                        [3],
+                        [1])
                 ],
                 [
                     'type'=> 'text',
@@ -98,7 +140,14 @@ class SectionSeeder extends Seeder
                     'disabled'=> false,
                     'required'=> true,
                     'options'=>[],
-                    'cols'=>'1'
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        [1],
+                        [2]),
+                    'seeRoles' => array(
+                        [3],
+                        [1])
                 ])
              ],
              [
@@ -115,7 +164,14 @@ class SectionSeeder extends Seeder
                         'disabled'=> false,
                         'required'=> true,
                         'options'=>[],
-                        'cols'=>'1'
+                        'cols'=>1,
+                        'inReport'=> true,
+                        'editRoles' => array(
+                            [1],
+                            [2]),
+                        'seeRoles' => array(
+                            [3],
+                            [1])
                     ],
                     [
                         'type'=> 'text',
@@ -126,7 +182,14 @@ class SectionSeeder extends Seeder
                         'disabled'=> false,
                         'required'=> true,
                         'options'=>[],
-                        'cols'=>'1'
+                        'cols'=>1,
+                        'inReport'=> true,
+                        'editRoles' => array(
+                            [1],
+                            [2]),
+                        'seeRoles' => array(
+                            [3],
+                            [1])
                     ],
                     [
                         'type'=> 'text',
@@ -137,7 +200,14 @@ class SectionSeeder extends Seeder
                         'disabled'=> false,
                         'required'=> true,
                         'options'=>[],
-                        'cols'=>'1'
+                        'cols'=>1,
+                        'inReport'=> true,
+                        'editRoles' => array(
+                            [1],
+                            [2]),
+                        'seeRoles' => array(
+                            [3],
+                            [1])
                     ],
                     [
                         'type'=> 'text',
@@ -148,7 +218,14 @@ class SectionSeeder extends Seeder
                         'disabled'=> false,
                         'required'=> true,
                         'options'=>[],
-                        'cols'=>'1'
+                        'cols'=>1,
+                        'inReport'=> true,
+                        'editRoles' => array(
+                            [1],
+                            [2]),
+                        'seeRoles' => array(
+                            [3],
+                            [1])
                     ],
                     [
                         'type'=> 'text',
@@ -159,7 +236,14 @@ class SectionSeeder extends Seeder
                         'disabled'=> false,
                         'required'=> true,
                         'options'=>[],
-                        'cols'=>'1'
+                        'cols'=>1,
+                        'inReport'=> true,
+                        'editRoles' => array(
+                            [1],
+                            [2]),
+                        'seeRoles' => array(
+                            [3],
+                            [1])
                     ])
             ],
             [
@@ -176,7 +260,12 @@ class SectionSeeder extends Seeder
                     'disabled'=> false,
                     'required'=> true,
                     'options'=>[],
-                    'cols'=>'1'
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        [1]),
+                    'seeRoles' => array(
+                        [3])
                 ],
                 [
                     'type'=> 'text',
@@ -187,7 +276,13 @@ class SectionSeeder extends Seeder
                     'disabled'=> false,
                     'required'=> true,
                     'options'=>[],
-                    'cols'=>'1'
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        [1],
+                        [2]),
+                    'seeRoles' => array(
+                        [1])
                 ])
             ]
 
