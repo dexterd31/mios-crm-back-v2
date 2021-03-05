@@ -119,6 +119,8 @@ class GroupController extends Controller
      */
     public function searchGroup($id)
     {
+        $subquery = GroupUser::select('user_id')->where('group_id',$id);
+
         $groupusers = DB::table('group_users')
                     ->join('groups','group_users.group_id','=','groups.id')
                     ->join('users','group_users.user_id','=','users.id')
@@ -127,11 +129,11 @@ class GroupController extends Controller
         
         $users = User::leftjoin('group_users','users.id','=','group_users.user_id')
                     ->leftjoin('groups','group_users.group_id','=','groups.id')
-                    ->where('group_users.group_id','<>',$id)
-                    ->orWhere('group_users.user_id',null)
-                    ->where('group_users.user_id')->get(); 
-                    
-        $data = ['sin_usar' => $users,'usados' => $groupusers];
+                    ->where('group_users.user_id',null)
+                    ->orWhere('group_users.group_id','!=',$id)
+                    ->whereNotIn('group_users.user_id',$subquery)
+                    ->get();                    
+        $data = ['available' => $users,'members' => $groupusers];
 
         return $data;
     }
