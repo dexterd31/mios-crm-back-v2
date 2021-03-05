@@ -143,7 +143,8 @@ class GroupController extends Controller
      * 17-02-2020
      * Método para crear el grupo con sus usuarios
      */
-    public function searchSelectGroup(){
+    public function searchSelectGroup()
+    {
         $groups = DB::table('groups')
                     ->select('id','name_group')->get();
         return $groups;

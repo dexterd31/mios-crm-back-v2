@@ -46,6 +46,11 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/campaigns', 'CampaignController@index');
     $router->post('/campaigns/{id}/updateState', 'CampaignController@updateState');
     
+    //Rutas de usuarios
+    $router->post('/storeUser', 'UserController@storeUser');
+    $router->put('/disabledUser/{id}', 'UserController@disabledUser');
+
+    
 
  
     
