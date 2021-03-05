@@ -33,16 +33,23 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/searchdocumenttype', 'FormAnswerController@searchDocumentType');
     
     //Rutas de grupos
-    $router->get('/searchgroup', 'GroupController@searchGroup');
+    $router->get('/searchgroup/{id}', 'GroupController@searchGroup');
     $router->post('/savegroup','GroupController@saveGroup');
     $router->get('/searchselectgroup','GroupController@searchSelectGroup');
     $router->get('/groupslist','GroupController@groupslist');
     $router->put('/deletegroup/{id}','GroupController@deleteGroup');
     $router->put('/updategroup/{id}','GroupController@updateGroup');
+    //consultar usuarios existentes para asignar al grupo
+    $router->get('/searchUser','GroupController@searchUser');
 
     // rutas de campañas
     $router->get('/campaigns', 'CampaignController@index');
     $router->post('/campaigns/{id}/updateState', 'CampaignController@updateState');
+    
+    //Rutas de usuarios
+    $router->post('/storeUser', 'UserController@storeUser');
+    $router->put('/disabledUser/{id}', 'UserController@disabledUser');
+
     
 
  
