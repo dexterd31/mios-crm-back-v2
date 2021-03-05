@@ -6,10 +6,16 @@ use App\Models\GroupUser;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
-
+use App\Services\RrhhService;
 
 class GroupController extends Controller
 {
+    private $rrhhService;
+
+    public function __construct(RrhhService $rrhhService)
+    {
+        $this->rrhhService = $rrhhService;
+    }
      /**
      * Nicol Ramirez 
      * 26-02-2021
@@ -125,9 +131,9 @@ class GroupController extends Controller
                     ->join('groups','group_users.group_id','=','groups.id')
                     ->join('users','group_users.user_id','=','users.id')
                     ->where('groups.id',$id)
-                    ->select('name_group','groups.description','group_users.user_id','username')->get();
+                    ->select('name_group','groups.description','group_users.user_id')->get();
         
-        $users = User::select('users.id', 'users.username')
+        $users = User::select('users.id')
                     ->distinct()
                     ->leftjoin('group_users','users.id','=','group_users.user_id')
                     ->leftjoin('groups','group_users.group_id','=','groups.id')
@@ -135,11 +141,31 @@ class GroupController extends Controller
                     ->orWhere('group_users.group_id','!=',$id)
                     ->whereNotIn('group_users.user_id',$subquery)
                     ->get();                    
-        $data = ['available' => $users,'members' => $groupusers];
+                         
+        $rrhh_users_ids = collect();
+       // dd($groupusers);
+        foreach ($groupusers as $key => $user) {
+            $usercrm = User::findOrFail($user->user_id);
+            $rrhh_users_ids->push($usercrm->id_rhh);
+            $user->id_rhh = $usercrm->id_rhh;
+        }
+        
+        $merged_data = $this->rrhhService->fecthUsersAndMerge($rrhh_users_ids->all(), 
+        json_decode($groupusers), 'id_rhh', ['name']);
 
-        return $data;
+        foreach ($users as $key => $user) {
+            $usercrm = User::findOrFail($user->id);
+            $rrhh_users_ids->push($usercrm->id_rhh);
+            $user->id_rhh = $usercrm->id_rhh;
+        }
+        
+        $merged_data2 = $this->rrhhService->fecthUsersAndMerge($rrhh_users_ids->all(), 
+        json_decode($users), 'id_rhh', ['name']);
+
+        $data = ['available' => $merged_data2,'members' => $merged_data];
+            return $data;
     }
-  
+    
     /**
      * Nicol Ramirez
      * 17-02-2020
@@ -158,9 +184,21 @@ class GroupController extends Controller
      * Método para consultar los usarios existentes por campañas
      */
 
-    public function searchUser()
+    public function searchUser($id)
     {
-        $users = User::select('id','username')->get();
-        return $users;
+       $users = $this->rrhhService->fetchUsersByCampaign($id);
+       $users = collect($users);
+       $users = $users->filter(function ($value, $key) {
+        return User::where('id_rhh', $value->id)->first() != null;
+    });
+       foreach($users as $user){
+            $crmUser = User::where('id_rhh', $user->id)->first();
+            if($crmUser != null){
+                $user->id = $crmUser->id;
+            }
+       }
+        return array_values($users->all());
     }
+
+    
 }
