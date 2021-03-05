@@ -15,34 +15,24 @@ class UserSeeder extends Seeder
         $users = array(
             [
                 'id_rhh' => '1',
-                'username' => 'nicolr',
-                'status' => 'online',
-                'state' => '1'
+                'state' => 1
 
             ],
             [
                 'id_rhh' => '2',
-                'username' => 'juanr',
-                'status' => 'online',
-                'state' => '1'
+                'state' => 1
             ],
             [
                 'id_rhh' => '3',
-                'username' => 'camilol',
-                'status' => 'online',
-                'state' => '1'
+                'state' => 1
             ],
             [
                 'id_rhh' => '4',
-                'username' => 'karenm',
-                'status' => 'online',
-                'state' => '1'
+                'state' => 1
             ],
             [
                 'id_rhh' => '5',
-                'username' => 'karolg',
-                'status' => 'online',
-                'state' => '1'
+                'state' => 1
             ]
         );
 
@@ -50,8 +40,6 @@ class UserSeeder extends Seeder
         {
             $User = new User();
             $User->id_rhh = $user['id_rhh'];
-            $User->username = $user['username'];
-            $User->status = $user['status'];
             $User->state = $user['state'];
             $User->save();
         }
