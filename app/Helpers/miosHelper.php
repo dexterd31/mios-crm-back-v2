@@ -41,7 +41,8 @@ class MiosHelper {
             'Segundo Nombre',
             'segundo Nombre',
             'segundo nombre',
-            'Nombre'
+            'Nombre',
+            'Segundo nombre'
         ];
         $lastNameArray = [
             'Apellido',
@@ -56,7 +57,8 @@ class MiosHelper {
             'Segundo Apellido',
             'segundo apellido',
             'apellidos',
-            'Apellidos'
+            'Apellidos',
+            'Segundo apellido'
         ];
         $documentArray = [
             'Cédula',
@@ -66,13 +68,11 @@ class MiosHelper {
             'No. Documento',
             'DNI'
         ];
-       // dd(!empty($key));
         $firstName = !empty($key) ? in_array($key,$firstNameArray):false;
         $middleName = !empty($key2) ? in_array($key2, $middleNameArray):false;
         $lastName = !empty($key3) ? in_array($key3, $lastNameArray):false;
         $secondLastName = !empty($key4) ? in_array($key4, $secondLastNameArray):false;
         $document = !empty($key5) ? in_array($key5, $documentArray):false;
-      //  dd($firstName);
 
         if($firstName)
         {

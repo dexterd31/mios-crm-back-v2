@@ -55,8 +55,8 @@ class FormController extends Controller
      */
     public function saveForm(Request $request,MiosHelper $miosHelper)
     {
-        /* try
-        { */
+         try
+        { 
             $forms = new Form([
                'group_id' =>  $request->input('group_id'),
                 'campaign_id' => 1,
@@ -74,7 +74,6 @@ class FormController extends Controller
               $section['fields'][0]['key'] =  strtolower( str_replace(' ','-',$section['fields'][0]['label']) );
               $sect = $miosHelper->validateKeyName($section['fields'][0]['label'], $section['fields'][1]['label'], $section['fields'][2]['label'], $section['fields'][3]['label'], $section['fields'][4]['label'],$section);
               
-              //dd($sect);
                $sections = new Section([
                    'form_id' => $forms->id,
                    'name_section' => $section['sectionName'],
@@ -85,11 +84,11 @@ class FormController extends Controller
             }
             return 'ok';
 
-      /*       return $this->successResponse('Guardado Correctamente');
+            return $this->successResponse('Guardado Correctamente');
     
         }catch(\Throwable $e){
             return $this->errorResponse('Error al guardar el formulario',500);
-        } */
+        } 
     }
     
     /**
@@ -112,7 +111,6 @@ class FormController extends Controller
          try
         { 
             $form = Form::find($id);
-          //  dd($form);
             $form->group_id = $request->group_id;
             $form->form_type_id = $request->type_form;
             $form->name_form = $request->name_form;
