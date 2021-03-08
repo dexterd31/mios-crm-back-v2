@@ -31,9 +31,9 @@ class SectionSeeder extends Seeder
                     'cols'=>1,
                     'inReport'=> true,
                     'editRoles' => array(
-                        [1,2]),
+                        'admin','supervisor'),
                     'seeRoles' => array(
-                        [3,1])
+                        'admin','asesor')
                 ],
                 [
                     'type'=> 'text',
@@ -49,9 +49,9 @@ class SectionSeeder extends Seeder
                     'cols'=>1,
                     'inReport'=> true,
                     'editRoles' => array(
-                        [1, 2]),
+                        'admin','supervisor'),
                     'seeRoles' => array(
-                        [3,1])
+                        'admin','asesor')
                 ],
                 [
                     'type'=> 'text',
@@ -67,9 +67,9 @@ class SectionSeeder extends Seeder
                     'cols'=>1,
                     'inReport'=> true,
                     'editRoles' => array(
-                        [1,2]),
+                        'admin','supervisor'),
                     'seeRoles' => array(
-                        [3,1])
+                        'admin','asesor')
                 ],
                 [
                     'type'=> 'text',
@@ -85,9 +85,9 @@ class SectionSeeder extends Seeder
                     'cols'=>1,
                     'inReport'=> true,
                     'editRoles' => array(
-                        [1,2]),
+                        'admin','supervisor'),
                     'seeRoles' => array(
-                        [3,1])
+                        'admin','asesor')
                 ],
                 [
                     'type'=> 'text',
@@ -103,9 +103,9 @@ class SectionSeeder extends Seeder
                     'cols'=>1,
                     'inReport'=> true,
                     'editRoles' => array(
-                        [1,2]),
+                        'admin','supervisor'),
                     'seeRoles' => array(
-                        [3,1])
+                        'admin','asesor')
                 ])
             ],
             [
@@ -127,9 +127,9 @@ class SectionSeeder extends Seeder
                     'cols'=>1,
                     'inReport'=> true,
                     'editRoles' => array(
-                        [1,2]),
+                        'admin','supervisor'),
                     'seeRoles' => array(
-                        [3,1])
+                        'admin','asesor')
                 ],
                 [
                     'type'=> 'text',
@@ -145,9 +145,9 @@ class SectionSeeder extends Seeder
                     'cols'=>1,
                     'inReport'=> true,
                     'editRoles' => array(
-                        [1,2]),
+                        'admin','supervisor'),
                     'seeRoles' => array(
-                        [3,1])
+                        'admin','asesor')
                 ])
              ],
              [
@@ -169,9 +169,9 @@ class SectionSeeder extends Seeder
                         'cols'=>1,
                         'inReport'=> true,
                         'editRoles' => array(
-                            [1,2]),
+                            'admin','supervisor','asesor'),
                         'seeRoles' => array(
-                            [3,1])
+                            'admin','supervisor','asesor')
                     ],
                     [
                         'type'=> 'text',
@@ -187,9 +187,9 @@ class SectionSeeder extends Seeder
                         'cols'=>1,
                         'inReport'=> true,
                         'editRoles' => array(
-                            [1,2]),
+                            'admin','supervisor','asesor'),
                         'seeRoles' => array(
-                            [3,1])
+                            'admin','asesor')
                     ],
                     [
                         'type'=> 'text',
@@ -205,9 +205,9 @@ class SectionSeeder extends Seeder
                         'cols'=>1,
                         'inReport'=> true,
                         'editRoles' => array(
-                            [1,2]),
+                            'admin','supervisor','asesor'),
                         'seeRoles' => array(
-                            [3,1])
+                            'admin','asesor')
                     ],
                     [
                         'type'=> 'text',
@@ -223,9 +223,9 @@ class SectionSeeder extends Seeder
                         'cols'=>1,
                         'inReport'=> true,
                         'editRoles' => array(
-                            [1,2]),
+                            'admin','supervisor','asesor'),
                         'seeRoles' => array(
-                            [3,1])
+                            'admin','asesor')
                     ],
                     [
                         'type'=> 'text',
@@ -241,9 +241,9 @@ class SectionSeeder extends Seeder
                         'cols'=>1,
                         'inReport'=> true,
                         'editRoles' => array(
-                            [1,2]),
+                            'admin','supervisor','asesor'),
                         'seeRoles' => array(
-                            [3,1])
+                            'admin','asesor')
                     ])
             ],
             [
@@ -265,9 +265,9 @@ class SectionSeeder extends Seeder
                     'cols'=>1,
                     'inReport'=> true,
                     'editRoles' => array(
-                        [1]),
+                        'admin'),
                     'seeRoles' => array(
-                        [3])
+                        'admin','supervisor','asesor')
                 ],
                 [
                     'type'=> 'text',
@@ -283,9 +283,9 @@ class SectionSeeder extends Seeder
                     'cols'=>1,
                     'inReport'=> true,
                     'editRoles' => array(
-                        [1,2]),
+                        'admin','supervisor'),
                     'seeRoles' => array(
-                        [1])
+                        'admin')
                 ])
             ]
 
