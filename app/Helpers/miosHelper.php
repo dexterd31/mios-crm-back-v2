@@ -14,6 +14,16 @@ class MiosHelper {
         'pageName' => 'page',
         ]);
     }
+
+    // Funcion para la respuesta json
+    function jsonResponse($success, $code, $keyMessage, $data) {
+        $data = [
+            "suceess"           => $success,
+            "code"              => $code,
+            "{$keyMessage}"     => $data
+        ];
+        return $data;
+    }
 }
 
 
