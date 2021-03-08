@@ -31,11 +31,9 @@ class SectionSeeder extends Seeder
                     'cols'=>1,
                     'inReport'=> true,
                     'editRoles' => array(
-                        [1],
-                        [2]),
+                        [1,2]),
                     'seeRoles' => array(
-                        [3],
-                        [1])
+                        [3,1])
                 ],
                 [
                     'type'=> 'text',
@@ -51,11 +49,9 @@ class SectionSeeder extends Seeder
                     'cols'=>1,
                     'inReport'=> true,
                     'editRoles' => array(
-                        [1],
-                        [2]),
+                        [1, 2]),
                     'seeRoles' => array(
-                        [3],
-                        [1])
+                        [3,1])
                 ],
                 [
                     'type'=> 'text',
@@ -71,11 +67,9 @@ class SectionSeeder extends Seeder
                     'cols'=>1,
                     'inReport'=> true,
                     'editRoles' => array(
-                        [1],
-                        [2]),
+                        [1,2]),
                     'seeRoles' => array(
-                        [3],
-                        [1])
+                        [3,1])
                 ],
                 [
                     'type'=> 'text',
@@ -91,11 +85,9 @@ class SectionSeeder extends Seeder
                     'cols'=>1,
                     'inReport'=> true,
                     'editRoles' => array(
-                        [1],
-                        [2]),
+                        [1,2]),
                     'seeRoles' => array(
-                        [3],
-                        [1])
+                        [3,1])
                 ],
                 [
                     'type'=> 'text',
@@ -111,11 +103,9 @@ class SectionSeeder extends Seeder
                     'cols'=>1,
                     'inReport'=> true,
                     'editRoles' => array(
-                        [1],
-                        [2]),
+                        [1,2]),
                     'seeRoles' => array(
-                        [3],
-                        [1])
+                        [3,1])
                 ])
             ],
             [
@@ -137,11 +127,9 @@ class SectionSeeder extends Seeder
                     'cols'=>1,
                     'inReport'=> true,
                     'editRoles' => array(
-                        [1],
-                        [2]),
+                        [1,2]),
                     'seeRoles' => array(
-                        [3],
-                        [1])
+                        [3,1])
                 ],
                 [
                     'type'=> 'text',
@@ -157,11 +145,9 @@ class SectionSeeder extends Seeder
                     'cols'=>1,
                     'inReport'=> true,
                     'editRoles' => array(
-                        [1],
-                        [2]),
+                        [1,2]),
                     'seeRoles' => array(
-                        [3],
-                        [1])
+                        [3,1])
                 ])
              ],
              [
@@ -183,11 +169,9 @@ class SectionSeeder extends Seeder
                         'cols'=>1,
                         'inReport'=> true,
                         'editRoles' => array(
-                            [1],
-                            [2]),
+                            [1,2]),
                         'seeRoles' => array(
-                            [3],
-                            [1])
+                            [3,1])
                     ],
                     [
                         'type'=> 'text',
@@ -203,11 +187,9 @@ class SectionSeeder extends Seeder
                         'cols'=>1,
                         'inReport'=> true,
                         'editRoles' => array(
-                            [1],
-                            [2]),
+                            [1,2]),
                         'seeRoles' => array(
-                            [3],
-                            [1])
+                            [3,1])
                     ],
                     [
                         'type'=> 'text',
@@ -223,11 +205,9 @@ class SectionSeeder extends Seeder
                         'cols'=>1,
                         'inReport'=> true,
                         'editRoles' => array(
-                            [1],
-                            [2]),
+                            [1,2]),
                         'seeRoles' => array(
-                            [3],
-                            [1])
+                            [3,1])
                     ],
                     [
                         'type'=> 'text',
@@ -243,11 +223,9 @@ class SectionSeeder extends Seeder
                         'cols'=>1,
                         'inReport'=> true,
                         'editRoles' => array(
-                            [1],
-                            [2]),
+                            [1,2]),
                         'seeRoles' => array(
-                            [3],
-                            [1])
+                            [3,1])
                     ],
                     [
                         'type'=> 'text',
@@ -263,11 +241,9 @@ class SectionSeeder extends Seeder
                         'cols'=>1,
                         'inReport'=> true,
                         'editRoles' => array(
-                            [1],
-                            [2]),
+                            [1,2]),
                         'seeRoles' => array(
-                            [3],
-                            [1])
+                            [3,1])
                     ])
             ],
             [
@@ -307,8 +283,7 @@ class SectionSeeder extends Seeder
                     'cols'=>1,
                     'inReport'=> true,
                     'editRoles' => array(
-                        [1],
-                        [2]),
+                        [1,2]),
                     'seeRoles' => array(
                         [1])
                 ])
