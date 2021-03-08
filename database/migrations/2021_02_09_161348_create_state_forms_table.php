@@ -16,7 +16,7 @@ class CreateStateFormsTable extends Migration
         Schema::create('state_forms', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->integer('permissions');
+            $table->string('permissions');
             $table->boolean('approval');
             $table->text('observation');
             $table->datetime('date_update');
