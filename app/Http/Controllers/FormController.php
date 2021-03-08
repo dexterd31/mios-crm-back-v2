@@ -6,7 +6,7 @@ use App\Models\FormType;
 use App\Models\Section;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use Helpers\MiosHelper;
 
 
 class FormController extends Controller
@@ -53,10 +53,10 @@ class FormController extends Controller
      * 27-01-2020
      * Método para crear el formulario y sus secciones
      */
-    public function saveForm(Request $request)
+    public function saveForm(Request $request,MiosHelper $miosHelper)
     {
-        try
-        {
+         try
+        { 
             $forms = new Form([
                'group_id' =>  $request->input('group_id'),
                 'campaign_id' => 1,
@@ -69,9 +69,11 @@ class FormController extends Controller
 
            foreach($request->input('sections') as $section)
            {
+               
               $section['fields'][0]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][0]['label']);
               $section['fields'][0]['key'] =  strtolower( str_replace(' ','-',$section['fields'][0]['label']) );
-              $sect = $section['fields'];
+              $sect = $miosHelper->validateKeyName($section['fields'][0]['label'], $section['fields'][1]['label'], $section['fields'][2]['label'], $section['fields'][3]['label'], $section['fields'][4]['label'],$section);
+              
                $sections = new Section([
                    'form_id' => $forms->id,
                    'name_section' => $section['sectionName'],
@@ -80,12 +82,13 @@ class FormController extends Controller
                ]);
                $sections->save();           
             }
+            return 'ok';
 
             return $this->successResponse('Guardado Correctamente');
     
         }catch(\Throwable $e){
             return $this->errorResponse('Error al guardar el formulario',500);
-        }
+        } 
     }
     
     /**
@@ -103,12 +106,11 @@ class FormController extends Controller
      *Método para editar el formulario
      */
     
-    public function editForm(Request $request, $id)
+    public function editForm(Request $request, $id, MiosHelper $miosHelper)
     {
          try
         { 
             $form = Form::find($id);
-          //  dd($form);
             $form->group_id = $request->group_id;
             $form->form_type_id = $request->type_form;
             $form->name_form = $request->name_form;
@@ -119,6 +121,7 @@ class FormController extends Controller
             {
                 $section['fields'][0]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][0]['label']);
                 $section['fields'][0]['key'] =  strtolower( str_replace(' ','-',$section['fields'][0]['label']) );
+               
                 $var = $section['fields'];
                 
                 $result = Section::find($section['idsection']);
