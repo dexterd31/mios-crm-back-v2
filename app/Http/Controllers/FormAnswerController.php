@@ -46,7 +46,9 @@ class FormAnswerController extends Controller
                                 'middle_name' => $section->middleName,
                                 'first_lastname' => $section->lastName,
                                 'second_lastname' => $section->secondLastName,
-                                'document' => $section->document
+                                'document' => $section->document,
+                                'phone' => $section->phone,
+                                'email' => $section->email
                             ]);
                             $client->save();
                         }

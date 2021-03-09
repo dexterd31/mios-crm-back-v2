@@ -19,6 +19,8 @@ class ClientSeeder extends Seeder
                 'second_lastname' => 'Manjarres',
                 'document' => '123456789',
                 'document_type_id' => 1,
+                'phone' => '1234567',
+                'email' => 'nicol@gmail.com'
                
             ],
             [
@@ -28,6 +30,8 @@ class ClientSeeder extends Seeder
                 'second_lastname' => 'Lopez',
                 'document' => '57891234',
                 'document_type_id' => 1,
+                'phone' => '7654321',
+                'email' => 'juan@gmail.com'
                
             ]);
 
@@ -40,6 +44,8 @@ class ClientSeeder extends Seeder
             $clients->second_lastname = $client['second_lastname'];
             $clients->document = $client['document'];
             $clients->document_type_id = $client['document_type_id'];
+            $clients->phone = $client['phone'];
+            $clients->email = $client['email'];
             $clients->save();
         }
     }
