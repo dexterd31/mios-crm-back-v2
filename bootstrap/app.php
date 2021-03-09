@@ -48,8 +48,16 @@ $app->singleton(
     App\Console\Kernel::class
 );
 
+$app->singleton('filesystem', function ($app) {
+    return $app->loadComponent(
+        'filesystems',
+        Illuminate\Filesystem\FilesystemServiceProvider::class,
+        'filesystem'
+    );
+});
 
-$app->register(Flipbox\LumenGenerator\LumenGeneratorServiceProvider::class);
+
+
 /*
 |--------------------------------------------------------------------------
 | Register Config Files
@@ -63,6 +71,7 @@ $app->register(Flipbox\LumenGenerator\LumenGeneratorServiceProvider::class);
 
 $app->configure('app');
 $app->configure('services');
+$app->configure('filesystems');
 
 /*
 |--------------------------------------------------------------------------
@@ -75,9 +84,6 @@ $app->configure('services');
 |
 */
 
-// $app->middleware([
-//     App\Http\Middleware\ExampleMiddleware::class
-// ]);
 $app->middleware([
     App\Http\Middleware\CorsMiddleware::class
  ]);
@@ -97,11 +103,13 @@ $app->routeMiddleware([
 |
 */
 
-// $app->register(App\Providers\AppServiceProvider::class);
-$app->register(App\Providers\AuthServiceProvider::class);
-// $app->register(App\Providers\EventServiceProvider::class);
-$app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
 
+$app->register(App\Providers\AuthServiceProvider::class);
+$app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
+$app->register(Flipbox\LumenGenerator\LumenGeneratorServiceProvider::class);
+$app->register(Illuminate\Filesystem\FilesystemServiceProvider::class);
+
+// $app->register(App\Providers\EventServiceProvider::class);
 /*
 |--------------------------------------------------------------------------
 | Load The Application Routes

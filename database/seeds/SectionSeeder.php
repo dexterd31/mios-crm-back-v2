@@ -20,24 +20,92 @@ class SectionSeeder extends Seeder
                 [
                     'type'=> 'text',
                     'controlType'=> 'textbox',
-                    'key'=> 'name',
-                    'label'=> 'nombre',
+                    'key'=> 'firstName',
+                    'label'=> 'primer nombre',
                     'value'=> '',
                     'disabled'=> false,
                     'required'=> true,
+                    'minlength'=>1,
+                    'maxLength'=> 30,
                     'options'=>[],
-                    'cols'=>'1'
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        'admin','supervisor'),
+                    'seeRoles' => array(
+                        'admin','asesor')
                 ],
                 [
                     'type'=> 'text',
                     'controlType'=> 'textbox',
-                    'key'=> 'lastname',
-                    'label'=> 'apellido',
+                    'key'=> 'middleName',
+                    'label'=> 'segundo nombre',
                     'value'=> '',
                     'disabled'=> false,
                     'required'=> true,
+                    'minlength'=>1,
+                    'maxLength'=> 30,
                     'options'=>[],
-                    'cols'=>'1'
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        'admin','supervisor'),
+                    'seeRoles' => array(
+                        'admin','asesor')
+                ],
+                [
+                    'type'=> 'text',
+                    'controlType'=> 'textbox',
+                    'key'=> 'lastName',
+                    'label'=> 'primer apellido',
+                    'value'=> '',
+                    'disabled'=> false,
+                    'required'=> true,
+                    'minlength'=>1,
+                    'maxLength'=> 30,
+                    'options'=>[],
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        'admin','supervisor'),
+                    'seeRoles' => array(
+                        'admin','asesor')
+                ],
+                [
+                    'type'=> 'text',
+                    'controlType'=> 'textbox',
+                    'key'=> 'secondLastName',
+                    'label'=> 'primer apellido',
+                    'value'=> '',
+                    'disabled'=> false,
+                    'required'=> true,
+                    'minlength'=>1,
+                    'maxLength'=> 30,
+                    'options'=>[],
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        'admin','supervisor'),
+                    'seeRoles' => array(
+                        'admin','asesor')
+                ],
+                [
+                    'type'=> 'text',
+                    'controlType'=> 'textbox',
+                    'key'=> 'document',
+                    'label'=> 'Documento',
+                    'value'=> '',
+                    'disabled'=> false,
+                    'required'=> true,
+                    'minlength'=>1,
+                    'maxLength'=> 30,
+                    'options'=>[],
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        'admin','supervisor'),
+                    'seeRoles' => array(
+                        'admin','asesor')
                 ])
             ],
             [
@@ -53,8 +121,15 @@ class SectionSeeder extends Seeder
                     'value'=> '',
                     'disabled'=> false,
                     'required'=> true,
+                    'minlength'=>1,
+                    'maxLength'=> 30,
                     'options'=>[],
-                    'cols'=>'1'
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        'admin','supervisor'),
+                    'seeRoles' => array(
+                        'admin','asesor')
                 ],
                 [
                     'type'=> 'text',
@@ -64,8 +139,15 @@ class SectionSeeder extends Seeder
                     'value'=> '',
                     'disabled'=> false,
                     'required'=> true,
+                    'minlength'=>1,
+                    'maxLength'=> 30,
                     'options'=>[],
-                    'cols'=>'1'
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        'admin','supervisor'),
+                    'seeRoles' => array(
+                        'admin','asesor')
                 ])
              ],
              [
@@ -73,28 +155,96 @@ class SectionSeeder extends Seeder
                 'name_section' => 'Datos personales',
                 'type_section' => 1,
                 'fields'=> array( 
-                [
-                    'type'=> 'text',
-                    'controlType'=> 'textbox',
-                    'key'=> 'nombre',
-                    'label'=> 'nombre',
-                    'value'=> '',
-                    'disabled'=> false,
-                    'required'=> true,
-                    'options'=>[],
-                    'cols'=>'1'
-                ],
-                [
-                    'type'=> 'text',
-                    'controlType'=> 'textbox',
-                    'key'=> 'apellido',
-                    'label'=> 'apellido',
-                    'value'=> '',
-                    'disabled'=> false,
-                    'required'=> true,
-                    'options'=>[],
-                    'cols'=>'1'
-                ])
+                    [
+                        'type'=> 'text',
+                        'controlType'=> 'textbox',
+                        'key'=> 'firstName',
+                        'label'=> 'primer nombre',
+                        'value'=> '',
+                        'disabled'=> false,
+                        'required'=> true,
+                        'minlength'=>1,
+                    'maxLength'=> 30,
+                        'options'=>[],
+                        'cols'=>1,
+                        'inReport'=> true,
+                        'editRoles' => array(
+                            'admin','supervisor','asesor'),
+                        'seeRoles' => array(
+                            'admin','supervisor','asesor')
+                    ],
+                    [
+                        'type'=> 'text',
+                        'controlType'=> 'textbox',
+                        'key'=> 'middleName',
+                        'label'=> 'segundo nombre',
+                        'value'=> '',
+                        'disabled'=> false,
+                        'required'=> true,
+                        'minlength'=>1,
+                    'maxLength'=> 30,
+                        'options'=>[],
+                        'cols'=>1,
+                        'inReport'=> true,
+                        'editRoles' => array(
+                            'admin','supervisor','asesor'),
+                        'seeRoles' => array(
+                            'admin','asesor')
+                    ],
+                    [
+                        'type'=> 'text',
+                        'controlType'=> 'textbox',
+                        'key'=> 'lastName',
+                        'label'=> 'primer apellido',
+                        'value'=> '',
+                        'disabled'=> false,
+                        'required'=> true,
+                        'minlength'=>1,
+                    'maxLength'=> 30,
+                        'options'=>[],
+                        'cols'=>1,
+                        'inReport'=> true,
+                        'editRoles' => array(
+                            'admin','supervisor','asesor'),
+                        'seeRoles' => array(
+                            'admin','asesor')
+                    ],
+                    [
+                        'type'=> 'text',
+                        'controlType'=> 'textbox',
+                        'key'=> 'secondLastName',
+                        'label'=> 'primer apellido',
+                        'value'=> '',
+                        'disabled'=> false,
+                        'required'=> true,
+                        'minlength'=>1,
+                    'maxLength'=> 30,
+                        'options'=>[],
+                        'cols'=>1,
+                        'inReport'=> true,
+                        'editRoles' => array(
+                            'admin','supervisor','asesor'),
+                        'seeRoles' => array(
+                            'admin','asesor')
+                    ],
+                    [
+                        'type'=> 'text',
+                        'controlType'=> 'textbox',
+                        'key'=> 'document',
+                        'label'=> 'Documento',
+                        'value'=> '',
+                        'disabled'=> false,
+                        'required'=> true,
+                        'minlength'=>1,
+                    'maxLength'=> 30,
+                        'options'=>[],
+                        'cols'=>1,
+                        'inReport'=> true,
+                        'editRoles' => array(
+                            'admin','supervisor','asesor'),
+                        'seeRoles' => array(
+                            'admin','asesor')
+                    ])
             ],
             [
                 'form_id' => '2',
@@ -109,8 +259,15 @@ class SectionSeeder extends Seeder
                     'value'=> '',
                     'disabled'=> false,
                     'required'=> true,
+                    'minlength'=>1,
+                    'maxLength'=> 30,
                     'options'=>[],
-                    'cols'=>'1'
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        'admin'),
+                    'seeRoles' => array(
+                        'admin','supervisor','asesor')
                 ],
                 [
                     'type'=> 'text',
@@ -120,8 +277,15 @@ class SectionSeeder extends Seeder
                     'value'=> '',
                     'disabled'=> false,
                     'required'=> true,
+                    'minlength'=>1,
+                    'maxLength'=> 30,
                     'options'=>[],
-                    'cols'=>'1'
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        'admin','supervisor'),
+                    'seeRoles' => array(
+                        'admin')
                 ])
             ]
 

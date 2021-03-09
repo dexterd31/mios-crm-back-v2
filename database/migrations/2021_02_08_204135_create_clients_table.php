@@ -20,6 +20,8 @@ class CreateClientsTable extends Migration
             $table->string('first_lastname')->nullable();
             $table->string('second_lastname')->nullable();
             $table->string('document')->nullable();
+            $table->string('phone')->nullable();
+            $table->string('email')->nullable();
             $table->timestamps();
         });
     }

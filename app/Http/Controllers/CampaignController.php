@@ -36,7 +36,6 @@ class CampaignController extends Controller
                     // si hay un error, es que la campaña esta desactivada
                     return $this->successResponse([]);;
                 }
-                
             }
         } catch (\Throwable $th) {
             return $this->errorResponse('Ocurrio un error al intentar mostrar las campañas.', 500);
