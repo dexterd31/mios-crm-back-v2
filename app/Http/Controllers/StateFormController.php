@@ -20,6 +20,7 @@ class StateFormController extends Controller
             $tray = new StateForm();
             $tray->name             = $json_body->name;
             $tray->permissions      = json_encode($json_body->permissions);
+            $tray->filters          = json_encode($json_body->filters);
             $tray->approval         = $json_body->approval;
             $tray->observation      = $json_body->observation;
             $tray->status           = true;
@@ -35,7 +36,7 @@ class StateFormController extends Controller
 
     public function list(MiosHelper $miosHelper, $form_id) {
         
-        $where = [ 'form_id' => $form_id];
+        $where = [ 'form_id' => $form_id, 'status' => true];
         $stateForm = StateForm::where($where)->paginate(10);
         if (empty($stateForm)) {
             $data = $miosHelper->jsonResponse(false, 404, 'message','No se en contraron registros');
@@ -74,9 +75,34 @@ class StateFormController extends Controller
         return response()->json($data, $data['code']);
     }
 
-    public function delete(Request $request, MiosHelper $miosHelper) {
+    public function delete(MiosHelper $miosHelper, $id) {
+        // Conseguir la bandeja
+        $tray = new StateForm();
+        $stateForm = StateForm::where('id', $id)->first();
+        $tray = json_decode($stateForm, true);
+        $tray['status'] = false;
+        //Eliminar lo que no queremos acrualizar 
+        unset($tray['id']);
+        unset($tray['permissions']);
+        unset($tray['approval']);
+        unset($tray['observation']);
+        unset($tray['created_at']);
+        unset($tray['updated_at']);
+        unset($tray['form_id']);
 
+        if (!empty($stateForm) && is_object($stateForm)) {
+            $stateForm = StateForm::where('id', $id)->update($tray);
+            $data = $miosHelper->jsonResponse(true, 200, 'try', $tray);
+        } else {
+            $data = $miosHelper->jsonResponse(false, 404, 'message','No se encontro la bandeja');
+        }
+
+        return response()->json($data, $data['code']);
     }
 
-    public function trayQuery(Request $request, MiosHelper $miosHelper){}
+    public function trayQuery(MiosHelper $miosHelper, $id){
+        $stateForm = StateForm::where('id', $id)->first();
+        $filterFilds = $stateForm->
+        var_dump($stateForm);
+    }
 }

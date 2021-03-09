@@ -17,6 +17,7 @@ class CreateStateFormsTable extends Migration
             $table->id();
             $table->string('name');
             $table->string('permissions');
+            $table->string('filters');
             $table->boolean('approval');
             $table->boolean('status');
             $table->text('observation');      
