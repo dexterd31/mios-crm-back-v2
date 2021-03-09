@@ -18,9 +18,8 @@ class CreateStateFormsTable extends Migration
             $table->string('name');
             $table->string('permissions');
             $table->boolean('approval');
-            $table->text('observation');
-            $table->datetime('date_update');
-           
+            $table->boolean('status');
+            $table->text('observation');      
             $table->timestamps();
         });
     }

@@ -35,8 +35,7 @@ class Relationships extends Migration
 
         Schema::table('state_forms', function ($table)
             {
-                $table->foreignId('form_answer_id')->constrained('form_answers'); 
-              
+                $table->foreignId('form_id')->constrained('forms'); 
             });
             
         Schema::table('sections', function ($table)
