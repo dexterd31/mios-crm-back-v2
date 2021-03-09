@@ -17,9 +17,10 @@ class DatabaseSeeder extends Seeder
         $this->call('ChannelSeeder');
         $this->call('FormtypeSeeder');
         $this->call('FormSeeder');
-         $this->call('SectionSeeder');
-         $this->call('DocumentTypeSeeder');
-         $this->call('ClientSeeder');
-         $this->call('GroupUserSeeder');
+        $this->call('SectionSeeder');
+        $this->call('DocumentTypeSeeder');
+        $this->call('ClientSeeder');
+        $this->call('GroupUserSeeder');
+        $this->call('FormAnswerSeeder');
     }
 }
