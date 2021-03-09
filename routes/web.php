@@ -27,10 +27,11 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
     $router->post('/formanswer/filterform', 'FormAnswerController@filterForm');
-    $router->put('/formanswer/editform/{id}', 'FormAnswerController@editInfo');
+    $router->put('/formanswer/updateFormAnswer/{id}', 'FormAnswerController@updateFormAnswer');
     $router->get('/formanswer/historic/{form_id}/{client_id}', 'FormAnswerController@formAnswerHistoric');
     //consultar tipo de documento de los clientes
     $router->get('/searchdocumenttype', 'FormAnswerController@searchDocumentType');
+
     
     //Rutas de grupos
     $router->get('/searchgroup/{id}', 'GroupController@searchGroup');
@@ -53,7 +54,11 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas de clientes
     $router->get('/getClient/{id}', 'ClientController@getClient');
 
-
+    //Rutas de bandejas
+    $router->post('/trays/save','StateFormController@save');
+    $router->get('/trays/list/{form_id}','StateFormController@list');
+    $router->get('/trays/get/{id}','StateFormController@get');
+    $router->put('/trays/update/{id}','StateFormController@update');
     
 
  

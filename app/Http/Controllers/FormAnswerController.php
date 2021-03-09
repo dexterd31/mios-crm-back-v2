@@ -77,70 +77,7 @@ class FormAnswerController extends Controller
 
                     $form_answer->save();
                     $message = 'Informacion guardada correctamente';
-                } else {
-                    $message = '';
-                    $client  = Client::find($json_body->client_id)->first();
-                    $sect    = KeyValue::where('client_id', $json_body->client_id)->get();
-                    if ($sect != null) {
-                        foreach ($json_body->sections as $section) {
-                            foreach ($section as $key => $value) {
-                                $where = [
-                                    'client_id' => $json_body->client_id,
-                                    'form_id' => $json_body->form_id,
-                                    'key' => $key
-                                ];
-                                $keyValue = KeyValue::where($where)->first();
-                                if (!empty($keyValue) && is_object($keyValue)) {
-                                    $keyValue->key = $key;
-                                    $keyValue->value = $value;
-                                    $keyValue->save();
-                                }
-                            }
-
-                            if (!empty($section->document_type_id)) {
-                                $client->document_type_id = $section->document_type_id;
-                                $client->first_name = $section->firstName;
-                                $client->middle_name = $section->middleName;
-                                $client->first_lastname = $section->lastName;
-                                $client->second_lastname = $section->secondLastName;
-                                $client->document = $section->document;
-                                $client->save();
-                            }
-                        }
-                        $form_answer = new FormAnswer([
-                            'user_id' => 1,
-                            'channel_id' => 1,
-                            'client_id' => $client->id,
-                            'form_id' => $json_body->form_id,
-                            'structure_answer' => json_encode($json_body->sections),
-                        ]);
-                        $form_answer->save();
-                        $message = 'Informacion actualizada correctamente';
-                    } else {
-                        foreach ($json_body->sections as $section) {
-                            foreach ($section as $key => $value) {
-                                $sect = new KeyValue([
-                                    'form_id' => $json_body->form_id,
-                                    'client_id' => $client->id,
-                                    'key' => $key,
-                                    'value' => $value,
-                                    'description' => 0
-                                ]);
-                                $sect->save();
-                            }
-                        }
-
-                        $form_answer = new FormAnswer([
-                            'user_id' => 1,
-                            'channel_id' => 1,
-                            'client_id' => $client->id,
-                            'form_id' => $json_body->form_id,
-                            'structure_answer' => json_encode($json_body->sections),
-                        ]);
-                        $form_answer->save();
-                        $message = 'Informacion creada y actualizada correctamente';
-                    }
-                }
+                } 
             } else {
                 $message = 'Tú rol no tiene permisos para ejecutar esta acción';
             }
@@ -248,5 +185,72 @@ class FormAnswerController extends Controller
         } catch (\Throwable $e) {
             return $this->errorResponse('Error al buscar la gestion', 500);
         }
+    }
+
+    public function updateFormAnswer(Request $request, $id){
+        $json_body = json_decode($request->getContent());
+            $message = '';
+            $client  = Client::find($id);
+            $sect    = KeyValue::where('client_id', $json_body->client_id)->get();
+            if ($sect != null) {
+                foreach ($json_body->sections as $section) {
+                    foreach ($section as $key => $value) {
+                        $where = [
+                            'client_id' => $json_body->client_id,
+                            'form_id' => $json_body->form_id,
+                            'key' => $key
+                        ];
+                        $keyValue = KeyValue::where($where)->first();
+                        if (!empty($keyValue) && is_object($keyValue)) {
+                            $keyValue->key = $key;
+                            $keyValue->value = $value;
+                            $keyValue->save();
+                        }
+                    }
+
+                    if (!empty($section->document_type_id)) {
+                        $client->document_type_id = $section->document_type_id;
+                        $client->first_name = $section->firstName;
+                        $client->middle_name = $section->middleName;
+                        $client->first_lastname = $section->lastName;
+                        $client->second_lastname = $section->secondLastName;
+                        $client->document = $section->document;
+                        $client->save();
+                    }
+                }
+                $form_answer = new FormAnswer([
+                    'user_id' => 1,
+                    'channel_id' => 1,
+                    'client_id' => $client->id,
+                    'form_id' => $json_body->form_id,
+                    'structure_answer' => json_encode($json_body->sections),
+                ]);
+                $form_answer->save();
+                $message = 'Informacion actualizada correctamente';
+            } else {
+                foreach ($json_body->sections as $section) {
+                    foreach ($section as $key => $value) {
+                        $sect = new KeyValue([
+                            'form_id' => $json_body->form_id,
+                            'client_id' => $client->id,
+                            'key' => $key,
+                            'value' => $value,
+                            'description' => 0
+                        ]);
+                        $sect->save();
+                    }
+                }
+
+                $form_answer = new FormAnswer([
+                    'user_id' => 1,
+                    'channel_id' => 1,
+                    'client_id' => $client->id,
+                    'form_id' => $json_body->form_id,
+                    'structure_answer' => json_encode($json_body->sections),
+                ]);
+                $form_answer->save();
+                $message = 'Informacion creada y actualizada correctamente';
+            }
+            return $message;
     }
 }
