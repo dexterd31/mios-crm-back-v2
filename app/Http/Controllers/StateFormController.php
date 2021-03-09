@@ -102,7 +102,7 @@ class StateFormController extends Controller
 
     public function trayQuery(MiosHelper $miosHelper, $id){
         $stateForm = StateForm::where('id', $id)->first();
-        $filterFilds = $stateForm->
-        var_dump($stateForm);
+        $filterFilds = $stateForm->filters;
+        var_dump($filterFilds);
     }
 }
