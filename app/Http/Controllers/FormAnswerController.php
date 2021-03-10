@@ -179,9 +179,13 @@ class FormAnswerController extends Controller
         try {
             
             $where = [ 'form_id' => $form_id, 'client_id' => $client_id ];
-            $form_answers = FormAnswer::where($where)->paginate(10);
+            $form_answers = FormAnswer::where($where)->paginate(10)->load('channel');
+            foreach($form_answers  as $form) {
+                $userData     = $this->ciuService->fetchUser($form->user_id)->data;
+                $form->user = $userData ;
+            }     
+                  
             $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
-
             return response()->json($data, $data['code']);
 
         } catch (\Throwable $e) {
