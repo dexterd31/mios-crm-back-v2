@@ -23,6 +23,10 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/searchformtype', 'FormController@searchFormType');
     $router->put('/editform/{id}', 'FormController@editForm');
     $router->put('/deleteform/{id}', 'FormController@deleteForm');
+
+    //Base de datos
+    $router->get('/form/dowload', 'FormController@exportExcel');
+    $router->post('/form/upload', 'FormController@importExcel');
    
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');

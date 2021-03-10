@@ -1,6 +1,9 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use App\Exports\FormExport;
+use App\Imports\FormImport;
 use App\Models\Form;
 use App\Models\FormType;
 use App\Models\Section;
@@ -8,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Helpers\MiosHelper;
 
+use Maatwebsite\Excel\Facades\Excel;
 
 class FormController extends Controller
 {
@@ -157,5 +161,33 @@ class FormController extends Controller
             return $this->errorResponse('Error al desactivar el formulario',500);
         }
        
+    }
+    /**
+    * Olme Marin
+    * 10-03-2021
+    * Método para descargar la plantilla de excel del formularios
+    */
+    public function exportExcel(MiosHelper $miosHelper) {
+        $f = Form::all();
+   
+        $file = Excel::download($f, 'plantilla.xls');
+        //$data = $miosHelper->jsonResponse(true, 200, 'message','mensaje');
+        //return response()->json($data, $data['code'], [],Excel::download(new FormExport, 'plantilla.xlsx'));
+        $file->sendHeaders(array(
+            'Content-Disposition: attachment'
+        ));
+        return response($file);
+    }
+
+     /**
+    * Olme Marin
+    * 10-03-2021
+    * Método para descargar la plantilla de excel del formularios
+    */
+    public function importExcel(Request $request, MiosHelper $miosHelper) {
+        $file = $request->file('excel');
+        Excel::import(new FormImport, $file);
+        $data = $miosHelper->jsonResponse(true, 200, 'message','Se realizo el cargue');
+        return response()->json($data, $data['code']);
     }
 }

@@ -179,7 +179,7 @@ class FormAnswerController extends Controller
         try {
             
             $where = [ 'form_id' => $form_id, 'client_id' => $client_id ];
-            $form_answers = FormAnswer::where($where)->paginate(10)->load('channel');
+            $form_answers = FormAnswer::where($where)->with('channel')->paginate(10);
             foreach($form_answers  as $form) {
                 $userData     = $this->ciuService->fetchUser($form->user_id)->data;
                 $form->user = $userData ;
