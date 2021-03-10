@@ -8,7 +8,7 @@ class User extends Model
 {
     protected $table = 'users';
     protected $PrimaryKey = 'id';
-    protected $fillable = ['id_rhh','username','status','state'];
+    protected $fillable = ['id_rhh','state'];
 
     public function groupuser(){
         return $this->belongsTo('App\Models\GroupUser','user_id');

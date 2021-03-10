@@ -10,18 +10,19 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use App\Services\CiuService;
 use App\Services\NominaService;
+use Helpers\MiosHelper;
 
 class FormAnswerController extends Controller
 {
     private $ciuService;
     private $nominaService;
 
-    public function __construct(CiuService $ciuService, NominaService $nominaService)
+     public function __construct(CiuService $ciuService, NominaService $nominaService)
     {
         $this->middleware('auth');
         $this->ciuService = $ciuService;
         $this->nominaService = $nominaService;
-    }
+    } 
     /**
      * Nicol Ramirez
      * 11-02-2020
@@ -37,7 +38,7 @@ class FormAnswerController extends Controller
                 if ($json_body->client_id == null) {
                     $contador = 0;
                     foreach ($json_body->sections as $section) {
-    
+
                         if ($contador == 0) {
                             $client = new Client([
                                 'document_type_id' => !empty($section->document_type_id) ? $section->document_type_id : 1,
@@ -45,11 +46,13 @@ class FormAnswerController extends Controller
                                 'middle_name' => $section->middleName,
                                 'first_lastname' => $section->lastName,
                                 'second_lastname' => $section->secondLastName,
-                                'document' => $section->document
+                                'document' => $section->document,
+                                'phone' => $section->phone,
+                                'email' => $section->email
                             ]);
                             $client->save();
                         }
-    
+
                         foreach ($section as $key => $value) {
                             $sect = new KeyValue([
                                 'form_id' => $json_body->form_id,
@@ -58,12 +61,12 @@ class FormAnswerController extends Controller
                                 'value' => $value,
                                 'description' => null
                             ]);
-    
-                            //$sect->save();
+
+                            $sect->save();
                         }
                         $contador++;
                     }
-    
+
                     $form_answer = new FormAnswer([
                         'user_id' => 1,
                         'channel_id' => 1,
@@ -71,76 +74,13 @@ class FormAnswerController extends Controller
                         'form_id' => $json_body->form_id,
                         'structure_answer' => json_encode($json_body->sections)
                     ]);
-    
+
                     $form_answer->save();
                     $message = 'Informacion guardada correctamente';
-                } else {
-                    $message = '';
-                    $client  = Client::find($json_body->client_id)->first();
-                    $sect    = KeyValue::where('client_id', $json_body->client_id)->get();
-                    if ($sect != null) {
-                        foreach ($json_body->sections as $section) {
-                            foreach ($section as $key => $value) {
-                                $where = [
-                                    'client_id' => $json_body->client_id,
-                                    'form_id' => $json_body->form_id,
-                                    'key' => $key
-                                ];
-                                $keyValue = KeyValue::where($where)->first();
-                                if (!empty($keyValue) && is_object($keyValue)) {
-                                    $keyValue->key = $key;
-                                    $keyValue->value = $value;
-                                    $keyValue->save();
-                                }
-                            }
-    
-                            if (!empty($section->document_type_id)) {
-                                $client->document_type_id = $section->document_type_id;
-                                $client->first_name = $section->firstName;
-                                $client->middle_name = $section->middleName;
-                                $client->first_lastname = $section->lastName;
-                                $client->second_lastname = $section->secondLastName;
-                                $client->document = $section->document;
-                                $client->save();
-                            }
-                        }
-                        $form_answer = new FormAnswer([
-                            'user_id' => 1,
-                            'channel_id' => 1,
-                            'client_id' => $client->id,
-                            'form_id' => $json_body->form_id,
-                            'structure_answer' => json_encode($json_body->sections),
-                        ]);
-                        $form_answer->save();
-                        $message = 'Informacion actualizada correctamente';
-                    } else {
-                        foreach ($json_body->sections as $section) {
-                            foreach ($section as $key => $value) {
-                                $sect = new KeyValue([
-                                    'form_id' => $json_body->form_id,
-                                    'client_id' => $client->id,
-                                    'key' => $key,
-                                    'value' => $value,
-                                    'description' => 0
-                                ]);
-                                $sect->save();
-                            }
-                        }
-    
-                        $form_answer = new FormAnswer([
-                            'user_id' => 1,
-                            'channel_id' => 1,
-                            'client_id' => $client->id,
-                            'form_id' => $json_body->form_id,
-                            'structure_answer' => json_encode($json_body->sections),
-                        ]);
-                        $form_answer->save();
-                        $message = 'Informacion creada y actualizada correctamente';
-                    }
-                }
-            } else {
+                } 
+             } else {
                 $message = 'Tú rol no tiene permisos para ejecutar esta acción';
-            }
+            } 
             return $this->successResponse($message);
         } catch (\Throwable $e) {
             return $this->errorResponse('Error al guardar el formulario', 500);
@@ -152,7 +92,7 @@ class FormAnswerController extends Controller
      * 26-02-2020
      * Método para filtrar las varias opciones en el formulario
      */
-    public function filterForm(Request $request)
+    public function filterForm(Request $request, MiosHelper $miosHelper)
     {
         try {
             if (Gate::allows('form_answer')) {
@@ -169,12 +109,15 @@ class FormAnswerController extends Controller
 
                 foreach ($form_answers as $form) {
                     //Variable para obtener los datos del usuario que realizo la gestion
+                    $form_answer_id     = $form->id;
                     $userData           = $this->ciuService->fetchUser($form->user_id)->data;
+                    $channelId          = $form->channel_id;
+                    $clientiId          = $form->client_id;
                     $created_at         = $form->created_at;
                     $updated_at         = $form->updated_at;
                     $array              =  json_decode(json_encode($form->structure_answer, true));
                     $structure_answer   = json_decode($array, TRUE);
-                    
+
                     foreach ($structure_answer as $answer) {
                         $find = false;
                         $find2 = false;
@@ -191,7 +134,10 @@ class FormAnswerController extends Controller
 
                         if ($find || $find2 || $find3) {
                             $info = [
-                                'user' => $userData ,
+                                'form_answer_id' => $form_answer_id,
+                                'user' => $userData,
+                                'channel_id' => $channelId,
+                                'client_id' => $clientiId,
                                 'created_at' => $created_at,
                                 'updated_at' => $updated_at,
                                 'register' => $structure_answer
@@ -200,20 +146,12 @@ class FormAnswerController extends Controller
                         }
                     }
                 }
-                $data = [
-                    'suceess' => true,
-                    'code' => 200,
-                    'result' => $infoForm,
-                ];
+                $pagination = $miosHelper->paginate($infoForm, $perPage = 15, $page = null);
+                $data = $miosHelper->jsonResponse(true, 200, 'result', $pagination);
             } else {
-                $data = [
-                    'suceess' => false,
-                    'code' => 403,
-                    'message' => 'Tú rol no tiene permisos para ejecutar esta acción'
-                ];
+                $data = $miosHelper->jsonResponse(false, 403, 'message','Tú rol no tiene permisos para ejecutar esta acción');
             }
             return response()->json($data, $data['code']);
-            
         } catch (\Throwable $e) {
             return $this->errorResponse('Error al buscar la gestion', 500);
         }
@@ -229,5 +167,67 @@ class FormAnswerController extends Controller
             ->select('id', 'name_type_document')->get();
 
         return $documentType;
+    }
+
+    /**
+     * Olme Marin
+     * 02-03-2021
+     * Método para consultar los registro de un cliente en from answer
+     */
+    public function formAnswerHistoric($form_id, $client_id, MiosHelper $miosHelper)
+    {
+        try {
+            
+            $where = [ 'form_id' => $form_id, 'client_id' => $client_id ];
+            $form_answers = FormAnswer::where($where)->paginate(10);
+            $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
+
+            return response()->json($data, $data['code']);
+
+        } catch (\Throwable $e) {
+            return $this->errorResponse('Error al buscar la gestion', 500);
+        }
+    }
+
+    public function updateFormAnswer(Request $request, $id)
+    {   
+       
+        $contador = 0;
+       foreach ($request->sections as $section) 
+       {
+           dd($section);
+           if ($contador == 0) {
+               $client = Client::find($request->client_id);
+               $client->document_type_id = !empty($section->document_type_id) ? $section->document_type_id : 1;
+               $client->first_name = $section['firstName'];
+                $client->middle_name = $section['middleName'];
+                $client->first_lastname = $section['lastName'];
+                $client->second_lastname = $section['secondLastName'];
+                $client->document = $section['document'];
+                $client->phone = $section['phone'];
+                $client->email = $section['email'];
+                $client->save();
+            }
+            $formAnswer = FormAnswer::find($id);
+            $formAnswer->form_id = $request->form_id;
+            $formAnswer->client_id = $request->client_id;
+            $formAnswer->structure_answer = json_encode($request->sections);
+            $formAnswer->save();
+    
+            foreach ($formAnswer->structure_answer as $key => $value) {
+                    $sect =  KeyValue::where(count('client_id',$client->id))->first();
+                    $sect->form_id = $request->form_id;
+                    $sect->client_id = $client->id;
+                    $sect->key = $key;
+                    $sect->value = $value;
+                    $sect->description = null;
+                    $sect->save();
+            }
+            $contador++;
+        }
+
+       
+        return 'ok';
+
     }
 }
