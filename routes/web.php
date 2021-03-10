@@ -61,8 +61,4 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->put('/trays/update/{id}','StateFormController@update');
     $router->get('/trays/delete/{id}','StateFormController@delete');
     $router->get('/trays/show/{id}','StateFormController@trayQuery');
-
- 
-    
-    
- });
+});
