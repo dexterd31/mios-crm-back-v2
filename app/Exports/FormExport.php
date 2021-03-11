@@ -6,6 +6,8 @@ use App\Models\Form;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
+$headersExcel = [];
+
 class FormExport implements FromCollection, WithHeadings
 {
     /**
@@ -17,16 +19,15 @@ class FormExport implements FromCollection, WithHeadings
     }
 
     public function headings(): array
-    {
-        return [
-            'Primer nombre',
-            'Segundo nombre',
-            'Primer apellido',
-            'Segundo apellido',
-            'Tipo documento',
-            'Documento',
-            'Telefono',
-            'Correo electronico',
-        ];
+    {   
+        global $headersExcel;
+        return $headersExcel;
+    }
+
+    public function headerMiosExcel($headers){
+        
+        global $headersExcel;
+        $headersExcel = $headers;
+        return $headers;
     }
 }
