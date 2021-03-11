@@ -17,12 +17,12 @@ class FormAnswerController extends Controller
     private $ciuService;
     private $nominaService;
 
-/*      public function __construct(CiuService $ciuService, NominaService $nominaService)
+     public function __construct(CiuService $ciuService, NominaService $nominaService)
     {
-        $this->middleware('auth');
+       // $this->middleware('auth');
         $this->ciuService = $ciuService;
         $this->nominaService = $nominaService;
-    }  */
+    }  
     /**
      * Nicol Ramirez
      * 11-02-2020
