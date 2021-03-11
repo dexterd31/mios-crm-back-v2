@@ -112,8 +112,8 @@ class FormController extends Controller
     
     public function editForm(Request $request, $id, MiosHelper $miosHelper)
     {
-         try
-        { 
+       /*   try
+        {  */
             $form = Form::find($id);
             $form->group_id = $request->group_id;
             $form->form_type_id = $request->type_form;
@@ -125,8 +125,7 @@ class FormController extends Controller
             {
                 $section['fields'][0]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][0]['label']);
                 $section['fields'][0]['key'] =  strtolower( str_replace(' ','-',$section['fields'][0]['label']) );
-               
-                $var = $section['fields'];
+                $var = $miosHelper->validateKeyName($section['fields'][0]['label'], $section['fields'][1]['label'], $section['fields'][2]['label'], $section['fields'][3]['label'], $section['fields'][4]['label'],$section['fields'][5]['label'],$section['fields'][6]['label'],$section);
                 
                 $result = Section::find($section['idsection']);
                 $result->name_section = $section['sectionName'];
@@ -134,12 +133,12 @@ class FormController extends Controller
                 $result->fields = json_encode($var);
                 $result->save();           
             } 
-           
-       return $this->successResponse('Formulario editado Correctamente');
+           return 'ok';
+      /*  return $this->successResponse('Formulario editado Correctamente');
     
         }catch(\Throwable $e){
             return $this->errorResponse('Error al editar el formulario',500);
-        } 
+        }  */
     }
 
         /**
