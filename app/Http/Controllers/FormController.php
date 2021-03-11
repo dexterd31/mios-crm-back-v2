@@ -112,8 +112,8 @@ class FormController extends Controller
     
     public function editForm(Request $request, $id, MiosHelper $miosHelper)
     {
-       /*   try
-        {  */
+          try
+        {  
             $form = Form::find($id);
             $form->group_id = $request->group_id;
             $form->form_type_id = $request->type_form;
@@ -133,12 +133,12 @@ class FormController extends Controller
                 $result->fields = json_encode($var);
                 $result->save();           
             } 
-           return 'ok';
-      /*  return $this->successResponse('Formulario editado Correctamente');
+         
+        return $this->successResponse('Formulario editado Correctamente');
     
         }catch(\Throwable $e){
             return $this->errorResponse('Error al editar el formulario',500);
-        }  */
+        }  
     }
 
         /**
