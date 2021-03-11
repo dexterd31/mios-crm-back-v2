@@ -106,6 +106,42 @@ class SectionSeeder extends Seeder
                         'admin','supervisor'),
                     'seeRoles' => array(
                         'admin','asesor')
+                ],
+                [
+                    'type'=> 'text',
+                    'controlType'=> 'textbox',
+                    'key'=> 'phone',
+                    'label'=> 'Teléfono',
+                    'value'=> '',
+                    'disabled'=> false,
+                    'required'=> true,
+                    'minlength'=>1,
+                    'maxLength'=> 30,
+                    'options'=>[],
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        'admin','supervisor'),
+                    'seeRoles' => array(
+                        'admin','asesor')
+                ],
+                [
+                    'type'=> 'text',
+                    'controlType'=> 'textbox',
+                    'key'=> 'email',
+                    'label'=> 'Email',
+                    'value'=> '',
+                    'disabled'=> false,
+                    'required'=> true,
+                    'minlength'=>1,
+                    'maxLength'=> 30,
+                    'options'=>[],
+                    'cols'=>1,
+                    'inReport'=> true,
+                    'editRoles' => array(
+                        'admin','supervisor'),
+                    'seeRoles' => array(
+                        'admin','asesor')
                 ])
             ],
             [
@@ -244,7 +280,43 @@ class SectionSeeder extends Seeder
                             'admin','supervisor','asesor'),
                         'seeRoles' => array(
                             'admin','asesor')
-                    ])
+                        ],
+                        [
+                            'type'=> 'text',
+                            'controlType'=> 'textbox',
+                            'key'=> 'phone',
+                            'label'=> 'Teléfono',
+                            'value'=> '',
+                            'disabled'=> false,
+                            'required'=> true,
+                            'minlength'=>1,
+                            'maxLength'=> 30,
+                            'options'=>[],
+                            'cols'=>1,
+                            'inReport'=> true,
+                            'editRoles' => array(
+                                'admin','supervisor'),
+                            'seeRoles' => array(
+                                'admin','asesor')
+                        ],
+                        [
+                            'type'=> 'text',
+                            'controlType'=> 'textbox',
+                            'key'=> 'email',
+                            'label'=> 'Email',
+                            'value'=> '',
+                            'disabled'=> false,
+                            'required'=> true,
+                            'minlength'=>1,
+                            'maxLength'=> 30,
+                            'options'=>[],
+                            'cols'=>1,
+                            'inReport'=> true,
+                            'editRoles' => array(
+                                'admin','supervisor'),
+                            'seeRoles' => array(
+                                'admin','asesor')
+                        ])
             ],
             [
                 'form_id' => '2',
