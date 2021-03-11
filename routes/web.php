@@ -31,7 +31,6 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
     $router->post('/formanswer/filterform', 'FormAnswerController@filterForm');
-    $router->put('/formanswer/updateFormAnswer/{id}', 'FormAnswerController@updateFormAnswer');
     $router->get('/formanswer/historic/{form_id}/{client_id}', 'FormAnswerController@formAnswerHistoric');
     //consultar tipo de documento de los clientes
     $router->get('/searchdocumenttype', 'FormAnswerController@searchDocumentType');
