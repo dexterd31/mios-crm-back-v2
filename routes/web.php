@@ -23,11 +23,14 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/searchformtype', 'FormController@searchFormType');
     $router->put('/editform/{id}', 'FormController@editForm');
     $router->put('/deleteform/{id}', 'FormController@deleteForm');
+
+    //Base de datos
+    $router->get('/form/dowload', 'FormController@exportExcel');
+    $router->post('/form/upload', 'FormController@importExcel');
    
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
     $router->post('/formanswer/filterform', 'FormAnswerController@filterForm');
-    $router->put('/formanswer/updateFormAnswer/{id}', 'FormAnswerController@updateFormAnswer');
     $router->get('/formanswer/historic/{form_id}/{client_id}', 'FormAnswerController@formAnswerHistoric');
     //consultar tipo de documento de los clientes
     $router->get('/searchdocumenttype', 'FormAnswerController@searchDocumentType');
@@ -61,9 +64,4 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->put('/trays/update/{id}','StateFormController@update');
     $router->get('/trays/delete/{id}','StateFormController@delete');
     $router->get('/trays/show/{id}','StateFormController@trayQuery');
-    
-
- 
-    
-    
- });
+});

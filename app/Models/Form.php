@@ -23,7 +23,7 @@ class Form extends Model
     }
 
     public function stateform(){
-        return $this->belongsTo('App\Models\StateForm','form_id');
+        return $this->hasMany('App\Models\StateForm','form_id');
     }
 
     public function campaign(){

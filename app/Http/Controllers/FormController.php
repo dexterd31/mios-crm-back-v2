@@ -1,6 +1,9 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use App\Exports\FormExport;
+use App\Imports\FormImport;
 use App\Models\Form;
 use App\Models\FormType;
 use App\Models\Section;
@@ -8,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Helpers\MiosHelper;
 
+use Maatwebsite\Excel\Facades\Excel;
 
 class FormController extends Controller
 {
@@ -72,7 +76,7 @@ class FormController extends Controller
                
               $section['fields'][0]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][0]['label']);
               $section['fields'][0]['key'] =  strtolower( str_replace(' ','-',$section['fields'][0]['label']) );
-              $sect = $miosHelper->validateKeyName($section['fields'][0]['label'], $section['fields'][1]['label'], $section['fields'][2]['label'], $section['fields'][3]['label'], $section['fields'][4]['label'],$section);
+              $sect = $miosHelper->validateKeyName($section['fields'][0]['label'], $section['fields'][1]['label'], $section['fields'][2]['label'], $section['fields'][3]['label'], $section['fields'][4]['label'],$section['fields'][5]['label'],$section['fields'][6]['label'],$section);
               
                $sections = new Section([
                    'form_id' => $forms->id,
@@ -157,5 +161,25 @@ class FormController extends Controller
             return $this->errorResponse('Error al desactivar el formulario',500);
         }
        
+    }
+    /**
+    * Olme Marin
+    * 10-03-2021
+    * Método para descargar la plantilla de excel del formularios
+    */
+    public function exportExcel() {
+        return Excel::download(new FormExport,'plantilla.xlsx');
+    }
+
+     /**
+    * Olme Marin
+    * 10-03-2021
+    * Método para importar info desde la plantilla de excel
+    */
+    public function importExcel(Request $request, MiosHelper $miosHelper) {
+        $file = $request->file('excel');
+        Excel::import(new FormImport, $file);
+        $data = $miosHelper->jsonResponse(true, 200, 'message','Se realizó el cargue de forma exitosa');
+        return response()->json($data, $data['code']);
     }
 }

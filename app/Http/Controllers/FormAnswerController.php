@@ -19,10 +19,10 @@ class FormAnswerController extends Controller
 
      public function __construct(CiuService $ciuService, NominaService $nominaService)
     {
-        $this->middleware('auth');
+       // $this->middleware('auth');
         $this->ciuService = $ciuService;
         $this->nominaService = $nominaService;
-    } 
+    }  
     /**
      * Nicol Ramirez
      * 11-02-2020
@@ -32,7 +32,7 @@ class FormAnswerController extends Controller
     {
         try {
             // Se valida si tiene permiso para hacer acciones en formAnswer
-            if (Gate::allows('form_answer')) {
+           // if (Gate::allows('form_answer')) {
                 $json_body = json_decode($request->getContent());
                 $client = null;
                 if ($json_body->client_id == null) {
@@ -78,9 +78,9 @@ class FormAnswerController extends Controller
                     $form_answer->save();
                     $message = 'Informacion guardada correctamente';
                 } 
-             } else {
+             /* } else {
                 $message = 'Tú rol no tiene permisos para ejecutar esta acción';
-            } 
+            }  */
             return $this->successResponse($message);
         } catch (\Throwable $e) {
             return $this->errorResponse('Error al guardar el formulario', 500);
@@ -95,7 +95,7 @@ class FormAnswerController extends Controller
     public function filterForm(Request $request, MiosHelper $miosHelper)
     {
         try {
-            if (Gate::allows('form_answer')) {
+         //   if (Gate::allows('form_answer')) {
                 $json_body = json_decode($request->getContent());
 
                 $formId     = $json_body->form_id;
@@ -148,9 +148,9 @@ class FormAnswerController extends Controller
                 }
                 $pagination = $miosHelper->paginate($infoForm, $perPage = 15, $page = null);
                 $data = $miosHelper->jsonResponse(true, 200, 'result', $pagination);
-            } else {
+          /*   } else {
                 $data = $miosHelper->jsonResponse(false, 403, 'message','Tú rol no tiene permisos para ejecutar esta acción');
-            }
+            } */
             return response()->json($data, $data['code']);
         } catch (\Throwable $e) {
             return $this->errorResponse('Error al buscar la gestion', 500);
@@ -179,9 +179,13 @@ class FormAnswerController extends Controller
         try {
             
             $where = [ 'form_id' => $form_id, 'client_id' => $client_id ];
-            $form_answers = FormAnswer::where($where)->paginate(10);
+            $form_answers = FormAnswer::where($where)->with('channel')->paginate(10);
+            foreach($form_answers  as $form) {
+                $userData     = $this->ciuService->fetchUser($form->user_id)->data;
+                $form->user = $userData ;
+            }     
+                  
             $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
-
             return response()->json($data, $data['code']);
 
         } catch (\Throwable $e) {
@@ -189,45 +193,4 @@ class FormAnswerController extends Controller
         }
     }
 
-    public function updateFormAnswer(Request $request, $id)
-    {   
-       
-        $contador = 0;
-       foreach ($request->sections as $section) 
-       {
-           dd($section);
-           if ($contador == 0) {
-               $client = Client::find($request->client_id);
-               $client->document_type_id = !empty($section->document_type_id) ? $section->document_type_id : 1;
-               $client->first_name = $section['firstName'];
-                $client->middle_name = $section['middleName'];
-                $client->first_lastname = $section['lastName'];
-                $client->second_lastname = $section['secondLastName'];
-                $client->document = $section['document'];
-                $client->phone = $section['phone'];
-                $client->email = $section['email'];
-                $client->save();
-            }
-            $formAnswer = FormAnswer::find($id);
-            $formAnswer->form_id = $request->form_id;
-            $formAnswer->client_id = $request->client_id;
-            $formAnswer->structure_answer = json_encode($request->sections);
-            $formAnswer->save();
-    
-            foreach ($formAnswer->structure_answer as $key => $value) {
-                    $sect =  KeyValue::where(count('client_id',$client->id))->first();
-                    $sect->form_id = $request->form_id;
-                    $sect->client_id = $client->id;
-                    $sect->key = $key;
-                    $sect->value = $value;
-                    $sect->description = null;
-                    $sect->save();
-            }
-            $contador++;
-        }
-
-       
-        return 'ok';
-
-    }
 }
