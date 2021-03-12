@@ -66,6 +66,10 @@ class Relationships extends Migration
             {
                 $table->foreignId('document_type_id')->constrained('document_types'); 
             });
+        Schema::table('parameters', function ($table)
+            {
+                $table->foreignId('section_id')->constrained('sections'); 
+            });
     
     
         

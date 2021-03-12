@@ -77,7 +77,34 @@ class FormAnswerController extends Controller
 
                     $form_answer->save();
                     $message = 'Informacion guardada correctamente';
-                } 
+                }else{
+
+                    foreach ($json_body->sections as $section) {
+                        foreach ($section as $key => $value) {
+                            $sec = new KeyValue([
+                                'form_id' => $json_body->form_id,
+                                'client_id' => $json_body->client_id,
+                                'key' => $key,
+                                'value' => $value,
+                                'description' => null
+                            ]);
+
+                            $sec->save();
+                        }
+
+                        $formanswer = new FormAnswer([
+                            'user_id' => 1,
+                            'channel_id' => 1,
+                            'client_id' => $json_body->client_id,
+                            'form_id' => $json_body->form_id,
+                            'structure_answer' => json_encode($json_body->sections)
+                        ]);
+    
+                        $formanswer->save();
+                    $message = 'Informacion guardada correctamente';
+
+                    }
+                }
              /* } else {
                 $message = 'Tú rol no tiene permisos para ejecutar esta acción';
             }  */

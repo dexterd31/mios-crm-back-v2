@@ -39,4 +39,8 @@ class Form extends Model
     public function upload(){
         return $this->hasMany('App\Models\Upload','form_id');
     }
+    
+    public function parameter(){
+        return $this->hasMany('App\Models\Parameter','form_id');
+    }
 }
