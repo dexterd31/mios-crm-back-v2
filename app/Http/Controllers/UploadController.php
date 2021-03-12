@@ -45,6 +45,7 @@ class UploadController extends Controller
             Excel::import(new FormImport, $file);
 
             //Seguardan los keyValues
+            //Excel::import(new KeyValuesImport,$file, $formId);
             $data = $miosHelper->jsonResponse(true, 200, 'message','Se realizó el cargue de forma exitosa');
             return response()->json($data, $data['code']);
         } else {

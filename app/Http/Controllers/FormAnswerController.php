@@ -19,7 +19,7 @@ class FormAnswerController extends Controller
 
      public function __construct(CiuService $ciuService, NominaService $nominaService)
     {
-       // $this->middleware('auth');
+        $this->middleware('auth');
         $this->ciuService = $ciuService;
         $this->nominaService = $nominaService;
     }  
