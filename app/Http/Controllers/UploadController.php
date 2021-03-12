@@ -19,7 +19,7 @@ class UploadController extends Controller
     public function exportExcel($parameters) {
         $formExport = new FormExport();
         $headers    = base64_decode($parameters);
-        $formExport->headerMiosExcel(json_decode($headers));
+        $formExport->headerMiosExcel(explode(",", $headers));
         return Excel::download(new FormExport,'plantilla.xlsx');
     }
 
