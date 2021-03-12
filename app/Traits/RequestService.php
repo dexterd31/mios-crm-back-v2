@@ -17,7 +17,7 @@ trait RequestService
             'base_uri' => $this->baseUri
             ]);
             if (isset($this->secret)) {
-                $headers['Authorization'] = $this->secret;
+                $headers['Authorization'] = 'Bearer '.$this->secret;
             }
 
             $response = $client->request($method, env('LOCAL') ? 'public/'.$requestUrl : $requestUrl,

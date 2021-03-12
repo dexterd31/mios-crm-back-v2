@@ -1,8 +1,9 @@
 <?php
 
 namespace App\Services;
-
+use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Traits\RequestService;
+
 class NominaService
 {
     use RequestService;
@@ -12,6 +13,7 @@ class NominaService
     public function __construct()
     {
         $this->baseUri = config('services.nomina.base_uri');
+        $this->secret = JWTAuth::getToken()->get();
     }
 
     public function fetchCampaign($id)
