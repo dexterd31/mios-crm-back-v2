@@ -21,7 +21,7 @@ class FormExport implements FromCollection, WithHeadings
     public function headings(): array
     {   
         global $headersExcel;
-        return $headersExcel;
+        return ['nombre', 'apellido'];
     }
 
     public function headerMiosExcel($headers){
