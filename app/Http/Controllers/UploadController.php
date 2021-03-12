@@ -16,12 +16,10 @@ class UploadController extends Controller
     * 10-03-2021
     * Método para descargar la plantilla de excel del formularios
     */
-    public function exportExcel() {
-        // $json_body  = json_decode($request->getContent());
-        // $parameters = $json_body->parameters;
+    public function exportExcel($parameters) {
         $formExport = new FormExport();
-        $headers    = [];//$parameters;
-        $formExport->headerMiosExcel($headers);
+        $headers    = base64_decode($parameters);
+        $formExport->headerMiosExcel(json_decode($headers));
         return Excel::download(new FormExport,'plantilla.xlsx');
     }
 
