@@ -65,5 +65,3 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/trays/delete/{id}','StateFormController@delete');
     $router->get('/trays/show/{id}','StateFormController@trayQuery');
 });
-
-//['first_name', 'middle_name', 'first_lastname', 'second_lastname', 'document', 'phone', 'email','document_type_id']
