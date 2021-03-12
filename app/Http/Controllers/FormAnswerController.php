@@ -42,13 +42,13 @@ class FormAnswerController extends Controller
                         if ($contador == 0) {
                             $client = new Client([
                                 'document_type_id' => !empty($section->document_type_id) ? $section->document_type_id : 1,
-                                'first_name' => $section->firstName,
-                                'middle_name' => $section->middleName,
-                                'first_lastname' => $section->lastName,
-                                'second_lastname' => $section->secondLastName,
-                                'document' => $section->document,
-                                'phone' => $section->phone,
-                                'email' => $section->email
+                                'first_name' => rtrim($section->firstName),
+                                'middle_name' => rtrim($section->middleName),
+                                'first_lastname' => rtrim($section->lastName),
+                                'second_lastname' => rtrim($section->secondLastName),
+                                'document' => rtrim($section->document),
+                                'phone' => rtrim($section->phone),
+                                'email' => rtrim($section->email)
                             ]);
                             $client->save();
                         }
@@ -95,62 +95,40 @@ class FormAnswerController extends Controller
     public function filterForm(Request $request, MiosHelper $miosHelper)
     {
         try {
-         //   if (Gate::allows('form_answer')) {
+           if (Gate::allows('form_answer')) {
                 $json_body = json_decode($request->getContent());
 
                 $formId     = $json_body->form_id;
-
-                $item1value = $json_body->item1_value;
-                $item2value = $json_body->item2_value;
-                $item3value = $json_body->item3_value;
-
-                $infoForm  = [];
-                $form_answers = FormAnswer::where('form_id', $formId)->get();
-
-                foreach ($form_answers as $form) {
-                    //Variable para obtener los datos del usuario que realizo la gestion
-                    $form_answer_id     = $form->id;
-                    $userData           = $this->ciuService->fetchUser($form->user_id)->data;
-                    $channelId          = $form->channel_id;
-                    $clientiId          = $form->client_id;
-                    $created_at         = $form->created_at;
-                    $updated_at         = $form->updated_at;
-                    $array              =  json_decode(json_encode($form->structure_answer, true));
-                    $structure_answer   = json_decode($array, TRUE);
-
-                    foreach ($structure_answer as $answer) {
-                        $find = false;
-                        $find2 = false;
-                        $find3 = false;
-                        if (isset($item1value) && strlen($item1value) > 0) {
-                            $find = array_search($item1value, $answer);
-                        }
-                        if (isset($item2value) && strlen($item2value) > 0) {
-                            $find2 = array_search($item2value, $answer);
-                        }
-                        if (isset($item3value) && strlen($item3value) > 0) {
-                            $find3 = array_search($item3value, $answer);
-                        }
-
-                        if ($find || $find2 || $find3) {
-                            $info = [
-                                'form_answer_id' => $form_answer_id,
-                                'user' => $userData,
-                                'channel_id' => $channelId,
-                                'client_id' => $clientiId,
-                                'created_at' => $created_at,
-                                'updated_at' => $updated_at,
-                                'register' => $structure_answer
-                            ];
-                            array_push($infoForm, $info);
-                        }
+                if (isset($json_body->item1_key) && isset($json_body->item1_value) && isset($json_body->item2_key) && isset($json_body->item2_value) && isset($json_body->item3_key) && isset($json_body->item3_value)) {
+                    $item1Key   = $json_body->item1_key;
+                    $item1value = !empty($json_body->item1_value) ? $json_body->item1_value : 'vacio';
+                    $item2Key   = $json_body->item2_key ;
+                    $item2value = !empty($json_body->item2_value) ? $json_body->item2_value : 'vacio';
+                    $item3Key   = $json_body->item3_key;
+                    $item3value = !empty($json_body->item3_value) ? $json_body->item3_value : 'vacio';
+    
+                    $option1 = '"'.rtrim($item1Key).'": "'.rtrim($item1value).'"';
+                    $option2 = '"'.rtrim($item2Key).'": "'.rtrim($item2value).'"';
+                    $option3 = '"'.rtrim($item3Key).'": "'.rtrim($item3value).'"';
+                    
+                    $form_answers = FormAnswer::where('form_id', $formId)
+                                    ->where('structure_answer', 'like', '%'.$option1.'%')
+                                    ->orWhere('structure_answer', 'like', '%'.$option2.'%')
+                                    ->orWhere('structure_answer', 'like', '%'.$option3.'%')
+                                    ->with('client')->paginate(10);
+    
+                    foreach ($form_answers as $form) {
+                        $userData       = $this->ciuService->fetchUser($form->user_id)->data;
+                        $form->userdata = $userData;
                     }
+                    $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
+                } else {
+                    $data = $miosHelper->jsonResponse(false, 404, 'message','No ha enviado todas las llaves');
                 }
-                $pagination = $miosHelper->paginate($infoForm, $perPage = 15, $page = null);
-                $data = $miosHelper->jsonResponse(true, 200, 'result', $pagination);
-          /*   } else {
+         
+            } else {
                 $data = $miosHelper->jsonResponse(false, 403, 'message','Tú rol no tiene permisos para ejecutar esta acción');
-            } */
+            } 
             return response()->json($data, $data['code']);
         } catch (\Throwable $e) {
             return $this->errorResponse('Error al buscar la gestion', 500);
