@@ -77,8 +77,35 @@ class FormAnswerController extends Controller
 
                     $form_answer->save();
                     $message = 'Informacion guardada correctamente';
-                } 
-            } else {
+                }else{
+
+                    foreach ($json_body->sections as $section) {
+                        foreach ($section as $key => $value) {
+                            $sec = new KeyValue([
+                                'form_id' => $json_body->form_id,
+                                'client_id' => $json_body->client_id,
+                                'key' => $key,
+                                'value' => $value,
+                                'description' => null
+                            ]);
+
+                            $sec->save();
+                        }
+
+                        $formanswer = new FormAnswer([
+                            'user_id' => 1,
+                            'channel_id' => 1,
+                            'client_id' => $json_body->client_id,
+                            'form_id' => $json_body->form_id,
+                            'structure_answer' => json_encode($json_body->sections)
+                        ]);
+    
+                        $formanswer->save();
+                    $message = 'Informacion guardada correctamente';
+
+                    }
+                }
+             } else {
                 $message = 'Tú rol no tiene permisos para ejecutar esta acción';
             } 
             return $this->successResponse($message);
@@ -95,7 +122,7 @@ class FormAnswerController extends Controller
     public function filterForm(Request $request, MiosHelper $miosHelper)
     {
         try {
-            if (Gate::allows('form_answer')) {
+           if (Gate::allows('form_answer')) {
                 $json_body = json_decode($request->getContent());
 
                 $formId     = $json_body->form_id;
@@ -125,9 +152,10 @@ class FormAnswerController extends Controller
                 } else {
                     $data = $miosHelper->jsonResponse(false, 404, 'message','No ha enviado todas las llaves');
                 }
+         
             } else {
                 $data = $miosHelper->jsonResponse(false, 403, 'message','Tú rol no tiene permisos para ejecutar esta acción');
-            }
+            } 
             return response()->json($data, $data['code']);
         } catch (\Throwable $e) {
             return $this->errorResponse('Error al buscar la gestion', 500);
