@@ -4,7 +4,7 @@ namespace App\Imports;
 
 use App\Models\Client;
 use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
+
 
 class FormImport implements ToModel
 {
