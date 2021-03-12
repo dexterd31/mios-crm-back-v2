@@ -77,6 +77,7 @@ class FormAnswerController extends Controller
 
                     $form_answer->save();
                     $message = 'Informacion guardada correctamente';
+                    
                 }else{
 
                     foreach ($json_body->sections as $section) {
