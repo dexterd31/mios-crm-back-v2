@@ -19,10 +19,10 @@ class FormAnswerController extends Controller
 
      public function __construct(CiuService $ciuService, NominaService $nominaService)
     {
-        $this->middleware('auth');
+       // $this->middleware('auth');
         $this->ciuService = $ciuService;
         $this->nominaService = $nominaService;
-    } 
+    }  
     /**
      * Nicol Ramirez
      * 11-02-2020
@@ -78,7 +78,7 @@ class FormAnswerController extends Controller
                     $form_answer->save();
                     $message = 'Informacion guardada correctamente';
                 } 
-             } else {
+            } else {
                 $message = 'Tú rol no tiene permisos para ejecutar esta acción';
             } 
             return $this->successResponse($message);
@@ -125,7 +125,6 @@ class FormAnswerController extends Controller
                 } else {
                     $data = $miosHelper->jsonResponse(false, 404, 'message','No ha enviado todas las llaves');
                 }
-         
             } else {
                 $data = $miosHelper->jsonResponse(false, 403, 'message','Tú rol no tiene permisos para ejecutar esta acción');
             }
@@ -171,45 +170,4 @@ class FormAnswerController extends Controller
         }
     }
 
-    public function updateFormAnswer(Request $request, $id)
-    {   
-       
-        $contador = 0;
-       foreach ($request->sections as $section) 
-       {
-           dd($section);
-           if ($contador == 0) {
-               $client = Client::find($request->client_id);
-               $client->document_type_id = !empty($section->document_type_id) ? $section->document_type_id : 1;
-               $client->first_name = $section['firstName'];
-                $client->middle_name = $section['middleName'];
-                $client->first_lastname = $section['lastName'];
-                $client->second_lastname = $section['secondLastName'];
-                $client->document = $section['document'];
-                $client->phone = $section['phone'];
-                $client->email = $section['email'];
-                $client->save();
-            }
-            $formAnswer = FormAnswer::find($id);
-            $formAnswer->form_id = $request->form_id;
-            $formAnswer->client_id = $request->client_id;
-            $formAnswer->structure_answer = json_encode($request->sections);
-            $formAnswer->save();
-    
-            foreach ($formAnswer->structure_answer as $key => $value) {
-                    $sect =  KeyValue::where(count('client_id',$client->id))->first();
-                    $sect->form_id = $request->form_id;
-                    $sect->client_id = $client->id;
-                    $sect->key = $key;
-                    $sect->value = $value;
-                    $sect->description = null;
-                    $sect->save();
-            }
-            $contador++;
-        }
-
-       
-        return 'ok';
-
-    }
 }

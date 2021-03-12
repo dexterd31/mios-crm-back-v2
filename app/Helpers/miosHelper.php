@@ -25,7 +25,7 @@ class MiosHelper {
         return $data;
     }
 
-    function validateKeyName($key,$key2,$key3,$key4,$key5,$section){
+    function validateKeyName($key,$key2,$key3,$key4,$key5,$key6,$key7,$section){
         $firstNameArray = [
             'Nombre',
             'Primer nombre',
@@ -68,11 +68,30 @@ class MiosHelper {
             'No. Documento',
             'DNI'
         ];
+        $phoneArray = [
+            'Teléfono',
+            'Celular',
+            'Telefono',
+            'Número de Teléfono',
+            'Numero de Celular',
+            'Fijo',
+            'celular',
+            'Teléfono de contacto'
+        ];
+        $emailArray = [
+            'Email',
+            'E-mail',
+            'Correo Electrónico',
+            'Correo',
+            'Correo electrónico'
+        ];
         $firstName = !empty($key) ? in_array($key,$firstNameArray):false;
         $middleName = !empty($key2) ? in_array($key2, $middleNameArray):false;
         $lastName = !empty($key3) ? in_array($key3, $lastNameArray):false;
         $secondLastName = !empty($key4) ? in_array($key4, $secondLastNameArray):false;
         $document = !empty($key5) ? in_array($key5, $documentArray):false;
+        $phone = !empty($key6) ? in_array($key6, $phoneArray):false;
+        $email = !empty($key7) ? in_array($key7, $emailArray):false;
 
         if($firstName)
         {
@@ -97,6 +116,14 @@ class MiosHelper {
         if($document)
         {
             $section['fields'][4]['key'] = 'document';
+        }
+        if($phone)
+        {
+            $section['fields'][5]['key'] = 'phone';
+        }
+        if($email)
+        {
+            $section['fields'][6]['key'] = 'email';
         }
         return $section['fields'];
     }
