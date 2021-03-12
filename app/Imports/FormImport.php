@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Models\Client;
+use App\Models\KeyValue;
 use Maatwebsite\Excel\Concerns\ToModel;
 
 
@@ -15,10 +16,13 @@ class FormImport implements ToModel
     */
     public function model(array $row)
     {   
+        $count = count($row);
+       
         if (is_numeric($row[4]) || $row[4] == null) {
             $client = Client::where('document', $row[5])->first();
             if ($client == null) {
-                return new Client([
+                //return new Client([
+                $clientNew = new Client([    
                     'first_name' => $row[0],
                     'middle_name' => $row[1],
                     'first_lastname' => $row[2],
@@ -28,7 +32,15 @@ class FormImport implements ToModel
                     'phone' => $row[6],
                     'email' => $row[7],
                 ]);
+                $clientId = $clientNew->id; 
+                for ($i=8; $i < $count; $i++) { 
+                    $keyValues = new KeyValue([
+                        $row[0]
+                    ]);
+                }
             } 
+            $clientId = $client->id; 
+            
         }
     }
 }
