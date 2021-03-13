@@ -14,5 +14,8 @@ class Section extends Model
         return $this->belongsTo('App\Models\Form', 'id');
     }
     
+    public function parameter(){
+        return $this->hasMany('App\Models\Parameter','form_id');
+    }
    
 }
