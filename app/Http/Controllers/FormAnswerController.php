@@ -147,8 +147,10 @@ class FormAnswerController extends Controller
     
                     foreach ($form_answers as $form) {
                         $userData       = $this->ciuService->fetchUser($form->user_id)->data;
+                        $form->structure_answer = json_decode($form->structure_answer);
                         $form->userdata = $userData;
                     }
+   
                     $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
                 } else {
                     $data = $miosHelper->jsonResponse(false, 404, 'message','No ha enviado todas las llaves');
