@@ -17,7 +17,7 @@ class CreateParametersTable extends Migration
             $table->id();
             $table->string('name');
             $table->json('options');
-            $table->integer('idSuperior');
+            $table->integer('idSuperior')->nullable();
             $table->timestamps();
         });
     }
