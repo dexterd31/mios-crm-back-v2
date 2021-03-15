@@ -76,15 +76,25 @@ class FormController extends Controller
               $section['fields'][0]['key'] =  strtolower( str_replace(' ','-',$section['fields'][0]['label']) );
               if($section['sectionName'] == 'Datos básicos de cliente'){
                   $sect = $miosHelper->validateKeyName($section['fields'][0]['label'], $section['fields'][1]['label'], $section['fields'][2]['label'], $section['fields'][3]['label'], $section['fields'][4]['label'],$section['fields'][5]['label'],$section['fields'][6]['label'],$section);
-              }
-              
-               $sections = new Section([
-                   'form_id' => $forms->id,
-                   'name_section' => $section['sectionName'],
-                   'type_section' => $section['type_section'],
-                   'fields' => json_encode($sect),
-               ]);
-               $sections->save();           
+                  
+                  $sections = new Section([
+                      'form_id' => $forms->id,
+                      'name_section' => $section['sectionName'],
+                      'type_section' => $section['type_section'],
+                      'fields' => json_encode($sect),
+                      ]);
+                      $sections->save();           
+                    }
+                else{
+                    $fields = $section['fields'];
+                    $sections = new Section([
+                        'form_id' => $forms->id,
+                        'name_section' => $section['sectionName'],
+                        'type_section' => $section['type_section'],
+                        'fields' => json_encode($fields),
+                        ]);
+                        $sections->save();
+                }
             }
             $data = ['forms' => $forms , 'sections' => json_decode($sections->fields), 'code' => 200,'message'=>'Guardado Correctamente'];
 
