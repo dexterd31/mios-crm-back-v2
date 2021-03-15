@@ -19,7 +19,7 @@ class FormAnswerController extends Controller
 
      public function __construct(CiuService $ciuService, NominaService $nominaService)
     {
-       // $this->middleware('auth');
+        $this->middleware('auth');
         $this->ciuService = $ciuService;
         $this->nominaService = $nominaService;
     }  
@@ -32,7 +32,7 @@ class FormAnswerController extends Controller
     {
         try {
             // Se valida si tiene permiso para hacer acciones en formAnswer
-           // if (Gate::allows('form_answer')) {
+            if (Gate::allows('form_answer')) {
                 $json_body = json_decode($request->getContent());
                 $client = null;
                 if ($json_body->client_id == null) {
@@ -106,9 +106,9 @@ class FormAnswerController extends Controller
 
                     }
                 }
-             /* } else {
+             } else {
                 $message = 'Tú rol no tiene permisos para ejecutar esta acción';
-            }  */
+            } 
             return $this->successResponse($message);
         } catch (\Throwable $e) {
             return $this->errorResponse('Error al guardar el formulario', 500);
@@ -147,8 +147,10 @@ class FormAnswerController extends Controller
     
                     foreach ($form_answers as $form) {
                         $userData       = $this->ciuService->fetchUser($form->user_id)->data;
+                        $form->structure_answer = json_decode($form->structure_answer);
                         $form->userdata = $userData;
                     }
+   
                     $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
                 } else {
                     $data = $miosHelper->jsonResponse(false, 404, 'message','No ha enviado todas las llaves');

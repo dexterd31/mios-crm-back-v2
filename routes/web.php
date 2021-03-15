@@ -62,6 +62,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/trays/list/{form_id}','StateFormController@list');
     $router->get('/trays/get/{id}','StateFormController@get');
     $router->put('/trays/update/{id}','StateFormController@update');   
+    
     $router->get('/trays/delete/{id}','StateFormController@delete');
     $router->get('/trays/show/{id}','StateFormController@trayQuery');
   
@@ -69,5 +70,4 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/saveParameters','ParameterController@saveParameters');
 });
 
-//['first_name', 'middle_name', 'first_lastname', 'second_lastname', 'document', 'phone', 'email','document_type_id']
 

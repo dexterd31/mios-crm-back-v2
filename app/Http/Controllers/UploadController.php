@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Exports\FormExport;
 use App\Imports\FormImport;
+use App\Imports\KeyValuesImport;
 use Helpers\MiosHelper;
+use App\Models\Upload;
 
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -23,15 +25,32 @@ class UploadController extends Controller
         return Excel::download(new FormExport,'plantilla.xlsx');
     }
 
-     /**
+    /**
     * Olme Marin
     * 10-03-2021
     * Método para importar info desde la plantilla de excel
     */
     public function importExcel(Request $request, MiosHelper $miosHelper) {
-        $file = $request->file('excel');
-        Excel::import(new FormImport, $file);
-        $data = $miosHelper->jsonResponse(true, 200, 'message','Se realizó el cargue de forma exitosa');
-        return response()->json($data, $data['code']);
+        $file   = $request->file('excel');
+        $userId = $request->user_id;
+        $formId = $request->form_id;
+        if (isset($file) && isset($userId) && isset($formId)) {
+            //Se agrega en la tabla de uploads
+            $upload = new Upload();
+            $upload->name       = $file->getClientOriginalName();
+            $upload->user_id    = $userId;
+            $upload->form_id    = $formId;
+            $upload->save();
+            //Se guardan los clientes
+            Excel::import(new FormImport, $file);
+
+            //Seguardan los keyValues
+            //Excel::import(new KeyValuesImport,$file, $formId);
+            $data = $miosHelper->jsonResponse(true, 200, 'message','Se realizó el cargue de forma exitosa');
+            return response()->json($data, $data['code']);
+        } else {
+            $data = $miosHelper->jsonResponse(false, 400, 'message', 'Faltan campos por ser diligenciados');
+            return response()->json($data, $data['code']);
+        }
     }
 }
