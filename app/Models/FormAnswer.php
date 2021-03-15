@@ -15,7 +15,7 @@ class FormAnswer extends Model
     }
 
     public function client(){
-        return $this->hasMany('App\Models\Client', 'id');
+        return $this->belongsTo('App\Models\Client', 'client_id');
     }
 
     public function user(){

@@ -2,50 +2,66 @@
 
 namespace App\Imports;
 
-use App\KeyValue;
+use App\Models\Client;
+use App\Models\KeyValue;
+use App\Models\FormAnswer;
 use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithMappedCells;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
 
-$dataExcel = [];
-
-class KeyValuesImport implements WithMappedCells, ToModel
+class KeyValuesImport implements ToModel, WithBatchInserts
 {
     /**
-    * @param array $row
-    *
-    * @return \Illuminate\Database\Eloquent\Model|null
-    */
- 
-    public function mapping(): array
+     * @param array $row
+     *
+     * @return \Illuminate\Database\Eloquent\Model|null
+     */
+    public $userId;
+    public $formId;
+    public $headers;
+    public $num = 0;
+    public $sections = [];
+
+    public function __construct($userId, $formId)
     {
-        global $dataExcel;
-        //$count = count($dataExcel);
-        var_dump($dataExcel);
-        
-        return [
-            'key'   => 'I1',
-            'value' => 'J1',
-        ];
+        $this->userId = $userId;
+        $this->formId = $formId;
     }
 
-    public function olme($data) {
-        var_dump('esto es olme');
-        var_dump($data);
-        global $dataExcel;
-        $dataExcel = $data;
-    }
 
     public function model(array $row)
     {
-        global $dataExcel;
-        $dataExcel = $row;
-        $keyValuesImport = new KeyValuesImport();
-        $keyValuesImport->olme($row);
-      
-        die();
+        if ($this->num == 0) {
+            $this->headers = $row;
+            $this->num = $this->num + 1;
+        } else {
+            $this->sections = [];
+            // Obtener el id del cliente
+            $client = Client::where('document', $row[5])->select('id')->first();
 
-        // return new KeyValue([
-        //     //
-        // ]);
+            // Se crea el obajecto de sections
+            $count = count($row);
+
+            for ($i = 8; $i < $count; $i++) {
+
+                $register = [
+                    '' . $this->headers[$i] . '' => $row[$i]
+                ];
+
+                array_push($this->sections, $register);
+            }
+            // Se crea el objecto para guardar la respuesta
+            return new FormAnswer([
+                'user_id' => $this->userId,
+                'channel_id' => 1,
+                'client_id' => $client->id,
+                'form_id' => $this->formId,
+                'structure_answer' => json_encode($this->sections)
+            ]);
+        }
+    }
+
+    public function batchSize(): int
+    {
+        return 1000;
     }
 }

@@ -122,7 +122,7 @@ class FormAnswerController extends Controller
      */
     public function filterForm(Request $request, MiosHelper $miosHelper)
     {
-        try {
+        //try {
            if (Gate::allows('form_answer')) {
                 $json_body = json_decode($request->getContent());
 
@@ -144,13 +144,26 @@ class FormAnswerController extends Controller
                                     ->orWhere('structure_answer', 'like', '%'.$option2.'%')
                                     ->orWhere('structure_answer', 'like', '%'.$option3.'%')
                                     ->with('client')->paginate(10);
-    
+
+                    // Si no se encuatra registros se busca por cliente
+                    if (count($form_answers) < 1) {
+                       $clientInfo = Client::Where('document', 'like', '%'.$item1value.'%')
+                       ->orWhere('document', 'like', '%'.$item2value.'%')
+                       ->orWhere('document', 'like', '%'.$item3value.'%')->select('id')->first();
+                       $clientNum = $clientInfo != null ? json_encode($clientInfo->id) : null;
+                       
+                        if($clientNum){
+                            $form_answers = FormAnswer::where('form_id', $formId)
+                                    ->where('client_id', $clientNum)
+                                    ->with('client')->paginate(10);
+                        }
+                    }
                     foreach ($form_answers as $form) {
                         $userData       = $this->ciuService->fetchUser($form->user_id)->data;
                         $form->structure_answer = json_decode($form->structure_answer);
                         $form->userdata = $userData;
                     }
-   
+
                     $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
                 } else {
                     $data = $miosHelper->jsonResponse(false, 404, 'message','No ha enviado todas las llaves');
@@ -160,9 +173,9 @@ class FormAnswerController extends Controller
                 $data = $miosHelper->jsonResponse(false, 403, 'message','Tú rol no tiene permisos para ejecutar esta acción');
             } 
             return response()->json($data, $data['code']);
-        } catch (\Throwable $e) {
-            return $this->errorResponse('Error al buscar la gestion', 500);
-        }
+        // } catch (\Throwable $e) {
+        //     return $this->errorResponse('Error al buscar la gestion', 500);
+        // }
     }
     /**
      * Nicoll Ramirez
