@@ -23,9 +23,11 @@
             "database/factories"
         ],
         "psr-4": {
-            "App\\": "app/",
-            "Helpers\\": "app/helpers/"
-        }
+            "App\\": "app/"
+        },
+        "files": [
+            "app/Helpers/miosHelper.php"
+        ]
     },
     "autoload-dev": {
         "classmap": [

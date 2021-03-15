@@ -25,8 +25,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->put('/deleteform/{id}', 'FormController@deleteForm');
 
     //Base de datos
-    $router->get('/form/dowload', 'FormController@exportExcel');
-    $router->post('/form/upload', 'FormController@importExcel');
+    $router->get('/form/dowload/{parameters}', 'UploadController@exportExcel');
+    $router->post('/form/upload', 'UploadController@importExcel');
    
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
@@ -61,7 +61,13 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/trays/save','StateFormController@save');
     $router->get('/trays/list/{form_id}','StateFormController@list');
     $router->get('/trays/get/{id}','StateFormController@get');
-    $router->put('/trays/update/{id}','StateFormController@update');
+    $router->put('/trays/update/{id}','StateFormController@update');   
+    
     $router->get('/trays/delete/{id}','StateFormController@delete');
     $router->get('/trays/show/{id}','StateFormController@trayQuery');
+  
+    //Rutas de parámetros
+    $router->post('/saveParameters','ParameterController@saveParameters');
 });
+
+
