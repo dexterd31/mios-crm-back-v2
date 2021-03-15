@@ -5,9 +5,10 @@ namespace App\Imports;
 use App\Models\Client;
 use App\Models\KeyValue;
 use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
 
 
-class FormImport implements ToModel
+class FormImport implements ToModel, WithBatchInserts
 {
     /**
      * @param array $row
@@ -31,5 +32,10 @@ class FormImport implements ToModel
                 ]);
             }
         }
+    }
+
+    public function batchSize(): int
+    {
+        return 1000;
     }
 }
