@@ -40,11 +40,11 @@ class KeyValuesImport implements ToModel, WithBatchInserts
 
             // Se crea el obajecto de sections
             $count = count($row);
-            
+
             for ($i = 8; $i < $count; $i++) {
-                
+
                 $register = [
-                    ''. $this->headers[$i].'' => $row[$i]
+                    '' . $this->headers[$i] . '' => $row[$i]
                 ];
 
                 array_push($this->sections, $register);
