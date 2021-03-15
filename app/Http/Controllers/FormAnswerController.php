@@ -145,6 +145,7 @@ class FormAnswerController extends Controller
                                     ->orWhere('structure_answer', 'like', '%'.$option3.'%')
                                     ->with('client')->paginate(10);
 
+                    // Si no se encuatra registros se busca por cliente
                     if (count($form_answers) < 1) {
                        $clientInfo = Client::Where('document', 'like', '%'.$item1value.'%')
                        ->orWhere('document', 'like', '%'.$item2value.'%')
