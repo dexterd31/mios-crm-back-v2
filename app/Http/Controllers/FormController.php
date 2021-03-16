@@ -57,8 +57,8 @@ class FormController extends Controller
      */
     public function saveForm(Request $request,MiosHelper $miosHelper)
     {
-/*           try
-        {    */
+          try
+        {  
             $forms = new Form([
                'group_id' =>  $request->input('group_id'),
                 'campaign_id' => 1,
@@ -71,7 +71,6 @@ class FormController extends Controller
 
            foreach($request->input('sections') as $section)
            {
-              // dd($section['sectionName']);
               $section['fields'][0]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][0]['label']);
               $section['fields'][0]['key'] =  strtolower( str_replace(' ','-',$section['fields'][0]['label']) );
               if($section['sectionName'] == 'Datos básicos de cliente'){
@@ -100,9 +99,9 @@ class FormController extends Controller
 
             return response()->json($data,$data['code']);
     
-       /*  }catch(\Throwable $e){
+      }catch(\Throwable $e){
             return $this->errorResponse('Error al guardar el formulario',500);
-        }    */
+        }  
     }
     
     /**
