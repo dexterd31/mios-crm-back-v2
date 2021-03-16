@@ -39,15 +39,17 @@ class KeyValuesImport implements ToModel, WithBatchInserts
 
             // Se crea el obajecto de sections
             $count = count($row);
-
+            $curso = array();
             for ($i = 8; $i < $count; $i++) {
 
-                $register = [
-                    '' . $this->headers[$i] . '' => $row[$i]
-                ];
+                $curso[$this->headers[$i]] = $row[$i];
+                // $register = [
+                //     '' . $this->headers[$i] . '' => $row[$i]
+                // ];
 
-                array_push($this->sections, $register);
+                //array_push($this->sections, $register);
             }
+            array_push($this->sections, $curso);
             // Se crea el objecto para guardar la respuesta
             return new Directory([
                 'user_id' => $this->userId,
