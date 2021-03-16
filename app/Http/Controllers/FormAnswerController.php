@@ -125,17 +125,19 @@ class FormAnswerController extends Controller
     {
         //try {
            if (Gate::allows('form_answer')) {
-                $json_body = json_decode($request->getContent());
+                //$json_body = json_decode($request->getContent());
+                $json_body = json_decode( preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true );
+                $formId     = $json_body['form_id'];
 
-                $formId     = $json_body->form_id;
-                if (isset($json_body->item1_key) && isset($json_body->item1_value) && isset($json_body->item2_key) && isset($json_body->item2_value) && isset($json_body->item3_key) && isset($json_body->item3_value)) {
-                    $item1Key   = $json_body->item1_key;
-                    $item1value = !empty($json_body->item1_value) ? $json_body->item1_value : 'vacio';
-                    $item2Key   = $json_body->item2_key ;
-                    $item2value = !empty($json_body->item2_value) ? $json_body->item2_value : 'vacio';
-                    $item3Key   = $json_body->item3_key;
-                    $item3value = !empty($json_body->item3_value) ? $json_body->item3_value : 'vacio';
-    
+                //$formId     = $json_body->form_id;
+                if (isset($json_body['item1_key']) && isset($json_body['item1_value']) && isset($json_body['item2_key']) && isset($json_body['item2_value']) && isset($json_body['item3_key']) && isset($json_body['item3_value'])) {
+                    $item1Key   = $json_body['item1_key'];
+                    $item1value = !empty($json_body['item1_value']) ? $json_body['item1_value'] : 'vacio';
+                    $item2Key   = $json_body['item2_key'] ;
+                    $item2value = !empty($json_body['item2_value']) ? $json_body['item2_value']: 'vacio';
+                    $item3Key   = $json_body['item3_key'];
+                    $item3value = !empty($json_body['item3_value']) ? $json_body['item3_value'] : 'vacio';
+                    
                     $option1 = '"'.rtrim($item1Key).'": "'.rtrim($item1value).'"';
                     $option2 = '"'.rtrim($item2Key).'": "'.rtrim($item2value).'"';
                     $option3 = '"'.rtrim($item3Key).'": "'.rtrim($item3value).'"';
@@ -152,7 +154,6 @@ class FormAnswerController extends Controller
                        ->orWhere('document', 'like', '%'.$item2value.'%')
                        ->orWhere('document', 'like', '%'.$item3value.'%')->select('id')->first();
                        $clientNum = $clientInfo != null ? json_encode($clientInfo->id) : null;
-                       
                         if($clientNum){
                             $form_answers = FormAnswer::where('form_id', $formId)
                                     ->where('client_id', $clientNum)
@@ -160,7 +161,7 @@ class FormAnswerController extends Controller
                         }
                         // Se busca en directory
                         if (count($form_answers) < 1) {
-                            $form_answers = FormAnswer::where('form_id', $formId)
+                            $form_answers = Directory::where('form_id', $formId)
                                             ->where('client_id', $clientNum)
                                             ->with('client')->paginate(10);
                         }
