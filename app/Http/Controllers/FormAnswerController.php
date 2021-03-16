@@ -125,17 +125,17 @@ class FormAnswerController extends Controller
     {
         //try {
            if (Gate::allows('form_answer')) {
-                //$json_body = json_decode($request->getContent());
+                $json_body = json_decode($request->getContent());
 
-                //$formId     = $json_body->form_id;
-                $formId       = $request->input('form_id');
-                $item1Key   =  $request->input('item1_key');
-                $item1value = !empty($request->input('item1_value')) ? $request->input('item1_value') : 'vacio';
-                $item2Key   = $request->input('item2_key');
-                $item2value = !empty($request->input('item2_value')) ? $request->input('item2_value') : 'vacio';
-                $item3Key   = $request->input('item3_key');
-                $item3value = !empty($request->input('item3_value')) ? $request->input('item3_value') : 'vacio';
-                if (isset($item1Key) && isset($item1value) && isset($item2Key) && isset($item2value) && isset($item3Key) && isset($item3value) ) {
+                $formId     = $json_body->form_id;
+                if (isset($json_body->item1_key) && isset($json_body->item1_value) && isset($json_body->item2_key) && isset($json_body->item2_value) && isset($json_body->item3_key) && isset($json_body->item3_value)) {
+                    $item1Key   = $json_body->item1_key;
+                    $item1value = !empty($json_body->item1_value) ? $json_body->item1_value : 'vacio';
+                    $item2Key   = $json_body->item2_key ;
+                    $item2value = !empty($json_body->item2_value) ? $json_body->item2_value : 'vacio';
+                    $item3Key   = $json_body->item3_key;
+                    $item3value = !empty($json_body->item3_value) ? $json_body->item3_value : 'vacio';
+    
                     $option1 = '"'.rtrim($item1Key).'": "'.rtrim($item1value).'"';
                     $option2 = '"'.rtrim($item2Key).'": "'.rtrim($item2value).'"';
                     $option3 = '"'.rtrim($item3Key).'": "'.rtrim($item3value).'"';
