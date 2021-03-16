@@ -3,8 +3,7 @@
 namespace App\Imports;
 
 use App\Models\Client;
-use App\Models\KeyValue;
-use App\Models\FormAnswer;
+use App\Models\Directory;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 
@@ -50,12 +49,11 @@ class KeyValuesImport implements ToModel, WithBatchInserts
                 array_push($this->sections, $register);
             }
             // Se crea el objecto para guardar la respuesta
-            return new FormAnswer([
+            return new Directory([
                 'user_id' => $this->userId,
-                'channel_id' => 1,
                 'client_id' => $client->id,
                 'form_id' => $this->formId,
-                'structure_answer' => json_encode($this->sections)
+                'data' => json_encode($this->sections)
             ]);
         }
     }

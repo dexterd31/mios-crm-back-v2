@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\FormAnswer;
 use App\Models\Client;
 use App\Models\KeyValue;
+use App\Models\Directory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use App\Services\CiuService;
@@ -157,13 +158,27 @@ class FormAnswerController extends Controller
                                     ->where('client_id', $clientNum)
                                     ->with('client')->paginate(10);
                         }
+                        // Se busca en directory
+                        if (count($form_answers) < 1) {
+                            $form_answers = FormAnswer::where('form_id', $formId)
+                                            ->where('client_id', $clientNum)
+                                            ->with('client')->paginate(10);
+                        }
+                        if (count($form_answers) < 1) {
+                            $form_answers = Directory::where('form_id', $formId)
+                                    ->where('data', 'like', '%'.$option1.'%')
+                                    ->orWhere('data', 'like', '%'.$option2.'%')
+                                    ->orWhere('data', 'like', '%'.$option3.'%')
+                                    ->with('client')->paginate(10);
+                        }
                     }
                     foreach ($form_answers as $form) {
                         $userData       = $this->ciuService->fetchUser($form->user_id)->data;
-                        $form->structure_answer = json_decode($form->structure_answer);
+                        $form->structure_answer = $form->data != null ? json_decode($form->data) : json_decode($form->structure_answer);
                         $form->userdata = $userData;
+                        unset($form->data);
                     }
-
+                    
                     $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
                 } else {
                     $data = $miosHelper->jsonResponse(false, 404, 'message','No ha enviado todas las llaves');

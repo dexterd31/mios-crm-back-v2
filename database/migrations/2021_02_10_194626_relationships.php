@@ -70,11 +70,6 @@ class Relationships extends Migration
             {
                 $table->foreignId('section_id')->constrained('sections'); 
             });
-    
-    
-        
-    
-
     }
 
     /**

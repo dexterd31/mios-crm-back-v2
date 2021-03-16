@@ -8,7 +8,7 @@ use App\Imports\FormImport;
 use App\Imports\KeyValuesImport;
 use Helpers\MiosHelper;
 use App\Models\Upload;
-
+use App\Models\Directory;
 use Maatwebsite\Excel\Facades\Excel;
 
 class UploadController extends Controller
@@ -41,10 +41,11 @@ class UploadController extends Controller
             $upload->user_id    = $userId;
             $upload->form_id    = $formId;
             $upload->save();
+            //Eliminar registros de Directory
+            Directory::where('form_id', $formId)->delete();
             //Se guardan los clientes
             Excel::import(new FormImport, $file);
-
-            //Seguardan los keyValues
+            //Seguardan directory
             Excel::import(new KeyValuesImport($userId, $formId),$file);
             $data = $miosHelper->jsonResponse(true, 200, 'message','Se realizó el cargue de forma exitosa');
             return response()->json($data, $data['code']);
