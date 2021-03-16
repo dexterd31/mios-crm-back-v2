@@ -175,7 +175,7 @@ class FormAnswerController extends Controller
                     }
                     foreach ($form_answers as $form) {
                         $userData       = $this->ciuService->fetchUser($form->user_id)->data;
-                        $form->structure_answer = $form->data != null ? json_decode($form->data) : json_decode($form->structure_answer);
+                        $form->structure_answer = $form->data != null ? json_decode( preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $form->data), true ): json_decode( preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $form->structure_answer), true );
                         $form->userdata = $userData;
                         unset($form->data);
                     }
