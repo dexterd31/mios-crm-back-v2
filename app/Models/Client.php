@@ -22,4 +22,8 @@ class Client extends Model
     public function documenttype(){
         return $this->HasOne('App\Models\DocumentType','id','document_type_id');
     }
+
+    public function directory(){
+        return $this->hasMany('App\Models\FormAnswer', 'client_id');
+    }
 }

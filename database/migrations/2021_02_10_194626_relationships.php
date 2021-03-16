@@ -70,11 +70,6 @@ class Relationships extends Migration
             {
                 $table->foreignId('form_id')->constrained('forms'); 
             });
-    
-    
-        
-    
-
     }
 
     /**

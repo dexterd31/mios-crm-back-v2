@@ -39,6 +39,10 @@ class Form extends Model
     public function upload(){
         return $this->hasMany('App\Models\Upload','form_id');
     }
+
+    public function directory(){
+        return $this->hasMany('App\Models\Upload','form_id');
+    }
     
 
 }
