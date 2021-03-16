@@ -125,7 +125,7 @@ class FormAnswerController extends Controller
     {
         //try {
            if (Gate::allows('form_answer')) {
-                $json_body = json_decode($request->getContent());
+                //$json_body = json_decode($request->getContent());
 
                 //$formId     = $json_body->form_id;
                 $formId       = $request->input('form_id');
