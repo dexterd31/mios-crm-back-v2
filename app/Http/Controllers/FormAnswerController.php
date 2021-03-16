@@ -140,9 +140,9 @@ class FormAnswerController extends Controller
                 $option3 = '"' . rtrim($item3Key) . '": "' . rtrim($item3value) . '"';
 
                 $form_answers = FormAnswer::where('form_id', $formId)
-                    ->where('structure_answer', 'like', '%' . $option1 . '%')
-                    ->orWhere('structure_answer', 'like', '%' . $option2 . '%')
-                    ->orWhere('structure_answer', 'like', '%' . $option3 . '%')
+                    ->where('structure_answer', 'like', '%' . $item1value . '%')
+                    ->orWhere('structure_answer', 'like', '%' . $item2value . '%')
+                    ->orWhere('structure_answer', 'like', '%' . $item3value . '%')
                     ->with('client')->paginate(10);
 
                 // Si no se encuatra registros se busca por cliente
@@ -164,9 +164,9 @@ class FormAnswerController extends Controller
                     }
                     if (count($form_answers) < 1) {
                         $form_answers = Directory::where('form_id', $formId)
-                            ->where('data', 'like', '%' . $option1 . '%')
-                            ->orWhere('data', 'like', '%' . $option2 . '%')
-                            ->orWhere('data', 'like', '%' . $option3 . '%')
+                            ->where('data', 'like', '%' . $item1value . '%')
+                            ->orWhere('data', 'like', '%' . $item2value . '%')
+                            ->orWhere('data', 'like', '%' . $item3value . '%')
                             ->with('client')->paginate(10);
                     }
                 }
