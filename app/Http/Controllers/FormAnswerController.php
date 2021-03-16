@@ -123,11 +123,10 @@ class FormAnswerController extends Controller
     {
         //try {
         if (Gate::allows('form_answer')) {
-            //$json_body = json_decode($request->getContent());
+    
             $json_body = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
             $formId     = $json_body['form_id'];
 
-            //$formId     = $json_body->form_id;
             if (isset($json_body['item1_key']) && isset($json_body['item1_value']) && isset($json_body['item2_key']) && isset($json_body['item2_value']) && isset($json_body['item3_key']) && isset($json_body['item3_value'])) {
                 $item1Key   = $json_body['item1_key'];
                 $item1value = !empty($json_body['item1_value']) ? $json_body['item1_value'] : 'vacio';
