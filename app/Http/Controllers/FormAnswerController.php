@@ -29,34 +29,36 @@ class FormAnswerController extends Controller
      * 11-02-2020
      * Método para guardar la información del formulario
      */
-    public function saveinfo(Request $request)
+    public function saveinfo(Request $request, MiosHelper $miosHelper)
     {
         try {
             // Se valida si tiene permiso para hacer acciones en formAnswer
             if (Gate::allows('form_answer')) {
-                $json_body = json_decode($request->getContent());
+                $json_body = $miosHelper->jsonDecodeResponse($request->getContent());
                 $client = null;
-                if ($json_body->client_id == null) {
-                    $contador = 0;
-                    foreach ($json_body->sections as $section) {
 
+                $structure_answer = $miosHelper->structureAnswer($json_body['form_id'], $json_body['sections']);
+              
+                if ($json_body['client_id'] == null || $json_body['client_id'] == "") {
+                    $contador = 0;
+                    foreach ($json_body['sections'] as $section) {
                         if ($contador == 0) {
                             $client = new Client([
-                                'document_type_id' => !empty($section->document_type_id) ? $section->document_type_id : 1,
-                                'first_name' => rtrim($section->firstName),
-                                'middle_name' => rtrim($section->middleName),
-                                'first_lastname' => rtrim($section->lastName),
-                                'second_lastname' => rtrim($section->secondLastName),
-                                'document' => rtrim($section->document),
-                                'phone' => rtrim($section->phone),
-                                'email' => rtrim($section->email)
+                                'document_type_id' => !empty($section['document_type_id']) ? $section['document_type_id'] : 1,
+                                'first_name' => rtrim($section['firstName']),
+                                'middle_name' => rtrim($section['middleName']),
+                                'first_lastname' => rtrim($section['lastName']),
+                                'second_lastname' => rtrim($section['secondLastName']),
+                                'document' => rtrim($section['document']),
+                                'phone' => rtrim($section['phone']),
+                                'email' => rtrim($section['email'])
                             ]);
                             $client->save();
                         }
-
+                    
                         foreach ($section as $key => $value) {
                             $sect = new KeyValue([
-                                'form_id' => $json_body->form_id,
+                                'form_id' => $json_body['form_id'],
                                 'client_id' => $client->id,
                                 'key' => $key,
                                 'value' => $value,
@@ -72,19 +74,18 @@ class FormAnswerController extends Controller
                         'user_id' => 1,
                         'channel_id' => 1,
                         'client_id' => $client->id,
-                        'form_id' => $json_body->form_id,
-                        'structure_answer' => json_encode($json_body->sections)
+                        'form_id' => $json_body['form_id'],
+                        'structure_answer' => json_encode($structure_answer)
                     ]);
 
                     $form_answer->save();
                     $message = 'Informacion guardada correctamente';
                 } else {
-
-                    foreach ($json_body->sections as $section) {
+                    foreach ($json_body['sections'] as $section) {
                         foreach ($section as $key => $value) {
                             $sec = new KeyValue([
-                                'form_id' => $json_body->form_id,
-                                'client_id' => $json_body->client_id,
+                                'form_id' => $json_body['form_id'],
+                                'client_id' => $json_body['client_id'],
                                 'key' => $key,
                                 'value' => $value,
                                 'description' => null
@@ -96,9 +97,9 @@ class FormAnswerController extends Controller
                         $formanswer = new FormAnswer([
                             'user_id' => 1,
                             'channel_id' => 1,
-                            'client_id' => $json_body->client_id,
-                            'form_id' => $json_body->form_id,
-                            'structure_answer' => json_encode($json_body->sections)
+                            'client_id' => $json_body['client_id'],
+                            'form_id' => $json_body['form_id'],
+                            'structure_answer' => json_encode($structure_answer)
                         ]);
 
                         $formanswer->save();
