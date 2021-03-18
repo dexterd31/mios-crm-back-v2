@@ -128,16 +128,9 @@ class FormAnswerController extends Controller
             $formId     = $json_body['form_id'];
 
             if (isset($json_body['item1_key']) && isset($json_body['item1_value']) && isset($json_body['item2_key']) && isset($json_body['item2_value']) && isset($json_body['item3_key']) && isset($json_body['item3_value'])) {
-                $item1Key   = $json_body['item1_key'];
                 $item1value = !empty($json_body['item1_value']) ? $json_body['item1_value'] : 'vacio';
-                $item2Key   = $json_body['item2_key'];
                 $item2value = !empty($json_body['item2_value']) ? $json_body['item2_value'] : 'vacio';
-                $item3Key   = $json_body['item3_key'];
                 $item3value = !empty($json_body['item3_value']) ? $json_body['item3_value'] : 'vacio';
-
-                $option1 = '"' . rtrim($item1Key) . '": "' . rtrim($item1value) . '"';
-                $option2 = '"' . rtrim($item2Key) . '": "' . rtrim($item2value) . '"';
-                $option3 = '"' . rtrim($item3Key) . '": "' . rtrim($item3value) . '"';
 
                 $form_answers = FormAnswer::where('form_id', $formId)
                     ->where('structure_answer', 'like', '%' . $item1value . '%')

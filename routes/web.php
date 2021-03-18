@@ -67,7 +67,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/trays/show/{id}','StateFormController@trayQuery');
   
     //Rutas de parámetros
-    $router->post('/saveParameters','ParameterController@saveParameters');
+    $router->post('/saveParameters/{id}','ParameterController@saveParameters');
 });
 
 
