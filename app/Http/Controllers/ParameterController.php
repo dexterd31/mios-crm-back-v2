@@ -19,7 +19,7 @@ class ParameterController extends Controller
                 {
                     $father = new Parameter([
                         'form_id' => $id,
-                        'name' => $dependency['name'],
+                        'name' => $dependency['label'],
                         'options' => json_encode($dependency['options']),
                         'idSuperior' => null,
                         'have_dependencies' => $dependency['have_dependencies']
@@ -31,7 +31,7 @@ class ParameterController extends Controller
 
                     $dependences = new Parameter([
                     'form_id' => $id,
-                    'name' => $dependency['name'],
+                    'name' => $dependency['label'],
                     'options' => json_encode($dependency['options']),
                     'idSuperior' => $id,
                     'dependency' => $dependency['father'],
