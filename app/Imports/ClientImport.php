@@ -8,7 +8,7 @@ use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 
 
-class FormImport implements ToModel, WithBatchInserts
+class ClientImport implements ToModel, WithBatchInserts
 {
     /**
      * @param array $row
