@@ -110,7 +110,8 @@ class FormController extends Controller
      * 04-02-2021
      * Método para consultar el tipo de formulario en el select de creación de formulario
      */
-    public function searchFormType(){
+    public function searchFormType()
+    {
         $formtype = FormType::select('id','name_type')->get();
         return $formtype;
     }
@@ -146,8 +147,6 @@ class FormController extends Controller
             $data = ['forms' => $form , 'sections' => json_decode($result->fields), 'code' => 200,'message'=>'Guardado Correctamente'];
 
             return response()->json($data,$data['code']);
-
-
         }catch(\Throwable $e){
             return $this->errorResponse('Error al editar el formulario',500);
         }
