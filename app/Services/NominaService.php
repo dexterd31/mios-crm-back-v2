@@ -31,7 +31,7 @@ class NominaService
             'state'=>$state,
 
         ];
-        return $this->request('POST', '/api/campaigns/' .$id.'/updateState', $requestBody);
+        return $this->request('PUT', '/api/campaigns/' .$id.'/updateState', $requestBody);
     }
     
 }
