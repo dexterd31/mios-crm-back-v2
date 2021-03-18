@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Gate;
 use App\Services\CiuService;
 use App\Services\NominaService;
 use Helpers\MiosHelper;
+use Helpers\FormAnswerHelper;
 
 class FormAnswerController extends Controller
 {
@@ -29,7 +30,7 @@ class FormAnswerController extends Controller
      * 11-02-2020
      * Método para guardar la información del formulario
      */
-    public function saveinfo(Request $request, MiosHelper $miosHelper)
+    public function saveinfo(Request $request, MiosHelper $miosHelper, FormAnswerHelper $formAnswerHelper)
     {
         try {
             // Se valida si tiene permiso para hacer acciones en formAnswer
@@ -37,8 +38,8 @@ class FormAnswerController extends Controller
                 $json_body = $miosHelper->jsonDecodeResponse($request->getContent());
                 $client = null;
 
-                $structure_answer = $miosHelper->structureAnswer($json_body['form_id'], $json_body['sections']);
-              
+                $structure_answer = $formAnswerHelper->structureAnswer($json_body['form_id'], $json_body['sections']);
+
                 if ($json_body['client_id'] == null || $json_body['client_id'] == "") {
                     $contador = 0;
                     foreach ($json_body['sections'] as $section) {
@@ -55,7 +56,7 @@ class FormAnswerController extends Controller
                             ]);
                             $client->save();
                         }
-                    
+
                         foreach ($section as $key => $value) {
                             $sect = new KeyValue([
                                 'form_id' => $json_body['form_id'],
@@ -124,7 +125,7 @@ class FormAnswerController extends Controller
     {
         //try {
         if (Gate::allows('form_answer')) {
-    
+
             $json_body = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
             $formId     = $json_body['form_id'];
 
