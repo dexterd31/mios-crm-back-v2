@@ -154,11 +154,11 @@ class FormController extends Controller
         }
     }
 
-        /**
-         * Nicoll Ramirez
-         * 23-02-2021
-         * Método para desactivar el estado del formulario
-         */
+    /**
+     * Nicoll Ramirez
+     * 23-02-2021
+     * Método para desactivar el estado del formulario
+     */
     public function deleteForm(Request $request, $id)
     {
         try
