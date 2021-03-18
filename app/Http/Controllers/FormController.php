@@ -121,12 +121,8 @@ class FormController extends Controller
      *23-02-2021
      *Método para editar el formulario
      */
-<<<<<<< HEAD
-    
-=======
 
 
->>>>>>> ef54e0ff7e74e906d5ced609dee02ec35d5b66bf
     public function editForm(Request $request, $id, MiosHelper $miosHelper)
     {
           try
