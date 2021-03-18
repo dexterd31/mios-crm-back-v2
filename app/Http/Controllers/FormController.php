@@ -121,7 +121,6 @@ class FormController extends Controller
      *Método para editar el formulario
      */
     
-    
     public function editForm(Request $request, $id, MiosHelper $miosHelper)
     {
           try
@@ -163,11 +162,11 @@ class FormController extends Controller
         }  
     }
 
-        /**
-         * Nicoll Ramirez
-         * 23-02-2021
-         * Método para desactivar el estado del formulario
-         */
+    /**
+     * Nicoll Ramirez
+     * 23-02-2021
+     * Método para desactivar el estado del formulario
+     */
     public function deleteForm(Request $request, $id)
     {
         try
