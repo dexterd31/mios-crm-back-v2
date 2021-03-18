@@ -18,6 +18,8 @@ class CreateParametersTable extends Migration
             $table->string('name');
             $table->json('options');
             $table->integer('idSuperior')->nullable();
+            $table->string('dependency')->nullable();
+            $table->boolean('have_dependencies')->nullable();
             $table->timestamps();
         });
     }
