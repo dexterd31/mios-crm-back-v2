@@ -58,7 +58,7 @@ class FormController extends Controller
     public function saveForm(Request $request,MiosHelper $miosHelper)
     {
           try
-        {  
+        {
             $forms = new Form([
                'group_id' =>  $request->input('group_id'),
                 'campaign_id' => 1,
@@ -83,7 +83,7 @@ class FormController extends Controller
                       'type_section' => $section['type_section'],
                       'fields' => json_encode($sect),
                       ]);
-                      $sections->save();           
+                      $sections->save();
                 }else{
                     $fields = $section['fields'];
                     $sections = new Section([
@@ -99,17 +99,18 @@ class FormController extends Controller
 
             return response()->json($data,$data['code']);
 
-       /*  }catch(\Throwable $e){
+         }catch(\Throwable $e){
             return $this->errorResponse('Error al guardar el formulario',500);
-        }  
+        }
     }
 
-    
+
     /**
      * Nicoll Ramirez
      * 04-02-2021
      * Método para consultar el tipo de formulario en el select de creación de formulario
-     */
+    */
+
     public function searchFormType()
     {
         $formtype = FormType::select('id','name_type')->get();
@@ -120,8 +121,8 @@ class FormController extends Controller
      *23-02-2021
      *Método para editar el formulario
      */
-    
-    
+
+
     public function editForm(Request $request, $id, MiosHelper $miosHelper)
     {
           try
