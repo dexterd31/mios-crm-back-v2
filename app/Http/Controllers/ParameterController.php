@@ -7,16 +7,44 @@ use App\Models\Parameter;
 
 class ParameterController extends Controller
 {
-    public function saveParameters(Request $request)
+    public function saveParameters(Request $request, $id)
     {
-        $parameters = new Parameter([
-            'section_id' => $request->input('section_id'),
-            'name' => $request->input('label'),
-            'options' => json_encode($request->options),
-            'idSuperior' => $request->input('idSuperior')
-        ]); 
-        $parameters->save();
+        try
+        {  
+            $id= 0;
+            foreach($request->data as $dependency)
+            {
+
+                if(!isset($dependency['father']))
+                {
+                    $father = new Parameter([
+                        'form_id' => $id,
+                        'name' => $dependency['name'],
+                        'options' => json_encode($dependency['options']),
+                        'idSuperior' => null,
+                        'have_dependencies' => $dependency['have_dependencies']
+                    ]); 
+                    $father->save();     
+                    $id= $father->id;
+
+                }else{
+
+                    $dependences = new Parameter([
+                    'form_id' => $id,
+                    'name' => $dependency['name'],
+                    'options' => json_encode($dependency['options']),
+                    'idSuperior' => $id,
+                    'dependency' => $dependency['father'],
+                    'have_dependencies' => $dependency['have_dependencies']
+                    ]); 
+                    $dependences->save();      
+                }
+            }
         
-        return 'ok';
+        return $this->successResponse('Guardado');
+    
+        }catch(\Throwable $e){
+            return $this->errorResponse('Error al guardar',500);
+        }
     }
 }
