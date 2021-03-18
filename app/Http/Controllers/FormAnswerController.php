@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Gate;
 use App\Services\CiuService;
 use App\Services\NominaService;
 use Helpers\MiosHelper;
+use Helpers\FormAnswerHelper;
 
 class FormAnswerController extends Controller
 {
@@ -29,34 +30,36 @@ class FormAnswerController extends Controller
      * 11-02-2020
      * Método para guardar la información del formulario
      */
-    public function saveinfo(Request $request)
+    public function saveinfo(Request $request, MiosHelper $miosHelper, FormAnswerHelper $formAnswerHelper)
     {
         try {
             // Se valida si tiene permiso para hacer acciones en formAnswer
             if (Gate::allows('form_answer')) {
-                $json_body = json_decode($request->getContent());
+                $json_body = $miosHelper->jsonDecodeResponse($request->getContent());
                 $client = null;
-                if ($json_body->client_id == null) {
-                    $contador = 0;
-                    foreach ($json_body->sections as $section) {
 
+                $structure_answer = $formAnswerHelper->structureAnswer($json_body['form_id'], $json_body['sections']);
+
+                if ($json_body['client_id'] == null || $json_body['client_id'] == "") {
+                    $contador = 0;
+                    foreach ($json_body['sections'] as $section) {
                         if ($contador == 0) {
                             $client = new Client([
-                                'document_type_id' => !empty($section->document_type_id) ? $section->document_type_id : 1,
-                                'first_name' => rtrim($section->firstName),
-                                'middle_name' => rtrim($section->middleName),
-                                'first_lastname' => rtrim($section->lastName),
-                                'second_lastname' => rtrim($section->secondLastName),
-                                'document' => rtrim($section->document),
-                                'phone' => rtrim($section->phone),
-                                'email' => rtrim($section->email)
+                                'document_type_id' => !empty($section['document_type_id']) ? $section['document_type_id'] : 1,
+                                'first_name' => rtrim($section['firstName']),
+                                'middle_name' => rtrim($section['middleName']),
+                                'first_lastname' => rtrim($section['lastName']),
+                                'second_lastname' => rtrim($section['secondLastName']),
+                                'document' => rtrim($section['document']),
+                                'phone' => rtrim($section['phone']),
+                                'email' => rtrim($section['email'])
                             ]);
                             $client->save();
                         }
 
                         foreach ($section as $key => $value) {
                             $sect = new KeyValue([
-                                'form_id' => $json_body->form_id,
+                                'form_id' => $json_body['form_id'],
                                 'client_id' => $client->id,
                                 'key' => $key,
                                 'value' => $value,
@@ -72,19 +75,18 @@ class FormAnswerController extends Controller
                         'user_id' => 1,
                         'channel_id' => 1,
                         'client_id' => $client->id,
-                        'form_id' => $json_body->form_id,
-                        'structure_answer' => json_encode($json_body->sections)
+                        'form_id' => $json_body['form_id'],
+                        'structure_answer' => json_encode($structure_answer)
                     ]);
 
                     $form_answer->save();
                     $message = 'Informacion guardada correctamente';
                 } else {
-
-                    foreach ($json_body->sections as $section) {
+                    foreach ($json_body['sections'] as $section) {
                         foreach ($section as $key => $value) {
                             $sec = new KeyValue([
-                                'form_id' => $json_body->form_id,
-                                'client_id' => $json_body->client_id,
+                                'form_id' => $json_body['form_id'],
+                                'client_id' => $json_body['client_id'],
                                 'key' => $key,
                                 'value' => $value,
                                 'description' => null
@@ -96,9 +98,9 @@ class FormAnswerController extends Controller
                         $formanswer = new FormAnswer([
                             'user_id' => 1,
                             'channel_id' => 1,
-                            'client_id' => $json_body->client_id,
-                            'form_id' => $json_body->form_id,
-                            'structure_answer' => json_encode($json_body->sections)
+                            'client_id' => $json_body['client_id'],
+                            'form_id' => $json_body['form_id'],
+                            'structure_answer' => json_encode($structure_answer)
                         ]);
 
                         $formanswer->save();
@@ -110,7 +112,7 @@ class FormAnswerController extends Controller
             }
             return $this->successResponse($message);
         } catch (\Throwable $e) {
-            return $this->errorResponse('Error al guardar el formulario', 500);
+            return $this->errorResponse('Error al guardar la gestion', 500);
         }
     }
 
@@ -123,21 +125,14 @@ class FormAnswerController extends Controller
     {
         //try {
         if (Gate::allows('form_answer')) {
-    
+
             $json_body = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
             $formId     = $json_body['form_id'];
 
             if (isset($json_body['item1_key']) && isset($json_body['item1_value']) && isset($json_body['item2_key']) && isset($json_body['item2_value']) && isset($json_body['item3_key']) && isset($json_body['item3_value'])) {
-                $item1Key   = $json_body['item1_key'];
                 $item1value = !empty($json_body['item1_value']) ? $json_body['item1_value'] : 'vacio';
-                $item2Key   = $json_body['item2_key'];
                 $item2value = !empty($json_body['item2_value']) ? $json_body['item2_value'] : 'vacio';
-                $item3Key   = $json_body['item3_key'];
                 $item3value = !empty($json_body['item3_value']) ? $json_body['item3_value'] : 'vacio';
-
-                $option1 = '"' . rtrim($item1Key) . '": "' . rtrim($item1value) . '"';
-                $option2 = '"' . rtrim($item2Key) . '": "' . rtrim($item2value) . '"';
-                $option3 = '"' . rtrim($item3Key) . '": "' . rtrim($item3value) . '"';
 
                 $form_answers = FormAnswer::where('form_id', $formId)
                     ->where('structure_answer', 'like', '%' . $item1value . '%')
