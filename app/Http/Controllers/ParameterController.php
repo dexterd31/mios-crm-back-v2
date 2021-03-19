@@ -37,11 +37,11 @@ class ParameterController extends Controller
 
                     $dependences = new Parameter([
                     'form_id' => $id,
-                    'name' => $dependency['label'],
+                    'label' => $dependency['label'],
                     'options' => json_encode($dependency['options']),
                     'key' => $var,
                     'idSuperior' => $idSuperior,
-                    'dependency' => $dependency['father'],
+                    'father' => $dependency['father'],
                     'have_dependencies' => $dependency['have_dependencies']
                     ]); 
                     $dependences->save();      
@@ -75,17 +75,17 @@ class ParameterController extends Controller
             if(!isset($dependency['father']))
             {
                 $parameters = Parameter::where('id',$dependency['id'])->first();
-                $parameters->name = $dependency['label'];
+                $parameters->label = $dependency['label'];
                 $parameters->options = json_encode($dependency['options']);
-                $parameters->dependency = $dependency['father'];
+                $parameters->father = $dependency['father'];
                 $parameters->save();
                 $idSuperior = $parameters->id;
             }else{
                 $dependencies = Parameter::where('id',$dependency['id'])->first();
                 if($dependencies){
-                    $dependencies->name = $dependency['label'];
+                    $dependencies->label = $dependency['label'];
                     $dependencies->options = json_encode($dependency['options']);
-                    $dependencies->dependency = $dependency['father'];
+                    $dependencies->father = $dependency['father'];
                     $dependencies->save();
                 }else{
                     $dependences = new Parameter([
