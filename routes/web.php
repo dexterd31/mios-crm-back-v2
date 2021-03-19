@@ -68,6 +68,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
   
     //Rutas de parámetros
     $router->post('/saveParameters/{id}','ParameterController@saveParameters');
+    $router->get('/searchParameter/{id}','ParameterController@searchParameter');
+    $router->put('/updateParameters/{id}','ParameterController@updateParameters');
 });
 
 
