@@ -17,6 +17,7 @@ class CreateParametersTable extends Migration
             $table->id();
             $table->string('name');
             $table->json('options');
+            $table->string('key');
             $table->integer('idSuperior')->nullable();
             $table->string('dependency')->nullable();
             $table->boolean('have_dependencies')->nullable();
