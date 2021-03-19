@@ -11,17 +11,21 @@ class ParameterController extends Controller
 {
     public function saveParameters(Request $request, $id)
     {
-        try
-        {  
+        /* try
+        { */  
             $idSuperior = 0;
             foreach($request->data as $dependency)
             {
-
+                $dependency['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$dependency['label']);
+                $dependency['key'] =  strtolower( str_replace(' ','-',$dependency['label']) );
+                $var = $dependency['key'];
+                
                 if(!isset($dependency['father']))
                 {
                     $father = new Parameter([
                         'form_id' => $id,
                         'name' => $dependency['label'],
+                        'key' => $var,
                         'options' => json_encode($dependency['options']),
                         'idSuperior' => null,
                         'have_dependencies' => $dependency['have_dependencies']
@@ -35,6 +39,7 @@ class ParameterController extends Controller
                     'form_id' => $id,
                     'name' => $dependency['label'],
                     'options' => json_encode($dependency['options']),
+                    'key' => $var,
                     'idSuperior' => $idSuperior,
                     'dependency' => $dependency['father'],
                     'have_dependencies' => $dependency['have_dependencies']
@@ -45,9 +50,9 @@ class ParameterController extends Controller
         
         return $this->successResponse('Guardado');
     
-        }catch(\Throwable $e){
+        /* }catch(\Throwable $e){
             return $this->errorResponse('Error al guardar',500);
-        }
+        } */
     }
 
     public function searchParameter($id){
