@@ -83,16 +83,20 @@ class ParameterController extends Controller
         $idSuperior = null;
         foreach($dataInfo as $dependency)
         {
+            $dependency['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$dependency['label']);
+            $dependency['key'] =  strtolower( str_replace(' ','-',$dependency['label']) );
+            $var = $dependency['key'];
             $parameters = Parameter::where('id',$dependency['id'])->first();
 
             if (!empty($parameters) && is_object($parameters)) {
-                $parameters->name = $dependency['label'];
+                $parameters->label = $dependency['label'];
+                $parameters->key = $var;
                 $parameters->options = json_encode($dependency['options']);
-                $parameters->dependency = isset($dependency['father']) ? $dependency['father'] : null ;
+                $parameters->father = isset($dependency['father']) ? $dependency['father'] : null ;
                 $parameters->idSuperior = $dependency['idSuperior'];
                 $parameters->have_dependencies = $dependency['have_dependencies'];
                 $parameters->save();
-                if($parameters->have_dependencies == 1){
+                if($parameters->have_dependencies != 1){
                     $idSuperior = $parameters->id;
                 }
                 
@@ -102,22 +106,23 @@ class ParameterController extends Controller
                 {
                     $father = new Parameter([
                         'form_id' => $id,
-                        'name' => $dependency['label'],
+                        'label' => $dependency['label'],
+                        'key' => $var,
                         'options' => json_encode($dependency['options']),
                         'idSuperior' => null,
                         'have_dependencies' => $dependency['have_dependencies']
                     ]); 
                     $father->save();     
-                    $idSuperior = $father->id;
 
                 }else{
                    
                     $dependences = new Parameter([
                     'form_id' => $id,
-                    'name' => $dependency['label'],
+                    'label' => $dependency['label'],
+                    'key' => $var,
                     'options' => json_encode($dependency['options']),
                     'idSuperior' => $idSuperior,
-                    'dependency' => $dependency['father'],
+                    'father' => $dependency['father'],
                     'have_dependencies' => $dependency['have_dependencies']
                     ]); 
                     $dependences->save();      
