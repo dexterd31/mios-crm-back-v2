@@ -11,9 +11,9 @@ class ApiConnection extends Model
     protected $fillable = [
         'name',
         'form_id',
-        'url', 
+        'url',
         'autorization_type',
-        'token', 
+        'token',
         'other_autorization_type',
         'other_token',
         'mode',
@@ -23,9 +23,14 @@ class ApiConnection extends Model
         'request_type',
         'status',
         'api_type'
-        ];
+    ];
 
-    public function form(){
-       return $this->belongsTo('App\Models\Form','form_id');
+    public function form()
+    {
+        return $this->belongsTo('App\Models\Form', 'form_id');
+    }
+
+    public function apiQuestion(){
+        return $this->hasMany('App\Models\ApiQuestion','api_id');
     }
 }

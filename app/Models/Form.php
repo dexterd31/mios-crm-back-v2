@@ -47,4 +47,8 @@ class Form extends Model
     public function apiConnection(){
         return $this->hasMany('App\Models\ApiConnection','form_id');
     }
+
+    public function apiQuestion(){
+        return $this->hasMany('App\Models\ApiQuestion','api_id');
+    }
 }

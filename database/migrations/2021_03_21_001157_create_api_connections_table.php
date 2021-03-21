@@ -28,7 +28,7 @@ class CreateApiConnectionsTable extends Migration
             $table->json('json_response');
             $table->tinyInteger('request_type');
             $table->tinyInteger('api_type');
-            $table->tinyInteger('status');
+            $table->tinyInteger('status')->default(1);
             $table->foreignId('form_id')->constrained('forms');
 
             $table->timestamps();

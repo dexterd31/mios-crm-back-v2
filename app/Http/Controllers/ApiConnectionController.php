@@ -26,21 +26,41 @@ class ApiConnectionController extends Controller
      */
     public function save(Request $request, MiosHelper $miosHelper)
     {
-        // Recoger los datos por post
-        $json_body = $miosHelper->jsonDecodeResponse($request->getContent());
-        if (!empty($json_body)) {
-            if ($json_body['json_response'] == NULL) {
-                $data   = $miosHelper->jsonResponse(false, 404, 'message', 'Se debe enviar un ejemplo de la respuesta de la solicitud del api.');
-            } else {
-                // Validar si el registro a guardar es de tipo login 
-                if ($json_body['request_type'] == 1) {
-                    // Se valida si el formulario ya tiene un registro de login
-                    $where = ['form_id' => $json_body['form_id'], 'request_type' => 1, 'status' => 1];
-                    $login = ApiConnection::where($where)->first();
-                    if ($login) {
-                        $data = $miosHelper->jsonResponse(false, 400, 'message', 'Ya existe un registro login en el sistema para esta api');
+        try {
+            // Recoger los datos por post
+            $json_body = $miosHelper->jsonDecodeResponse($request->getContent());
+            if (!empty($json_body)) {
+                if ($json_body['json_response'] == NULL) {
+                    $data   = $miosHelper->jsonResponse(false, 404, 'message', 'Se debe enviar un ejemplo de la respuesta de la solicitud del api.');
+                } else {
+                    // Validar si el registro a guardar es de tipo login 
+                    if ($json_body['request_type'] == 1) {
+                        // Se valida si el formulario ya tiene un registro de login
+                        $where = ['form_id' => $json_body['form_id'], 'request_type' => 1, 'status' => 1];
+                        $login = ApiConnection::where($where)->first();
+                        if ($login) {
+                            $data = $miosHelper->jsonResponse(false, 400, 'message', 'Ya existe un registro login en el sistema para esta api');
+                        } else {
+                            // Se guarda el registro login 
+                            $api                            = new ApiConnection();
+                            $api->name                      = $json_body['name'];
+                            $api->url                       = $json_body['url'];
+                            $api->autorization_type         = $json_body['autorization_type'];
+                            $api->token                     = $json_body['token'];
+                            $api->other_autorization_type   = $json_body['other_autorization_type'];
+                            $api->other_token               = $json_body['other_token'];
+                            $api->mode                      = $json_body['mode'];
+                            $api->parameter                 = trim($json_body['parameter']);
+                            $api->json_send                 = json_encode($json_body['json_send']);
+                            $api->json_response             = json_encode($json_body['json_response']);
+                            $api->request_type              = $json_body['request_type'];
+                            $api->api_type                  = $json_body['api_type'];
+                            $api->status                    = true;
+                            $api->form_id                   = $json_body['form_id'];
+                            $api->save();
+                            $data = $miosHelper->jsonResponse(true, 200, 'api_conection', $api);
+                        }
                     } else {
-                        // Se guarda el registro login 
                         $api                            = new ApiConnection();
                         $api->name                      = $json_body['name'];
                         $api->url                       = $json_body['url'];
@@ -59,29 +79,14 @@ class ApiConnectionController extends Controller
                         $api->save();
                         $data = $miosHelper->jsonResponse(true, 200, 'api_conection', $api);
                     }
-                } else {
-                    $api                            = new ApiConnection();
-                    $api->name                      = $json_body['name'];
-                    $api->url                       = $json_body['url'];
-                    $api->autorization_type         = $json_body['autorization_type'];
-                    $api->token                     = $json_body['token'];
-                    $api->other_autorization_type   = $json_body['other_autorization_type'];
-                    $api->other_token               = $json_body['other_token'];
-                    $api->mode                      = $json_body['mode'];
-                    $api->parameter                 = trim($json_body['parameter']);
-                    $api->json_send                 = json_encode($json_body['json_send']);
-                    $api->json_response             = json_encode($json_body['json_response']);
-                    $api->request_type              = $json_body['request_type'];
-                    $api->api_type                  = $json_body['api_type'];
-                    $api->status                    = true;
-                    $api->form_id                   = $json_body['form_id'];
-                    $api->save();
-                    $data = $miosHelper->jsonResponse(true, 200, 'api_conection', $api);
                 }
+            } else {
+                $data = $miosHelper->jsonResponse(false, 400, 'message', 'Faltan campos por diligenciarse');
             }
-        } else {
-            $data = $miosHelper->jsonResponse(false, 400, 'message', 'Faltan campos por diligenciarse');
+        } catch (\Throwable $th) {
+            $data = $miosHelper->jsonResponse(false, 400, 'message', 'Ha ocurrido un error');
         }
+
         return response()->json($data, $data['code']);
     }
 
@@ -125,29 +130,34 @@ class ApiConnectionController extends Controller
      */
     public function update(Request $request, MiosHelper $miosHelper, $id)
     {
-        // Recoger los datos por post
-        $json_body = $miosHelper->jsonDecodeResponse($request->getContent());
-        if (!empty($json_body)) {
-            //Eliminar lo que no queremos actualizar 
-            unset($json_body['id']);
-            unset($json_body['created_at']);
-            if ($json_body['json_response'] == NULL) {
-                $data   = $miosHelper->jsonResponse(false, 404, 'message', 'Se debe enviar un ejemplo de la respuesta de la solicitud del api.');
-            } else {
-                //Obtener el registro a actualizar 
-                $api = ApiConnection::where('id', $id)->first();
-                if (!empty($api) && is_object($api)) {
-                    $json_body['json_response'] = json_encode($json_body['json_response']);
-                    $json_body['status']        = 1;
-                    $api    = ApiConnection::where('id', $id)->update($json_body);
-                    $data   = $miosHelper->jsonResponse(true, 200, 'api', $json_body);
+        try {
+            // Recoger los datos por post
+            $json_body = $miosHelper->jsonDecodeResponse($request->getContent());
+            if (!empty($json_body)) {
+                //Eliminar lo que no queremos actualizar 
+                unset($json_body['id']);
+                unset($json_body['created_at']);
+                if ($json_body['json_response'] == NULL) {
+                    $data   = $miosHelper->jsonResponse(false, 404, 'message', 'Se debe enviar un ejemplo de la respuesta de la solicitud del api.');
                 } else {
-                    $data   = $miosHelper->jsonResponse(false, 404, 'message', 'No se encontro un registro con ese id');
+                    //Obtener el registro a actualizar 
+                    $api = ApiConnection::where('id', $id)->first();
+                    if (!empty($api) && is_object($api)) {
+                        $json_body['json_response'] = json_encode($json_body['json_response']);
+                        $json_body['status']        = 1;
+                        $api    = ApiConnection::where('id', $id)->update($json_body);
+                        $data   = $miosHelper->jsonResponse(true, 200, 'api', $json_body);
+                    } else {
+                        $data   = $miosHelper->jsonResponse(false, 404, 'message', 'No se encontro un registro con ese id');
+                    }
                 }
+            } else {
+                $data = $miosHelper->jsonResponse(false, 400, 'message', 'Faltan campos por diligenciarse');
             }
-        } else {
-            $data = $miosHelper->jsonResponse(false, 400, 'message', 'Faltan campos por diligenciarse');
+        } catch (\Throwable $th) {
+            $data = $miosHelper->jsonResponse(false, 400, 'message', 'Ha ocurrido un error: ' . $th);
         }
+
         return response()->json($data, $data['code']);
     }
 
@@ -169,7 +179,7 @@ class ApiConnectionController extends Controller
                 $api = ApiConnection::where('id', $id)->update($api);
                 $data = $miosHelper->jsonResponse(true, 200, 'api', 'Se elimino la api');
             } else {
-                $data = $miosHelper->jsonResponse(false, 404, 'message','No se encontro la api');
+                $data = $miosHelper->jsonResponse(false, 404, 'message', 'No se encontro la api');
             }
         } catch (\Throwable $th) {
             $data = $miosHelper->jsonResponse(false, 404, 'message', 'Ha ocurrido un error');
