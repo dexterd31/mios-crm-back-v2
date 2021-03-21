@@ -57,8 +57,8 @@ class FormController extends Controller
      */
     public function saveForm(Request $request,MiosHelper $miosHelper)
     {
-          try
-        {
+/*           try
+        { */
             $forms = new Form([
                'group_id' =>  $request->input('group_id'),
                 'campaign_id' => 1,
@@ -71,19 +71,21 @@ class FormController extends Controller
 
            foreach($request->input('sections') as $section)
            {
-              $section['fields'][0]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][0]['label']);
-              $section['fields'][0]['key'] =  strtolower( str_replace(' ','-',$section['fields'][0]['label']) );
-              if($section['sectionName'] == 'Datos básicos de cliente')
+               for($i=0; $i<count($section); $i++){
+                $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
+                $section['fields'][$i]['key'] =  strtolower( str_replace(' ','-',$section['fields'][$i]['label']) );
+               }
+              //dd($section);
+              if($section['sectionName'] == 'Datos básicos del cliente')
               {
                   $sect = $miosHelper->validateKeyName($section['fields'][0]['label'], $section['fields'][1]['label'], $section['fields'][2]['label'], $section['fields'][3]['label'], $section['fields'][4]['label'],$section['fields'][5]['label'],$section['fields'][6]['label'],$section);
-
-                  $sections = new Section([
+                  $firstSection = new Section([
                       'form_id' => $forms->id,
                       'name_section' => $section['sectionName'],
                       'type_section' => $section['type_section'],
                       'fields' => json_encode($sect),
                       ]);
-                      $sections->save();
+                      $firstSection->save();
                 }else{
                     $fields = $section['fields'];
                     $sections = new Section([
@@ -94,14 +96,15 @@ class FormController extends Controller
                         ]);
                         $sections->save();
                 }
-           }
+            }
+           
             $data = ['forms' => $forms , 'sections' => json_decode($sections->fields), 'code' => 200,'message'=>'Guardado Correctamente'];
 
             return response()->json($data,$data['code']);
-
+/* 
          }catch(\Throwable $e){
             return $this->errorResponse('Error al guardar el formulario',500);
-        }
+        } */
     }
 
 
