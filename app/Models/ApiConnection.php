@@ -17,6 +17,7 @@ class ApiConnection extends Model
         'other_autorization_type',
         'other_token',
         'mode',
+        'parameter',
         'json_send',
         'json_response',
         'request_type',

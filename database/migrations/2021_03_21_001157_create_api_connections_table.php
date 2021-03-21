@@ -23,6 +23,7 @@ class CreateApiConnectionsTable extends Migration
             $table->string('other_autorization_type')->nullable();
             $table->string('other_token')->nullable();
             $table->string('mode');
+            $table->string('parameter')->nullable();
             $table->json('json_send')->nullable();
             $table->json('json_response');
             $table->tinyInteger('request_type');
