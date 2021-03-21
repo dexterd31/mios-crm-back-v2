@@ -57,8 +57,8 @@ class FormController extends Controller
      */
     public function saveForm(Request $request,MiosHelper $miosHelper)
     {
-/*           try
-        { */
+           try
+        { 
             $forms = new Form([
                'group_id' =>  $request->input('group_id'),
                 'campaign_id' => 1,
@@ -98,13 +98,13 @@ class FormController extends Controller
                 }
             }
            
-            $data = ['forms' => $forms , 'sections' => json_decode($sections->fields), 'code' => 200,'message'=>'Guardado Correctamente'];
+            $data = ['forms' => $forms , 'sections' => json_decode($sections->fields), 'code' => 200,'message'=>'Formulario Guardado Correctamente'];
 
             return response()->json($data,$data['code']);
-/* 
+
          }catch(\Throwable $e){
             return $this->errorResponse('Error al guardar el formulario',500);
-        } */
+        } 
     }
 
 
