@@ -23,6 +23,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/searchformtype', 'FormController@searchFormType');
     $router->put('/editform/{id}', 'FormController@editForm');
     $router->put('/deleteform/{id}', 'FormController@deleteForm');
+    //Reporte del formulario
+    $router->get('/report/{id}','FormController@report');
 
     //Base de datos
     $router->get('/form/dowload/{parameters}', 'UploadController@exportExcel');
@@ -68,6 +70,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
   
     //Rutas de parámetros
     $router->post('/saveParameters/{id}','ParameterController@saveParameters');
+    $router->get('/searchParameterByFather/{id}/{father}','ParameterController@searchParameterByFather');
     $router->get('/searchParameter/{id}','ParameterController@searchParameter');
     $router->put('/updateParameters/{id}','ParameterController@updateParameters');
 });

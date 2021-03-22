@@ -8,7 +8,9 @@ use App\Models\Section;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Helpers\MiosHelper;
-
+use App\Models\KeyValue;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\FormReportExport;
 
 
 class FormController extends Controller
@@ -57,8 +59,8 @@ class FormController extends Controller
      */
     public function saveForm(Request $request,MiosHelper $miosHelper)
     {
-          try
-        {
+         try 
+        {  
             $forms = new Form([
                'group_id' =>  $request->input('group_id'),
                 'campaign_id' => 1,
@@ -69,39 +71,48 @@ class FormController extends Controller
                 ]);
                 $forms->save();
 
-           foreach($request->input('sections') as $section)
+           foreach($request['sections'] as $section)
            {
-              $section['fields'][0]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][0]['label']);
-              $section['fields'][0]['key'] =  strtolower( str_replace(' ','-',$section['fields'][0]['label']) );
-              if($section['sectionName'] == 'Datos básicos de cliente')
-              {
-                  $sect = $miosHelper->validateKeyName($section['fields'][0]['label'], $section['fields'][1]['label'], $section['fields'][2]['label'], $section['fields'][3]['label'], $section['fields'][4]['label'],$section['fields'][5]['label'],$section['fields'][6]['label'],$section);
+               for($i=0; $i<count($section['fields']); $i++){
+                   if($section['sectionName']== 'Datos básicos del cliente'){
+                       
+                       $sect = $miosHelper->validateKeyName($section['fields'][0]['label'], $section['fields'][1]['label'], $section['fields'][2]['label'], $section['fields'][3]['label'], $section['fields'][4]['label'],$section['fields'][5]['label'],$section['fields'][6]['label'],$section['fields'][7]['label'],$section);
+                   }else{
+                       $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
+                       $section['fields'][$i]['key'] =  strtolower( str_replace(' ','-',$section['fields'][$i]['label']) );
 
-                  $sections = new Section([
+                   }  
+               }
+              if($section['sectionName'] == 'Datos básicos del cliente')
+              {
+                $firstSection = new Section([
+                    'id' => $section['idsection'],
                       'form_id' => $forms->id,
                       'name_section' => $section['sectionName'],
                       'type_section' => $section['type_section'],
-                      'fields' => json_encode($sect),
+                      'fields' => json_encode($sect)
                       ]);
-                      $sections->save();
+                      $firstSection->save();
                 }else{
                     $fields = $section['fields'];
                     $sections = new Section([
+                        'id' => $section['idsection'],
                         'form_id' => $forms->id,
                         'name_section' => $section['sectionName'],
                         'type_section' => $section['type_section'],
-                        'fields' => json_encode($fields),
+                        'fields' => json_encode($fields)
                         ]);
                         $sections->save();
                 }
-           }
-            $data = ['forms' => $forms , 'sections' => json_decode($sections->fields), 'code' => 200,'message'=>'Guardado Correctamente'];
+            }
+           
+            $data = ['forms' => $forms , 'firstSection'=> json_decode($firstSection->fields),'sections' => json_decode($sections->fields), 'code' => 200,'message'=>'Formulario Guardado Correctamente'];
 
-            return response()->json($data,$data['code']);
+           return response()->json($data, $data['code']);
 
          }catch(\Throwable $e){
             return $this->errorResponse('Error al guardar el formulario',500);
-        }
+        }  
     }
 
 
@@ -140,23 +151,24 @@ class FormController extends Controller
                 $section['fields'][0]['key'] =  strtolower( str_replace(' ','-',$section['fields'][0]['label']) );
                 if($section['sectionName'] == 'Datos básicos de cliente'){
 
-                    $var = $miosHelper->validateKeyName($section['fields'][0]['label'], $section['fields'][1]['label'], $section['fields'][2]['label'], $section['fields'][3]['label'], $section['fields'][4]['label'],$section['fields'][5]['label'],$section['fields'][6]['label'],$section);
+                    $var = $miosHelper->validateKeyName($section['fields'][0]['label'], $section['fields'][1]['label'], $section['fields'][2]['label'], $section['fields'][3]['label'], $section['fields'][4]['label'],$section['fields'][5]['label'],$section['fields'][6]['label'],$section['fields'][7]['label'],$section);
     
-                    $result = Section::find($section['idsection']);
-                    $result->name_section = $section['sectionName'];
-                    $result->type_section = $section['type_section'];
-                    $result->fields = json_encode($var);
-                    $result->save();
+                    $sections = Section::find($section['idsection']);
+                    $sections->name_section = $section['sectionName'];
+                    $sections->type_section = $section['type_section'];
+                    $sections->fields = json_encode($var);
+                    $sections->save();
                 }else{
                     $fields = $section['fields'];
-                    $result = Section::find($section['idsection']);
-                    $result->name_section = $section['sectionName'];
-                    $result->type_section = $section['type_section'];
-                    $result->fields = json_encode($fields);
-                    $result->save();
+                    $sections = Section::find($section['idsection']);
+                   // dd($section);
+                    $sections->name_section = $section['sectionName'];
+                    $sections->type_section = $section['type_section'];
+                    $sections->fields = json_encode($fields);
+                    $sections->save();
                 }
             }
-            $data = ['forms' => $form , 'sections' => json_decode($result->fields), 'code' => 200,'message'=>'Guardado Correctamente'];
+            $data = ['forms' => $form , 'sections' => json_decode($sections->fields), 'code' => 200,'message'=>'Guardado Correctamente'];
 
             return response()->json($data,$data['code']);
         }catch(\Throwable $e){
@@ -183,5 +195,12 @@ class FormController extends Controller
             return $this->errorResponse('Error al desactivar el formulario',500);
         }
 
+    }
+
+    public function report($parameters){
+        $formExport = new FormReportExport();
+        $headers    = utf8_encode(base64_decode($parameters));
+        $formExport->headersExcel(explode(",", $headers));
+        return Excel::download(new FormReportExport, 'reporte_formulario.xlsx');
     }
 }
