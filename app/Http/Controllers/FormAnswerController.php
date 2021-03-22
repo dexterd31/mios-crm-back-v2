@@ -112,7 +112,7 @@ class FormAnswerController extends Controller
             }
             return $this->successResponse($message);
         } catch (\Throwable $e) {
-            return $this->errorResponse('Error al guardar el formulario', 500);
+            return $this->errorResponse('Error al guardar la gestion', 500);
         }
     }
 
