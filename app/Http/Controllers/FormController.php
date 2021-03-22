@@ -75,11 +75,11 @@ class FormController extends Controller
                 $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
                 $section['fields'][$i]['key'] =  strtolower( str_replace(' ','-',$section['fields'][$i]['label']) );
                }
-              //dd($section);
               if($section['sectionName'] == 'Datos básicos del cliente')
               {
                   $sect = $miosHelper->validateKeyName($section['fields'][0]['label'], $section['fields'][1]['label'], $section['fields'][2]['label'], $section['fields'][3]['label'], $section['fields'][4]['label'],$section['fields'][5]['label'],$section['fields'][6]['label'],$section);
                   $firstSection = new Section([
+                    'id' => $section['idsection'],
                       'form_id' => $forms->id,
                       'name_section' => $section['sectionName'],
                       'type_section' => $section['type_section'],
@@ -89,6 +89,7 @@ class FormController extends Controller
                 }else{
                     $fields = $section['fields'];
                     $sections = new Section([
+                        'id' => $section['idsection'],
                         'form_id' => $forms->id,
                         'name_section' => $section['sectionName'],
                         'type_section' => $section['type_section'],
@@ -145,21 +146,22 @@ class FormController extends Controller
 
                     $var = $miosHelper->validateKeyName($section['fields'][0]['label'], $section['fields'][1]['label'], $section['fields'][2]['label'], $section['fields'][3]['label'], $section['fields'][4]['label'],$section['fields'][5]['label'],$section['fields'][6]['label'],$section);
     
-                    $result = Section::find($section['idsection']);
-                    $result->name_section = $section['sectionName'];
-                    $result->type_section = $section['type_section'];
-                    $result->fields = json_encode($var);
-                    $result->save();
+                    $sections = Section::find($section['idsection']);
+                    $sections->name_section = $section['sectionName'];
+                    $sections->type_section = $section['type_section'];
+                    $sections->fields = json_encode($var);
+                    $sections->save();
                 }else{
                     $fields = $section['fields'];
-                    $result = Section::find($section['idsection']);
-                    $result->name_section = $section['sectionName'];
-                    $result->type_section = $section['type_section'];
-                    $result->fields = json_encode($fields);
-                    $result->save();
+                    $sections = Section::find($section['idsection']);
+                   // dd($section);
+                    $sections->name_section = $section['sectionName'];
+                    $sections->type_section = $section['type_section'];
+                    $sections->fields = json_encode($fields);
+                    $sections->save();
                 }
             }
-            $data = ['forms' => $form , 'sections' => json_decode($result->fields), 'code' => 200,'message'=>'Guardado Correctamente'];
+            $data = ['forms' => $form , 'sections' => json_decode($sections->fields), 'code' => 200,'message'=>'Guardado Correctamente'];
 
             return response()->json($data,$data['code']);
         }catch(\Throwable $e){
