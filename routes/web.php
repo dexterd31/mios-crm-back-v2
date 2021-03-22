@@ -72,7 +72,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/saveParameters/{id}','ParameterController@saveParameters');
     $router->get('/searchParameterByFather/{id}/{father}','ParameterController@searchParameterByFather');
     $router->get('/searchParameter/{id}','ParameterController@searchParameter');
-    $router->put('/updateParameters/{id}','ParameterController@updateParameters');
+    $router->put('/updateParameters/{parameters}','ParameterController@updateParameters');
 });
 
 
