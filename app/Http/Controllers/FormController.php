@@ -75,7 +75,6 @@ class FormController extends Controller
            {
                for($i=0; $i<count($section['fields']); $i++){
                    if($section['sectionName']== 'Datos básicos del cliente'){
-                       
                        $sect = $miosHelper->validateKeyName($section['fields'][0]['label'], $section['fields'][1]['label'], $section['fields'][2]['label'], $section['fields'][3]['label'], $section['fields'][4]['label'],$section['fields'][5]['label'],$section['fields'][6]['label'],$section['fields'][7]['label'],$section);
                    }else{
                        $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
@@ -136,8 +135,8 @@ class FormController extends Controller
 
     public function editForm(Request $request, $id, MiosHelper $miosHelper)
     {
-          try
-        {
+           try
+        { 
             $form = Form::find($id);
             $form->group_id = $request->group_id;
             $form->form_type_id = $request->type_form;
@@ -147,33 +146,36 @@ class FormController extends Controller
 
             foreach($request->sections as $section)
             {
-                $section['fields'][0]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][0]['label']);
-                $section['fields'][0]['key'] =  strtolower( str_replace(' ','-',$section['fields'][0]['label']) );
+                for($i=0; $i<count($section['fields']); $i++){
+                    if($section['sectionName']== 'Datos básicos del cliente'){
+                        $sect = $miosHelper->validateKeyName($section['fields'][0]['label'], $section['fields'][1]['label'], $section['fields'][2]['label'], $section['fields'][3]['label'], $section['fields'][4]['label'],$section['fields'][5]['label'],$section['fields'][6]['label'],$section['fields'][7]['label'],$section);
+                    }else{
+                        $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
+                        $section['fields'][$i]['key'] =  strtolower( str_replace(' ','-',$section['fields'][$i]['label']) );
+ 
+                    }  
+                }
                 if($section['sectionName'] == 'Datos básicos de cliente'){
-
-                    $var = $miosHelper->validateKeyName($section['fields'][0]['label'], $section['fields'][1]['label'], $section['fields'][2]['label'], $section['fields'][3]['label'], $section['fields'][4]['label'],$section['fields'][5]['label'],$section['fields'][6]['label'],$section['fields'][7]['label'],$section);
-    
                     $sections = Section::find($section['idsection']);
                     $sections->name_section = $section['sectionName'];
                     $sections->type_section = $section['type_section'];
-                    $sections->fields = json_encode($var);
+                    $sections->fields = json_encode($sect);
                     $sections->save();
                 }else{
                     $fields = $section['fields'];
                     $sections = Section::find($section['idsection']);
-                   // dd($section);
                     $sections->name_section = $section['sectionName'];
                     $sections->type_section = $section['type_section'];
                     $sections->fields = json_encode($fields);
                     $sections->save();
                 }
             }
-            $data = ['forms' => $form , 'sections' => json_decode($sections->fields), 'code' => 200,'message'=>'Guardado Correctamente'];
+            $data = ['forms' => $form , 'sections' => json_decode($sections->fields), 'code' => 200,'message'=>'Formulario editado Correctamente'];
 
             return response()->json($data,$data['code']);
         }catch(\Throwable $e){
             return $this->errorResponse('Error al editar el formulario',500);
-        }
+        } 
     }
 
     /**
