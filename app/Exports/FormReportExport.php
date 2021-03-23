@@ -4,6 +4,8 @@ namespace App\Exports;
 
 use App\Models\KeyValue;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Illuminate\Http\Request;
+
 
 class FormReportExport implements FromCollection
 {
@@ -12,9 +14,8 @@ class FormReportExport implements FromCollection
     */
     public function collection()
     {
-        $form_id = 0;
-        return KeyValue::where('form_id',$form_id)
-        ->select('key','value')->get();
+      
+        return KeyValue::all();
     }
 
     public function headings(): array
