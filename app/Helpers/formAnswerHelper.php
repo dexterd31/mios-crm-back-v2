@@ -192,6 +192,7 @@ class FormAnswerHelper
 
     // Funcion para hacer la consulta http por curl
     function httpRequest($mode, $url, $autorization_type, $token, $other_autorization_type, $other_token, $json_send) {
+        $miosHelper     = new MiosHelper();
         if ($mode == 'GET') {
             $headersData = array();
 
@@ -211,7 +212,7 @@ class FormAnswerHelper
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             $result = curl_exec($ch);
             curl_close($ch);
-            $apiData = json_decode($result);
+            $apiData = $miosHelper->jsonDecodeResponse($result);
             return $apiData;
         } else {
 
@@ -236,7 +237,7 @@ class FormAnswerHelper
             $result = curl_exec($ch);
 
             curl_close($ch);
-            $apiData = json_decode($result);
+            $apiData = $miosHelper->jsonDecodeResponse($result);
 
             return $apiData;
         }
