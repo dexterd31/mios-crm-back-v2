@@ -2,12 +2,13 @@
 
 namespace App\Exports;
 
-use App\Models\KeyValue;
-use Maatwebsite\Excel\Concerns\FromCollection;
+use App\Models\FormAnswer;
+use Maatwebsite\Excel\Concerns\FromQuery;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 
 
-class FormReportExport implements FromCollection
+class FormReportExport implements FromQuery, WithHeadings
 {
     public $fecha_desde;
     public $fecha_hasta;
@@ -27,13 +28,34 @@ class FormReportExport implements FromCollection
     */
     public function collection()
     {
-      
-        $keyvalue = KeyValue::where('form_id',$this->form_id)
-                        ->whereBetween('key_values.created_at', [$this->fecha_desde, $this->fecha_hasta])
-                        ->select('key','value')->get();
+     // dd($this->headers);
+        $formAnswers = FormAnswer::where('form_id',$this->form_id)
+                      //  ->whereBetween('created_at', [$this->fecha_desde, $this->fecha_hasta])
+                          ->where('created_at','>=', $this->fecha_desde)
+                          ->where('created_at','<=', $this->fecha_hasta)
+                         // ->whereIn('key',$this->headers)
+                        ->select('structure_answer')->get();
 
-                    
-                    //    dd($keyvalue);
+                        $formAnswer = array();
+                        $keys = array();
+
+                       // dd($formAnswers);
+                        foreach($formAnswers as $answer){
+
+                           // dd(json_decode($answer->structure_answer));
+                            foreach(json_decode($answer->structure_answer) as $section){
+                               // dd(json_decode($answer->structure_answer));
+                               foreach($section as $key => $value){
+                                    $keys[$key] = $value;
+                                }
+                                $formAnswer = $keys;
+                               // $keys = array();
+                            }
+                        }
+                       //  dd($formAnswer);
+                        
+
+                     return (json_encode($formAnswer));
     }
 
     public function headings(): array
