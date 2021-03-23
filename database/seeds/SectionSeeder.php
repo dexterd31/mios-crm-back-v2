@@ -10,7 +10,7 @@ class SectionSeeder extends Seeder
      * @return void
      */
     public function run()
-    {
+   {
         $Sections = array(
             [
                 'form_id' => '1',
@@ -142,8 +142,42 @@ class SectionSeeder extends Seeder
                         'admin','supervisor'),
                     'seeRoles' => array(
                         'admin','asesor')
-                ])
-            ],
+                    ],
+                    [
+                        "type"=> "options",
+                        "key"=> "document_type_id",
+                        "controlType"=> "dropdown",
+                        "label"=> "Tipo de documento",
+                        "value"=> "",
+                        "required"=> false,
+                        "canAdd"=> false,
+                        "options"=> array(
+                            [
+                            
+                                "id"=> 1,
+                                "name"=> "Cédula de ciudadania"
+                            ],
+                           [
+                                "id"=> 2,
+                                "name"=> "Tarjeta de ciudadania"
+                           ],
+                           [
+                                "id"=> 3,
+                                "name"=> "NIT"
+                           ],
+                           [
+                                "id"=> 3,
+                                "name"=> "Cédula de extranjería"
+                           ]),
+                            "minLength"=> null,
+                            "maxLength"=> null,
+                            "inReport"=> true,
+                            "disabled"=> false,
+                            "cols"=> 1,
+                            "editRoles"=> [],
+                            "seeRoles"=> []
+                    ])
+            ],     
             [
                 'form_id' => '1',
                 'name_section' => 'Datos de la mascota',
@@ -360,11 +394,10 @@ class SectionSeeder extends Seeder
                         'admin')
                 ])
             ]
-
         );
 
         foreach ($Sections as $section)
-        {
+       {
             $Sections = new Section();
             $Sections->form_id = $section['form_id'];
             $Sections->name_section = $section['name_section'];
