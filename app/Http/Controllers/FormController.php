@@ -199,10 +199,11 @@ class FormController extends Controller
 
     }
 
-    public function report($id, $parameters){
-        $formReport = new FormReportExport();
-        $headers    = utf8_encode(base64_decode($id, $parameters));
-        $formReport->headersExcel(explode(",", $headers));
-        return Excel::download(new FormReportExport, 'reporte_formulario.xlsx');
+    public function report($form_id,$fecha_desde,$fecha_hasta,$parameters){
+        $headers    = utf8_encode(base64_decode($parameters));
+       // $formReport->headersExcel(explode(",", $headers));
+        //return Excel::download($formReport, 'reporte_formulario.xlsx');
+
+        return Excel::download(new FormReportExport($form_id, $fecha_desde, $fecha_hasta,$headers), 'reporte_formulario.xlsx');
     }
 }
