@@ -7,6 +7,7 @@ use App\Models\FormAnswer;
 use App\Models\Client;
 use App\Models\KeyValue;
 use App\Models\Directory;
+use App\Models\ApiConnection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use App\Services\CiuService;
@@ -121,57 +122,91 @@ class FormAnswerController extends Controller
      * 26-02-2020
      * Método para filtrar las varias opciones en el formulario
      */
-    public function filterForm(Request $request, MiosHelper $miosHelper)
+    public function filterForm(Request $request, MiosHelper $miosHelper, FormAnswerHelper $formAnswerHelper)
     {
         //try {
         if (Gate::allows('form_answer')) {
 
-            $json_body = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
-            $formId     = $json_body['form_id'];
+            $json_body      = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
+            $formId         = $json_body['form_id'];
+            $form_answers   = null;
 
             if (isset($json_body['item1_key']) && isset($json_body['item1_value']) && isset($json_body['item2_key']) && isset($json_body['item2_value']) && isset($json_body['item3_key']) && isset($json_body['item3_value'])) {
+                $item1key   = !empty($json_body['item1_key']) ? $json_body['item1_key'] : 'vacio';
                 $item1value = !empty($json_body['item1_value']) ? $json_body['item1_value'] : 'vacio';
+                $item2key   = !empty($json_body['item2_key']) ? $json_body['item2_key'] : 'vacio';
                 $item2value = !empty($json_body['item2_value']) ? $json_body['item2_value'] : 'vacio';
+                $item3key   = !empty($json_body['item3_key']) ? $json_body['item3_key'] : 'vacio';
                 $item3value = !empty($json_body['item3_value']) ? $json_body['item3_value'] : 'vacio';
 
-                $form_answers = FormAnswer::where('form_id', $formId)
+                // Se busca si la solicitud tiene cargue por api
+                $where = ['form_id' => $formId, 'request_type' => 2, 'status' => 1];
+                $apiFind = ApiConnection::where($where)->first();
+                $parameter = null;
+                if ($apiFind) {
+                    if ($apiFind['parameter'] != null || $apiFind['parameter'] != '') {
+                        if($item1key == $apiFind['parameter']) {
+                            $parameter = $item1value;
+                        } else if($item2key == $apiFind['parameter']) {
+                            $parameter = $item2value;
+                        } else if($item3key == $apiFind['parameter']){
+                            $parameter = $item3value;
+                        }
+                    }
+                    
+                    // Se hace el cargue de la información con la api registrada.
+                    $infoApi = $formAnswerHelper->getInfoByApi($apiFind, $parameter, $formId);
+
+                    $form_answers = $infoApi;
+                    $ff = [];
+                    array_push($ff, $form_answers);
+
+                    $form_answers = $miosHelper->paginate($ff, $perPage = 15, $page = null);
+                    
+                }
+
+                if($form_answers == null) {
+
+                    // Se continua la busqueda por gestio o base de datos
+                    $form_answers = FormAnswer::where('form_id', $formId)
                     ->where('structure_answer', 'like', '%' . $item1value . '%')
                     ->orWhere('structure_answer', 'like', '%' . $item2value . '%')
                     ->orWhere('structure_answer', 'like', '%' . $item3value . '%')
                     ->with('client')->paginate(10);
 
-                // Si no se encuatra registros se busca por cliente
-                if (count($form_answers) < 1) {
-                    $clientInfo = Client::Where('document', 'like', '%' . $item1value . '%')
-                        ->orWhere('document', 'like', '%' . $item2value . '%')
-                        ->orWhere('document', 'like', '%' . $item3value . '%')->select('id')->first();
-                    $clientNum = $clientInfo != null ? json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $clientInfo->id)) : null;
-                    if ($clientNum) {
-                        $form_answers = FormAnswer::where('form_id', $formId)
-                            ->where('client_id', $clientNum)
-                            ->with('client')->paginate(10);
-                    }
-                    // Se busca en directory
+                    // Si no se encuatra registros se busca por cliente
                     if (count($form_answers) < 1) {
-                        $form_answers = Directory::where('form_id', $formId)
-                            ->where('client_id', $clientNum)
-                            ->with('client')->paginate(10);
+                        $clientInfo = Client::Where('document', 'like', '%' . $item1value . '%')
+                            ->orWhere('document', 'like', '%' . $item2value . '%')
+                            ->orWhere('document', 'like', '%' . $item3value . '%')->select('id')->first();
+                        $clientNum = $clientInfo != null ? json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $clientInfo->id)) : null;
+                        if ($clientNum) {
+                            $form_answers = FormAnswer::where('form_id', $formId)
+                                ->where('client_id', $clientNum)
+                                ->with('client')->paginate(10);
+                        }
+                        // Se busca en directory
+                        if (count($form_answers) < 1) {
+                            $form_answers = Directory::where('form_id', $formId)
+                                ->where('client_id', $clientNum)
+                                ->with('client')->paginate(10);
+                        }
+                        if (count($form_answers) < 1) {
+                            $form_answers = Directory::where('form_id', $formId)
+                                ->where('data', 'like', '%' . $item1value . '%')
+                                ->orWhere('data', 'like', '%' . $item2value . '%')
+                                ->orWhere('data', 'like', '%' . $item3value . '%')
+                                ->with('client')->paginate(10);
+                        }
                     }
-                    if (count($form_answers) < 1) {
-                        $form_answers = Directory::where('form_id', $formId)
-                            ->where('data', 'like', '%' . $item1value . '%')
-                            ->orWhere('data', 'like', '%' . $item2value . '%')
-                            ->orWhere('data', 'like', '%' . $item3value . '%')
-                            ->with('client')->paginate(10);
+                    foreach ($form_answers as $form) {
+                        $userData       = $this->ciuService->fetchUser($form->user_id)->data;
+                        $form->structure_answer = $form->data != null ? json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $form->data), true) : json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $form->structure_answer), true);
+                        $form->userdata = $userData;
+                        unset($form->data);
                     }
+                    
                 }
-                foreach ($form_answers as $form) {
-                    $userData       = $this->ciuService->fetchUser($form->user_id)->data;
-                    $form->structure_answer = $form->data != null ? json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $form->data), true) : json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $form->structure_answer), true);
-                    $form->userdata = $userData;
-                    unset($form->data);
-                }
-
                 $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
             } else {
                 $data = $miosHelper->jsonResponse(false, 404, 'message', 'No ha enviado todas las llaves');
@@ -184,6 +219,7 @@ class FormAnswerController extends Controller
         //     return $this->errorResponse('Error al buscar la gestion', 500);
         // }
     }
+
     /**
      * Nicoll Ramirez
      * 22-02-2021
