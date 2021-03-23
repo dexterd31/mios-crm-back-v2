@@ -26,7 +26,8 @@
             "App\\": "app/"
         },
         "files": [
-            "app/Helpers/miosHelper.php"
+            "app/Helpers/miosHelper.php",
+            "app/Helpers/formAnswerHelper.php"
         ]
     },
     "autoload-dev": {

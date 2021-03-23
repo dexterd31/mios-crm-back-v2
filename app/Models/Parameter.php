@@ -8,9 +8,9 @@ class Parameter extends Model
 {
    protected $table = 'parameters';
    protected $PrimaryKey = 'id';
-   protected $fillable = ['section_id','name','options','idSuperior'];
+   protected $fillable = ['form_id','label','options','idSuperior','father','have_dependencies','key'];
     
-   public function section(){
-       return $this->belongsTo('App\Models\Section','id');
+   public function form(){
+       return $this->belongsTo('App\Models\Form','id');
    }
 }
