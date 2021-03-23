@@ -9,10 +9,15 @@ use Illuminate\Support\Facades\DB;
 
 class ParameterController extends Controller
 {
+    /**
+     * Nicoll Ramirez
+     * 19-03-2021
+     * Método para crear las dependencias en el formulario
+     */
     public function saveParameters(Request $request, $id)
     {
-        /* try
-        { */  
+         try
+        { 
             $idSuperior = 0;
             foreach($request->data as $dependency)
             {
@@ -49,13 +54,17 @@ class ParameterController extends Controller
                 }
             }
         
-        return $this->successResponse('Guardado');
+        return $this->successResponse('Dependencia Guardada Correctamente');
     
-        /* }catch(\Throwable $e){
-            return $this->errorResponse('Error al guardar',500);
-        } */
+         }catch(\Throwable $e){
+            return $this->errorResponse('Error al guardar las dependencias',500);
+        }
     }
-
+/**
+ * Nicoll Ramirez
+ * 19-03-2021
+ * Método para consultar las dependencias por padre
+ */
     public function searchParameterByFather($id,$father){
         
         $parameters = Parameter::where('form_id',$id)
@@ -66,6 +75,11 @@ class ParameterController extends Controller
         return $parameters;
 
     }
+    /**
+     * Nicoll Ramirez
+     * 19-03-2021
+     * Método para consultar todas las dependencias existentes en el formulario
+     */
     public function searchParameter($id){
         
         $parameters = Parameter::where('form_id',$id)->get();
@@ -75,9 +89,16 @@ class ParameterController extends Controller
         return $parameters;
 
     }
-
+/**
+ * Nicoll Ramirez
+ * 22-03-2021
+ * Método para editar las dependencias
+ */
     public function updateParameters(Request $request, MiosHelper $miosHelper, $id)
     {
+       /*  try{ */
+
+        
         $json_body = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
         $dataInfo = $json_body['data'];
         $idSuperior = null;
@@ -87,7 +108,6 @@ class ParameterController extends Controller
             $dependency['key'] =  strtolower( str_replace(' ','-',$dependency['label']) );
             $var = $dependency['key'];
             $parameters = Parameter::where('id',$dependency['id'])->first();
-
             if (!empty($parameters) && is_object($parameters)) {
                 $parameters->label = $dependency['label'];
                 $parameters->key = $var;
@@ -131,6 +151,10 @@ class ParameterController extends Controller
 
             }
         }
-        return 'ok';
+        return $this->successResponse('Dependencias Modificadas Correctamente');
+    /* 
+         }catch(\Throwable $e){
+            return $this->errorResponse('Error al modificar las dependencias',500);
+        } */
     }
 }

@@ -23,11 +23,13 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/searchformtype', 'FormController@searchFormType');
     $router->put('/editform/{id}', 'FormController@editForm');
     $router->put('/deleteform/{id}', 'FormController@deleteForm');
+    //Reporte del formulario
+    $router->get('/report/{id}/{parameters}','FormController@report');
 
     //Base de datos
     $router->get('/form/dowload/{parameters}', 'UploadController@exportExcel');
     $router->post('/form/upload', 'UploadController@importExcel');
-   
+
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
     $router->post('/formanswer/filterform', 'FormAnswerController@filterForm');
@@ -35,7 +37,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //consultar tipo de documento de los clientes
     $router->get('/searchdocumenttype', 'FormAnswerController@searchDocumentType');
 
-    
+
     //Rutas de grupos
     $router->get('/searchgroup/{id}', 'GroupController@searchGroup');
     $router->post('/savegroup','GroupController@saveGroup');
@@ -49,23 +51,23 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     // rutas de campañas
     $router->get('/campaigns', 'CampaignController@index');
     $router->post('/campaigns/{id}/updateState', 'CampaignController@updateState');
-    
+
     //Rutas de usuarios
     $router->post('/storeUser', 'UserController@storeUser');
     $router->put('/disabledUser/{id}', 'UserController@disabledUser');
-    
+
     //Rutas de clientes
     $router->get('/getClient/{id}', 'ClientController@getClient');
 
     //Rutas de bandejas
-    $router->post('/trays/save','StateFormController@save');
-    $router->get('/trays/list/{form_id}','StateFormController@list');
-    $router->get('/trays/get/{id}','StateFormController@get');
-    $router->put('/trays/update/{id}','StateFormController@update');   
-    
+    // $router->post('/trays/save','StateFormController@save');
+    // $router->get('/trays/list/{form_id}','StateFormController@list');
+    // $router->get('/trays/get/{id}','StateFormController@get');
+    // $router->put('/trays/update/{id}','StateFormController@update');
+
     $router->get('/trays/delete/{id}','StateFormController@delete');
     $router->get('/trays/show/{id}','StateFormController@trayQuery');
-  
+
     //Rutas de parámetros
     $router->post('/saveParameters/{id}','ParameterController@saveParameters');
     $router->get('/searchParameterByFather/{id}/{father}','ParameterController@searchParameterByFather');
@@ -86,6 +88,11 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/apiQuestion/get/{id}', 'ApiQuestionController@get');
     $router->put('/apiQuestion/update/{id}', 'ApiQuestionController@update');
     $router->get('/apiQuestion/delete/{id}', 'ApiQuestionController@delete');
+    
+    //Rutas Bandejas
+    $router->post('/trays/save','TrayController@store');
+    $router->get('/trays/','TrayController@index');
+
 });
 
 
