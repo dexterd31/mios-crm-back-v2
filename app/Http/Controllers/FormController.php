@@ -59,8 +59,8 @@ class FormController extends Controller
      */
     public function saveForm(Request $request,MiosHelper $miosHelper)
     {
-         try 
-        {  
+         try
+        {
             $forms = new Form([
                'group_id' =>  $request->input('group_id'),
                 'campaign_id' => 1,
@@ -80,7 +80,7 @@ class FormController extends Controller
                        $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
                        $section['fields'][$i]['key'] =  strtolower( str_replace(' ','-',$section['fields'][$i]['label']) );
 
-                   }  
+                   }
                }
               if($section['sectionName'] == 'Datos básicos del cliente')
               {
@@ -104,14 +104,14 @@ class FormController extends Controller
                         $sections->save();
                 }
             }
-           
+
             $data = ['forms' => $forms , 'firstSection'=> json_decode($firstSection->fields),'sections' => json_decode($sections->fields), 'code' => 200,'message'=>'Formulario Guardado Correctamente'];
 
            return response()->json($data, $data['code']);
 
          }catch(\Throwable $e){
             return $this->errorResponse('Error al guardar el formulario',500);
-        }  
+        }
     }
 
 
@@ -135,8 +135,8 @@ class FormController extends Controller
 
     public function editForm(Request $request, $id, MiosHelper $miosHelper)
     {
-          /*  try
-        {  */
+        try
+        {
             $form = Form::find($id);
             $form->group_id = $request->group_id;
             $form->form_type_id = $request->type_form;
@@ -148,12 +148,21 @@ class FormController extends Controller
             {
                 for($i=0; $i<count($section['fields']); $i++){
                     if($section['sectionName' ]== 'Datos básicos del cliente'){
-                        $sect = $miosHelper->validateKeyName($section['fields'][0]['label'], $section['fields'][1]['label'], $section['fields'][2]['label'], $section['fields'][3]['label'], $section['fields'][4]['label'],$section['fields'][5]['label'],$section['fields'][6]['label'],$section['fields'][7]['label'],$section);
+                        $firstName = isset($section['fields'][0]['label']) ? $section['fields'][0]['label'] : null;
+                        $middleName = isset($section['fields'][1]['label']) ? $section['fields'][1]['label'] : null;
+                        $lastName = isset($section['fields'][2]['label']) ? $section['fields'][2]['label'] : null;
+                        $secondLastName = isset($section['fields'][3]['label']) ? $section['fields'][3]['label'] : null;
+                        $document = isset($section['fields'][4]['label']) ? $section['fields'][4]['label'] : null;
+                        $phone = isset($section['fields'][5]['label']) ? $section['fields'][5]['label'] : null;
+                        $email = isset($section['fields'][6]['label']) ? $section['fields'][6]['label'] : null;
+                        $documentTypeId = isset($section['fields'][7]['label']) ? $section['fields'][7]['label'] : null;
+
+                        $sect = $miosHelper->validateKeyName($firstName, $middleName, $lastName, $secondLastName, $document,$phone,$email,$documentTypeId,$section);
                     }else{
                         $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
                         $section['fields'][$i]['key'] =  strtolower( str_replace(' ','-',$section['fields'][$i]['label']) );
- 
-                    }  
+
+                    }
                 }
                 if($section['sectionName'] == 'Datos básicos de cliente'){
                     $sections = Section::find($section['idsection']);
@@ -173,9 +182,9 @@ class FormController extends Controller
             $data = ['forms' => $form , 'sections' => json_decode($sections->fields), 'code' => 200,'message'=>'Formulario editado Correctamente'];
 
             return response()->json($data,$data['code']);
-        /* }catch(\Throwable $e){
+         }catch(\Throwable $e){
             return $this->errorResponse('Error al editar el formulario',500);
-        }  */
+        }
     }
 
     /**
