@@ -14,7 +14,7 @@ class SectionSeeder extends Seeder
         $Sections = array(
             [
                 'form_id' => '1',
-                'name_section' => 'Datos personales',
+                'name_section' => 'Datos básicos del cliente',
                 'type_section' => 1,
                 'fields'=> array( 
                 [
@@ -188,7 +188,7 @@ class SectionSeeder extends Seeder
              ],
              [
                 'form_id' => '2',
-                'name_section' => 'Datos personales',
+                'name_section' => 'Datos básicos del cliente',
                 'type_section' => 1,
                 'fields'=> array( 
                     [
