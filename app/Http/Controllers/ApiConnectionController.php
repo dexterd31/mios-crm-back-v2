@@ -186,4 +186,13 @@ class ApiConnectionController extends Controller
         }
         return response()->json($data, $data['code']);
     }
+
+    /**
+     * Olme Marin
+     * 20-03-2020
+     * Método para hacer login en las api registradas
+    */
+    public function apiLogin(Request $request, MiosHelper $miosHelper){
+        //$apis = ApiConnection::where()
+    }
 }
