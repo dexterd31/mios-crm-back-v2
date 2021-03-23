@@ -193,6 +193,9 @@ class ApiConnectionController extends Controller
      * Método para hacer login en las api registradas
     */
     public function apiLogin(Request $request, MiosHelper $miosHelper){
-        //$apis = ApiConnection::where()
+        $where = ['request_type' => 1, 'status' => 1];
+        $apis = ApiConnection::where($where)->get();
+        echo json_encode($apis);
+        die();
     }
 }

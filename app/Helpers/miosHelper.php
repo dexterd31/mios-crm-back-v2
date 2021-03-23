@@ -37,7 +37,7 @@ class MiosHelper
         return $json;
     }
 
-    function validateKeyName($key, $key2, $key3, $key4, $key5, $key6, $key7, $section)
+    function validateKeyName($key, $key2, $key3, $key4, $key5, $key6, $key7,$key8, $section)
     {
         $firstNameArray = [
             'Nombre',
@@ -98,6 +98,12 @@ class MiosHelper
             'Correo',
             'Correo electrónico'
         ];
+        $documentTypeArray = [
+            'Tipo de documento',
+            'Tipo Documento',
+            'Tipo documento',
+            'tipo documento',
+        ];
         $firstName = !empty($key) ? in_array($key, $firstNameArray) : false;
         $middleName = !empty($key2) ? in_array($key2, $middleNameArray) : false;
         $lastName = !empty($key3) ? in_array($key3, $lastNameArray) : false;
@@ -105,6 +111,7 @@ class MiosHelper
         $document = !empty($key5) ? in_array($key5, $documentArray) : false;
         $phone = !empty($key6) ? in_array($key6, $phoneArray) : false;
         $email = !empty($key7) ? in_array($key7, $emailArray) : false;
+        $documenttype = !empty($key8) ? in_array($key8, $documentTypeArray) : false;
 
         if ($firstName) {
             $section['fields'][0]['key'] = 'firstName';
@@ -131,6 +138,10 @@ class MiosHelper
         if ($email) {
             $section['fields'][6]['key'] = 'email';
         }
+        if ($documenttype) {
+            $section['fields'][7]['key'] = 'document_type_id';
+        }
         return $section['fields'];
     }
+        
 }
