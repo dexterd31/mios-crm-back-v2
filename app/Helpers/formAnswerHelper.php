@@ -139,7 +139,8 @@ class FormAnswerHelper
         // Se obtiene la infromación del api registrado
         $result = $this->httpRequest($mode, $url, $autorization_type, $token, $other_autorization_type, $other_token, $json_send);
         $apiData = $miosHelper->jsonDecodeResponse(json_encode($result));
-        $num = count($apiData);
+        
+        $num = isset($apiData) ? count($apiData) : 0;
         /**
          * Se hace el match con la respuesta de mios 
          * Se llama la relación del api con el formulario de mios
@@ -213,16 +214,17 @@ class FormAnswerHelper
             $apiData = json_decode($result);
             return $apiData;
         } else {
-            $headersData = array();
 
             if( $autorization_type != null || $token != null) {
-                $headersData ['Autorization'] =  $autorization_type.' '.$token;   
+                $auth  = isset($autorization_type) ? $autorization_type.' '.$token : $token;
+                $autorization = "Authorization:$auth";   
             }
             if ($other_autorization_type != null && $other_token != null) {
-                $headersData[$other_autorization_type] = $other_token;
+                $otherAutorization = "$other_autorization_type:$other_token";
             }
-  
-            $headers = $headersData;
+
+            $headers = array("Content-Type:application/json", "$autorization", "$otherAutorization");
+            
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_POST, true);
@@ -230,10 +232,12 @@ class FormAnswerHelper
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($json_send));
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $json_send);
             $result = curl_exec($ch);
+
             curl_close($ch);
             $apiData = json_decode($result);
+
             return $apiData;
         }
     } 
