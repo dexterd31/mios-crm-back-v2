@@ -68,6 +68,23 @@ $router->group(['prefix' => 'api'], function () use ($router) {
   
     //Rutas de parámetros
     $router->post('/saveParameters/{id}','ParameterController@saveParameters');
+    $router->get('/searchParameterByFather/{id}/{father}','ParameterController@searchParameterByFather');
+    $router->get('/searchParameter/{id}','ParameterController@searchParameter');
+    $router->put('/updateParameters/{id}','ParameterController@updateParameters');
+
+    //Rutas de conexión apis
+    $router->post('/apiConnection/save', 'ApiConnectionController@save');
+    $router->get('/apiConnection/list/{form_id}', 'ApiConnectionController@list');
+    $router->get('/apiConnection/get/{id}', 'ApiConnectionController@get');
+    $router->put('/apiConnection/update/{id}', 'ApiConnectionController@update');
+    $router->get('/apiConnection/delete/{id}', 'ApiConnectionController@delete');
+
+    //Rutas de api question
+    $router->post('/apiQuestion/save', 'ApiQuestionController@save');
+    $router->get('/apiQuestion/list/{form_id}', 'ApiQuestionController@list');
+    $router->get('/apiQuestion/get/{id}', 'ApiQuestionController@get');
+    $router->put('/apiQuestion/update/{id}', 'ApiQuestionController@update');
+    $router->get('/apiQuestion/delete/{id}', 'ApiQuestionController@delete');
 });
 
 
