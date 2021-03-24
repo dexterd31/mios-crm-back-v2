@@ -16,38 +16,42 @@ class PermissionCrmController extends Controller
      */
     public function list(MiosHelper $miosHelper, $rolCiu)
     {
+        try {
+            $rolCrm = RolCrm::where('key', trim($rolCiu))->first();
+            if (empty($rolCrm)) {
+                $data = $miosHelper->jsonResponse(false, 404, 'message', 'No se han encontrado el rol');
+            } else {
+                $idRolCrm         = $rolCrm->id;
+                $permissions      = PermissionCrm::where('rol_id', $idRolCrm)->get()->load('module');
 
-        $rolCrm = RolCrm::where('key', trim($rolCiu))->first();
-        if (empty($rolCrm)) {
-            $data = $miosHelper->jsonResponse(false, 404, 'message', 'No se han encontrado el rol con ese id');
-        } else {
-            $idRolCrm         = $rolCrm->id;
-            $permissions      = PermissionCrm::where('rol_id', $idRolCrm)->get()->load('module');
+                foreach ($permissions as $permission) {
 
-            foreach ($permissions as $permission) {
-      
-                // Se limpia lo que no se necesita mostrar de la consulta
-                unset($permission['id']);
-                unset($permission['rol_id']);
-                unset($permission['module_id']);
-                unset($permission['status']);
-                unset($permission['created_at']);
-                unset($permission['updated_at']);
-                unset($permission['module']['id']);
-                unset($permission['module']['status']);
-                unset($permission['module']['created_at']);
-                unset($permission['module']['updated_at']);
+                    // Se limpia lo que no se necesita mostrar de la consulta
+                    unset($permission['id']);
+                    unset($permission['rol_id']);
+                    unset($permission['module_id']);
+                    unset($permission['status']);
+                    unset($permission['created_at']);
+                    unset($permission['updated_at']);
+                    unset($permission['module']['id']);
+                    unset($permission['module']['status']);
+                    unset($permission['module']['created_at']);
+                    unset($permission['module']['updated_at']);
+                }
+
+                // Se arma la respuesta
+                $response = [
+                    'rol_id' => $idRolCrm,
+                    'rol_name' => $rolCrm->name,
+                    'modules' => $permissions
+                ];
+
+                $data   = $miosHelper->jsonResponse(true, 200, 'permissions', $response);
             }
-            
-            // Se arma la respuesta
-            $response = [
-                'rol_id' => $idRolCrm,
-                'rol_name' => $rolCrm->name,
-                'modules' => $permissions
-            ];
-
-            $data   = $miosHelper->jsonResponse(true, 200, 'permissions', $response);
+        } catch (\Throwable $th) {
+            $data   = $miosHelper->jsonResponse(true, 500, 'message', 'Ha ocurrido un error: ' . $th);
         }
+
 
         return response()->json($data, $data['code']);
     }
