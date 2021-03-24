@@ -32,6 +32,10 @@ class ModuleCrmSeeder extends Seeder
             [
                 'name'      => 'typify_form_record',
                 'status'    => 1
+            ],
+            [
+                'name'      => 'escalations',
+                'status'    => 1
             ]
         );
 

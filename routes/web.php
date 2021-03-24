@@ -93,6 +93,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/trays/save','TrayController@store');
     $router->get('/trays/','TrayController@index');
 
+    //Rutas Permisos
+    $router->get('/permission/{idRolCiu}', 'PermissionCrmController@list');
+
 });
 
 

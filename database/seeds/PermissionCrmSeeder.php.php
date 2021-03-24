@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Seeder;
+use App\Models\PermissionCrm;
 
 class PermissionCrmSeeder extends Seeder
 {
@@ -58,6 +59,15 @@ class PermissionCrmSeeder extends Seeder
                 'change'    => 1,
                 'all'       => 1
             ],
+            [
+                'rol_id'    => 2,
+                'module_id' => 6,
+                'save'      => 1,
+                'view'      => 1,
+                'edit'      => 1,
+                'change'    => 1,
+                'all'       => 1
+            ],
             // Asesor
             [
                 'rol_id'    => 1,
@@ -99,6 +109,15 @@ class PermissionCrmSeeder extends Seeder
                 'save'      => 1,
                 'view'      => 1,
                 'edit'      => 1,
+                'change'    => 0,
+                'all'       => 0
+            ],
+            [
+                'rol_id'    => 1,
+                'module_id' => 6,
+                'save'      => 0,
+                'view'      => 0,
+                'edit'      => 0,
                 'change'    => 0,
                 'all'       => 0
             ],
@@ -147,6 +166,15 @@ class PermissionCrmSeeder extends Seeder
                 'change'    => 0,
                 'all'       => 1
             ],
+            [
+                'rol_id'    => 3,
+                'module_id' => 6,
+                'save'      => 0,
+                'view'      => 0,
+                'edit'      => 0,
+                'change'    => 0,
+                'all'       => 0
+            ],
             // Radicador
             [
                 'rol_id'    => 4,
@@ -188,6 +216,15 @@ class PermissionCrmSeeder extends Seeder
                 'module_id' => 5,
                 'save'      => 0,
                 'view'      => 0,
+                'edit'      => 0,
+                'change'    => 0,
+                'all'       => 0
+            ],
+            [
+                'rol_id'    => 4,
+                'module_id' => 6,
+                'save'      => 1,
+                'view'      => 1,
                 'edit'      => 0,
                 'change'    => 0,
                 'all'       => 0
@@ -237,6 +274,15 @@ class PermissionCrmSeeder extends Seeder
                 'change'    => 0,
                 'all'       => 0
             ],
+            [
+                'rol_id'    => 5,
+                'module_id' => 6,
+                'save'      => 1,
+                'view'      => 1,
+                'edit'      => 1,
+                'change'    => 1,
+                'all'       => 1
+            ],
             // Supervisor-ESCA
             [
                 'rol_id'    => 6,
@@ -281,6 +327,15 @@ class PermissionCrmSeeder extends Seeder
                 'edit'      => 0,
                 'change'    => 0,
                 'all'       => 0
+            ],
+            [
+                'rol_id'    => 6,
+                'module_id' => 6,
+                'save'      => 0,
+                'view'      => 0,
+                'edit'      => 1,
+                'change'    => 1,
+                'all'       => 1
             ],
             // Calidad
             [
@@ -327,6 +382,15 @@ class PermissionCrmSeeder extends Seeder
                 'change'    => 0,
                 'all'       => 0
             ],
+            [
+                'rol_id'    => 7,
+                'module_id' => 6,
+                'save'      => 0,
+                'view'      => 0,
+                'edit'      => 0,
+                'change'    => 0,
+                'all'       => 0
+            ],
             // Datamarshall
             [
                 'rol_id'    => 8,
@@ -368,6 +432,15 @@ class PermissionCrmSeeder extends Seeder
                 'module_id' => 5,
                 'save'      => 0,
                 'view'      => 1,
+                'edit'      => 0,
+                'change'    => 0,
+                'all'       => 0
+            ],
+            [
+                'rol_id'    => 8,
+                'module_id' => 6,
+                'save'      => 0,
+                'view'      => 0,
                 'edit'      => 0,
                 'change'    => 0,
                 'all'       => 0
@@ -417,6 +490,15 @@ class PermissionCrmSeeder extends Seeder
                 'change'    => 0,
                 'all'       => 0
             ],
+            [
+                'rol_id'    => 9,
+                'module_id' => 6,
+                'save'      => 0,
+                'view'      => 0,
+                'edit'      => 0,
+                'change'    => 0,
+                'all'       => 0
+            ],
             // Usuario externo
             [
                 'rol_id'    => 10,
@@ -461,7 +543,30 @@ class PermissionCrmSeeder extends Seeder
                 'edit'      => 0,
                 'change'    => 0,
                 'all'       => 0
-            ]
+            ],
+            [
+                'rol_id'    => 10,
+                'module_id' => 6,
+                'save'      => 0,
+                'view'      => 0,
+                'edit'      => 0,
+                'change'    => 0,
+                'all'       => 0
+            ],
         );
+
+        foreach ($permissions as $permission ) {
+
+            $Permission = new PermissionCrm();
+            $Permission->rol_id     = $permission['rol_id'];
+            $Permission->module_id  = $permission['module_id'];
+            $Permission->save       = $permission['save'];
+            $Permission->view       = $permission['view'];
+            $Permission->edit       = $permission['edit'];
+            $Permission->change     = $permission['change'];
+            $Permission->all        = $permission['all'];
+            $Permission->save();
+
+        }
     }
 }
