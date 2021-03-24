@@ -44,7 +44,27 @@ class AuthServiceProvider extends ServiceProvider
 
         // Validar permiso para las acciones en form_answer
         Gate::define('form_answer', function($user){
-            if (in_array('crm::admin', $user->roles) || in_array('bpms::solicitante', $user->roles) || in_array('bpms::responsable_bpms', $user->roles) || in_array('ciu::supervisor', $user->roles)) {
+            if (in_array('crm::admin', $user->roles) || in_array('bpms::solicitante', $user->roles) || in_array('bpms::responsable_bpms', $user->roles) 
+                || in_array('ciu::supervisor', $user->roles) || in_array('crm::supervisor_crm', $user->roles) || in_array('crm::asesor', $user->roles) 
+                || in_array('crm::calidad', $user->roles) || in_array('crm::datamarshall', $user->roles) || in_array('crm::backoffice', $user->roles) || in_array('crm::usuario_externo', $user->roles)) {
+                return true;
+            } else {
+                return false;
+            }
+        });
+
+        // Validar permisos de campaigns
+        Gate::define('campaigns', function($user){
+            if (in_array('crm::admin', $user->roles) || in_array('crm::supervisor_crm', $user->roles) || in_array('ciu::supervisor', $user->roles)) {
+                return true;
+            } else {
+                return false;
+            }
+        });
+
+        // Validar permisos de grupos
+        Gate::define('groups', function($user){
+            if (in_array('crm::admin', $user->roles) || in_array('crm::supervisor_crm', $user->roles) || in_array('ciu::supervisor', $user->roles)) {
                 return true;
             } else {
                 return false;
