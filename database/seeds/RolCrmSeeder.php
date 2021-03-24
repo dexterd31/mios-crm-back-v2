@@ -76,7 +76,7 @@ class RolCrmSeeder extends Seeder
             [
                 'ciu_id'    => 0,
                 'name'      => 'Superviso-CIU',
-                'key'       => 'superviso_ciu',
+                'key'       => 'superviso',
                 'status'    => 1
             ]
         );
