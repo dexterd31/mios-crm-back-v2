@@ -22,5 +22,8 @@ class DatabaseSeeder extends Seeder
         $this->call('ClientSeeder');
         $this->call('GroupUserSeeder');
         $this->call('FormAnswerSeeder');
+        $this->call('RolCrmSeeder');
+        $this->call('ModuleCrmSeeder');
+        $this->call('PermissionCrmSeeder');
     }
 }
