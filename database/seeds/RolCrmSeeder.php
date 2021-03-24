@@ -72,6 +72,12 @@ class RolCrmSeeder extends Seeder
                 'name'      => 'Usuario externo',
                 'key'       => 'usuario_externo',
                 'status'    => 1
+            ],
+            [
+                'ciu_id'    => 0,
+                'name'      => 'Superviso-CIU',
+                'key'       => 'superviso_ciu',
+                'status'    => 1
             ]
         );
 

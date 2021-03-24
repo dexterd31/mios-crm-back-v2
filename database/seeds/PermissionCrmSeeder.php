@@ -13,6 +13,61 @@ class PermissionCrmSeeder extends Seeder
     public function run()
     {
         $permissions = array(
+            // Superviso Ciu
+            [
+                'rol_id'    => 2,
+                'module_id' => 1,
+                'save'      => 1,
+                'view'      => 1,
+                'edit'      => 1,
+                'change'    => 1,
+                'all'       => 1
+            ],
+            [
+                'rol_id'    => 2,
+                'module_id' => 2,
+                'save'      => 1,
+                'view'      => 1,
+                'edit'      => 1,
+                'change'    => 1,
+                'all'       => 1
+            ],
+            [
+                'rol_id'    => 2,
+                'module_id' => 3,
+                'save'      => 1,
+                'view'      => 1,
+                'edit'      => 1,
+                'change'    => 1,
+                'all'       => 1
+            ],
+            [
+                'rol_id'    => 2,
+                'module_id' => 4,
+                'save'      => 1,
+                'view'      => 1,
+                'edit'      => 1,
+                'change'    => 1,
+                'all'       => 1
+            ],
+            [
+                'rol_id'    => 2,
+                'module_id' => 5,
+                'save'      => 1,
+                'view'      => 1,
+                'edit'      => 1,
+                'change'    => 1,
+                'all'       => 1
+            ],
+            [
+                'rol_id'    => 2,
+                'module_id' => 6,
+                'save'      => 1,
+                'view'      => 1,
+                'edit'      => 1,
+                'change'    => 1,
+                'all'       => 1
+            ],
             //Administrador
             [
                 'rol_id'    => 2,

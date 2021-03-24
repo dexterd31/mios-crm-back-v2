@@ -14,10 +14,10 @@ class PermissionCrmController extends Controller
      * 24-03-2020
      * Método para enlistar los permisos que tiene un rol
      */
-    public function list(MiosHelper $miosHelper, $idRolCiu)
+    public function list(MiosHelper $miosHelper, $rolCiu)
     {
 
-        $rolCrm = RolCrm::where('ciu_id', $idRolCiu)->first();
+        $rolCrm = RolCrm::where('key', trim($rolCiu))->first();
         if (empty($rolCrm)) {
             $data = $miosHelper->jsonResponse(false, 404, 'message', 'No se han encontrado el rol con ese id');
         } else {
