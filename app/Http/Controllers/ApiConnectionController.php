@@ -52,6 +52,7 @@ class ApiConnectionController extends Controller
                             $api->mode                      = $json_body['mode'];
                             $api->parameter                 = trim($json_body['parameter']);
                             $api->json_send                 = json_encode($json_body['json_send']);
+                            $api->graphql_send              = $json_body['graphql_send'];
                             $api->json_response             = json_encode($json_body['json_response']);
                             $api->request_type              = $json_body['request_type'];
                             $api->api_type                  = $json_body['api_type'];
@@ -71,6 +72,7 @@ class ApiConnectionController extends Controller
                         $api->mode                      = $json_body['mode'];
                         $api->parameter                 = trim($json_body['parameter']);
                         $api->json_send                 = json_encode($json_body['json_send']);
+                        $api->graphql_send              = $json_body['graphql_send'];
                         $api->json_response             = json_encode($json_body['json_response']);
                         $api->request_type              = $json_body['request_type'];
                         $api->api_type                  = $json_body['api_type'];
@@ -84,7 +86,7 @@ class ApiConnectionController extends Controller
                 $data = $miosHelper->jsonResponse(false, 400, 'message', 'Faltan campos por diligenciarse');
             }
         } catch (\Throwable $th) {
-            $data = $miosHelper->jsonResponse(false, 400, 'message', 'Ha ocurrido un error');
+            $data = $miosHelper->jsonResponse(false, 500, 'message', 'Ha ocurrido un error');
         }
 
         return response()->json($data, $data['code']);

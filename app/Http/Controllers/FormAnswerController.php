@@ -157,10 +157,10 @@ class FormAnswerController extends Controller
                         $infoApi = $formAnswerHelper->getInfoByApi($apiFind, $parameter, $formId);
 
                         $form_answers = $infoApi;
-                        $ff = [];
-                        array_push($ff, $form_answers);
+                        $answerApi = [];
+                        array_push($answerApi, $form_answers);
 
-                        $form_answers = $miosHelper->paginate($ff, $perPage = 15, $page = null);
+                        $form_answers = $miosHelper->paginate($answerApi, $perPage = 15, $page = null);
                     }
 
                     if ($form_answers == null) {

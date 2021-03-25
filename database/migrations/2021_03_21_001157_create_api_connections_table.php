@@ -25,6 +25,7 @@ class CreateApiConnectionsTable extends Migration
             $table->string('mode');
             $table->string('parameter')->nullable();
             $table->json('json_send')->nullable();
+            $table->string('graphql_send')->nullable();
             $table->json('json_response');
             $table->tinyInteger('request_type');
             $table->tinyInteger('api_type');
