@@ -5,6 +5,7 @@ namespace Helpers;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
+use App\Models\GroupUser;
 
 class MiosHelper
 {
@@ -142,6 +143,12 @@ class MiosHelper
             $section['fields'][7]['key'] = 'document_type_id';
         }
         return $section['fields'];
+    }
+
+    // Funcion para obtner los grupos por id de usuario
+    function groupsByUserId($userId) {
+        $groups = GroupUser::where('user_id', $userId)->get();
+        return $groups;
     }
         
 }
