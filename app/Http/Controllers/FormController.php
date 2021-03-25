@@ -217,7 +217,7 @@ class FormController extends Controller
             // Se obtienes los grupor por usuarios
             $groupsIds  = $miosHelper->groupsByUserId($idUser);
             $where      = ['state' => 1, 'group_id' => $groupsIds];
-            $forms      = Form::where($where)->get();
+            $forms      = Form::where($where)->get()->load('formtype');
             foreach ($forms as $form) {
                 $form->filters = $miosHelper->jsonDecodeResponse($form->filters);
             }
