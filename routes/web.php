@@ -25,6 +25,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->put('/deleteform/{id}', 'FormController@deleteForm');
     //Reporte del formulario
     $router->get('/report/{form_id}/{fecha_desde}/{fecha_hasta}/{parameters}','FormController@report');
+    $router->get('/formsbyuser/{idUser}', 'FormController@formsByUser');
 
     //Base de datos
     $router->get('/form/dowload/{parameters}', 'UploadController@exportExcel');

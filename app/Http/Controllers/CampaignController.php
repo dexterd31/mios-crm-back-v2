@@ -63,13 +63,9 @@ class CampaignController extends Controller
     {
 
         try {
-            $groupsIds = [];
 
             // Se obtienes los grupor por usuarios
-            $groups = $miosHelper->groupsByUserId($idUser);
-            foreach ($groups as $group) {
-                array_push($groupsIds, $group['id']);
-            }
+            $groupsIds = $miosHelper->groupsByUserId($idUser);
             $campaigns = Campaing::where('group_id', $groupsIds)->get();
             $data = $miosHelper->jsonResponse(true, 200, 'campaigns', $campaigns);
         } catch (\Throwable $th) {

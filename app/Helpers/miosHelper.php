@@ -38,7 +38,7 @@ class MiosHelper
         return $json;
     }
 
-    function validateKeyName($key, $key2, $key3, $key4, $key5, $key6, $key7,$key8, $section)
+    function validateKeyName($key, $key2, $key3, $key4, $key5, $key6, $key7, $key8, $section)
     {
         $firstNameArray = [
             'Nombre',
@@ -146,9 +146,13 @@ class MiosHelper
     }
 
     // Funcion para obtner los grupos por id de usuario
-    function groupsByUserId($userId) {
+    function groupsByUserId($userId)
+    {
+        $groupsIds = [];
         $groups = GroupUser::where('user_id', $userId)->get();
-        return $groups;
+        foreach ($groups as $group) {
+            array_push($groupsIds, $group['id']);
+        }
+        return $groupsIds;
     }
-        
 }
