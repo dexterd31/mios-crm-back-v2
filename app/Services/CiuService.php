@@ -14,7 +14,7 @@ class CiuService
     public function __construct()
     {
         $this->baseUri = config('services.ciu.base_uri');
-        $this->secret = JWTAuth::getToken()->get();
+        $this->secret = JWTAuth::getToken();
     }
 
     public function fetchUser($id){

@@ -13,7 +13,7 @@ class NominaService
     public function __construct()
     {
         $this->baseUri = config('services.nomina.base_uri');
-        $this->secret = JWTAuth::getToken()->get();
+        $this->secret = JWTAuth::getToken();
     }
 
     public function fetchCampaign($id)

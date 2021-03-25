@@ -12,6 +12,7 @@ class RrhhService
     public function __construct()
     {
         $this->baseUri = config('services.rrhh.base_uri');
+        $this->secret = JWTAuth::getToken();
     }
 
     /**
