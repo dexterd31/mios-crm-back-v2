@@ -11,7 +11,7 @@ class Form extends Model
     protected $fillable = ['group_id', 'campaign_id', 'form_type_id', 'name_form','filters','state'];
 
     public function formtype(){
-        return $this->hasOne('App\Models\FormType', 'id');
+        return $this->belongsTo('App\Models\FormType', 'form_type_id');
     }
 
     public function section(){
