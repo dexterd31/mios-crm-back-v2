@@ -120,9 +120,26 @@ class EscalationController extends Controller
                     }
                 }
             }
+            //dd($form['sections'][0]['fields']);
             // revisar que todos los campos se hayan validado correctamente
             if($validated_fields == count($scalation->fields)){
-                $client_json = json_encode(Client::findOrFail($request->client_id));
+                
+                if($request->client_id){
+                    $client_json = json_encode(Client::findOrFail($request->client_id));
+                } else {
+                    $document = null;
+                    $document_type_id = null;
+                    foreach ($form['sections'][0]['fields'] as $value) {
+                        if ($value['key']== 'document'){
+                            $document = $value['value'];
+                        }
+                        if($value['key'] == 'document_type_id'){
+                            $document_type_id = $value['value'];
+                        }
+                    }
+                    $client_json = json_encode(Client::where('document', $document)->where('document_type_id', $document_type_id)->firstOrFail());
+                }
+                
                 $this->pqrsService->createEscalation($scalation->asunto_id, $scalation->estado_id, $client_json, 1, $request->form, null, 'hola');
                 return $this->successResponse('Peticion escalada');
             }
