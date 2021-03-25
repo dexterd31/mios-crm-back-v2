@@ -220,7 +220,6 @@ class GroupController extends Controller
             $data = $miosHelper->jsonResponse(true, 500, 'message', 'Ha ocurrido un error: ' . $th);
         }
 
-
         return response()->json($data, $data['code']);
     }
 }
