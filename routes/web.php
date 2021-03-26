@@ -91,11 +91,15 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/apiQuestion/get/{id}', 'ApiQuestionController@get');
     $router->put('/apiQuestion/update/{id}', 'ApiQuestionController@update');
     $router->get('/apiQuestion/delete/{id}', 'ApiQuestionController@delete');
+    
 
     //Rutas Bandejas
     $router->post('/trays/save','TrayController@store');
     $router->get('/trays/','TrayController@index');
 
+
+    //Rutas escalamientos
+    $router->post('/escalations', 'EscalationController@validateScalation');
     //Rutas Permisos
     $router->get('/permission/{rolCiu}', 'PermissionCrmController@list');
 
