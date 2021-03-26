@@ -25,6 +25,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->put('/deleteform/{id}', 'FormController@deleteForm');
     //Reporte del formulario
     $router->get('/report/{form_id}/{fecha_desde}/{fecha_hasta}/{parameters}','FormController@report');
+    $router->get('/formsbyuser/{idUser}', 'FormController@formsByUser');
 
     //Base de datos
     $router->get('/form/dowload/{parameters}', 'UploadController@exportExcel');
@@ -47,10 +48,12 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->put('/updategroup/{id}','GroupController@updateGroup');
     //consultar usuarios existentes para asignar al grupo
     $router->get('/searchUser/{id}','GroupController@searchUser');
+    $router->get('/groupsbyuser/{idUser}', 'GroupController@listGroupsByUser');
 
     // rutas de campañas
     $router->get('/campaigns', 'CampaignController@index');
     $router->post('/campaigns/{id}/updateState', 'CampaignController@updateState');
+    $router->get('/campaignsbyuser/{idUser}', 'CampaignController@campaignsByUser');
 
     //Rutas de usuarios
     $router->post('/storeUser', 'UserController@storeUser');
@@ -92,6 +95,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas Bandejas
     $router->post('/trays/save','TrayController@store');
     $router->get('/trays/','TrayController@index');
+
+    //Rutas Permisos
+    $router->get('/permission/{rolCiu}', 'PermissionCrmController@list');
 
 });
 
