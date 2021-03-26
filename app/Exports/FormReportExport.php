@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\FormAnswer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -32,30 +33,61 @@ class FormReportExport implements FromCollection, WithHeadings
     */
     public function collection()
     {
-     
+      // dd($this->headers);
+
       //dd($this->headers);
-        $formAnswers = FormAnswer::where('form_id',$this->form_id)
+
+      // $formAnswers = DB::table('form_answers')->where('form_id',$this->form_id)
+      //                     ->where('created_at','>=', $this->fecha_desde)
+      //                     ->where('created_at','<=', $this->fecha_hasta)
+      //                     ->select('structure_answer')
+      //                     ->get();
+
+      //                     return dd($formAnswers);
+
+
+      $formAnswers = FormAnswer::where('form_id',$this->form_id)
                           ->where('created_at','>=', $this->fecha_desde)
                           ->where('created_at','<=', $this->fecha_hasta)
-                        ->select('structure_answer')->get();
-
+                          ->select('structure_answer')->get();
 
                         if(count($formAnswers)==0){
                           return 'Error al consultar los datos';
                         }else{
+                          // return dd($formAnswers);
+                          $i=0;
+
+                          $data = [];
                           foreach($formAnswers as $answer){
                             foreach(json_decode($answer->structure_answer) as $structure){
                               foreach($structure as $id => $value){
-                                $ids[$id] = $value;
-
+                                $ids[$i][$id] = $value;
+                                return dd();
+                                if($ids[$i][$id] == $this->headers){
+                                  array_push($data, $value);
+                                }
                               }
                             }
+                            $i++;
                           }
+
+
+                          return dd($data);
+                          // return dd($this->headers);
+                          $idx=0;
+                          foreach($this->headers as $data){
+                            $datas[$idx] = $ids[$data];
+                            $idx++;
+                          }
+
+                          return dd($datas);
+                          return $datas;
                          // dd($value);
                         // dd($ids);
+
                         return array($ids);
                       }
-                      
+
                         //return [];
 
 
