@@ -184,9 +184,8 @@ class FormAnswerController extends Controller
                     }
                 } else {
                     // Cundo se regresa la respuesta vacia porque no incontro registro por ninua fuente de información
-                    $arrayData = $apiHelper->responseFilterMios([], $formId);
                     $form_answers = $validador;
-                    $form_answers['data'] = [$arrayData];
+                    $form_answers['data'] = [];
                 }
 
 
