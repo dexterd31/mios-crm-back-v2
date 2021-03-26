@@ -51,6 +51,8 @@ class ApiConnectionController extends Controller
                             $api->other_token               = $json_body['other_token'];
                             $api->mode                      = $json_body['mode'];
                             $api->parameter                 = trim($json_body['parameter']);
+                            $api->parameter2                = trim($json_body['parameter2']);
+                            $api->parameter3                = trim($json_body['parameter3']);
                             $api->json_send                 = json_encode($json_body['json_send']);
                             $api->graphql_send              = $json_body['graphql_send'];
                             $api->json_response             = json_encode($json_body['json_response']);
@@ -71,6 +73,8 @@ class ApiConnectionController extends Controller
                         $api->other_token               = $json_body['other_token'];
                         $api->mode                      = $json_body['mode'];
                         $api->parameter                 = trim($json_body['parameter']);
+                        $api->parameter2                = trim($json_body['parameter2']);
+                        $api->parameter3                = trim($json_body['parameter3']);
                         $api->json_send                 = json_encode($json_body['json_send']);
                         $api->graphql_send              = $json_body['graphql_send'];
                         $api->json_response             = json_encode($json_body['json_response']);
@@ -189,15 +193,4 @@ class ApiConnectionController extends Controller
         return response()->json($data, $data['code']);
     }
 
-    /**
-     * Olme Marin
-     * 20-03-2020
-     * Método para hacer login en las api registradas
-    */
-    public function apiLogin(Request $request, MiosHelper $miosHelper){
-        $where = ['request_type' => 1, 'status' => 1];
-        $apis = ApiConnection::where($where)->get();
-        echo json_encode($apis);
-        die();
-    }
 }

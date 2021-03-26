@@ -14,6 +14,8 @@ use App\Services\CiuService;
 use App\Services\NominaService;
 use Helpers\MiosHelper;
 use Helpers\FormAnswerHelper;
+use Helpers\ApiHelper;
+use Helpers\FilterHelper;
 
 class FormAnswerController extends Controller
 {
@@ -121,7 +123,7 @@ class FormAnswerController extends Controller
      * 26-02-2020
      * Método para filtrar las varias opciones en el formulario
      */
-    public function filterForm(Request $request, MiosHelper $miosHelper, FormAnswerHelper $formAnswerHelper)
+    public function filterForm(Request $request, MiosHelper $miosHelper, FormAnswerHelper $formAnswerHelper, ApiHelper $apiHelper, FilterHelper $filterHelper)
     {
         try {
             if (Gate::allows('form_answer')) {
@@ -130,7 +132,6 @@ class FormAnswerController extends Controller
                 $formId         = $json_body['form_id'];
                 $form_answers   = null;
 
-                if (isset($json_body['item1_key']) && isset($json_body['item1_value']) && isset($json_body['item2_key']) && isset($json_body['item2_value']) && isset($json_body['item3_key']) && isset($json_body['item3_value'])) {
                     $item1key   = !empty($json_body['item1_key']) ? $json_body['item1_key'] : 'vacio';
                     $item1value = !empty($json_body['item1_value']) ? $json_body['item1_value'] : 'vacio';
                     $item2key   = !empty($json_body['item2_key']) ? $json_body['item2_key'] : 'vacio';
@@ -141,8 +142,11 @@ class FormAnswerController extends Controller
                     // Se busca si la solicitud tiene cargue por api
                     $where = ['form_id' => $formId, 'request_type' => 2, 'status' => 1];
                     $apiFind = ApiConnection::where($where)->first();
-                    $parameter = null;
+                    $parameter  = null;
+                    $parameter2 = null;
+                    $parameter3 = null;
                     if ($apiFind) {
+                        // Se busca los item de busqueda 
                         if ($apiFind['parameter'] != null || $apiFind['parameter'] != '') {
                             if ($item1key == $apiFind['parameter']) {
                                 $parameter = $item1value;
@@ -152,9 +156,30 @@ class FormAnswerController extends Controller
                                 $parameter = $item3value;
                             }
                         }
+                        // Item de busqueda 2
+                        if ($apiFind['parameter2'] != null || $apiFind['parameter2'] != '') {
+                            if ($item1key == $apiFind['parameter2']) {
+                                $parameter = $item1value;
+                            } else if ($item2key == $apiFind['parameter2']) {
+                                $parameter = $item2value;
+                            } else if ($item3key == $apiFind['parameter2']) {
+                                $parameter = $item3value;
+                            }
+                        }
+
+                        // Item de busqueda 2
+                        if ($apiFind['parameter3'] != null || $apiFind['parameter3'] != '') {
+                            if ($item1key == $apiFind['parameter3']) {
+                                $parameter = $item1value;
+                            } else if ($item2key == $apiFind['parameter3']) {
+                                $parameter = $item2value;
+                            } else if ($item3key == $apiFind['parameter3']) {
+                                $parameter = $item3value;
+                            }
+                        }
 
                         // Se hace el cargue de la información con la api registrada.
-                        $infoApi = $formAnswerHelper->getInfoByApi($apiFind, $parameter, $formId);
+                        $infoApi = $apiHelper->getInfoByApi($apiFind, $parameter, $parameter2, $parameter3, $formId);
 
                         $form_answers = $infoApi;
                         $answerApi = [];
@@ -165,12 +190,8 @@ class FormAnswerController extends Controller
 
                     if ($form_answers == null) {
 
-                        // Se continua la busqueda por gestio o base de datos
-                        $form_answers = FormAnswer::where('form_id', $formId)
-                            ->where('structure_answer', 'like', '%' . $item1value . '%')
-                            ->orWhere('structure_answer', 'like', '%' . $item2value . '%')
-                            ->orWhere('structure_answer', 'like', '%' . $item3value . '%')
-                            ->with('client')->paginate(10);
+                        // Se buscan las gestiones por base de datos
+                        $form_answers = $filterHelper->filterByDataBase($formId, $item1value, $item2value, $item3value);
 
                         // Si no se encuatra registros se busca por cliente
                         if (count($form_answers) < 1) {
@@ -205,9 +226,7 @@ class FormAnswerController extends Controller
                         }
                     }
                     $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
-                } else {
-                    $data = $miosHelper->jsonResponse(false, 404, 'message', 'No ha enviado todas las llaves');
-                }
+                
             } else {
                 $data = $miosHelper->jsonResponse(false, 403, 'message', 'Tú rol no tiene permisos para ejecutar esta acción');
             }
