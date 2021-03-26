@@ -36,10 +36,14 @@ class FormAnswerController extends Controller
         // try {
             // Se valida si tiene permiso para hacer acciones en formAnswer
             if (Gate::allows('form_answer')) {
-                $json_body = $miosHelper->jsonDecodeResponse($request->getContent());
-                $client = null;
+                // return $request;
+                // $json_body = $miosHelper->jsonDecodeResponse($request->getContent());
+                // $json_body = $request->getContent();
+                // return $json_body;
+                // $client = null;
 
-                $structure_answer = $formAnswerHelper->structureAnswer($json_body['form_id'], $json_body['sections']);
+                $structure_answer = $formAnswerHelper->structureAnswer($request['form_id'], $request['sections']);
+                return $structure_answer;
 
                 if ($json_body['client_id'] == null || $json_body['client_id'] == "") {
                     $contador = 0;
