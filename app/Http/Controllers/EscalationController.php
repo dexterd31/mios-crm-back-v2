@@ -125,8 +125,10 @@ class EscalationController extends Controller
             if($validated_fields == count($scalation->fields)){
                 
                 if($request->client_id){
+                    // si se envia el id del cliente en el request usar esa info
                     $client_json = json_encode(Client::findOrFail($request->client_id));
                 } else {
+                    //si no se envia en el request buscar en el formulario la informacion del cliente
                     $document = null;
                     $document_type_id = null;
                     foreach ($form['sections'][0]['fields'] as $value) {
