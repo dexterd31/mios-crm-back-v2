@@ -2,32 +2,86 @@
 
 namespace App\Exports;
 
-use App\Models\KeyValue;
-use Maatwebsite\Excel\Concerns\FromCollection;
+use App\Models\FormAnswer;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Concerns\Exportable;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 
 
-class FormReportExport implements FromCollection
+class FormReportExport implements FromCollection, WithHeadings
 {
+
+  use Exportable;
+
+    public $fecha_desde;
+    public $fecha_hasta;
+    public $form_id;
+    public $headers;
+
+    public function __construct($form_id, $fecha_desde, $fecha_hasta,$headers)
+    {
+        $this->fecha_desde = $fecha_desde;
+        $this->fecha_hasta = $fecha_hasta;
+        $this->form_id = $form_id;
+        $this->headers = explode(",", $headers);
+    }
+
     /**
     * @return \Illuminate\Support\Collection
     */
     public function collection()
     {
-      
-        return KeyValue::all();
+     dd($this->headers);
+        $formAnswers = FormAnswer::where('form_id',$this->form_id)
+                      //  ->whereBetween('created_at', [$this->fecha_desde, $this->fecha_hasta])
+                          ->where('created_at','>=', $this->fecha_desde)
+                          ->where('created_at','<=', $this->fecha_hasta)
+                         // ->whereIn('key',$this->headers)
+                        ->select('structure_answer')->get();
+
+                        if(count($formAnswers)==0){
+                          return $formAnswers;
+                        }
+
+                        return [];
+
+                        dd($formAnswers);
+
+
+
+                       //  $formAnswer = array();
+                       //  $keys = array();
+
+                       // // dd($formAnswers);
+                       //  foreach($formAnswers as $answer){
+
+                       //     // dd(json_decode($answer->structure_answer));
+                       //      foreach(json_decode($answer->structure_answer) as $section){
+                       //         // dd(json_decode($answer->structure_answer));
+                       //         foreach($section as $key => $value){
+                       //              $keys[$key] = $value;
+                       //          }
+                       //          $formAnswer = $keys;
+                       //         // $keys = array();
+                       //      }
+                       //  }
+                       // //  dd($formAnswer);
+
+
+                     return (json_encode($formAnswer));
     }
 
     public function headings(): array
-    {   
-        global $headersExcel;
-        return $headersExcel;
+    {
+        return $this->headers;
     }
 
-    public function headersExcel($headers){
-        
-        global $headersExcel;
-        $headersExcel = $headers;
-        return $headers;
-    }
+    // public function headersExcel($headers){
+
+    //     global $headersExcel;
+    //     $headersExcel = $headers;
+    //     return $headers;
+    // }
+
 }
