@@ -87,7 +87,6 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/apiConnection/get/{id}', 'ApiConnectionController@get');
     $router->put('/apiConnection/update/{id}', 'ApiConnectionController@update');
     $router->get('/apiConnection/delete/{id}', 'ApiConnectionController@delete');
-    $router->get('/apiConnection/login', 'ApiConnectionController@apiLogin');
 
     //Rutas de api question
     $router->post('/apiQuestion/save', 'ApiQuestionController@save');
