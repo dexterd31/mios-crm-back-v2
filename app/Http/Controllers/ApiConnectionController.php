@@ -17,6 +17,7 @@ class ApiConnectionController extends Controller
      * api_type = Para saber que tipo de api es la solicitud 1.Api rest 2.Graphql 
      * autorization_type = saber que tipo de autenticación maneja la api Bearer,OAuth,Hawk etc. 
      * parameter = Comodin para saber si la url recibe un parametro es debe llegar sin espacios 
+     * response_token = Para guardar como se debe obtner de la respuesta el token -solo aplica para login
      */
 
     /**
@@ -84,7 +85,7 @@ class ApiConnectionController extends Controller
                 $data = $miosHelper->jsonResponse(false, 400, 'message', 'Faltan campos por diligenciarse');
             }
         } catch (\Throwable $th) {
-            $data = $miosHelper->jsonResponse(false, 400, 'message', 'Ha ocurrido un error');
+            $data = $miosHelper->jsonResponse(false, 500, 'message', 'Ha ocurrido un error');
         }
 
         return response()->json($data, $data['code']);
@@ -187,15 +188,4 @@ class ApiConnectionController extends Controller
         return response()->json($data, $data['code']);
     }
 
-    /**
-     * Olme Marin
-     * 20-03-2020
-     * Método para hacer login en las api registradas
-    */
-    public function apiLogin(Request $request, MiosHelper $miosHelper){
-        $where = ['request_type' => 1, 'status' => 1];
-        $apis = ApiConnection::where($where)->get();
-        echo json_encode($apis);
-        die();
-    }
 }

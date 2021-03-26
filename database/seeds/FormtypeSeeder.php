@@ -15,13 +15,18 @@ class FormtypeSeeder extends Seeder
         $FormType = array(
             [
                 'name_type' => 'Outbound',
-                'description' => 'Ad',
+                'description' => '.',
                 'key' => '1'
             ],
             [
                 'name_type' => 'Inbound',
-                'description' => 'compras',
+                'description' => '.',
                 'key' => '2'
+            ],
+            [
+                'name_type' => 'Inbound y Outbound',
+                'description' => '.',
+                'key' => '3'
             ]
     );
 
