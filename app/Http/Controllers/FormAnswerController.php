@@ -179,7 +179,7 @@ class FormAnswerController extends Controller
                         }
 
                         // Se hace el cargue de la información con la api registrada.
-                        $infoApi = $apiHelper->getInfoByApi($apiFind, $parameter, $parameter2, $parameter3, $formId, $item1key, $item1value, $item2key, $item2value, $item3key, $item3value );
+                        $infoApi = $apiHelper->getInfoByApi($apiFind, $parameter, $formId, $item1key, $item1value, $item2key, $item2value, $item3key, $item3value );
 
                         $form_answers = $infoApi;
                         $answerApi = [];

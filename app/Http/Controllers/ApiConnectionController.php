@@ -52,8 +52,6 @@ class ApiConnectionController extends Controller
                             $api->other_token               = $json_body['other_token'];
                             $api->mode                      = $json_body['mode'];
                             $api->parameter                 = trim($json_body['parameter']);
-                            $api->parameter2                = trim($json_body['parameter2']);
-                            $api->parameter3                = trim($json_body['parameter3']);
                             $api->json_send                 = json_encode($json_body['json_send']);
                             $api->json_response             = json_encode($json_body['json_response']);
                             $api->request_type              = $json_body['request_type'];
@@ -73,8 +71,6 @@ class ApiConnectionController extends Controller
                         $api->other_token               = $json_body['other_token'];
                         $api->mode                      = $json_body['mode'];
                         $api->parameter                 = trim($json_body['parameter']);
-                        $api->parameter2                = trim($json_body['parameter2']);
-                        $api->parameter3                = trim($json_body['parameter3']);
                         $api->json_send                 = json_encode($json_body['json_send']);
                         $api->json_response             = json_encode($json_body['json_response']);
                         $api->request_type              = $json_body['request_type'];

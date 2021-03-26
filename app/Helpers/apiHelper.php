@@ -10,7 +10,7 @@ use Helpers\MiosHelper;
 class ApiHelper
 {
     // Funcion para cargar la información desde una api registrada
-    function getInfoByApi($registerApi, $parameter, $parameter2, $parameter3, $formId, $item1key, $item1value, $item2key, $item2value, $item3key, $item3value)
+    function getInfoByApi($registerApi, $parameter, $formId, $item1key, $item1value, $item2key, $item2value, $item3key, $item3value)
     {
         try {
             $miosHelper                 = new MiosHelper();
@@ -24,14 +24,8 @@ class ApiHelper
             $api_type                   = $registerApi['api_type'];
             $login                      = true; // Bandera para saber si se pudo hacer login en el api
 
-            if ($registerApi['mode'] == 'GET' || $registerApi['mode'] == 'PUT') {
-                if ($registerApi['parameter'] != null || $registerApi['parameter'] != '') {
-                    $url  = $url . '/' . $parameter;
-                } elseif ($parameter2) {
-                    $url  = $url . '/' . $parameter2;
-                } elseif ($parameter3) {
-                    $url  = $url . '/' . $parameter3;
-                }
+            if ($registerApi['mode'] == 'GET') {
+                $url  = $url . '/' . $parameter;
             }
 
             // Se valida si valida si el registro requiere de login 

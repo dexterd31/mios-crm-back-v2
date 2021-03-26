@@ -24,8 +24,6 @@ class CreateApiConnectionsTable extends Migration
             $table->text('other_token')->nullable();
             $table->string('mode');
             $table->string('parameter')->nullable();
-            $table->string('parameter3')->nullable();
-            $table->string('parameter3')->nullable();
             $table->json('json_send')->nullable();
             $table->json('json_response');
             $table->string('response_token')->nullable();
