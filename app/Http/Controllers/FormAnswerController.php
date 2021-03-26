@@ -125,19 +125,19 @@ class FormAnswerController extends Controller
      */
     public function filterForm(Request $request, MiosHelper $miosHelper, FormAnswerHelper $formAnswerHelper, ApiHelper $apiHelper, FilterHelper $filterHelper)
     {
-        try {
+        //try {
             if (Gate::allows('form_answer')) {
 
                 $json_body      = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
                 $formId         = $json_body['form_id'];
                 $form_answers   = null;
 
-                    $item1key   = !empty($json_body['item1_key']) ? $json_body['item1_key'] : 'vacio';
-                    $item1value = !empty($json_body['item1_value']) ? $json_body['item1_value'] : 'vacio';
-                    $item2key   = !empty($json_body['item2_key']) ? $json_body['item2_key'] : 'vacio';
-                    $item2value = !empty($json_body['item2_value']) ? $json_body['item2_value'] : 'vacio';
-                    $item3key   = !empty($json_body['item3_key']) ? $json_body['item3_key'] : 'vacio';
-                    $item3value = !empty($json_body['item3_value']) ? $json_body['item3_value'] : 'vacio';
+                    $item1key   = !empty($json_body['item1_key']) ? $json_body['item1_key'] : '';
+                    $item1value = !empty($json_body['item1_value']) ? $json_body['item1_value'] : '';
+                    $item2key   = !empty($json_body['item2_key']) ? $json_body['item2_key'] : '';
+                    $item2value = !empty($json_body['item2_value']) ? $json_body['item2_value'] : '';
+                    $item3key   = !empty($json_body['item3_key']) ? $json_body['item3_key'] : '';
+                    $item3value = !empty($json_body['item3_value']) ? $json_body['item3_value'] : '';
 
                     // Se busca si la solicitud tiene cargue por api
                     $where = ['form_id' => $formId, 'request_type' => 2, 'status' => 1];
@@ -179,7 +179,7 @@ class FormAnswerController extends Controller
                         }
 
                         // Se hace el cargue de la información con la api registrada.
-                        $infoApi = $apiHelper->getInfoByApi($apiFind, $parameter, $parameter2, $parameter3, $formId);
+                        $infoApi = $apiHelper->getInfoByApi($apiFind, $parameter, $parameter2, $parameter3, $formId, $item1key, $item1value, $item2key, $item2value, $item3key, $item3value );
 
                         $form_answers = $infoApi;
                         $answerApi = [];
@@ -231,9 +231,9 @@ class FormAnswerController extends Controller
                 $data = $miosHelper->jsonResponse(false, 403, 'message', 'Tú rol no tiene permisos para ejecutar esta acción');
             }
             return response()->json($data, $data['code']);
-        } catch (\Throwable $e) {
-            return $this->errorResponse('Error al buscar la gestion', 500);
-        }
+        // } catch (\Throwable $e) {
+        //     return $this->errorResponse('Error al buscar la gestion', 500);
+        // }
     }
 
     /**

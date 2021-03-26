@@ -17,6 +17,7 @@ class ApiConnectionController extends Controller
      * api_type = Para saber que tipo de api es la solicitud 1.Api rest 2.Graphql 
      * autorization_type = saber que tipo de autenticación maneja la api Bearer,OAuth,Hawk etc. 
      * parameter = Comodin para saber si la url recibe un parametro es debe llegar sin espacios 
+     * response_token = Para guardar como se debe obtner de la respuesta el token -solo aplica para login
      */
 
     /**
@@ -54,7 +55,6 @@ class ApiConnectionController extends Controller
                             $api->parameter2                = trim($json_body['parameter2']);
                             $api->parameter3                = trim($json_body['parameter3']);
                             $api->json_send                 = json_encode($json_body['json_send']);
-                            $api->graphql_send              = $json_body['graphql_send'];
                             $api->json_response             = json_encode($json_body['json_response']);
                             $api->request_type              = $json_body['request_type'];
                             $api->api_type                  = $json_body['api_type'];
@@ -76,7 +76,6 @@ class ApiConnectionController extends Controller
                         $api->parameter2                = trim($json_body['parameter2']);
                         $api->parameter3                = trim($json_body['parameter3']);
                         $api->json_send                 = json_encode($json_body['json_send']);
-                        $api->graphql_send              = $json_body['graphql_send'];
                         $api->json_response             = json_encode($json_body['json_response']);
                         $api->request_type              = $json_body['request_type'];
                         $api->api_type                  = $json_body['api_type'];
