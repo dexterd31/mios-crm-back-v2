@@ -53,11 +53,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     // rutas de campañas
     $router->get('/campaigns', 'CampaignController@index');
     $router->post('/campaigns/{id}/updateState', 'CampaignController@updateState');
-<<<<<<< HEAD
-    $router->get('/campaigns/selectCampaign', 'CampaignController@campaignsSelect');
-=======
     $router->get('/campaignsbyuser/{idUser}', 'CampaignController@campaignsByUser');
->>>>>>> 17431a1b60b13b34557112484d3d1cedfdfcd9c6
 
     //Rutas de usuarios
     $router->post('/storeUser', 'UserController@storeUser');

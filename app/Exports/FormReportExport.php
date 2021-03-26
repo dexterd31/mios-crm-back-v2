@@ -32,21 +32,32 @@ class FormReportExport implements FromCollection, WithHeadings
     */
     public function collection()
     {
-     dd($this->headers);
+     
+      //dd($this->headers);
         $formAnswers = FormAnswer::where('form_id',$this->form_id)
-                      //  ->whereBetween('created_at', [$this->fecha_desde, $this->fecha_hasta])
                           ->where('created_at','>=', $this->fecha_desde)
                           ->where('created_at','<=', $this->fecha_hasta)
-                         // ->whereIn('key',$this->headers)
                         ->select('structure_answer')->get();
 
+
                         if(count($formAnswers)==0){
-                          return $formAnswers;
-                        }
+                          return 'Error al consultar los datos';
+                        }else{
+                          foreach($formAnswers as $answer){
+                            foreach(json_decode($answer->structure_answer) as $structure){
+                              foreach($structure as $id => $value){
+                                $ids[$id] = $value;
 
-                        return [];
+                              }
+                            }
+                          }
+                         // dd($value);
+                        // dd($ids);
+                        return array($ids);
+                      }
+                      
+                        //return [];
 
-                        dd($formAnswers);
 
 
 
@@ -69,7 +80,7 @@ class FormReportExport implements FromCollection, WithHeadings
                        // //  dd($formAnswer);
 
 
-                     return (json_encode($formAnswer));
+                    // return (json_encode($formAnswer));
     }
 
     public function headings(): array
