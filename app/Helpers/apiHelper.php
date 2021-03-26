@@ -45,18 +45,30 @@ class ApiHelper
 
             if ($login) {
                 // Se llena las variables de busqueda
-                
+                if ($api_type == 1) {
+                    // Api rest
                     $variables = [$item1key => $item1value, $item2key => $item2value, $item3key => $item3value];
                     $json_send = $miosHelper->jsonDecodeResponse($json_send);
                     $json_send = $variables;
                     $json_send = json_encode($json_send);
-                
+                } else {
+                    //Graphql
+                    $variables = [$item1key => $item1value, $item2key => $item2value, $item3key => $item3value];
+                    $json_send = $miosHelper->jsonDecodeResponse($json_send);
+                    $json_send['variables'] = $variables;
+                    $json_send = json_encode($json_send);
+                }
+
+
+
+
+
                 // Se obtiene la infromación del api registrado
                 $result = $this->httpRequest($mode, $url, $autorization_type, $token, $other_autorization_type, $other_token, $json_send, $api_type);
                 $apiData = $miosHelper->jsonDecodeResponse(json_encode($result));
 
                 $num = isset($apiData) ? count($apiData) : 0;
- 
+
                 /**
                  * Se hace el match con la respuesta de mios 
                  * Se llama la relación del api con el formulario de mios
@@ -169,7 +181,7 @@ class ApiHelper
             curl_setopt($ch, CURLOPT_POSTFIELDS, $json_send);
             $result = curl_exec($ch);
             curl_close($ch);
-    
+
             $apiData = $miosHelper->jsonDecodeResponse($result);
 
             return $apiData;
