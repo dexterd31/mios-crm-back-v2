@@ -143,7 +143,6 @@ class GroupController extends Controller
                     ->get();                    
                          
         $rrhh_users_ids = collect();
-       // dd($groupusers);
         foreach ($groupusers as $key => $user) {
             $usercrm = User::findOrFail($user->user_id);
             $rrhh_users_ids->push($usercrm->id_rhh);
@@ -164,18 +163,6 @@ class GroupController extends Controller
 
         $data = ['available' => $merged_data2,'members' => $merged_data];
             return $data;
-    }
-    
-    /**
-     * Nicol Ramirez
-     * 17-02-2020
-     * Método para crear el grupo con sus usuarios
-     */
-    public function searchSelectGroup()
-    {
-        $groups = DB::table('groups')
-                    ->select('id','name_group')->get();
-        return $groups;
     }
 
     /**

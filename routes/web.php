@@ -41,7 +41,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas de grupos
     $router->get('/searchgroup/{id}', 'GroupController@searchGroup');
     $router->post('/savegroup','GroupController@saveGroup');
-    $router->get('/searchselectgroup','GroupController@searchSelectGroup');
+    $router->get('/searchselectgroup/{id}','GroupController@searchSelectGroup');
     $router->get('/groupslist','GroupController@groupslist');
     $router->put('/deletegroup/{id}','GroupController@deleteGroup');
     $router->put('/updategroup/{id}','GroupController@updateGroup');
@@ -51,6 +51,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     // rutas de campañas
     $router->get('/campaigns', 'CampaignController@index');
     $router->post('/campaigns/{id}/updateState', 'CampaignController@updateState');
+    $router->get('/campaigns/selectCampaign', 'CampaignController@campaignsSelect');
 
     //Rutas de usuarios
     $router->post('/storeUser', 'UserController@storeUser');

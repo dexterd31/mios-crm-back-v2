@@ -23,7 +23,7 @@ class CampaignController extends Controller
     { 
         try {
             // si es admin mostrar todas las campañas
-            if(Gate::allows('admin')){
+            if(Gate::allows('admin') || Gate::allows('supervisor') ){
                 $campaigns = $this->nominaService->fetchCampaigns(0);
                 return $this->successResponse($campaigns);
             } else{
@@ -51,4 +51,5 @@ class CampaignController extends Controller
             return $this->errorResponse('Ocurrio un error al intentar cambiar el estado de la campaña.', 500);
         }
     }
+
 }
