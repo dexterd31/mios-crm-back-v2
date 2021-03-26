@@ -53,10 +53,6 @@ class ApiHelper
                     $json_send = json_encode($json_send);
                 }
 
-
-
-
-
                 // Se obtiene la infromación del api registrado
                 $result = $this->httpRequest($mode, $url, $autorization_type, $token, $other_autorization_type, $other_token, $json_send, $api_type);
                 $apiData = $miosHelper->jsonDecodeResponse(json_encode($result));
