@@ -33,7 +33,7 @@ class FormAnswerController extends Controller
      */
     public function saveinfo(Request $request, MiosHelper $miosHelper, FormAnswerHelper $formAnswerHelper)
     {
-        try {
+        // try {
             // Se valida si tiene permiso para hacer acciones en formAnswer
             if (Gate::allows('form_answer')) {
                 $json_body = $miosHelper->jsonDecodeResponse($request->getContent());
@@ -111,9 +111,9 @@ class FormAnswerController extends Controller
                 $message = 'Tú rol no tiene permisos para ejecutar esta acción';
             }
             return $this->successResponse($message);
-        } catch (\Throwable $e) {
-            return $this->errorResponse('Error al guardar la gestion', 500);
-        }
+        // } catch (\Throwable $e) {
+        //     return $this->errorResponse('Error al guardar la gestion', 500);
+        // }
     }
 
     /**
