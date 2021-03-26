@@ -106,7 +106,7 @@ class ApiHelper
                         }
                         $i++;
                     }
-                    $responseArray = $this->responseFilterMios($relationship);
+                    $responseArray = $this->responseFilterMios($relationship, $formId);
                     return $responseArray;
                 } else {
                     return null;
@@ -183,29 +183,38 @@ class ApiHelper
     }
 
     // Funcion para formatear la respuesta de filtor
-    function responseFilterMios($relationship)
+    function responseFilterMios($relationship, $formId)
     {
 
         $rrhh = [
-            'campaign_id'   => 0,
-            'email'         => '',
-            'first_name'    => '',
-            'id_number'     => '',
-            'id_type'       => '',
-            'last_name'     => '',
-            'phone'         => ''
+            'first_name'    => null,
+            'last_name'     => null,
+            'id_number'     => null,
+            'id_type'       => null, 
+            'email'         => null, 
+            'phone'         => null,
+            'campaign_id'   => null,
         ];
-        $userData = ['rrhh' => $rrhh];
+        $userData = [
+            'id'        => 0,
+            'rrhh_id'   => 0,
+            'group_id'  => null,
+            'username'  => null,
+            'email'     => null,
+            'deleted_at'=> null,
+            'rrhh'      => $rrhh,
+            'roles'     => [],
+        ];
         $responseArray  = [
-            'created_at'        => 0,
-            'updated_at'        => 0,
+            'id'                => 0,
             'user_id'           => 0,
-            'form_id'           => 0,
-            'structure_answer'  => $relationship,
-            'channel_id'        => 0,
+            'form_id'           => $formId,
             'client_id'         => 0,
+            'created_at'        => null,
+            'updated_at'        => null,
+            'structure_answer'  => $relationship,
             'userdata'          => $userData,
-            'client'            => 0,
+            'client'            => []
         ];
 
         return $responseArray;

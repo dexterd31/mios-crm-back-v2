@@ -123,114 +123,80 @@ class FormAnswerController extends Controller
      * 26-02-2020
      * Método para filtrar las varias opciones en el formulario
      */
-    public function filterForm(Request $request, MiosHelper $miosHelper, FormAnswerHelper $formAnswerHelper, ApiHelper $apiHelper, FilterHelper $filterHelper)
+    public function filterForm(Request $request, MiosHelper $miosHelper, FilterHelper $filterHelper, ApiHelper $apiHelper)
     {
         //try {
-            if (Gate::allows('form_answer')) {
+        if (Gate::allows('form_answer')) {
 
-                $json_body      = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
-                $formId         = $json_body['form_id'];
-                $form_answers   = null;
+            $json_body      = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
+            $formId         = $json_body['form_id'];
+            $form_answers   = null;
 
-                    $item1key   = !empty($json_body['item1_key']) ? $json_body['item1_key'] : '';
-                    $item1value = !empty($json_body['item1_value']) ? $json_body['item1_value'] : '';
-                    $item2key   = !empty($json_body['item2_key']) ? $json_body['item2_key'] : '';
-                    $item2value = !empty($json_body['item2_value']) ? $json_body['item2_value'] : '';
-                    $item3key   = !empty($json_body['item3_key']) ? $json_body['item3_key'] : '';
-                    $item3value = !empty($json_body['item3_value']) ? $json_body['item3_value'] : '';
+            $item1key   = !empty($json_body['item1_key']) ? $json_body['item1_key'] : '';
+            $item1value = !empty($json_body['item1_value']) ? $json_body['item1_value'] : '';
+            $item2key   = !empty($json_body['item2_key']) ? $json_body['item2_key'] : '';
+            $item2value = !empty($json_body['item2_value']) ? $json_body['item2_value'] : '';
+            $item3key   = !empty($json_body['item3_key']) ? $json_body['item3_key'] : '';
+            $item3value = !empty($json_body['item3_value']) ? $json_body['item3_value'] : '';
 
-                    // Se busca si la solicitud tiene cargue por api
-                    $where = ['form_id' => $formId, 'request_type' => 2, 'status' => 1];
-                    $apiFind = ApiConnection::where($where)->first();
-                    $parameter  = null;
-                    $parameter2 = null;
-                    $parameter3 = null;
-                    if ($apiFind) {
-                        // Se busca los item de busqueda 
-                        if ($apiFind['parameter'] != null || $apiFind['parameter'] != '') {
-                            if ($item1key == $apiFind['parameter']) {
-                                $parameter = $item1value;
-                            } else if ($item2key == $apiFind['parameter']) {
-                                $parameter = $item2value;
-                            } else if ($item3key == $apiFind['parameter']) {
-                                $parameter = $item3value;
-                            }
-                        }
-                        // Item de busqueda 2
-                        if ($apiFind['parameter2'] != null || $apiFind['parameter2'] != '') {
-                            if ($item1key == $apiFind['parameter2']) {
-                                $parameter = $item1value;
-                            } else if ($item2key == $apiFind['parameter2']) {
-                                $parameter = $item2value;
-                            } else if ($item3key == $apiFind['parameter2']) {
-                                $parameter = $item3value;
-                            }
-                        }
+            /*
+                    * Se busca el si el cliente existe en el sistema
+                    * Se busca si hay registros en Mios
+                    */
+            $form_answers = $filterHelper->filterByGestions($formId, $item1value, $item2value, $item3value);
 
-                        // Item de busqueda 2
-                        if ($apiFind['parameter3'] != null || $apiFind['parameter3'] != '') {
-                            if ($item1key == $apiFind['parameter3']) {
-                                $parameter = $item1value;
-                            } else if ($item2key == $apiFind['parameter3']) {
-                                $parameter = $item2value;
-                            } else if ($item3key == $apiFind['parameter3']) {
-                                $parameter = $item3value;
-                            }
-                        }
-
-                        // Se hace el cargue de la información con la api registrada.
-                        $infoApi = $apiHelper->getInfoByApi($apiFind, $parameter, $formId, $item1key, $item1value, $item2key, $item2value, $item3key, $item3value );
-
-                        $form_answers = $infoApi;
-                        $answerApi = [];
-                        array_push($answerApi, $form_answers);
-
-                        $form_answers = $miosHelper->paginate($answerApi, $perPage = 15, $page = null);
-                    }
-
-                    if ($form_answers == null) {
-
-                        // Se buscan las gestiones por base de datos
-                        $form_answers = $filterHelper->filterByDataBase($formId, $item1value, $item2value, $item3value);
-
-                        // Si no se encuatra registros se busca por cliente
-                        if (count($form_answers) < 1) {
-                            $clientInfo = Client::Where('document', 'like', '%' . $item1value . '%')
-                                ->orWhere('document', 'like', '%' . $item2value . '%')
-                                ->orWhere('document', 'like', '%' . $item3value . '%')->select('id')->first();
-                            $clientNum = $clientInfo != null ? json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $clientInfo->id)) : null;
-                            if ($clientNum) {
-                                $form_answers = FormAnswer::where('form_id', $formId)
-                                    ->where('client_id', $clientNum)
-                                    ->with('client')->paginate(10);
-                            }
-                            // Se busca en directory
-                            if (count($form_answers) < 1) {
-                                $form_answers = Directory::where('form_id', $formId)
-                                    ->where('client_id', $clientNum)
-                                    ->with('client')->paginate(10);
-                            }
-                            if (count($form_answers) < 1) {
-                                $form_answers = Directory::where('form_id', $formId)
-                                    ->where('data', 'like', '%' . $item1value . '%')
-                                    ->orWhere('data', 'like', '%' . $item2value . '%')
-                                    ->orWhere('data', 'like', '%' . $item3value . '%')
-                                    ->with('client')->paginate(10);
-                            }
-                        }
-                        foreach ($form_answers as $form) {
-                            $userData       = $this->ciuService->fetchUser($form->user_id)->data;
-                            $form->structure_answer = $form->data != null ? json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $form->data), true) : json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $form->structure_answer), true);
-                            $form->userdata = $userData;
-                            unset($form->data);
-                        }
-                    }
-                    $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
+            // Se valida si ya se ha encontrado inforación, sino se busca por id del cliente
+            $validador = $miosHelper->jsonDecodeResponse(json_encode($form_answers));
+            
+            if ($form_answers == null || count($validador['data']) == 0) {
+                // Se buscan las gestiones por base de datos
+                $clientId = $filterHelper->searchClient($item1value, $item2value, $item3value);
                 
-            } else {
-                $data = $miosHelper->jsonResponse(false, 403, 'message', 'Tú rol no tiene permisos para ejecutar esta acción');
+                if ($clientId) {
+                    $form_answers = $filterHelper->searchGestionByClientId($formId, $clientId);
+                }
+
+                // Se valida si ya se ha encontrado inforación, sino se busca en base de datos
+                $validador = $miosHelper->jsonDecodeResponse(json_encode($form_answers));
+                if ($form_answers == null || count($validador['data']) == 0) {
+                    // Se busca por el cargue de base de datos = directory
+                    $form_answers = $filterHelper->filterByDataBase($formId, $clientId, $item1value, $item2value, $item3value);
+                }
             }
-            return response()->json($data, $data['code']);
+            // Se valida si ya se ha encontrado inforación, sino se busca si tene api
+            $validador = $miosHelper->jsonDecodeResponse(json_encode($form_answers));
+
+            if( $form_answers == null || count($validador['data']) == 0) {
+                // Se busca por api si tiene registrado el formulario
+                $form_answers = $filterHelper->filterbyApi($formId, $item1key, $item1value, $item2key, $item2value, $item3key, $item3value);
+            }
+
+            if ($form_answers != null ) {
+                // Se mapea la respuesta
+                foreach ($form_answers as $form) {
+                    if (isset($form['structure_answer'])) {
+                        $form['structure_answer'] = is_array($form['structure_answer']) ? json_encode($form['structure_answer']) : $form['structure_answer'];
+                    }
+                    $userData = $form['user_id'] != 0 ? $this->ciuService->fetchUser($form['user_id'])->data : 0;
+                    $form['structure_answer'] = isset($form['data']) ? $miosHelper->jsonDecodeResponse($form['data']) : $miosHelper->jsonDecodeResponse($form['structure_answer']);
+                    $form['userdata'] = $userData;
+                    unset($form['data']);
+                }
+            } else {
+                // Cundo se regresa la respuesta vacia porque no incontro registro por ninua fuente de información
+                $arrayData = $apiHelper->responseFilterMios([], $formId);
+                $form_answers = $validador;
+                $form_answers['data'] = [$arrayData];
+
+   
+            }
+            
+
+            $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
+        } else {
+            $data = $miosHelper->jsonResponse(false, 403, 'message', 'Tú rol no tiene permisos para ejecutar esta acción');
+        }
+        return response()->json($data, $data['code']);
         // } catch (\Throwable $e) {
         //     return $this->errorResponse('Error al buscar la gestion', 500);
         // }
