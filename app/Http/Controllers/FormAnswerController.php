@@ -6,8 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\FormAnswer;
 use App\Models\Client;
 use App\Models\KeyValue;
-use App\Models\Directory;
-use App\Models\ApiConnection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use App\Services\CiuService;
@@ -217,14 +215,13 @@ class FormAnswerController extends Controller
      * 02-03-2021
      * Método para consultar los registro de un cliente en from answer
      */
-    public function formAnswerHistoric($form_id, $client_id, MiosHelper $miosHelper)
+    public function formAnswerHistoric($id, MiosHelper $miosHelper)
     {
         try {
-
-            $where = ['form_id' => $form_id, 'client_id' => $client_id];
-            $form_answers = FormAnswer::where($where)->with('channel')->paginate(10);
+            $form_answers = FormAnswer::where('id', $id)->with('channel', 'client')->paginate(10);
             foreach ($form_answers  as $form) {
                 $userData     = $this->ciuService->fetchUser($form->user_id)->data;
+                $form->structure_answer = $miosHelper->jsonDecodeResponse($form->structure_answer);
                 $form->user = $userData;
             }
 
