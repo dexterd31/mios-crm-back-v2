@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\Traits\RequestService;
+use Tymon\JWTAuth\Facades\JWTAuth;
+
+
 class RrhhService
 {
     use RequestService;

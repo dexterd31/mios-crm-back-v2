@@ -34,7 +34,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
     $router->post('/formanswer/filterform', 'FormAnswerController@filterForm');
-    $router->get('/formanswer/historic/{form_id}/{client_id}', 'FormAnswerController@formAnswerHistoric');
+    $router->get('/formanswer/historic/{id}', 'FormAnswerController@formAnswerHistoric');
     //consultar tipo de documento de los clientes
     $router->get('/searchdocumenttype', 'FormAnswerController@searchDocumentType');
 
@@ -42,7 +42,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas de grupos
     $router->get('/searchgroup/{id}', 'GroupController@searchGroup');
     $router->post('/savegroup','GroupController@saveGroup');
-    $router->get('/searchselectgroup','GroupController@searchSelectGroup');
+    $router->get('/searchselectgroup/{id}','GroupController@searchSelectGroup');
     $router->get('/groupslist','GroupController@groupslist');
     $router->put('/deletegroup/{id}','GroupController@deleteGroup');
     $router->put('/updategroup/{id}','GroupController@updateGroup');
@@ -83,7 +83,6 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/apiConnection/get/{id}', 'ApiConnectionController@get');
     $router->put('/apiConnection/update/{id}', 'ApiConnectionController@update');
     $router->get('/apiConnection/delete/{id}', 'ApiConnectionController@delete');
-    $router->get('/apiConnection/login', 'ApiConnectionController@apiLogin');
 
     //Rutas de api question
     $router->post('/apiQuestion/save', 'ApiQuestionController@save');

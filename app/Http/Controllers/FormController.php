@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\FormReportExport;
 use App\Models\Form;
+use App\Models\FormAnswer;
 use App\Models\FormType;
+use App\Models\KeyValue;
 use App\Models\Section;
+use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Helpers\MiosHelper;
-use App\Models\KeyValue;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\FormReportExport;
 
 
 class FormController extends Controller
@@ -58,11 +59,11 @@ class FormController extends Controller
      */
     public function saveForm(Request $request, MiosHelper $miosHelper)
     {
-        try
+         try
         {
             $forms = new Form([
                 'group_id' =>  $request->input('group_id'),
-                'campaign_id' => 1,
+                'campaign_id' => $request->input('campaign_id'),
                 'form_type_id' => $request->input('type_form'),
                 'name_form' => $request->input('name_form'),
                 'filters' => json_encode($request->filters),
@@ -72,16 +73,6 @@ class FormController extends Controller
 
            foreach($request['sections'] as $section)
            {
-               // for($i=0; $i<count($section['fields']); $i++){
-               //     if($section['sectionName']== 'Datos básicos del cliente'){
-               //         $sect = $miosHelper->validateKeyName($section['fields'][0]['label'], $section['fields'][1]['label'], $section['fields'][2]['label'], $section['fields'][3]['label'], $section['fields'][4]['label'],$section['fields'][5]['label'],$section['fields'][6]['label'],$section['fields'][7]['label'],$section);
-               //     }else{
-               //         $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
-               //         $section['fields'][$i]['key'] =  strtolower( str_replace(' ','-',$section['fields'][$i]['label']) );
-
-               //     }
-               // }
-
                 for($i=0; $i<count($section['fields']); $i++){
                     if($section['fields'][$i]['key'] == 'null'){
                         $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
@@ -119,9 +110,9 @@ class FormController extends Controller
 
            return response()->json($data, $data['code']);
 
-         }catch(\Throwable $e){
+          }catch(\Throwable $e){
             return $this->errorResponse('Error al guardar el formulario',500);
-        }
+        } 
     }
 
 
@@ -155,25 +146,6 @@ class FormController extends Controller
 
             foreach($request->sections as $section)
             {
-                // for($i=0; $i<count($section['fields']); $i++){
-                //     if($section['sectionName' ]== 'Datos básicos del cliente'){
-                //         $firstName = isset($section['fields'][0]['label']) ? $section['fields'][0]['label'] : null;
-                //         $middleName = isset($section['fields'][1]['label']) ? $section['fields'][1]['label'] : null;
-                //         $lastName = isset($section['fields'][2]['label']) ? $section['fields'][2]['label'] : null;
-                //         $secondLastName = isset($section['fields'][3]['label']) ? $section['fields'][3]['label'] : null;
-                //         $document = isset($section['fields'][4]['label']) ? $section['fields'][4]['label'] : null;
-                //         $phone = isset($section['fields'][5]['label']) ? $section['fields'][5]['label'] : null;
-                //         $email = isset($section['fields'][6]['label']) ? $section['fields'][6]['label'] : null;
-                //         $documentTypeId = isset($section['fields'][7]['label']) ? $section['fields'][7]['label'] : null;
-
-                //         $sect = $miosHelper->validateKeyName($firstName, $middleName, $lastName, $secondLastName, $document,$phone,$email,$documentTypeId,$section);
-                //     }else{
-                //         $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
-                //         $section['fields'][$i]['key'] =  strtolower( str_replace(' ','-',$section['fields'][$i]['label']) );
-
-                //     }
-                // }
-
                 for($i=0; $i<count($section['fields']); $i++){
                     if($section['fields'][$i]['key'] == 'null'){
                         $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
@@ -186,7 +158,7 @@ class FormController extends Controller
                     $sections = Section::find($section['idsection']);
                     $sections->name_section = $section['sectionName'];
                     $sections->type_section = $section['type_section'];
-                    $sections->fields = json_encode($sect);
+                    $sections->fields = json_encode($section['fields']);
                     $sections->save();
                 } else {
                     $fields = $section['fields'];
@@ -239,11 +211,37 @@ class FormController extends Controller
 
     public function report($form_id, $fecha_desde, $fecha_hasta, $parameters)
     {
-        $headers    = utf8_encode(base64_decode($parameters));
-        // $formReport->headersExcel(explode(",", $headers));
-        //return Excel::download($formReport, 'reporte_formulario.xlsx');
+      $headers    = utf8_encode(base64_decode($parameters));
+      $headers = explode(",", $headers);
+      $headers2 = [];
 
-        return Excel::download(new FormReportExport($form_id, $fecha_desde, $fecha_hasta, $headers), 'reporte_formulario.xlsx');
+      $ids = [];
+      $formAnswers = FormAnswer::where('form_id',$form_id)
+                          ->where('created_at','>=', $fecha_desde)
+                          ->where('created_at','<=', $fecha_hasta)
+                          ->select('structure_answer')->get();
+
+      if(count($formAnswers)==0){
+        return 'Error al consultar los datos';
+      }else{
+        $i=0;
+
+        $data = [];
+        foreach($formAnswers as $answer){
+          foreach(json_decode($answer->structure_answer) as $structure){
+            foreach($structure as $id => $value){
+              if(in_array($id, $headers)){
+                $ids[$i][$id] = $value;
+                if($i==0){
+                  array_push($headers2, $id);
+                }
+              }
+            }
+          }
+          $i++;
+        }
+      }
+      return Excel::download(new FormReportExport($ids, $headers2), 'reporte_formulario.xlsx');
     }
 
     /**
