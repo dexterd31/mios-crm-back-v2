@@ -35,21 +35,16 @@ class FormAnswerController extends Controller
      */
     public function saveinfo(Request $request, MiosHelper $miosHelper, FormAnswerHelper $formAnswerHelper)
     {
-        // try {
+         try {
             // Se valida si tiene permiso para hacer acciones en formAnswer
             if (Gate::allows('form_answer')) {
-                // return $request;
-                // $json_body = $miosHelper->jsonDecodeResponse($request->getContent());
-                // $json_body = $request->getContent();
-                // return $json_body;
-                // $client = null;
+               
 
                 $structure_answer = $formAnswerHelper->structureAnswer($request['form_id'], $request['sections']);
-                return $structure_answer;
 
-                if ($json_body['client_id'] == null || $json_body['client_id'] == "") {
+                if ($request['client_id'] == null || $request['client_id'] == "") {
                     $contador = 0;
-                    foreach ($json_body['sections'] as $section) {
+                    foreach ($request['sections'] as $section) {
                         if ($contador == 0) {
                             $client = new Client([
                                 'document_type_id' => !empty($section['document_type_id']) ? $section['document_type_id'] : 1,
@@ -66,7 +61,7 @@ class FormAnswerController extends Controller
 
                         foreach ($section as $key => $value) {
                             $sect = new KeyValue([
-                                'form_id' => $json_body['form_id'],
+                                'form_id' => $request['form_id'],
                                 'client_id' => $client->id,
                                 'key' => $key,
                                 'value' => $value,
@@ -82,18 +77,18 @@ class FormAnswerController extends Controller
                         'user_id' => 1,
                         'channel_id' => 1,
                         'client_id' => $client->id,
-                        'form_id' => $json_body['form_id'],
+                        'form_id' => $request['form_id'],
                         'structure_answer' => json_encode($structure_answer)
                     ]);
 
                     $form_answer->save();
                     $message = 'Informacion guardada correctamente';
                 } else {
-                    foreach ($json_body['sections'] as $section) {
+                    foreach ($request['sections'] as $section) {
                         foreach ($section as $key => $value) {
                             $sec = new KeyValue([
-                                'form_id' => $json_body['form_id'],
-                                'client_id' => $json_body['client_id'],
+                                'form_id' => $request['form_id'],
+                                'client_id' => $request['client_id'],
                                 'key' => $key,
                                 'value' => $value,
                                 'description' => null
@@ -105,8 +100,8 @@ class FormAnswerController extends Controller
                     $formanswer = new FormAnswer([
                         'user_id' => 1,
                         'channel_id' => 1,
-                        'client_id' => $json_body['client_id'],
-                        'form_id' => $json_body['form_id'],
+                        'client_id' => $request['client_id'],
+                        'form_id' => $request['form_id'],
                         'structure_answer' => json_encode($structure_answer)
                     ]);
 
@@ -117,9 +112,9 @@ class FormAnswerController extends Controller
                 $message = 'Tú rol no tiene permisos para ejecutar esta acción';
             }
             return $this->successResponse($message);
-        // } catch (\Throwable $e) {
-        //     return $this->errorResponse('Error al guardar la gestion', 500);
-        // }
+         } catch (\Throwable $e) {
+             return $this->errorResponse('Error al guardar la gestion', 500);
+         }
     }
 
     /**
@@ -224,14 +219,13 @@ class FormAnswerController extends Controller
      * 02-03-2021
      * Método para consultar los registro de un cliente en from answer
      */
-    public function formAnswerHistoric($form_id, $client_id, MiosHelper $miosHelper)
+    public function formAnswerHistoric($id, MiosHelper $miosHelper)
     {
         try {
-
-            $where = ['form_id' => $form_id, 'client_id' => $client_id];
-            $form_answers = FormAnswer::where($where)->with('channel')->paginate(10);
+            $form_answers = FormAnswer::where('id', $id)->with('channel', 'client')->paginate(10);
             foreach ($form_answers  as $form) {
                 $userData     = $this->ciuService->fetchUser($form->user_id)->data;
+                $form->structure_answer = $miosHelper->jsonDecodeResponse($form->structure_answer);
                 $form->user = $userData;
             }
 

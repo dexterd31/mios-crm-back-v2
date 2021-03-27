@@ -34,7 +34,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
     $router->post('/formanswer/filterform', 'FormAnswerController@filterForm');
-    $router->get('/formanswer/historic/{form_id}/{client_id}', 'FormAnswerController@formAnswerHistoric');
+    $router->get('/formanswer/historic/{id}', 'FormAnswerController@formAnswerHistoric');
     //consultar tipo de documento de los clientes
     $router->get('/searchdocumenttype', 'FormAnswerController@searchDocumentType');
 
@@ -90,11 +90,15 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/apiQuestion/get/{id}', 'ApiQuestionController@get');
     $router->put('/apiQuestion/update/{id}', 'ApiQuestionController@update');
     $router->get('/apiQuestion/delete/{id}', 'ApiQuestionController@delete');
+    
 
     //Rutas Bandejas
     $router->post('/trays/save','TrayController@store');
     $router->get('/trays/','TrayController@index');
 
+
+    //Rutas escalamientos
+    $router->post('/escalations', 'EscalationController@validateScalation');
     //Rutas Permisos
     $router->get('/permission/{rolCiu}', 'PermissionCrmController@list');
 

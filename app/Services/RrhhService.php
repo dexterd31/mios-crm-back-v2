@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\Traits\RequestService;
+use Tymon\JWTAuth\Facades\JWTAuth;
+
+
 class RrhhService
 {
     use RequestService;
@@ -12,6 +15,7 @@ class RrhhService
     public function __construct()
     {
         $this->baseUri = config('services.rrhh.base_uri');
+        $this->secret = JWTAuth::getToken();
     }
 
     /**

@@ -10,5 +10,8 @@ return [
     ],
     'rrhh' => [
         'base_uri' => env('RRHH_SERVICES_BASE_URI'),
+    ],
+    'pqrs' => [
+        'base_uri' => env('PQRS_SERVICES_BASE_URI'),
     ]
 ];
