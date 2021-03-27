@@ -212,6 +212,7 @@ class FormController extends Controller
     public function report($form_id, $fecha_desde, $fecha_hasta, $parameters)
     {
       $headers    = utf8_encode(base64_decode($parameters));
+      dd($headers);
       $headers = explode(",", $headers);
       $headers2 = [];
 
@@ -224,6 +225,7 @@ class FormController extends Controller
       if(count($formAnswers)==0){
         return 'Error al consultar los datos';
       }else{
+        dd($headers);
         $i=0;
 
         $data = [];
