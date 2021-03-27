@@ -215,6 +215,7 @@ class FormController extends Controller
       $headers = explode(",", $headers);
       $headers2 = [];
 
+      $ids = [];
       $formAnswers = FormAnswer::where('form_id',$form_id)
                           ->where('created_at','>=', $fecha_desde)
                           ->where('created_at','<=', $fecha_hasta)
