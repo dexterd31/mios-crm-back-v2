@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\FormReportExport;
 use App\Models\Form;
+use App\Models\FormAnswer;
 use App\Models\FormType;
+use App\Models\KeyValue;
 use App\Models\Section;
+use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Helpers\MiosHelper;
-use App\Models\KeyValue;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\FormReportExport;
 
 
 class FormController extends Controller
@@ -239,11 +240,36 @@ class FormController extends Controller
 
     public function report($form_id, $fecha_desde, $fecha_hasta, $parameters)
     {
-        $headers    = utf8_encode(base64_decode($parameters));
-        // $formReport->headersExcel(explode(",", $headers));
-        //return Excel::download($formReport, 'reporte_formulario.xlsx');
+      $headers    = utf8_encode(base64_decode($parameters));
+      $headers = explode(",", $headers);
+      $headers2 = [];
 
-        return Excel::download(new FormReportExport($form_id, $fecha_desde, $fecha_hasta, $headers), 'reporte_formulario.xlsx');
+      $formAnswers = FormAnswer::where('form_id',$form_id)
+                          ->where('created_at','>=', $fecha_desde)
+                          ->where('created_at','<=', $fecha_hasta)
+                          ->select('structure_answer')->get();
+
+      if(count($formAnswers)==0){
+        return 'Error al consultar los datos';
+      }else{
+        $i=0;
+
+        $data = [];
+        foreach($formAnswers as $answer){
+          foreach(json_decode($answer->structure_answer) as $structure){
+            foreach($structure as $id => $value){
+              if(in_array($id, $headers)){
+                $ids[$i][$id] = $value;
+                if($i==0){
+                  array_push($headers2, $id);
+                }
+              }
+            }
+          }
+          $i++;
+        }
+      }
+      return Excel::download(new FormReportExport($ids, $headers2), 'reporte_formulario.xlsx');
     }
 
     /**
