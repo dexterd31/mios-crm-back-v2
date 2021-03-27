@@ -31,7 +31,7 @@ class SectionSeeder extends Seeder
                     'options'=>[],
                     'cols'=>1,
                     'inReport'=> true,
-                    'preloaded' => false,
+                    'preloaded' => true,
                     'dependencies' => [],
                     'editRoles' => array(
                         'admin','supervisor'),
@@ -52,7 +52,7 @@ class SectionSeeder extends Seeder
                     'options'=>[],
                     'cols'=>1,
                     'inReport'=> true,
-                    'preloaded' => false,
+                    'preloaded' => true,
                     'dependencies' => [],
                     'editRoles' => array(
                         'admin','supervisor'),
@@ -73,7 +73,7 @@ class SectionSeeder extends Seeder
                     'options'=>[],
                     'cols'=>1,
                     'inReport'=> true,
-                    'preloaded' => false,
+                    'preloaded' => true,
                     'dependencies' => [],
                     'editRoles' => array(
                         'admin','supervisor'),
@@ -94,7 +94,7 @@ class SectionSeeder extends Seeder
                     'options'=>[],
                     'cols'=>1,
                     'inReport'=> true,
-                    'preloaded' => false,
+                    'preloaded' => true,
                     'dependencies' => [],
                     'editRoles' => array(
                         'admin','supervisor'),
@@ -115,7 +115,7 @@ class SectionSeeder extends Seeder
                     'options'=>[],
                     'cols'=>1,
                     'inReport'=> true,
-                    'preloaded' => false,
+                    'preloaded' => true,
                     'dependencies' => [],
                     'editRoles' => array(
                         'admin','supervisor'),
@@ -136,7 +136,7 @@ class SectionSeeder extends Seeder
                     'options'=>[],
                     'cols'=>1,
                     'inReport'=> true,
-                    'preloaded' => false,
+                    'preloaded' => true,
                     'dependencies' => [],
                     'editRoles' => array(
                         'admin','supervisor'),
@@ -157,7 +157,7 @@ class SectionSeeder extends Seeder
                     'options'=>[],
                     'cols'=>1,
                     'inReport'=> true,
-                    'preloaded' => false,
+                    'preloaded' => true,
                     'dependencies' => [],
                     'editRoles' => array(
                         'admin','supervisor'),
@@ -193,7 +193,7 @@ class SectionSeeder extends Seeder
                             "minLength"=> null,
                             "maxLength"=> null,
                             "inReport"=> true,
-                            'preloaded' => false,
+                            'preloaded' => true,
                             'dependencies' => [],
                             "disabled"=> false,
                             "cols"=> 1,
@@ -268,7 +268,7 @@ class SectionSeeder extends Seeder
                         'options'=>[],
                         'cols'=>1,
                         'inReport'=> true,
-                        'preloaded' => false,
+                        'preloaded' => true,
                         'dependencies' => [],
                         'editRoles' => array(
                             'admin','supervisor','asesor'),
@@ -289,7 +289,7 @@ class SectionSeeder extends Seeder
                         'options'=>[],
                         'cols'=>1,
                         'inReport'=> true,
-                        'preloaded' => false,
+                        'preloaded' => true,
                         'dependencies' => [],
                         'editRoles' => array(
                             'admin','supervisor','asesor'),
@@ -310,7 +310,7 @@ class SectionSeeder extends Seeder
                         'options'=>[],
                         'cols'=>1,
                         'inReport'=> true,
-                        'preloaded' => false,
+                        'preloaded' => true,
                         'dependencies' => [],
                         'editRoles' => array(
                             'admin','supervisor','asesor'),
@@ -331,7 +331,7 @@ class SectionSeeder extends Seeder
                         'options'=>[],
                         'cols'=>1,
                         'inReport'=> true,
-                        'preloaded' => false,
+                        'preloaded' => true,
                         'dependencies' => [],
                         'editRoles' => array(
                             'admin','supervisor','asesor'),
@@ -352,7 +352,7 @@ class SectionSeeder extends Seeder
                         'options'=>[],
                         'cols'=>1,
                         'inReport'=> true,
-                        'preloaded' => false,
+                        'preloaded' => true,
                         'dependencies' => [],
                         'editRoles' => array(
                             'admin','supervisor','asesor'),
@@ -373,7 +373,7 @@ class SectionSeeder extends Seeder
                             'options'=>[],
                             'cols'=>1,
                             'inReport'=> true,
-                            'preloaded' => false,
+                            'preloaded' => true,
                             'dependencies' => [],
                             'editRoles' => array(
                                 'admin','supervisor'),
@@ -394,7 +394,7 @@ class SectionSeeder extends Seeder
                             'options'=>[],
                             'cols'=>1,
                             'inReport'=> true,
-                            'preloaded' => false,
+                            'preloaded' => true,
                             'dependencies' => [],
                             'editRoles' => array(
                                 'admin','supervisor'),
