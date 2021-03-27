@@ -73,16 +73,6 @@ class FormController extends Controller
 
            foreach($request['sections'] as $section)
            {
-               // for($i=0; $i<count($section['fields']); $i++){
-               //     if($section['sectionName']== 'Datos básicos del cliente'){
-               //         $sect = $miosHelper->validateKeyName($section['fields'][0]['label'], $section['fields'][1]['label'], $section['fields'][2]['label'], $section['fields'][3]['label'], $section['fields'][4]['label'],$section['fields'][5]['label'],$section['fields'][6]['label'],$section['fields'][7]['label'],$section);
-               //     }else{
-               //         $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
-               //         $section['fields'][$i]['key'] =  strtolower( str_replace(' ','-',$section['fields'][$i]['label']) );
-
-               //     }
-               // }
-
                 for($i=0; $i<count($section['fields']); $i++){
                     if($section['fields'][$i]['key'] == 'null'){
                         $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
@@ -156,25 +146,6 @@ class FormController extends Controller
 
             foreach($request->sections as $section)
             {
-                // for($i=0; $i<count($section['fields']); $i++){
-                //     if($section['sectionName' ]== 'Datos básicos del cliente'){
-                //         $firstName = isset($section['fields'][0]['label']) ? $section['fields'][0]['label'] : null;
-                //         $middleName = isset($section['fields'][1]['label']) ? $section['fields'][1]['label'] : null;
-                //         $lastName = isset($section['fields'][2]['label']) ? $section['fields'][2]['label'] : null;
-                //         $secondLastName = isset($section['fields'][3]['label']) ? $section['fields'][3]['label'] : null;
-                //         $document = isset($section['fields'][4]['label']) ? $section['fields'][4]['label'] : null;
-                //         $phone = isset($section['fields'][5]['label']) ? $section['fields'][5]['label'] : null;
-                //         $email = isset($section['fields'][6]['label']) ? $section['fields'][6]['label'] : null;
-                //         $documentTypeId = isset($section['fields'][7]['label']) ? $section['fields'][7]['label'] : null;
-
-                //         $sect = $miosHelper->validateKeyName($firstName, $middleName, $lastName, $secondLastName, $document,$phone,$email,$documentTypeId,$section);
-                //     }else{
-                //         $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
-                //         $section['fields'][$i]['key'] =  strtolower( str_replace(' ','-',$section['fields'][$i]['label']) );
-
-                //     }
-                // }
-
                 for($i=0; $i<count($section['fields']); $i++){
                     if($section['fields'][$i]['key'] == 'null'){
                         $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
