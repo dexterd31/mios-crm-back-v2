@@ -112,7 +112,7 @@ class FormController extends Controller
 
           }catch(\Throwable $e){
             return $this->errorResponse('Error al guardar el formulario',500);
-        } 
+        }
     }
 
 
@@ -212,7 +212,6 @@ class FormController extends Controller
     public function report($form_id, $fecha_desde, $fecha_hasta, $parameters)
     {
       $headers    = utf8_encode(base64_decode($parameters));
-      dd($headers);
       $headers = explode(",", $headers);
       $headers2 = [];
 
@@ -223,9 +222,8 @@ class FormController extends Controller
                           ->select('structure_answer')->get();
 
       if(count($formAnswers)==0){
-        return 'Error al consultar los datos';
+        return $this->errorResponse('No se encontraron datos en el rango de fecha suministrado', 500);
       }else{
-        dd($headers);
         $i=0;
 
         $data = [];
