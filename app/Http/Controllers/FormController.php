@@ -58,11 +58,11 @@ class FormController extends Controller
      */
     public function saveForm(Request $request, MiosHelper $miosHelper)
     {
-        try
-        {
+       /*  try
+        { */
             $forms = new Form([
                 'group_id' =>  $request->input('group_id'),
-                'campaign_id' => 1,
+                'campaign_id' => $request->input('campaign_id'),
                 'form_type_id' => $request->input('type_form'),
                 'name_form' => $request->input('name_form'),
                 'filters' => json_encode($request->filters),
@@ -119,9 +119,9 @@ class FormController extends Controller
 
            return response()->json($data, $data['code']);
 
-         }catch(\Throwable $e){
+         /* }catch(\Throwable $e){
             return $this->errorResponse('Error al guardar el formulario',500);
-        }
+        } */
     }
 
 
@@ -186,7 +186,7 @@ class FormController extends Controller
                     $sections = Section::find($section['idsection']);
                     $sections->name_section = $section['sectionName'];
                     $sections->type_section = $section['type_section'];
-                    $sections->fields = json_encode($sect);
+                    $sections->fields = json_encode($section['fields']);
                     $sections->save();
                 } else {
                     $fields = $section['fields'];
