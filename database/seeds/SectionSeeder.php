@@ -18,7 +18,7 @@ class SectionSeeder extends Seeder
                 'type_section' => 1,
                 'fields'=> array( 
                 [
-                    'id'=>'1616799311180',
+                    'id'=>1616799311180,
                     'type'=> 'text',
                     'controlType'=> 'textbox',
                     'key'=> 'firstName',
@@ -31,7 +31,7 @@ class SectionSeeder extends Seeder
                     'options'=>[],
                     'cols'=>1,
                     'inReport'=> true,
-                    'preloaded' => false,
+                    'preloaded' => true,
                     'dependencies' => [],
                     'editRoles' => array(
                         'admin','supervisor'),
@@ -39,7 +39,7 @@ class SectionSeeder extends Seeder
                         'admin','asesor')
                 ],
                 [
-                    'id'=>'1616799311181',
+                    'id'=>1616799311181,
                     'type'=> 'text',
                     'controlType'=> 'textbox',
                     'key'=> 'middleName',
@@ -52,7 +52,7 @@ class SectionSeeder extends Seeder
                     'options'=>[],
                     'cols'=>1,
                     'inReport'=> true,
-                    'preloaded' => false,
+                    'preloaded' => true,
                     'dependencies' => [],
                     'editRoles' => array(
                         'admin','supervisor'),
@@ -60,7 +60,7 @@ class SectionSeeder extends Seeder
                         'admin','asesor')
                 ],
                 [
-                    'id'=>'1616799311182',
+                    'id'=>1616799311182,
                     'type'=> 'text',
                     'controlType'=> 'textbox',
                     'key'=> 'lastName',
@@ -73,7 +73,7 @@ class SectionSeeder extends Seeder
                     'options'=>[],
                     'cols'=>1,
                     'inReport'=> true,
-                    'preloaded' => false,
+                    'preloaded' => true,
                     'dependencies' => [],
                     'editRoles' => array(
                         'admin','supervisor'),
@@ -81,7 +81,7 @@ class SectionSeeder extends Seeder
                         'admin','asesor')
                 ],
                 [
-                    'id'=>'1616799311183',
+                    'id'=>1616799311183,
                     'type'=> 'text',
                     'controlType'=> 'textbox',
                     'key'=> 'secondLastName',
@@ -94,7 +94,7 @@ class SectionSeeder extends Seeder
                     'options'=>[],
                     'cols'=>1,
                     'inReport'=> true,
-                    'preloaded' => false,
+                    'preloaded' => true,
                     'dependencies' => [],
                     'editRoles' => array(
                         'admin','supervisor'),
@@ -102,7 +102,7 @@ class SectionSeeder extends Seeder
                         'admin','asesor')
                 ],
                 [
-                    'id'=>'1616799311184',
+                    'id'=>1616799311184,
                     'type'=> 'text',
                     'controlType'=> 'textbox',
                     'key'=> 'document',
@@ -115,7 +115,7 @@ class SectionSeeder extends Seeder
                     'options'=>[],
                     'cols'=>1,
                     'inReport'=> true,
-                    'preloaded' => false,
+                    'preloaded' => true,
                     'dependencies' => [],
                     'editRoles' => array(
                         'admin','supervisor'),
@@ -123,7 +123,7 @@ class SectionSeeder extends Seeder
                         'admin','asesor')
                 ],
                 [
-                    'id'=>'1616799311185',
+                    'id'=>1616799311185,
                     'type'=> 'text',
                     'controlType'=> 'textbox',
                     'key'=> 'phone',
@@ -136,7 +136,7 @@ class SectionSeeder extends Seeder
                     'options'=>[],
                     'cols'=>1,
                     'inReport'=> true,
-                    'preloaded' => false,
+                    'preloaded' => true,
                     'dependencies' => [],
                     'editRoles' => array(
                         'admin','supervisor'),
@@ -144,7 +144,7 @@ class SectionSeeder extends Seeder
                         'admin','asesor')
                 ],
                 [
-                    'id'=>'1616799311186',
+                    'id'=>1616799311186,
                     'type'=> 'text',
                     'controlType'=> 'textbox',
                     'key'=> 'email',
@@ -157,7 +157,7 @@ class SectionSeeder extends Seeder
                     'options'=>[],
                     'cols'=>1,
                     'inReport'=> true,
-                    'preloaded' => false,
+                    'preloaded' => true,
                     'dependencies' => [],
                     'editRoles' => array(
                         'admin','supervisor'),
@@ -193,7 +193,7 @@ class SectionSeeder extends Seeder
                             "minLength"=> null,
                             "maxLength"=> null,
                             "inReport"=> true,
-                            'preloaded' => false,
+                            'preloaded' => true,
                             'dependencies' => [],
                             "disabled"=> false,
                             "cols"=> 1,
@@ -207,7 +207,7 @@ class SectionSeeder extends Seeder
                 'type_section' => 2,
                 'fields' => array(
                 [
-                    'id' => '1616799311187',
+                    'id' => 616799311187,
                     'type'=> 'text',
                     'controlType'=> 'textbox',
                     'key'=> 'name',
@@ -228,7 +228,7 @@ class SectionSeeder extends Seeder
                         'admin','asesor')
                 ],
                 [
-                    'id' => '1616799311188',
+                    'id' => 1616799311188,
                     'type'=> 'text',
                     'controlType'=> 'textbox',
                     'key'=> 'age',
@@ -255,7 +255,7 @@ class SectionSeeder extends Seeder
                 'type_section' => 1,
                 'fields'=> array( 
                     [
-                        'id' => '1616799311180',
+                        'id' => 1616799311180,
                         'type'=> 'text',
                         'controlType'=> 'textbox',
                         'key'=> 'firstName',
@@ -268,7 +268,7 @@ class SectionSeeder extends Seeder
                         'options'=>[],
                         'cols'=>1,
                         'inReport'=> true,
-                        'preloaded' => false,
+                        'preloaded' => true,
                         'dependencies' => [],
                         'editRoles' => array(
                             'admin','supervisor','asesor'),
@@ -276,7 +276,7 @@ class SectionSeeder extends Seeder
                             'admin','supervisor','asesor')
                     ],
                     [
-                        'id' => '1616799311181',
+                        'id' => 1616799311181,
                         'type'=> 'text',
                         'controlType'=> 'textbox',
                         'key'=> 'middleName',
@@ -289,7 +289,7 @@ class SectionSeeder extends Seeder
                         'options'=>[],
                         'cols'=>1,
                         'inReport'=> true,
-                        'preloaded' => false,
+                        'preloaded' => true,
                         'dependencies' => [],
                         'editRoles' => array(
                             'admin','supervisor','asesor'),
@@ -297,7 +297,7 @@ class SectionSeeder extends Seeder
                             'admin','asesor')
                     ],
                     [
-                        'id' => '1616799311182',
+                        'id' => 1616799311182,
                         'type'=> 'text',
                         'controlType'=> 'textbox',
                         'key'=> 'lastName',
@@ -310,7 +310,7 @@ class SectionSeeder extends Seeder
                         'options'=>[],
                         'cols'=>1,
                         'inReport'=> true,
-                        'preloaded' => false,
+                        'preloaded' => true,
                         'dependencies' => [],
                         'editRoles' => array(
                             'admin','supervisor','asesor'),
@@ -318,7 +318,7 @@ class SectionSeeder extends Seeder
                             'admin','asesor')
                     ],
                     [
-                        'id' => '1616799311183',
+                        'id' => 1616799311183,
                         'type'=> 'text',
                         'controlType'=> 'textbox',
                         'key'=> 'secondLastName',
@@ -331,7 +331,7 @@ class SectionSeeder extends Seeder
                         'options'=>[],
                         'cols'=>1,
                         'inReport'=> true,
-                        'preloaded' => false,
+                        'preloaded' => true,
                         'dependencies' => [],
                         'editRoles' => array(
                             'admin','supervisor','asesor'),
@@ -339,7 +339,7 @@ class SectionSeeder extends Seeder
                             'admin','asesor')
                     ],
                     [
-                        'id' => '1616799311184',
+                        'id' => 1616799311184,
                         'type'=> 'text',
                         'controlType'=> 'textbox',
                         'key'=> 'document',
@@ -352,7 +352,7 @@ class SectionSeeder extends Seeder
                         'options'=>[],
                         'cols'=>1,
                         'inReport'=> true,
-                        'preloaded' => false,
+                        'preloaded' => true,
                         'dependencies' => [],
                         'editRoles' => array(
                             'admin','supervisor','asesor'),
@@ -360,7 +360,7 @@ class SectionSeeder extends Seeder
                             'admin','asesor')
                         ],
                         [
-                            'id' => '1616799311185',
+                            'id' => 1616799311185,
                             'type'=> 'text',
                             'controlType'=> 'textbox',
                             'key'=> 'phone',
@@ -373,7 +373,7 @@ class SectionSeeder extends Seeder
                             'options'=>[],
                             'cols'=>1,
                             'inReport'=> true,
-                            'preloaded' => false,
+                            'preloaded' => true,
                             'dependencies' => [],
                             'editRoles' => array(
                                 'admin','supervisor'),
@@ -381,7 +381,7 @@ class SectionSeeder extends Seeder
                                 'admin','asesor')
                         ],
                         [
-                            'id' => '1616799311186',
+                            'id' => 1616799311186,
                             'type'=> 'text',
                             'controlType'=> 'textbox',
                             'key'=> 'email',
@@ -394,7 +394,7 @@ class SectionSeeder extends Seeder
                             'options'=>[],
                             'cols'=>1,
                             'inReport'=> true,
-                            'preloaded' => false,
+                            'preloaded' => true,
                             'dependencies' => [],
                             'editRoles' => array(
                                 'admin','supervisor'),
@@ -408,7 +408,7 @@ class SectionSeeder extends Seeder
                 'type_section' => 2,
                 'fields' => array(
                 [
-                    'id' => '1616799311187',
+                    'id' => 1616799311187,
                     'type'=> 'text',
                     'controlType'=> 'textbox',
                     'key'=> 'placa',
@@ -429,7 +429,7 @@ class SectionSeeder extends Seeder
                         'admin','supervisor','asesor')
                 ],
                 [
-                    'id' => '1616799311188',
+                    'id' => 1616799311188,
                     'type'=> 'text',
                     'controlType'=> 'textbox',
                     'key'=> 'marca',

@@ -112,7 +112,7 @@ class FormController extends Controller
 
           }catch(\Throwable $e){
             return $this->errorResponse('Error al guardar el formulario',500);
-        } 
+        }
     }
 
 
@@ -222,7 +222,7 @@ class FormController extends Controller
                           ->select('structure_answer')->get();
 
       if(count($formAnswers)==0){
-        return 'Error al consultar los datos';
+        return $this->errorResponse('No se encontraron datos en el rango de fecha suministrado', 500);
       }else{
         $i=0;
 
