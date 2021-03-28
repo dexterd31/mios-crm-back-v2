@@ -11,6 +11,20 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        // $this->call('UsersTableSeeder');
+        $this->call('UserSeeder');
+        $this->call('GroupsSeeder');
+        $this->call('CampaingSeeder');
+        $this->call('ChannelSeeder');
+        $this->call('FormtypeSeeder');
+        $this->call('FormSeeder');
+        $this->call('SectionSeeder');
+        $this->call('DocumentTypeSeeder');
+        $this->call('ClientSeeder');
+        $this->call('GroupUserSeeder');
+        $this->call('FormAnswerSeeder');
+        $this->call('RolCrmSeeder');
+        $this->call('ModuleCrmSeeder');
+        $this->call('PermissionCrmSeeder');
+        $this->call('ApiConnections');
     }
 }

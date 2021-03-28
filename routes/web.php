@@ -16,6 +16,92 @@ $router->get('/', function () use ($router) {
 });
 $router->group(['prefix' => 'api'], function () use ($router) {
 
-    //Endpoints
- 
- });
+    //Rutas para creación de formulario dinamico
+    $router->post('/saveform', 'FormController@saveForm');
+    $router->get('/formslist', 'FormController@FormsList');
+    $router->get('/searchform/{id}', 'FormController@searchForm');
+    $router->get('/searchformtype', 'FormController@searchFormType');
+    $router->put('/editform/{id}', 'FormController@editForm');
+    $router->put('/deleteform/{id}', 'FormController@deleteForm');
+    //Reporte del formulario
+    $router->get('/report/{form_id}/{fecha_desde}/{fecha_hasta}/{parameters}','FormController@report');
+    $router->get('/formsbyuser/{idUser}', 'FormController@formsByUser');
+
+    //Base de datos
+    $router->get('/form/dowload/{parameters}', 'UploadController@exportExcel');
+    $router->post('/form/upload', 'UploadController@importExcel');
+
+    //Rutas para la información del formulario
+    $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
+    $router->post('/formanswer/filterform', 'FormAnswerController@filterForm');
+    $router->get('/formanswer/historic/{id}', 'FormAnswerController@formAnswerHistoric');
+    //consultar tipo de documento de los clientes
+    $router->get('/searchdocumenttype', 'FormAnswerController@searchDocumentType');
+
+
+    //Rutas de grupos
+    $router->get('/searchgroup/{id}', 'GroupController@searchGroup');
+    $router->post('/savegroup','GroupController@saveGroup');
+    $router->get('/searchselectgroup/{id}','GroupController@searchSelectGroup');
+    $router->get('/groupslist','GroupController@groupslist');
+    $router->put('/deletegroup/{id}','GroupController@deleteGroup');
+    $router->put('/updategroup/{id}','GroupController@updateGroup');
+    //consultar usuarios existentes para asignar al grupo
+    $router->get('/searchUser/{id}','GroupController@searchUser');
+    $router->get('/groupsbyuser/{idUser}', 'GroupController@listGroupsByUser');
+
+    // rutas de campañas
+    $router->get('/campaigns', 'CampaignController@index');
+    $router->post('/campaigns/{id}/updateState', 'CampaignController@updateState');
+    $router->get('/campaignsbyuser/{idUser}', 'CampaignController@campaignsByUser');
+
+    //Rutas de usuarios
+    $router->post('/storeUser', 'UserController@storeUser');
+    $router->put('/disabledUser/{id}', 'UserController@disabledUser');
+
+    //Rutas de clientes
+    $router->get('/getClient/{id}', 'ClientController@getClient');
+
+    //Rutas de bandejas
+    // $router->post('/trays/save','StateFormController@save');
+    // $router->get('/trays/list/{form_id}','StateFormController@list');
+    // $router->get('/trays/get/{id}','StateFormController@get');
+    // $router->put('/trays/update/{id}','StateFormController@update');
+    // $router->get('/trays/show/{id}','StateFormController@trayQuery');
+
+    //Rutas de parámetros
+    $router->post('/saveParameters/{id}','ParameterController@saveParameters');
+    $router->get('/searchParameterByFather/{id}/{father}','ParameterController@searchParameterByFather');
+    $router->get('/searchParameter/{id}','ParameterController@searchParameter');
+    $router->put('/updateParameters/{id}','ParameterController@updateParameters');
+
+    //Rutas de conexión apis
+    $router->post('/apiConnection/save', 'ApiConnectionController@save');
+    $router->get('/apiConnection/list/{form_id}', 'ApiConnectionController@list');
+    $router->get('/apiConnection/get/{id}', 'ApiConnectionController@get');
+    $router->put('/apiConnection/update/{id}', 'ApiConnectionController@update');
+    $router->get('/apiConnection/delete/{id}', 'ApiConnectionController@delete');
+
+    //Rutas de api question
+    $router->post('/apiQuestion/save', 'ApiQuestionController@save');
+    $router->get('/apiQuestion/list/{form_id}', 'ApiQuestionController@list');
+    $router->get('/apiQuestion/get/{id}', 'ApiQuestionController@get');
+    $router->put('/apiQuestion/update/{id}', 'ApiQuestionController@update');
+    $router->get('/apiQuestion/delete/{id}', 'ApiQuestionController@delete');
+
+
+    //Rutas Bandejas
+    $router->post('/trays/save','TrayController@store');
+    $router->get('/trays','TrayController@index');
+    $router->get('/trays/delete/{id}','TrayController@delete');
+    $router->get('/trays/form/{id}','TrayController@show');
+
+
+    //Rutas escalamientos
+    $router->post('/escalations', 'EscalationController@validateScalation');
+    //Rutas Permisos
+    $router->get('/permission/{rolCiu}', 'PermissionCrmController@list');
+
+});
+
+
