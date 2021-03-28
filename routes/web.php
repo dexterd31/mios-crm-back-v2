@@ -67,9 +67,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     // $router->get('/trays/list/{form_id}','StateFormController@list');
     // $router->get('/trays/get/{id}','StateFormController@get');
     // $router->put('/trays/update/{id}','StateFormController@update');
-
-    $router->get('/trays/delete/{id}','StateFormController@delete');
-    $router->get('/trays/show/{id}','StateFormController@trayQuery');
+    // $router->get('/trays/show/{id}','StateFormController@trayQuery');
 
     //Rutas de parámetros
     $router->post('/saveParameters/{id}','ParameterController@saveParameters');
@@ -90,11 +88,13 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/apiQuestion/get/{id}', 'ApiQuestionController@get');
     $router->put('/apiQuestion/update/{id}', 'ApiQuestionController@update');
     $router->get('/apiQuestion/delete/{id}', 'ApiQuestionController@delete');
-    
+
 
     //Rutas Bandejas
     $router->post('/trays/save','TrayController@store');
-    $router->get('/trays/','TrayController@index');
+    $router->get('/trays','TrayController@index');
+    $router->get('/trays/delete/{id}','TrayController@delete');
+    $router->get('/trays/form/{id}','TrayController@show');
 
 
     //Rutas escalamientos

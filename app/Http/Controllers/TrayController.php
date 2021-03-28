@@ -31,10 +31,16 @@ class TrayController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->all();
-        $data['state'] = 1;
+        // return $request;
+        $data = $request['entries'];
+        // $data['state'] = 1;
+        // dd($request['entries']);
 
-        $tray = Tray::create($data);
+        $tray = new Tray;
+        $tray->name = $data['name'];
+        $tray->form_id = $data['form_id'];
+        $tray->fields = json_encode($data['fields']);
+        $tray->state = 1;
         $tray->save();
 
         return $this->successResponse('Bandeja creada con exito');
@@ -46,9 +52,16 @@ class TrayController extends Controller
      * @param  \App\Models\Tray  $tray
      * @return \Illuminate\Http\Response
      */
-    public function show(Tray $tray)
+    public function show($id)
     {
-        //
+        $trays = Tray::where('form_id', $id)->get();
+        // dd($trays);
+
+        if(count($trays)==0) {
+            return $this->errorResponse('No se encontraron bandejas',404);
+        }
+
+        return $this->successResponse($trays);
     }
 
     /**
@@ -58,9 +71,9 @@ class TrayController extends Controller
      * @param  \App\Models\Tray  $tray
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Tray $tray)
+    public function update(Request $request, $id)
     {
-        $tray = Tray::whereId($tray)->first();
+        $tray = Tray::whereId($id)->first();
         if(!$tray) return $this->errorResponse('Bandeja no encontrada', 404);
 
         $data = $request->all();
@@ -75,11 +88,11 @@ class TrayController extends Controller
      * @param  \App\Models\Tray  $tray
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Tray $tray)
+    public function destroy($id)
     {
-        tray = Tray::findOrFail($tray);
-        tray->state = 0;
-        tray->update();
+        $tray = Tray::findOrFail($id);
+        $tray->state = 0;
+        $tray->update();
 
         return $this->successResponse('Bandeja eliminada con exito');
     }
