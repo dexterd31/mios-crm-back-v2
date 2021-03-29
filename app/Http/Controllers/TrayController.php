@@ -31,15 +31,13 @@ class TrayController extends Controller
      */
     public function store(Request $request)
     {
-        // return $request;
         $data = $request['entries'];
-        // $data['state'] = 1;
-        // dd($request['entries']);
 
         $tray = new Tray;
         $tray->name = $data['name'];
         $tray->form_id = $data['form_id'];
         $tray->fields = json_encode($data['fields']);
+        $tray->rols = json_encode($data['rols']);
         $tray->state = 1;
         $tray->save();
 
@@ -95,5 +93,23 @@ class TrayController extends Controller
         $tray->update();
 
         return $this->successResponse('Bandeja eliminada con exito');
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  \App\Models\Tray  $tray
+     * @return \Illuminate\Http\Response
+     */
+    public function getTray($id)
+    {
+        $tray = Tray::where('id',$id)->with('form')->first();
+        // dd($trays);
+
+        if($tray==null) {
+            return $this->errorResponse('No se encontro la bandeja',404);
+        }
+
+        return $this->successResponse($tray);
     }
 }

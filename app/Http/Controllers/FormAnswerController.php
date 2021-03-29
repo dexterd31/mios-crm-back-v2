@@ -35,10 +35,10 @@ class FormAnswerController extends Controller
      */
     public function saveinfo(Request $request, MiosHelper $miosHelper, FormAnswerHelper $formAnswerHelper)
     {
-       //  try {
+        try {
             // Se valida si tiene permiso para hacer acciones en formAnswer
             if (Gate::allows('form_answer')) {
-               
+
 
                 $structure_answer = $formAnswerHelper->structureAnswer($request['form_id'], $request['sections']);
 
@@ -112,9 +112,9 @@ class FormAnswerController extends Controller
                 $message = 'Tú rol no tiene permisos para ejecutar esta acción';
             }
             return $this->successResponse($message);
-       //  } catch (\Throwable $e) {
-         //    return $this->errorResponse('Error al guardar la gestion', 500);
-         //}
+        } catch (\Throwable $e) {
+            return $this->errorResponse('Error al guardar la gestion', 500);
+         }
     }
 
     /**
@@ -146,11 +146,11 @@ class FormAnswerController extends Controller
 
                 // Se valida si ya se ha encontrado inforación, sino se busca por id del cliente
                 $validador = $miosHelper->jsonDecodeResponse(json_encode($form_answers));
-                
+
                 if ($form_answers == null || count($validador['data']) == 0) {
                     // Se buscan las gestiones por base de datos
                     $clientId = $filterHelper->searchClient($item1value, $item2value, $item3value);
-                    
+
                     if ($clientId) {
                         $form_answers = $filterHelper->searchGestionByClientId($formId, $clientId);
                     }
@@ -187,9 +187,9 @@ class FormAnswerController extends Controller
                     $form_answers = $validador;
                     $form_answers['data'] = [$arrayData];
 
-    
+
                 }
-                
+
 
                 $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
             } else {

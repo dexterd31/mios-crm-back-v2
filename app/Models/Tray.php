@@ -2,11 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Form;
 use Illuminate\Database\Eloquent\Model;
 
 class Tray extends Model
 {
     protected $fillable = [
-        'name','form_id','fields', 'state'
+        'name','form_id','fields','rols', 'state'
     ];
+
+    public function form(){
+        return $this->belongsTo(Form::class);
+    }
 }

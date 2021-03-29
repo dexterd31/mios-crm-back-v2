@@ -95,6 +95,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/trays','TrayController@index');
     $router->get('/trays/delete/{id}','TrayController@delete');
     $router->get('/trays/form/{id}','TrayController@show');
+    $router->get('/tray/{id}','TrayController@getTray');
 
 
     //Rutas escalamientos
