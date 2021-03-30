@@ -59,8 +59,8 @@ class FormController extends Controller
      */
     public function saveForm(Request $request, MiosHelper $miosHelper)
     {
-         try
-        {
+        //  try
+        // {
             $forms = new Form([
                 'group_id' =>  $request->input('group_id'),
                 'campaign_id' => $request->input('campaign_id'),
@@ -110,9 +110,9 @@ class FormController extends Controller
 
            return response()->json($data, $data['code']);
 
-          }catch(\Throwable $e){
-            return $this->errorResponse('Error al guardar el formulario',500);
-        }
+        //   }catch(\Throwable $e){
+        //     return $this->errorResponse('Error al guardar el formulario',500);
+        // }
     }
 
 
@@ -136,7 +136,7 @@ class FormController extends Controller
 
     public function editForm(Request $request, $id, MiosHelper $miosHelper)
     {
-        try {
+        // try {
             $form = Form::find($id);
             $form->group_id = $request->group_id;
             $form->form_type_id = $request->type_form;
@@ -195,9 +195,9 @@ class FormController extends Controller
             $data = ['forms' => $form, 'sections' => json_decode($sections->fields), 'code' => 200, 'message' => 'Formulario editado Correctamente'];
 
             return response()->json($data, $data['code']);
-        } catch (\Throwable $e) {
-            return $this->errorResponse('Error al editar el formulario', 500);
-        }
+        // } catch (\Throwable $e) {
+        //     return $this->errorResponse('Error al editar el formulario', 500);
+        // }
     }
 
     /**
@@ -207,15 +207,15 @@ class FormController extends Controller
      */
     public function deleteForm(Request $request, $id)
     {
-        try {
+        // try {
             $form = Form::find($id);
             $form->state = $request->state;
             $form->save();
 
             return $this->successResponse('Formulario desactivado correctamente');
-        } catch (\Throwable $e) {
-            return $this->errorResponse('Error al desactivar el formulario', 500);
-        }
+        // } catch (\Throwable $e) {
+        //     return $this->errorResponse('Error al desactivar el formulario', 500);
+        // }
     }
 
     public function report($form_id, $fecha_desde, $fecha_hasta, $parameters)
@@ -259,7 +259,7 @@ class FormController extends Controller
     public function formsByUser(MiosHelper $miosHelper, $idUser)
     {
 
-        try {
+        // try {
             // Se obtienes los grupor por usuarios
             $groupsIds  = $miosHelper->groupsByUserId($idUser);
             $where      = ['state' => 1, 'group_id' => $groupsIds];
@@ -268,9 +268,9 @@ class FormController extends Controller
                 $form->filters = $miosHelper->jsonDecodeResponse($form->filters);
             }
             $data       = $miosHelper->jsonResponse(true, 200, 'forms', $forms);
-        } catch (\Throwable $th) {
-            $data       = $miosHelper->jsonResponse(true, 500, 'message', 'Ha ocurrido un error: ' . $th);
-        }
+        // } catch (\Throwable $th) {
+        //     $data       = $miosHelper->jsonResponse(true, 500, 'message', 'Ha ocurrido un error: ' . $th);
+        // }
 
 
         return response()->json($data, $data['code']);

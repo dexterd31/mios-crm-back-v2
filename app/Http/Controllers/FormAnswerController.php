@@ -35,7 +35,7 @@ class FormAnswerController extends Controller
      */
     public function saveinfo(Request $request, MiosHelper $miosHelper, FormAnswerHelper $formAnswerHelper)
     {
-        try {
+        // try {
             // Se valida si tiene permiso para hacer acciones en formAnswer
             if (Gate::allows('form_answer')) {
 
@@ -145,9 +145,9 @@ class FormAnswerController extends Controller
                 $message = 'Tú rol no tiene permisos para ejecutar esta acción';
             }
             return $this->successResponse($message);
-        } catch (\Throwable $e) {
-            return $this->errorResponse('Error al guardar la gestion', 500);
-        }
+        // } catch (\Throwable $e) {
+        //     return $this->errorResponse('Error al guardar la gestion', 500);
+        // }
     }
 
     /**
@@ -157,7 +157,7 @@ class FormAnswerController extends Controller
      */
     public function filterForm(Request $request, MiosHelper $miosHelper, FilterHelper $filterHelper, ApiHelper $apiHelper)
     {
-        try {
+        // try {
             if (Gate::allows('form_answer')) {
 
                 $json_body      = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
@@ -227,9 +227,9 @@ class FormAnswerController extends Controller
                 $data = $miosHelper->jsonResponse(false, 403, 'message', 'Tú rol no tiene permisos para ejecutar esta acción');
             }
             return response()->json($data, $data['code']);
-        } catch (\Throwable $e) {
-            return $this->errorResponse('Error al buscar la gestion', 500);
-        }
+        // } catch (\Throwable $e) {
+        //     return $this->errorResponse('Error al buscar la gestion', 500);
+        // }
     }
 
     /**
@@ -252,7 +252,7 @@ class FormAnswerController extends Controller
      */
     public function formAnswerHistoric($id, MiosHelper $miosHelper)
     {
-        try {
+        // try {
             $form_answers = FormAnswer::where('id', $id)->with('channel', 'client')->paginate(10);
             foreach ($form_answers  as $form) {
                 $userData     = $this->ciuService->fetchUser($form->user_id)->data;
@@ -262,9 +262,9 @@ class FormAnswerController extends Controller
 
             $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
             return response()->json($data, $data['code']);
-        } catch (\Throwable $e) {
-            return $this->errorResponse('Error al buscar la gestion', 500);
-        }
+        // } catch (\Throwable $e) {
+        //     return $this->errorResponse('Error al buscar la gestion', 500);
+        // }
     }
 
 
