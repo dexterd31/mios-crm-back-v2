@@ -53,10 +53,6 @@ class ApiHelper
                     $json_send = json_encode($json_send);
                 }
 
-
-
-
-
                 // Se obtiene la infromación del api registrado
                 $result = $this->httpRequest($mode, $url, $autorization_type, $token, $other_autorization_type, $other_token, $json_send, $api_type);
                 $apiData = $miosHelper->jsonDecodeResponse(json_encode($result));
@@ -72,40 +68,34 @@ class ApiHelper
 
                 if ($apiRelationship && $num > 0) {
                     $relationship = $miosHelper->jsonDecodeResponse($apiRelationship['relationship']);
-
                     $i = 0;
-                    // foreach para recorrer cada registro de la realación
+                    // foreach para recorrer cada registro de la realación                    
                     foreach ($relationship as $rel) {
                         foreach ($rel as $key => $value) {
-                            /** 
-                             * $key es el nombre de la llave y $value el valor
-                             * Se ve si el valor tiene hijos
-                             */
-                            if ($relationship[$i][$key] != null || $relationship[$i][$key] != '') {
-
-                                $valueArray = explode('.', $value);
-
-                                $count      = count($valueArray);
+                            // Se valida que la key se value y que el valor no este ni nulo o vacio
+                            if($key == 'value' &&  $rel[$key] != '' && $rel[$key] != null){
+                                // Se llena un array para saber si la llave final hace parte de un objeto
+                                $valueArray = explode('.', $rel[$key]);
+                                $count = count($valueArray);
                                 $subNivel   = '';
-
-                                if ($count > 1) {
+                                if($count > 1) {
+                                    // For para recorrer los objetos de la llave final
                                     for ($j = 0; $j < $count; $j++) {
                                         if ($j == 0) {
                                             $subNivel   = $apiData[$valueArray[$j]];
                                         } else {
                                             $subNivel   = $subNivel[$valueArray[$j]];
                                         }
+                                        $relationship[$i]['value'] = $subNivel;
                                     }
-                                    $relationship[$i][$key] = $subNivel;
                                 } else {
-                                    $relationship[$i][$key] = $apiData[$value];
+                                    $relationship[$i]['value'] = $apiData[$value];
                                 }
-                            } else {
-                                $relationship[$i][$key] = '';
-                            }
+                            } 
                         }
-                        $i++;
+                        $i ++;
                     }
+
                     $responseArray = $this->responseFilterMios($relationship, $formId);
                     return $responseArray;
                 } else {

@@ -15,8 +15,8 @@ class FormAnswerHelper
     {
         $sectionsFind   = Section::where('form_id', $formId)->get();
         $arraySections  = $this->getKeysValues($sectionsFind);
-        $row            = array();
-        $result         = [];
+        $row            = array(); // Array para construir el objeto
+        $result         = []; // Array para guardar los objectos
 
         $i = 0;
         foreach ($arraySections as $obj) {
@@ -24,13 +24,17 @@ class FormAnswerHelper
 
             foreach ($register as $key => $value) {
                 if (isset($responseSection[$i][$key]) != null || isset($responseSection[$i][$key]) != '') {
-                    $row[$key] = trim($responseSection[$i][$key]);
+                    $row['id'] = time();
+                    $row['key'] = $key;
+                    $row['value'] = trim($responseSection[$i][$key]);
+                    array_push($result, $row);
                 } else {
-                    $row[$key] = NULL;
+                    $row['id'] = time();
+                    $row['key'] = $key;
+                    $row['value'] = '';
                 }
             }
 
-            array_push($result, $row);
             $row = array();
             $i++;
         }

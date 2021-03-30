@@ -6,8 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\FormAnswer;
 use App\Models\Client;
 use App\Models\KeyValue;
-use App\Models\Directory;
-use App\Models\ApiConnection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use App\Services\CiuService;
@@ -197,7 +195,7 @@ class FormAnswerController extends Controller
                 }
                 // Se valida si ya se ha encontrado inforación, sino se busca si tene api
                 $validador = $miosHelper->jsonDecodeResponse(json_encode($form_answers));
-
+                
                 if ($form_answers == null || count($validador['data']) == 0) {
                     // Se busca por api si tiene registrado el formulario
                     $form_answers = $filterHelper->filterbyApi($formId, $item1key, $item1value, $item2key, $item2value, $item3key, $item3value);
@@ -270,7 +268,7 @@ class FormAnswerController extends Controller
 
     /**
      * Olme Marin
-     * 02-03-2021
+     * 29-03-2021
      * Método para actualizar al cleinte
      */
     public function updateClient($client)

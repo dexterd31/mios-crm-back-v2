@@ -38,7 +38,7 @@ class UploadController extends Controller
         $formId = $request->form_id;
         if (isset($file) && isset($userId) && isset($formId)) {
             //Se agrega en la tabla de uploads
-            $upload = new Upload();
+            $upload             = new Upload();
             $upload->name       = $file->getClientOriginalName();
             $upload->user_id    = $userId;
             $upload->form_id    = $formId;
@@ -61,7 +61,6 @@ class UploadController extends Controller
                 $data = $miosHelper->jsonResponse(false, 400, 'message', 'Ha ocurrido un error al importar el archivo');
                 return response()->json($data, $data['code']);
             }
-            
         } else {
             $data = $miosHelper->jsonResponse(false, 400, 'message', 'Faltan campos por ser diligenciados');
             return response()->json($data, $data['code']);

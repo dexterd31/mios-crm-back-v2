@@ -165,6 +165,7 @@ class SectionSeeder extends Seeder
                         'admin','asesor')
                     ],
                     [
+                        'id' => 160079930000,
                         "type"=> "options",
                         "key"=> "document_type_id",
                         "controlType"=> "dropdown",
@@ -197,8 +198,12 @@ class SectionSeeder extends Seeder
                             'dependencies' => [],
                             "disabled"=> false,
                             "cols"=> 1,
-                            "editRoles"=> [],
-                            "seeRoles"=> []
+                            "editRoles"=> [
+                                "asesor", "admin", "supervisor_crm", "calidad", "datamarshall", "backoffice"
+                            ],
+                            "seeRoles"=> [
+                                "asesor", "admin", "supervisor_crm", "calidad", "datamarshall", "backoffice"
+                            ]
                     ])
             ],     
             [
@@ -337,6 +342,47 @@ class SectionSeeder extends Seeder
                             'admin','supervisor','asesor'),
                         'seeRoles' => array(
                             'admin','asesor')
+                    ],
+                    [
+                        'id' => 161679930000,
+                        "type"=> "options",
+                        "key"=> "document_type_id",
+                        "controlType"=> "dropdown",
+                        "label"=> "Tipo de documento",
+                        "value"=> "",
+                        "required"=> false,
+                        "canAdd"=> false,
+                        "options"=> array(
+                            [
+                            
+                                "id"=> 1,
+                                "name"=> "Cédula de ciudadania"
+                            ],
+                           [
+                                "id"=> 2,
+                                "name"=> "Tarjeta de ciudadania"
+                           ],
+                           [
+                                "id"=> 3,
+                                "name"=> "NIT"
+                           ],
+                           [
+                                "id"=> 3,
+                                "name"=> "Cédula de extranjería"
+                           ]),
+                        "minLength"=> null,
+                        "maxLength"=> null,
+                        "inReport"=> true,
+                        'preloaded' => true,
+                        'dependencies' => [],
+                        "disabled"=> false,
+                        "cols"=> 1,
+                        "editRoles"=> [
+                            "asesor", "admin", "supervisor_crm", "calidad", "datamarshall", "backoffice"
+                        ],
+                        "seeRoles"=> [
+                            "asesor", "admin", "supervisor_crm", "calidad", "datamarshall", "backoffice"
+                        ]
                     ],
                     [
                         'id' => 1616799311184,
@@ -642,7 +688,7 @@ class SectionSeeder extends Seeder
                                     "seeRoles"=> [
                                         "asesor", "admin", "supervisor_crm", "calidad", "datamarshall", "backoffice"
                                     ]
-                        ]
+                            ]
                     )
             ],
 
