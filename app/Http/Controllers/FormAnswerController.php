@@ -35,119 +35,119 @@ class FormAnswerController extends Controller
      */
     public function saveinfo(Request $request, MiosHelper $miosHelper, FormAnswerHelper $formAnswerHelper)
     {
-        //try {
-        // Se valida si tiene permiso para hacer acciones en formAnswer
-        if (Gate::allows('form_answer')) {
+        try {
+            // Se valida si tiene permiso para hacer acciones en formAnswer
+            if (Gate::allows('form_answer')) {
 
-            $json_body = $request['sections'];
-            $obj = array();
-            $clientInfo = [];
-            $clientData = array();
-            $i = 0;
+                $json_body = $request['sections'];
+                $obj = array();
+                $clientInfo = [];
+                $clientData = array();
+                $i = 0;
 
-            foreach ($json_body as $section) {
-                foreach ($section['fields'] as $field) {
-                    if ($i == 0) {
-                        $clientData[$field['key']] = $field['value'];
+                foreach ($json_body as $section) {
+                    foreach ($section['fields'] as $field) {
+                        if ($i == 0) {
+                            $clientData[$field['key']] = $field['value'];
+                        }
+                        $register['id'] = $field['id'];
+                        $register['key'] = $field['key'];
+                        $register['value'] = $field['value'];
+                        array_push($obj, $register);
                     }
-                    $register['id'] = $field['id'];
-                    $register['key'] = $field['key'];
-                    $register['value'] = $field['value'];
-                    array_push($obj, $register);
+                    $i++;
                 }
-                $i++;
-            }
-            array_push($clientInfo, $clientData);
-            $clientData = array();
+                array_push($clientInfo, $clientData);
+                $clientData = array();
 
 
-            if ($request['client_id'] == null) {
-                $clientFind = Client::where('document', $clientInfo[0]['document'])->where('document_type_id', $clientInfo[0]['document_type_id'])->first();
-             
-                if ($clientFind == null) { 
-                    $client = new Client([
-                        'document_type_id'  => !empty($clientInfo[0]['document_type_id']) ? $clientInfo[0]['document_type_id'] : 1,
-                        'first_name'        => isset($clientInfo[0]['firstName']) ? rtrim($clientInfo[0]['firstName']) : '',
-                        'middle_name'       => isset($clientInfo[0]['middleName']) ? rtrim($clientInfo[0]['middleName']) : '',
-                        'first_lastname'    => isset($clientInfo[0]['lastName']) ? rtrim($clientInfo[0]['lastName']) : '',
-                        'second_lastname'   => isset($clientInfo[0]['secondLastName']) ? rtrim($clientInfo[0]['secondLastName']) : '',
-                        'document'          => isset($clientInfo[0]['document']) ? rtrim($clientInfo[0]['document']) : '',
-                        'phone'             => isset($clientInfo[0]['phone']) ? rtrim($clientInfo[0]['phone']) : '',
-                        'email'             => isset($clientInfo[0]['email']) ? rtrim($clientInfo[0]['email']) : ''
-                    ]);
-                    $client->save();
-                } else {
-                    $clientFind->first_name         = isset($clientInfo[0]['firstName']) ? $clientInfo[0]['firstName'] : $clientFind->first_name;
-                    $clientFind->middle_name        = isset($clientInfo[0]['middleName']) ? $clientInfo[0]['middleName'] : $clientFind->middle_name ;
-                    $clientFind->first_lastname     = isset($clientInfo[0]['lastName']) ? $clientInfo[0]['lastName']: $clientFind->first_lastname;
-                    $clientFind->second_lastname    = isset($clientInfo[0]['secondLastName']) ? $clientInfo[0]['secondLastName']: $clientFind->second_lastname;
-                    $clientFind->phone              = isset($clientInfo[0]['phone']) ? $clientInfo[0]['phone']: $clientFind->phone;
-                    $clientFind->email              = isset($clientInfo[0]['email']) ? $clientInfo[0]['email']: $clientFind->email;
-                    $clientFind->update();
-                }
-       
-                foreach ($obj as $row ) {
-                    $sect = new KeyValue([
-                        'form_id' => $request['form_id'],
+                if ($request['client_id'] == null) {
+                    $clientFind = Client::where('document', $clientInfo[0]['document'])->where('document_type_id', $clientInfo[0]['document_type_id'])->first();
+
+                    if ($clientFind == null) {
+                        $client = new Client([
+                            'document_type_id'  => !empty($clientInfo[0]['document_type_id']) ? $clientInfo[0]['document_type_id'] : 1,
+                            'first_name'        => isset($clientInfo[0]['firstName']) ? rtrim($clientInfo[0]['firstName']) : '',
+                            'middle_name'       => isset($clientInfo[0]['middleName']) ? rtrim($clientInfo[0]['middleName']) : '',
+                            'first_lastname'    => isset($clientInfo[0]['lastName']) ? rtrim($clientInfo[0]['lastName']) : '',
+                            'second_lastname'   => isset($clientInfo[0]['secondLastName']) ? rtrim($clientInfo[0]['secondLastName']) : '',
+                            'document'          => isset($clientInfo[0]['document']) ? rtrim($clientInfo[0]['document']) : '',
+                            'phone'             => isset($clientInfo[0]['phone']) ? rtrim($clientInfo[0]['phone']) : '',
+                            'email'             => isset($clientInfo[0]['email']) ? rtrim($clientInfo[0]['email']) : ''
+                        ]);
+                        $client->save();
+                    } else {
+                        $clientFind->first_name         = isset($clientInfo[0]['firstName']) ? $clientInfo[0]['firstName'] : $clientFind->first_name;
+                        $clientFind->middle_name        = isset($clientInfo[0]['middleName']) ? $clientInfo[0]['middleName'] : $clientFind->middle_name;
+                        $clientFind->first_lastname     = isset($clientInfo[0]['lastName']) ? $clientInfo[0]['lastName'] : $clientFind->first_lastname;
+                        $clientFind->second_lastname    = isset($clientInfo[0]['secondLastName']) ? $clientInfo[0]['secondLastName'] : $clientFind->second_lastname;
+                        $clientFind->phone              = isset($clientInfo[0]['phone']) ? $clientInfo[0]['phone'] : $clientFind->phone;
+                        $clientFind->email              = isset($clientInfo[0]['email']) ? $clientInfo[0]['email'] : $clientFind->email;
+                        $clientFind->update();
+                    }
+
+                    foreach ($obj as $row) {
+                        $sect = new KeyValue([
+                            'form_id' => $request['form_id'],
+                            'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
+                            'key' => $row['key'],
+                            'value' => $row['value'],
+                            'description' => null
+                        ]);
+
+                        $sect->save();
+                    }
+
+                    $form_answer = new FormAnswer([
+                        'user_id' => $request['user_id'],
+                        'channel_id' => 1,
                         'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
-                        'key' => $row['key'],
-                        'value' => $row['value'],
-                        'description' => null
-                    ]);
-
-                    $sect->save();
-                }
-
-                $form_answer = new FormAnswer([
-                    'user_id' => $request['user_id'],
-                    'channel_id' => 1,
-                    'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
-                    'form_id' => $request['form_id'],
-                    'structure_answer' => json_encode($obj)
-                ]);
-
-                $form_answer->save();
-                $message = 'Informacion guardada correctamente';
-            } else {
-                $clientFind = Client::where('id', $request['client_id'])->first();
-                $clientFind->first_name         = isset($clientInfo[0]['firstName']) ? $clientInfo[0]['firstName'] : $clientFind->first_name;
-                $clientFind->middle_name        = isset($clientInfo[0]['middleName']) ? $clientInfo[0]['middleName'] : $clientFind->middle_name ;
-                $clientFind->first_lastname     = isset($clientInfo[0]['lastName']) ? $clientInfo[0]['lastName']: $clientFind->first_lastname;
-                $clientFind->second_lastname    = isset($clientInfo[0]['secondLastName']) ? $clientInfo[0]['secondLastName']: $clientFind->second_lastname;
-                $clientFind->phone              = isset($clientInfo[0]['phone']) ? $clientInfo[0]['phone']: $clientFind->phone;
-                $clientFind->email              = isset($clientInfo[0]['email']) ? $clientInfo[0]['email']: $clientFind->email;
-                $clientFind->update();
-
-                foreach ($obj as $row ) {
-                    $sect = new KeyValue([
                         'form_id' => $request['form_id'],
-                        'client_id' => $clientFind['id'],
-                        'key' => $row['key'],
-                        'value' => $row['value'],
-                        'description' => null
+                        'structure_answer' => json_encode($obj)
                     ]);
 
-                    $sect->save();
+                    $form_answer->save();
+                    $message = 'Informacion guardada correctamente';
+                } else {
+                    $clientFind = Client::where('id', $request['client_id'])->first();
+                    $clientFind->first_name         = isset($clientInfo[0]['firstName']) ? $clientInfo[0]['firstName'] : $clientFind->first_name;
+                    $clientFind->middle_name        = isset($clientInfo[0]['middleName']) ? $clientInfo[0]['middleName'] : $clientFind->middle_name;
+                    $clientFind->first_lastname     = isset($clientInfo[0]['lastName']) ? $clientInfo[0]['lastName'] : $clientFind->first_lastname;
+                    $clientFind->second_lastname    = isset($clientInfo[0]['secondLastName']) ? $clientInfo[0]['secondLastName'] : $clientFind->second_lastname;
+                    $clientFind->phone              = isset($clientInfo[0]['phone']) ? $clientInfo[0]['phone'] : $clientFind->phone;
+                    $clientFind->email              = isset($clientInfo[0]['email']) ? $clientInfo[0]['email'] : $clientFind->email;
+                    $clientFind->update();
+
+                    foreach ($obj as $row) {
+                        $sect = new KeyValue([
+                            'form_id' => $request['form_id'],
+                            'client_id' => $clientFind['id'],
+                            'key' => $row['key'],
+                            'value' => $row['value'],
+                            'description' => null
+                        ]);
+
+                        $sect->save();
+                    }
+
+                    $form_answer = new FormAnswer([
+                        'user_id' => $request['user_id'],
+                        'channel_id' => 1,
+                        'client_id' => $request['client_id'],
+                        'form_id' => $request['form_id'],
+                        'structure_answer' => json_encode($obj)
+                    ]);
+
+                    $form_answer->save();
+                    $message = 'Informacion guardada correctamente';
                 }
-
-                $form_answer = new FormAnswer([
-                    'user_id' => $request['user_id'],
-                    'channel_id' => 1,
-                    'client_id' => $request['client_id'],
-                    'form_id' => $request['form_id'],
-                    'structure_answer' => json_encode($obj)
-                ]);
-
-                $form_answer->save();
-                $message = 'Informacion guardada correctamente';
+            } else {
+                $message = 'Tú rol no tiene permisos para ejecutar esta acción';
             }
-        } else {
-            $message = 'Tú rol no tiene permisos para ejecutar esta acción';
+            return $this->successResponse($message);
+        } catch (\Throwable $e) {
+            return $this->errorResponse('Error al guardar la gestion', 500);
         }
-        return $this->successResponse($message);
-        // } catch (\Throwable $e) {
-        //     return $this->errorResponse('Error al guardar la gestion', 500);
-        // }
     }
 
     /**
@@ -273,13 +273,14 @@ class FormAnswerController extends Controller
      * 02-03-2021
      * Método para actualizar al cleinte
      */
-    public function updateClient($client) {
+    public function updateClient($client)
+    {
         $client->first_name         = isset($clientInfo[0]['firstName']) ? $clientInfo[0]['firstName'] : $client->first_name;
-        $client->middle_name        = isset($clientInfo[0]['middleName']) ? $clientInfo[0]['middleName'] : $client->middle_name ;
-        $client->first_lastname     = isset($clientInfo[0]['lastName']) ? $clientInfo[0]['lastName']: $client->first_lastname;
-        $client->second_lastname    = isset($clientInfo[0]['secondLastName']) ? $clientInfo[0]['secondLastName']: $client->second_lastname;
-        $client->phone              = isset($clientInfo[0]['phone']) ? $clientInfo[0]['phone']: $client->phone;
-        $client->email              = isset($clientInfo[0]['email']) ? $clientInfo[0]['email']: $client->email;
+        $client->middle_name        = isset($clientInfo[0]['middleName']) ? $clientInfo[0]['middleName'] : $client->middle_name;
+        $client->first_lastname     = isset($clientInfo[0]['lastName']) ? $clientInfo[0]['lastName'] : $client->first_lastname;
+        $client->second_lastname    = isset($clientInfo[0]['secondLastName']) ? $clientInfo[0]['secondLastName'] : $client->second_lastname;
+        $client->phone              = isset($clientInfo[0]['phone']) ? $clientInfo[0]['phone'] : $client->phone;
+        $client->email              = isset($clientInfo[0]['email']) ? $clientInfo[0]['email'] : $client->email;
         $client->update();
     }
 }
