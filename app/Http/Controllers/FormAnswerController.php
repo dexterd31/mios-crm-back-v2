@@ -6,8 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\FormAnswer;
 use App\Models\Client;
 use App\Models\KeyValue;
-use App\Models\Directory;
-use App\Models\ApiConnection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use App\Services\CiuService;
@@ -270,7 +268,7 @@ class FormAnswerController extends Controller
 
     /**
      * Olme Marin
-     * 02-03-2021
+     * 29-03-2021
      * Método para actualizar al cleinte
      */
     public function updateClient($client)
