@@ -237,15 +237,13 @@ class FormController extends Controller
 
         $data = [];
         foreach($formAnswers as $answer){
-          foreach(json_decode($answer->structure_answer) as $structure){
-            foreach($structure as $id => $value){
-              if(in_array($id, $headers)){
-                $ids[$i][$id] = $value;
+          foreach(json_decode($answer->structure_answer) as $field){
+            if(in_array($field->key, $headers)){
+                $ids[$i][$field->key] = $field->value;
                 if($i==0){
-                  array_push($headers2, $id);
+                  array_push($headers2, $field->key);
                 }
               }
-            }
           }
           $i++;
         }
