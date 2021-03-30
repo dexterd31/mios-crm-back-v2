@@ -108,7 +108,7 @@ class EscalationController extends Controller
             //iterar cada uno de los campos a validar
             foreach ($scalation->fields as $compare) {
                 //iterar secciones de formulario
-                foreach ($form['sections'] as $form_section) {
+                foreach ($form as $form_section) {
                     //iterar campos del formulario
                     foreach ($form_section['fields'] as $form_field) {
                         //hacer interseccion de campos de formulario con los campos a validar
@@ -124,14 +124,14 @@ class EscalationController extends Controller
             // revisar que todos los campos se hayan validado correctamente
             if($validated_fields == count($scalation->fields)){
                 
-                if($request->client_id){
+                if(json_decode($request->client_id)){
                     // si se envia el id del cliente en el request usar esa info
                     $client_json = json_encode(Client::findOrFail($request->client_id));
                 } else {
                     //si no se envia en el request buscar en el formulario la informacion del cliente
                     $document = null;
                     $document_type_id = null;
-                    foreach ($form['sections'][0]['fields'] as $value) {
+                    foreach ($form[0]['fields'] as $value) {
                         if ($value['key']== 'document'){
                             $document = $value['value'];
                         }
@@ -141,8 +141,9 @@ class EscalationController extends Controller
                     }
                     $client_json = json_encode(Client::where('document', $document)->where('document_type_id', $document_type_id)->firstOrFail());
                 }
-                
-                $this->pqrsService->createEscalation($scalation->asunto_id, $scalation->estado_id, $client_json, 1, $request->form, null, 'hola');
+
+                $form_data = (object) ['sections' => json_decode($request->form)];
+                $this->pqrsService->createEscalation($scalation->asunto_id, $scalation->estado_id, $client_json, 1, json_encode($form_data), null, 'hola');
                 return $this->successResponse('Peticion escalada');
             }
         }

@@ -12,28 +12,48 @@ class FormAnswerHelper
 
     // Funcion para hacer formatear el structureAnswer
     function structureAnswer($formId, $responseSection)
-    {
+    {       
+        $miosHelper         = new MiosHelper();
         $sectionsFind   = Section::where('form_id', $formId)->get();
         $arraySections  = $this->getKeysValues($sectionsFind);
-        $row            = array();
-        $result         = [];
+        $row            = array(); // Array para construir el objeto
+        $result         = []; // Array para guardar los objectos
+        $arrayTemporal  = [];
+        $ids            = []; //Array para guardar los ids de las secciones
+        // Se obtienen los registro de fields
+        foreach ($sectionsFind as $section) {
+            array_push($arrayTemporal, $section["fields"]);
+        }
+        // Se obtines los ids de las secciones
+        foreach ($arrayTemporal as $temp => $t) {
+            $register   = $miosHelper->jsonDecodeResponse($t);
+            foreach ($register as $reg => $r) {
+                array_push($ids, $register[$reg]['id'] );
+            }
+        }
 
         $i = 0;
+        $j = 0;
         foreach ($arraySections as $obj) {
             $register   = $obj;
-
+            
             foreach ($register as $key => $value) {
                 if (isset($responseSection[$i][$key]) != null || isset($responseSection[$i][$key]) != '') {
-                    $row[$key] = trim($responseSection[$i][$key]);
+                    $row['id'] = $ids[$j];
+                    $row['key'] = $key;
+                    $row['value'] = trim($responseSection[$i][$key]);
+                    array_push($result, $row);
                 } else {
-                    $row[$key] = NULL;
+                    $row['id'] = $ids[$j];
+                    $row['key'] = $key;
+                    $row['value'] = '';
                 }
+                $j ++;
             }
-
-            array_push($result, $row);
-            $row = array();
             $i++;
+            $row = array();
         }
+
         return $result;
     }
 
@@ -75,7 +95,6 @@ class FormAnswerHelper
         foreach ($sectionsFind as $section) {
             array_push($arrayTemporal, $section["fields"]);
         }
-
         // Se buscan los labels para traer los keyvalues
         foreach ($arrayTemporal as $obj) {
             $register   = $miosHelper->jsonDecodeResponse($obj);
@@ -96,7 +115,6 @@ class FormAnswerHelper
             array_push($arrayKeyValues, $arraySections);
             $arraySections = array();
         }
-
         return $arrayKeyValues;
     }
 }
