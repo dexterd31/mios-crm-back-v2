@@ -13,10 +13,9 @@ class FilterHelper
     // Funcion para filtar por gestiones de mios
     function filterByGestions($formId, $item1value, $item2value, $item3value)
     {
-
         // Se continua la busqueda por gestiones
         $form_answers = FormAnswer::where('form_id', $formId)
-            ->where('structure_answer', 'like', '%' . $item1value . '%')
+            ->where('structure_answer', 'like', '%' . $item1value .'%')
             ->where('structure_answer', 'like', '%' . $item2value. '%')
             ->where('structure_answer', 'like', '%' . $item3value. '%')
             ->with('client')->paginate(10);

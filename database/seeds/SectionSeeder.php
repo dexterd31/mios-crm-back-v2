@@ -165,6 +165,7 @@ class SectionSeeder extends Seeder
                         'admin','asesor')
                     ],
                     [
+                        'id' => 160079930000,
                         "type"=> "options",
                         "key"=> "document_type_id",
                         "controlType"=> "dropdown",
@@ -197,8 +198,12 @@ class SectionSeeder extends Seeder
                             'dependencies' => [],
                             "disabled"=> false,
                             "cols"=> 1,
-                            "editRoles"=> [],
-                            "seeRoles"=> []
+                            "editRoles"=> [
+                                "asesor", "admin", "supervisor_crm", "calidad", "datamarshall", "backoffice"
+                            ],
+                            "seeRoles"=> [
+                                "asesor", "admin", "supervisor_crm", "calidad", "datamarshall", "backoffice"
+                            ]
                     ])
             ],     
             [
