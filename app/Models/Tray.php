@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Form;
+use App\Models\FormAnswer;
 use Illuminate\Database\Eloquent\Model;
 
 class Tray extends Model
