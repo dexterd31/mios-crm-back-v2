@@ -114,4 +114,9 @@ class TrayController extends Controller
 
         return $this->successResponse($tray);
     }
+
+    // public function formAnswersByTray($tray) {
+    //     $tray = Tray::where('id',$id)->first();
+    //     $formsAnswers = FormsAnswers::where
+    // }
 }
