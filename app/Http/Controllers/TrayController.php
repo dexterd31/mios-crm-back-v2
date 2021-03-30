@@ -71,12 +71,14 @@ class TrayController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $data = $request['entries'];
         $tray = Tray::whereId($id)->first();
         if(!$tray) return $this->errorResponse('Bandeja no encontrada', 404);
 
-        $data = $request->all();
+        $tray->name = $data['name'];
+        $tray->rols = $data['rols'];
+        $tray->update();
 
-        Tray::whereId($tray)->update($data);
         return $this->successResponse('Bandeja actualizada con exito');
     }
 
