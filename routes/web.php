@@ -34,7 +34,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
     $router->post('/formanswer/filterform', 'FormAnswerController@filterForm');
-    $router->get('/formanswer/historic/{form_id}/{client_id}', 'FormAnswerController@formAnswerHistoric');
+    $router->get('/formanswer/historic/{id}', 'FormAnswerController@formAnswerHistoric');
     //consultar tipo de documento de los clientes
     $router->get('/searchdocumenttype', 'FormAnswerController@searchDocumentType');
 
@@ -42,7 +42,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas de grupos
     $router->get('/searchgroup/{id}', 'GroupController@searchGroup');
     $router->post('/savegroup','GroupController@saveGroup');
-    $router->get('/searchselectgroup','GroupController@searchSelectGroup');
+    $router->get('/searchselectgroup/{id}','GroupController@searchSelectGroup');
     $router->get('/groupslist','GroupController@groupslist');
     $router->put('/deletegroup/{id}','GroupController@deleteGroup');
     $router->put('/updategroup/{id}','GroupController@updateGroup');
@@ -62,15 +62,6 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas de clientes
     $router->get('/getClient/{id}', 'ClientController@getClient');
 
-    //Rutas de bandejas
-    // $router->post('/trays/save','StateFormController@save');
-    // $router->get('/trays/list/{form_id}','StateFormController@list');
-    // $router->get('/trays/get/{id}','StateFormController@get');
-    // $router->put('/trays/update/{id}','StateFormController@update');
-
-    $router->get('/trays/delete/{id}','StateFormController@delete');
-    $router->get('/trays/show/{id}','StateFormController@trayQuery');
-
     //Rutas de parámetros
     $router->post('/saveParameters/{id}','ParameterController@saveParameters');
     $router->get('/searchParameterByFather/{id}/{father}','ParameterController@searchParameterByFather');
@@ -83,7 +74,6 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/apiConnection/get/{id}', 'ApiConnectionController@get');
     $router->put('/apiConnection/update/{id}', 'ApiConnectionController@update');
     $router->get('/apiConnection/delete/{id}', 'ApiConnectionController@delete');
-    $router->get('/apiConnection/login', 'ApiConnectionController@apiLogin');
 
     //Rutas de api question
     $router->post('/apiQuestion/save', 'ApiQuestionController@save');
@@ -91,11 +81,15 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/apiQuestion/get/{id}', 'ApiQuestionController@get');
     $router->put('/apiQuestion/update/{id}', 'ApiQuestionController@update');
     $router->get('/apiQuestion/delete/{id}', 'ApiQuestionController@delete');
-    
+
 
     //Rutas Bandejas
     $router->post('/trays/save','TrayController@store');
-    $router->get('/trays/','TrayController@index');
+    $router->get('/trays','TrayController@index');
+    $router->get('/trays/delete/{id}','TrayController@delete');
+    $router->get('/trays/form/{id}','TrayController@show');
+    $router->get('/tray/{id}','TrayController@getTray');
+    $router->put('/tray/{id}','TrayController@update');
 
 
     //Rutas escalamientos

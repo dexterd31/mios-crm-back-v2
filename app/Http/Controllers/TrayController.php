@@ -31,10 +31,14 @@ class TrayController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->all();
-        $data['state'] = 1;
+        $data = $request['entries'];
 
-        $tray = Tray::create($data);
+        $tray = new Tray;
+        $tray->name = $data['name'];
+        $tray->form_id = $data['form_id'];
+        $tray->fields = json_encode($data['fields']);
+        $tray->rols = json_encode($data['rols']);
+        $tray->state = 1;
         $tray->save();
 
         return $this->successResponse('Bandeja creada con exito');
@@ -46,9 +50,16 @@ class TrayController extends Controller
      * @param  \App\Models\Tray  $tray
      * @return \Illuminate\Http\Response
      */
-    public function show(Tray $tray)
+    public function show($id)
     {
-        //
+        $trays = Tray::where('form_id', $id)->get();
+        // dd($trays);
+
+        if(count($trays)==0) {
+            return $this->errorResponse('No se encontraron bandejas',404);
+        }
+
+        return $this->successResponse($trays);
     }
 
     /**
@@ -58,14 +69,16 @@ class TrayController extends Controller
      * @param  \App\Models\Tray  $tray
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Tray $tray)
+    public function update(Request $request, $id)
     {
-        $tray = Tray::whereId($tray)->first();
+        $data = $request['entries'];
+        $tray = Tray::whereId($id)->first();
         if(!$tray) return $this->errorResponse('Bandeja no encontrada', 404);
 
-        $data = $request->all();
+        $tray->name = $data['name'];
+        $tray->rols = $data['rols'];
+        $tray->update();
 
-        Tray::whereId($tray)->update($data);
         return $this->successResponse('Bandeja actualizada con exito');
     }
 
@@ -75,12 +88,35 @@ class TrayController extends Controller
      * @param  \App\Models\Tray  $tray
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Tray $tray)
+    public function destroy($id)
     {
-        tray = Tray::findOrFail($tray);
-        tray->state = 0;
-        tray->update();
+        $tray = Tray::findOrFail($id);
+        $tray->state = 0;
+        $tray->update();
 
         return $this->successResponse('Bandeja eliminada con exito');
     }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  \App\Models\Tray  $tray
+     * @return \Illuminate\Http\Response
+     */
+    public function getTray($id)
+    {
+        $tray = Tray::where('id',$id)->with('form')->first();
+        // dd($trays);
+
+        if($tray==null) {
+            return $this->errorResponse('No se encontro la bandeja',404);
+        }
+
+        return $this->successResponse($tray);
+    }
+
+    // public function formAnswersByTray($tray) {
+    //     $tray = Tray::where('id',$id)->first();
+    //     $formsAnswers = FormsAnswers::where
+    // }
 }

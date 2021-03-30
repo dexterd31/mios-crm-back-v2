@@ -25,5 +25,6 @@ class DatabaseSeeder extends Seeder
         $this->call('RolCrmSeeder');
         $this->call('ModuleCrmSeeder');
         $this->call('PermissionCrmSeeder');
+        $this->call('ApiConnections');
     }
 }
