@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FormAnswer;
 use App\Models\Tray;
 use Illuminate\Http\Request;
 
@@ -31,15 +32,13 @@ class TrayController extends Controller
      */
     public function store(Request $request)
     {
-        // return $request;
         $data = $request['entries'];
-        // $data['state'] = 1;
-        // dd($request['entries']);
 
         $tray = new Tray;
         $tray->name = $data['name'];
         $tray->form_id = $data['form_id'];
         $tray->fields = json_encode($data['fields']);
+        $tray->rols = json_encode($data['rols']);
         $tray->state = 1;
         $tray->save();
 
@@ -73,12 +72,14 @@ class TrayController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $data = $request['entries'];
         $tray = Tray::whereId($id)->first();
         if(!$tray) return $this->errorResponse('Bandeja no encontrada', 404);
 
-        $data = $request->all();
+        $tray->name = $data['name'];
+        $tray->rols = $data['rols'];
+        $tray->update();
 
-        Tray::whereId($tray)->update($data);
         return $this->successResponse('Bandeja actualizada con exito');
     }
 
@@ -95,5 +96,59 @@ class TrayController extends Controller
         $tray->update();
 
         return $this->successResponse('Bandeja eliminada con exito');
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  \App\Models\Tray  $tray
+     * @return \Illuminate\Http\Response
+     */
+    public function getTray($id)
+    {
+        $tray = Tray::where('id',$id)->with('form')->first();
+        // dd($trays);
+
+        if($tray==null) {
+            return $this->errorResponse('No se encontro la bandeja',404);
+        }
+
+        return $this->successResponse($tray);
+    }
+
+    public function formAnswersByTray($id) {
+
+        $tray = Tray::where('id',$id)
+                        ->select('form_id','fields')
+                        ->first();
+
+        $formsAnswers = FormAnswer::where('form_id', $tray->form_id)
+                                    ->get();
+
+        $answers = array();
+        $i = 0;
+
+        foreach(json_decode($tray->fields) as $field){
+
+            foreach($formsAnswers as $formAnswer) {
+                $estructura = json_decode($formAnswer->structure_answer);
+
+                // Filtrar que contenga el id del field buscado
+                $estructura = collect($estructura)->filter( function ($value, $key) use ($field) {
+                    if($value->id==$field->id){
+                        return 1;
+                    }else{
+                        return 0;
+                    }
+                });
+
+                if(count($estructura)>=1){
+                    array_push($answers, json_decode($formAnswer));
+                }
+            }
+        }
+
+        return $answers;
+
     }
 }
