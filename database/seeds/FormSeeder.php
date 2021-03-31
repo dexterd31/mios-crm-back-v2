@@ -96,7 +96,50 @@ class FormSeeder extends Seeder
                         'cols'=>'1'
                     ]
                 )
-            ]
+                    ],
+                    [
+                
+                        'group_id' => 1,
+                        'campaign_id' => 1,
+                        'form_type_id' => 1,
+                        'name_form' => 'Form dependencias',
+                        'state' => 1,
+                        'filters' => array(
+                            [
+                                'type'=> 'text',
+                                'controlType'=> 'textbox',
+                                'key'=> 'document',
+                                'label'=> 'No. Documento',
+                                'value'=> '',
+                                'disabled'=> false,
+                                'required'=> true,
+                                'options'=>[],
+                                'cols'=>'1'
+                            ],
+                            [
+                                'type'=> 'text',
+                                'controlType'=> 'textbox',
+                                'key'=> 'phone',
+                                'label'=> 'telefono',
+                                'value'=> '',
+                                'disabled'=> false,
+                                'required'=> true,
+                                'options'=>[],
+                                'cols'=>'1'
+                            ],
+                            [
+                                'type'=> 'text',
+                                'controlType'=> 'textbox',
+                                'key'=> 'email',
+                                'label'=> 'Email',
+                                'value'=> '',
+                                'disabled'=> false,
+                                'required'=> true,
+                                'options'=>[],
+                                'cols'=>'1'
+                            ]
+                        )
+                    ]
         );
 
         foreach ($Form as $form)

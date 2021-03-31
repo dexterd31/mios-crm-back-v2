@@ -18,6 +18,7 @@ class CreateTraysTable extends Migration
             $table->string('name');
             $table->foreignId('form_id')->constrained('forms');
             $table->json('fields');
+            $table->json('rols');
             $table->boolean('state');
             $table->timestamps();
         });

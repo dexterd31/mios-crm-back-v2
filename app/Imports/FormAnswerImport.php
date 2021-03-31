@@ -41,10 +41,9 @@ class FormAnswerImport implements ToModel, WithBatchInserts
 
             // Se pasan los labels para obtener los keyvalues del formulario
             $keyValues = $formAnswerHelper->getKeysValuesForExcel($this->headers, $this->formId);
-        
             // Se construye el formato del objeto de FormAnswer
-            $temporal         = array();
-            $responseTemporal = [];
+            $temporal         = array(); // Array para hacer una lista de los keys del formulario
+            $responseTemporal = []; // Array para llenar los key del formulario con los registros del excel
             foreach ($keyValues as $key) {
                 foreach($key as $excelKey => $value){
                     array_push($temporal, $excelKey);
@@ -56,7 +55,7 @@ class FormAnswerImport implements ToModel, WithBatchInserts
                 $curso[$temporal[$i]] = $row[$i];
             }
             array_push($responseTemporal, $curso);
-
+            
             // Se organiza el regsitro de excel por secciones del formulario
             $i = 0;
             $arrayTemporal = array();
