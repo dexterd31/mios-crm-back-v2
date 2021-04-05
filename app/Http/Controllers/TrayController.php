@@ -135,13 +135,27 @@ class TrayController extends Controller
 
                 // Filtrar que contenga el id del field buscado
                 $estructura = collect($estructura)->filter( function ($value, $key) use ($field) {
-                    if($value->id==$field->id){
-                        return 1;
-                    }else{
-                        return 0;
+                    if($field->type == "options"){
+                        if($value->id==$field->id){
+                            foreach($field->value as $fieldValue){
+                                if($value->value == $fieldValue->id){
+                                    return 1;
+                                }else{
+                                    return 0;
+                                }
+                            }
                     }
-                });
+                    }else{
+                        if($value->id==$field->id){
+                            if($value->value != '' || $value->value != null){
+                               return 1;
+                            }
+                        }else{
+                            return 0;
+                        }
+                    }
 
+                });
                 if(count($estructura)>=1){
                     array_push($answers, json_decode($formAnswer));
                 }
