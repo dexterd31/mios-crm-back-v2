@@ -23,6 +23,7 @@ class ClientSeeder extends Seeder
                 'email' => 'jair.celis.torrado@gmail.com'
                
             ],
+            
             [
                 'first_name' => 'Juan',
                 'middle_name' => 'Felipe',
