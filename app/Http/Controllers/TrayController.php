@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FormAnswer;
 use App\Models\Tray;
 use Illuminate\Http\Request;
 
@@ -115,8 +116,53 @@ class TrayController extends Controller
         return $this->successResponse($tray);
     }
 
-    // public function formAnswersByTray($tray) {
-    //     $tray = Tray::where('id',$id)->first();
-    //     $formsAnswers = FormsAnswers::where
-    // }
+    public function formAnswersByTray($id) {
+
+        $tray = Tray::where('id',$id)
+                        ->select('form_id','fields')
+                        ->first();
+
+        $formsAnswers = FormAnswer::where('form_id', $tray->form_id)
+                                    ->get();
+
+        $answers = array();
+        $i = 0;
+
+        foreach(json_decode($tray->fields) as $field){
+
+            foreach($formsAnswers as $formAnswer) {
+                $estructura = json_decode($formAnswer->structure_answer);
+
+                // Filtrar que contenga el id del field buscado
+                $estructura = collect($estructura)->filter( function ($value, $key) use ($field) {
+                    if($field->type == "options"){
+                        if($value->id==$field->id){
+                            foreach($field->value as $fieldValue){
+                                if($value->value == $fieldValue->id){
+                                    return 1;
+                                }else{
+                                    return 0;
+                                }
+                            }
+                    }
+                    }else{
+                        if($value->id==$field->id){
+                            if($value->value != '' || $value->value != null){
+                               return 1;
+                            }
+                        }else{
+                            return 0;
+                        }
+                    }
+
+                });
+                if(count($estructura)>=1){
+                    array_push($answers, json_decode($formAnswer));
+                }
+            }
+        }
+
+        return $answers;
+
+    }
 }
