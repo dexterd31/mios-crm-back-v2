@@ -13,14 +13,14 @@ class ClientSeeder extends Seeder
     {
         $clients = array(
             [
-                'first_name' => 'Nicoll',
-                'middle_name' => 'Natalia',
-                'first_lastname' => 'Ramirez',
-                'second_lastname' => 'Manjarres',
-                'document' => '123456789',
+                'first_name' => 'Jair',
+                'middle_name' => 'Armando',
+                'first_lastname' => 'Celis',
+                'second_lastname' => 'Torrado',
+                'document' => '1032399970',
                 'document_type_id' => 1,
-                'phone' => '1234567',
-                'email' => 'nicol@gmail.com'
+                'phone' => '3207671490',
+                'email' => 'jair.celis.torrado@gmail.com'
                
             ],
             [
