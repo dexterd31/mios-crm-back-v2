@@ -25,6 +25,10 @@ class NominaService
         return $this->request('GET', '/api/campaigns?paginate='. $paginate)->data;
     }
 
+    public function fetchAllCampaigns($paginate){
+        return $this->request('GET', '/api/campaigns/showAll?paginate='. $paginate)->data;
+    }
+
     public function changeCampaignState($id, $state)
     {
         $requestBody = [
