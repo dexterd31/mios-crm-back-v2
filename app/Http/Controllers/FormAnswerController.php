@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\FormAnswer;
 use App\Models\Client;
+use App\Models\FormAnswer;
 use App\Models\KeyValue;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Gate;
+use App\Models\Section;
 use App\Services\CiuService;
 use App\Services\NominaService;
-use Helpers\MiosHelper;
-use Helpers\FormAnswerHelper;
 use Helpers\ApiHelper;
 use Helpers\FilterHelper;
+use Helpers\FormAnswerHelper;
+use Helpers\MiosHelper;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class FormAnswerController extends Controller
 {
@@ -280,5 +281,29 @@ class FormAnswerController extends Controller
         $client->phone              = isset($clientInfo[0]['phone']) ? $clientInfo[0]['phone'] : $client->phone;
         $client->email              = isset($clientInfo[0]['email']) ? $clientInfo[0]['email'] : $client->email;
         $client->update();
+    }
+
+    public function updateInfo(Request $request, $id){
+        $obj = array();
+        $i=0;
+        foreach ($request->sections as $section) {
+            foreach ($section['fields'] as $field) {
+                if ($i == 0) {
+                    $clientData[$field['key']] = $field['value'];
+                }
+                $register['id'] = $field['id'];
+                $register['key'] = $field['key'];
+                $register['value'] = $field['value'];
+                array_push($obj, $register);
+            }
+            $i++;
+        }
+
+        $form_answer = FormAnswer::where('id', $id)->first();
+
+        $form_answer->structure_answer = json_encode($obj);
+        $form_answer->update();
+
+        return response()->json('Guardado' ,200);
     }
 }
