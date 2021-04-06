@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Attachment;
 use Illuminate\Database\Eloquent\Model;
 
 class FormAnswer extends Model
@@ -24,5 +25,9 @@ class FormAnswer extends Model
 
     public function channel(){
         return $this->hasMany('App\Models\Channel', 'id');
+    }
+
+    public function atachments(){
+        return $this->hasMany(Attachment::class);
     }
 }
