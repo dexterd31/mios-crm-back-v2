@@ -60,6 +60,10 @@ class TrayController extends Controller
             return $this->errorResponse('No se encontraron bandejas',404);
         }
 
+        foreach($trays as $tray){
+           $tray->count = count($this->formAnswersByTray($tray->id));
+        }
+
         return $this->successResponse($trays);
     }
 
