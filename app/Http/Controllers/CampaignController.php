@@ -26,7 +26,7 @@ class CampaignController extends Controller
         try {
             // si es admin mostrar todas las campañas
             if(Gate::allows('admin') || Gate::allows('supervisor') ){
-                $campaigns = $this->nominaService->fetchCampaigns(0);
+                $campaigns = $this->nominaService->fetchAllCampaigns(0);
                 return $this->successResponse($campaigns);
             } else {
                 // si no, solo mostrar la asociada al usuario
