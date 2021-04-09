@@ -57,7 +57,7 @@ class TrayController extends Controller
         // dd($trays);
 
         if(count($trays)==0) {
-            return $this->errorResponse('No se encontraron bandejas',404);
+            return $this->errorResponse('No se encontraron bandejas',200);
         }
 
         foreach($trays as $tray){
@@ -132,9 +132,22 @@ class TrayController extends Controller
         $answers = array();
         $i = 0;
 
+
+
+        return $answers;
+
+    }
+
+    public function matchTrayFields(Request $request){
+
+
+
+        $tray = Tray::where('form_id',$request->form_id)
+                        ->select('form_id','fields')
+                        ->first();
+
         foreach(json_decode($tray->fields) as $field){
 
-            foreach($formsAnswers as $formAnswer) {
                 $estructura = json_decode($formAnswer->structure_answer);
 
                 // Filtrar que contenga el id del field buscado
@@ -163,10 +176,7 @@ class TrayController extends Controller
                 if(count($estructura)>=1){
                     array_push($answers, json_decode($formAnswer));
                 }
-            }
         }
-
-        return $answers;
 
     }
 }

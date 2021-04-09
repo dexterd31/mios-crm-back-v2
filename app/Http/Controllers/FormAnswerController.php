@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\FormAnswer;
 use App\Models\KeyValue;
 use App\Models\Section;
+use App\Models\Tray;
 use App\Services\CiuService;
 use App\Services\NominaService;
 use Helpers\ApiHelper;
@@ -56,6 +57,7 @@ class FormAnswerController extends Controller
                     }
                     $i++;
                 }
+
                 array_push($clientInfo, $clientData);
                 $clientData = array();
 
@@ -140,6 +142,16 @@ class FormAnswerController extends Controller
                     $form_answer->save();
                     $message = 'Informacion guardada correctamente';
                 }
+
+                // AGREGAR METODO PARA COMPARAR SI LOS FIELDS ESTAN EN UN TRAY
+
+                $this->matchTrayFields($request['form_id'], $obj)
+
+                if($this->matchTrayFields){
+                    // AGREGAR UN METODO PARA REGISTRAR form_answer EN LA TABLA FormAnswer_Trays
+                }
+
+
             } else {
                 $message = 'Tú rol no tiene permisos para ejecutar esta acción';
             }
@@ -305,5 +317,45 @@ class FormAnswerController extends Controller
         $form_answer->update();
 
         return response()->json('Guardado' ,200);
+    }
+
+    public function matchTrayFields($formId, $fields){
+
+        $tray = Tray::where('form_id',$formId)
+                        ->select('form_id','fields')
+                        ->get();
+
+        foreach(json_decode($tray->fields) as $field){
+
+                $estructura = json_decode($formAnswer->structure_answer);
+
+                // Filtrar que contenga el id del field buscado
+                $estructura = collect($estructura)->filter( function ($value, $key) use ($field) {
+                    if($field->type == "options"){
+                        if($value->id==$field->id){
+                            foreach($field->value as $fieldValue){
+                                if($value->value == $fieldValue->id){
+                                    return 1;
+                                }else{
+                                    return 0;
+                                }
+                            }
+                    }
+                    }else{
+                        if($value->id==$field->id){
+                            if($value->value != '' || $value->value != null){
+                               return 1;
+                            }
+                        }else{
+                            return 0;
+                        }
+                    }
+
+                });
+                if(count($estructura)>=1){
+                    array_push($answers, json_decode($formAnswer));
+                }
+        }
+
     }
 }

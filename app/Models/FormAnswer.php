@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Attachment;
+use App\Models\Tray;
 use Illuminate\Database\Eloquent\Model;
 
 class FormAnswer extends Model
@@ -29,5 +30,9 @@ class FormAnswer extends Model
 
     public function atachments(){
         return $this->hasMany(Attachment::class);
+    }
+
+    public function atachments(){
+        return $this->hasMany(Tray::class);
     }
 }
