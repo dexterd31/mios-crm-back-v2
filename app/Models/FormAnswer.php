@@ -32,7 +32,7 @@ class FormAnswer extends Model
         return $this->hasMany(Attachment::class);
     }
 
-    public function atachments(){
-        return $this->hasMany(Tray::class);
+    public function trays(){
+        return $this->belongsToMany(Tray::class, 'form_answers_trays');
     }
 }
