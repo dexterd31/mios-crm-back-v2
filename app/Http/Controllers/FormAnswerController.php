@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\FormAnswer;
 use App\Models\KeyValue;
 use App\Models\Section;
+use App\Models\Tray;
 use App\Services\CiuService;
 use App\Services\NominaService;
 use Helpers\ApiHelper;
@@ -43,6 +44,7 @@ class FormAnswerController extends Controller
                 $clientInfo = [];
                 $clientData = array();
                 $i = 0;
+                $form_answer = null;
 
                 foreach ($json_body as $section) {
                     foreach ($section['fields'] as $field) {
@@ -56,6 +58,7 @@ class FormAnswerController extends Controller
                     }
                     $i++;
                 }
+
                 array_push($clientInfo, $clientData);
                 $clientData = array();
 
@@ -140,6 +143,11 @@ class FormAnswerController extends Controller
                     $form_answer->save();
                     $message = 'Informacion guardada correctamente';
                 }
+
+                // Manejar bandejas
+                $this->matchTrayFields($form_answer->form_id, $form_answer);
+
+
             } else {
                 $message = 'Tú rol no tiene permisos para ejecutar esta acción';
             }
@@ -214,10 +222,10 @@ class FormAnswerController extends Controller
                         unset($form['data']);
                     }
                 } else {
-                    // Cundo se regresa la respuesta vacia porque no incontro registro por ninua fuente de información
-                    $arrayData = $apiHelper->responseFilterMios([], $formId);
+                    // Cuando se regresa la respuesta vacia porque no incontro registro por ninguna fuente de información
+                    
                     $form_answers = $validador;
-                    $form_answers['data'] = [$arrayData];
+                    $form_answers['data'] = [];
                 }
 
 
@@ -304,6 +312,54 @@ class FormAnswerController extends Controller
         $form_answer->structure_answer = json_encode($obj);
         $form_answer->update();
 
+        // Manejar bandejas
+        $this->matchTrayFields($form_answer->form_id, $form_answer);
+
         return response()->json('Guardado' ,200);
+    }
+
+    public function matchTrayFields($formId, $formAnswer){
+
+        $trays = Tray::where('form_id',$formId)
+                        ->select('id', 'form_id','fields')
+                        ->get();
+
+        foreach ($trays as $tray) {
+            foreach(json_decode($tray->fields) as $field){
+
+                $estructura = json_decode($formAnswer->structure_answer);
+
+                /* entrada a bandeja */
+                // Filtrar que contenga el id del field buscado
+                $tray_in = collect($estructura)->filter( function ($value, $key) use ($field) {
+                    // si es tipo options, validar el valor del option
+                    if($field->type == "options"){
+                        if($value->id==$field->id){
+                            foreach($field->value as $fieldValue){
+                                if($value->value == $fieldValue->id){
+                                    return 1;
+                                }else{
+                                    return 0;
+                                }
+                            }
+                        }
+                    }else{
+                        // si es otro tipo validar que el valor no este vacio o nulo.
+                        if($value->id==$field->id && !empty($value->value)){
+                            return 1;
+                        }else{
+                            return 0;
+                        }
+                    }
+
+                });
+
+                if(count($tray_in)>=1){
+                    $tray->FormAnswers()->attach($formAnswer->id);
+                }
+            }
+        }
+        
+
     }
 }
