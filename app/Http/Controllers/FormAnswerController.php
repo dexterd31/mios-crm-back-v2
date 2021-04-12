@@ -145,7 +145,7 @@ class FormAnswerController extends Controller
                 }
 
                 // Manejar bandejas
-                $this->matchTrayFields($request['form_id'], $form_answer);
+                $this->matchTrayFields($form_answer->form_id, $form_answer);
 
 
             } else {
@@ -312,13 +312,16 @@ class FormAnswerController extends Controller
         $form_answer->structure_answer = json_encode($obj);
         $form_answer->update();
 
+        // Manejar bandejas
+        $this->matchTrayFields($form_answer->form_id, $form_answer);
+
         return response()->json('Guardado' ,200);
     }
 
     public function matchTrayFields($formId, $formAnswer){
 
         $trays = Tray::where('form_id',$formId)
-                        ->select('form_id','fields')
+                        ->select('id', 'form_id','fields')
                         ->get();
 
         foreach ($trays as $tray) {
@@ -326,8 +329,9 @@ class FormAnswerController extends Controller
 
                 $estructura = json_decode($formAnswer->structure_answer);
 
+                /* entrada a bandeja */
                 // Filtrar que contenga el id del field buscado
-                $estructura = collect($estructura)->filter( function ($value, $key) use ($field) {
+                $tray_in = collect($estructura)->filter( function ($value, $key) use ($field) {
                     // si es tipo options, validar el valor del option
                     if($field->type == "options"){
                         if($value->id==$field->id){
@@ -350,8 +354,8 @@ class FormAnswerController extends Controller
 
                 });
 
-                if(count($estructura)>=1){
-                    $tray->FormAsnwers->attach($formAnswer->id);
+                if(count($tray_in)>=1){
+                    $tray->FormAnswers()->attach($formAnswer->id);
                 }
             }
         }
