@@ -128,49 +128,8 @@ class TrayController extends Controller
         $tray = Tray::where('id',$id)
             ->firstOrFail();
 
-        return $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
+        return $tray->formAnswers;//()->paginate($request->query('n', 5))->withQueryString();
 
     }
 
-    public function matchTrayFields(Request $request){
-
-
-
-        $tray = Tray::where('form_id',$request->form_id)
-                        ->select('form_id','fields')
-                        ->first();
-
-        foreach(json_decode($tray->fields) as $field){
-
-                $estructura = json_decode($formAnswer->structure_answer);
-
-                // Filtrar que contenga el id del field buscado
-                $estructura = collect($estructura)->filter( function ($value, $key) use ($field) {
-                    if($field->type == "options"){
-                        if($value->id==$field->id){
-                            foreach($field->value as $fieldValue){
-                                if($value->value == $fieldValue->id){
-                                    return 1;
-                                }else{
-                                    return 0;
-                                }
-                            }
-                    }
-                    }else{
-                        if($value->id==$field->id){
-                            if($value->value != '' || $value->value != null){
-                               return 1;
-                            }
-                        }else{
-                            return 0;
-                        }
-                    }
-
-                });
-                if(count($estructura)>=1){
-                    array_push($answers, json_decode($formAnswer));
-                }
-        }
-
-    }
 }
