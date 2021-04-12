@@ -16,7 +16,7 @@ class Tray extends Model
         return $this->belongsTo(Form::class);
     }
 
-    public function formAnswer(){
-        return $this->hasMany(FormAnswer::class);
+    public function formAnswers(){
+        return $this->belongsToMany(FormAnswer::class, 'form_answers_trays');
     }
 }

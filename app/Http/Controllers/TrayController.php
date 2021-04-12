@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\FormAnswer;
 use App\Models\Tray;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TrayController extends Controller
 {
@@ -53,11 +54,15 @@ class TrayController extends Controller
      */
     public function show($id)
     {
-        $trays = Tray::where('form_id', $id)->get();
-        // dd($trays);
+        $trays = Tray::where('form_id', $id)
+            ->join('form_answers_trays', 'trays.id', '=', 'form_answers_trays.tray_id')
+            ->selectRaw('trays.*, count(tray_id) as count')
+            ->having(DB::raw('count(tray_id)'), '>', 0)
+            ->groupBy('tray_id')
+            ->get();
 
         if(count($trays)==0) {
-            return $this->errorResponse('No se encontraron bandejas',200);
+            return $this->successResponse([]);
         }
 
         return $this->successResponse($trays);

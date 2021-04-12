@@ -13,7 +13,7 @@ class CreateFormAnswersTraysTable extends Migration
      */
     public function up()
     {
-        Schema::create('form_answers__trays', function (Blueprint $table) {
+        Schema::create('form_answers_trays', function (Blueprint $table) {
             $table->id();
             $table->foreignId('form_answer_id')->constrained('form_answers');
             $table->foreignId('tray_id')->constrained('trays');
