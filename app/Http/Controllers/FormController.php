@@ -231,7 +231,9 @@ class FormController extends Controller
                           ->select('structure_answer')->get();
 
       if(count($formAnswers)==0){
-        return $this->errorResponse('No se encontraron datos en el rango de fecha suministrado', 500);
+          // 406 Not Acceptable
+          // se envia este error ya que no esta mapeado en interceptor angular.
+        return $this->errorResponse('No se encontraron datos en el rango de fecha suministrado', 406);
       }else{
         $i=0;
 
