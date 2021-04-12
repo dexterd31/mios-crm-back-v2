@@ -222,10 +222,10 @@ class FormAnswerController extends Controller
                         unset($form['data']);
                     }
                 } else {
-                    // Cundo se regresa la respuesta vacia porque no incontro registro por ninua fuente de información
-                    $arrayData = $apiHelper->responseFilterMios([], $formId);
+                    // Cuando se regresa la respuesta vacia porque no incontro registro por ninguna fuente de información
+                    
                     $form_answers = $validador;
-                    $form_answers['data'] = [$arrayData];
+                    $form_answers['data'] = [];
                 }
 
 
