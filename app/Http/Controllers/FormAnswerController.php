@@ -321,15 +321,14 @@ class FormAnswerController extends Controller
     public function matchTrayFields($formId, $formAnswer){
 
         $trays = Tray::where('form_id',$formId)
-                        ->select('id', 'form_id','fields')
                         ->get();
 
         foreach ($trays as $tray) {
+
+            /* entrada a bandeja */
             foreach(json_decode($tray->fields) as $field){
 
                 $estructura = json_decode($formAnswer->structure_answer);
-
-                /* entrada a bandeja */
                 // Filtrar que contenga el id del field buscado
                 $tray_in = collect($estructura)->filter( function ($value, $key) use ($field) {
                     // si es tipo options, validar el valor del option
@@ -357,6 +356,43 @@ class FormAnswerController extends Controller
                 if(count($tray_in)>=1){
                     $tray->FormAnswers()->attach($formAnswer->id);
                 }
+
+                
+            }
+
+            /* salida a bandeja */
+            foreach(json_decode($tray->fields_exit) as $field_exit){
+
+                $estructura = json_decode($formAnswer->structure_answer);
+                // Filtrar que contenga el id del field buscado
+                $tray_out = collect($estructura)->filter( function ($value, $key) use ($field_exit) {
+                    // si es tipo options, validar el valor del option
+                    if($field_exit->type == "options"){
+                        if($value->id==$field_exit->id){
+                            foreach($field_exit->value as $fieldValue){
+                                if($value->value == $fieldValue->id){
+                                    return 1;
+                                }else{
+                                    return 0;
+                                }
+                            }
+                        }
+                    }else{
+                        // si es otro tipo validar que el valor no este vacio o nulo.
+                        if($value->id==$field_exit->id && !empty($value->value)){
+                            return 1;
+                        }else{
+                            return 0;
+                        }
+                    }
+
+                });
+
+                if(count($tray_out)>=1){
+                    $tray->FormAnswers()->detach($formAnswer->id);
+                }
+
+                
             }
         }
         

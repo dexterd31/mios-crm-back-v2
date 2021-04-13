@@ -39,6 +39,8 @@ class TrayController extends Controller
         $tray->name = $data['name'];
         $tray->form_id = $data['form_id'];
         $tray->fields = json_encode($data['fields']);
+        $tray->fields_exit = json_encode($data['field_exit']);
+        $tray->fields_table = json_encode($data['field_table']);
         $tray->rols = json_encode($data['rols']);
         $tray->state = 1;
         $tray->save();
@@ -64,6 +66,11 @@ class TrayController extends Controller
         if(count($trays)==0) {
             return $this->successResponse([]);
         }
+
+        // validar si el usuario actual puede visualizar trays dependiendo de su rol.
+        $trays = $trays->filter(function($x){
+            return count(array_intersect(auth()->user()->roles, json_decode($x->rols)));
+        });
 
         return $this->successResponse($trays);
     }
@@ -109,7 +116,7 @@ class TrayController extends Controller
      * @param  \App\Models\Tray  $tray
      * @return \Illuminate\Http\Response
      */
-    public function getTray($id)
+    public function getTray(Request $request, $id)
     {
         $tray = Tray::where('id',$id)->with('form')->first();
         // dd($trays);
@@ -121,63 +128,13 @@ class TrayController extends Controller
         return $this->successResponse($tray);
     }
 
-    public function formAnswersByTray($id) {
+    public function formAnswersByTray(Request $request, $id) {
 
         $tray = Tray::where('id',$id)
-                        ->select('form_id','fields')
-                        ->first();
+            ->firstOrFail();
 
-        $formsAnswers = FormAnswer::where('form_id', $tray->form_id)
-                                    ->get();
-
-        $answers = array();
-        $i = 0;
-
-
-
-        return $answers;
+        return $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
 
     }
 
-    public function matchTrayFields(Request $request){
-
-
-
-        $tray = Tray::where('form_id',$request->form_id)
-                        ->select('form_id','fields')
-                        ->first();
-
-        foreach(json_decode($tray->fields) as $field){
-
-                $estructura = json_decode($formAnswer->structure_answer);
-
-                // Filtrar que contenga el id del field buscado
-                $estructura = collect($estructura)->filter( function ($value, $key) use ($field) {
-                    if($field->type == "options"){
-                        if($value->id==$field->id){
-                            foreach($field->value as $fieldValue){
-                                if($value->value == $fieldValue->id){
-                                    return 1;
-                                }else{
-                                    return 0;
-                                }
-                            }
-                    }
-                    }else{
-                        if($value->id==$field->id){
-                            if($value->value != '' || $value->value != null){
-                               return 1;
-                            }
-                        }else{
-                            return 0;
-                        }
-                    }
-
-                });
-                if(count($estructura)>=1){
-                    array_push($answers, json_decode($formAnswer));
-                }
-        }
-
-    }
 }
