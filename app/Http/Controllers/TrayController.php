@@ -67,6 +67,11 @@ class TrayController extends Controller
             return $this->successResponse([]);
         }
 
+        // validar si el usuario actual puede visualizar trays dependiendo de su rol.
+        $trays = $trays->filter(function($x){
+            return count(array_intersect(auth()->user()->roles, json_decode($x->rols)));
+        });
+
         return $this->successResponse($trays);
     }
 
@@ -128,7 +133,7 @@ class TrayController extends Controller
         $tray = Tray::where('id',$id)
             ->firstOrFail();
 
-        return $tray->formAnswers;//()->paginate($request->query('n', 5))->withQueryString();
+        return $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
 
     }
 
