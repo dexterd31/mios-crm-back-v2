@@ -326,6 +326,7 @@ class FormAnswerController extends Controller
         foreach ($trays as $tray) {
 
             /* entrada a bandeja */
+            $in_fields_matched = 0;
             foreach(json_decode($tray->fields) as $field){
 
                 $estructura = json_decode($formAnswer->structure_answer);
@@ -354,13 +355,17 @@ class FormAnswerController extends Controller
                 });
 
                 if(count($tray_in)>=1){
-                    $tray->FormAnswers()->attach($formAnswer->id);
+                    $in_fields_matched++;
                 }
-
+            }
+            
+            if((count(json_decode($tray->fields))> 0) && ($in_fields_matched == count(json_decode($tray->fields)))){
                 
+                $tray->FormAnswers()->attach($formAnswer->id);
             }
 
             /* salida a bandeja */
+            $exit_fields_matched = 0;
             foreach(json_decode($tray->fields_exit) as $field_exit){
 
                 $estructura = json_decode($formAnswer->structure_answer);
@@ -389,10 +394,11 @@ class FormAnswerController extends Controller
                 });
 
                 if(count($tray_out)>=1){
-                    $tray->FormAnswers()->detach($formAnswer->id);
+                    $exit_fields_matched++;
                 }
-
-                
+            }
+            if((count(json_decode($tray->fields_exit)) >0 ) && ($exit_fields_matched == count(json_decode($tray->fields_exit)))){
+                $tray->FormAnswers()->detach($formAnswer->id);
             }
         }
         
