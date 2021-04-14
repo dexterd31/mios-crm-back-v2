@@ -19,7 +19,7 @@ class TrayController extends Controller
         $trays = Tray::all();
 
         if(!$trays) {
-            return $this->errorResponse('No se encontraron bandejas',404);
+            return $this->successResponse([]);
         }
 
         return $this->successResponse($trays);
@@ -54,15 +54,20 @@ class TrayController extends Controller
      * @param  \App\Models\Tray  $tray
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $trays = Tray::where('form_id', $id)
-            ->join('form_answers_trays', 'trays.id', '=', 'form_answers_trays.tray_id')
-            ->selectRaw('trays.*, count(tray_id) as count')
-            ->having(DB::raw('count(tray_id)'), '>', 0)
-            ->groupBy('tray_id')
-            ->get();
+        $trays = Tray::where('form_id', $id);
+        
+        if($request->query('showall', 0) == 0)
+        {
+            $trays = $trays->having(DB::raw('count(tray_id)'), '>', 0)
+                ->join('form_answers_trays', 'trays.id', '=', 'form_answers_trays.tray_id')
+                ->selectRaw('trays.*, count(tray_id) as count')
+                ->groupBy('trays.id');
+        }
 
+        $trays = $trays->get();
+        
         if(count($trays)==0) {
             return $this->successResponse([]);
         }
