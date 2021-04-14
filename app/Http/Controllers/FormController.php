@@ -88,7 +88,7 @@ class FormController extends Controller
                       'name_section' => $section['sectionName'],
                       'type_section' => $section['type_section'],
                       'fields' => json_encode($section['fields']),
-                      'collapse' => $section['collapse']
+                      'collapse' => empty($section['collapse'])? 0 : $section['collapse']
                     ]);
                     $firstSection->save();
                 }else{
@@ -99,7 +99,7 @@ class FormController extends Controller
                         'name_section' => $section['sectionName'],
                         'type_section' => $section['type_section'],
                         'fields' => json_encode($fields),
-                        'collapse' => $section['collapse']
+                        empty($section['collapse'])? 0 : $section['collapse']
                     ]);
                     $sections->save();
                 }
@@ -170,7 +170,7 @@ class FormController extends Controller
                     $sections->name_section = $section['sectionName'];
                     $sections->type_section = $section['type_section'];
                     $sections->fields = json_encode($section['fields']);
-                    $sections->collapse = $section['collapse'];
+                    $sections->collapse = empty($section['collapse'])? 0 : $section['collapse'];
                     $sections->save();
                 } else {
                     $fields = $section['fields'];
@@ -183,7 +183,7 @@ class FormController extends Controller
                         'name_section' => $section['sectionName'],
                         'type_section' => $section['type_section'],
                         'fields' => json_encode($fields),
-                        'collapse' => $section['collapse']
+                        'collapse' => empty($section['collapse'])? 0 : $section['collapse']
                         ]);
                         $sections->save();
 
@@ -191,7 +191,7 @@ class FormController extends Controller
                         $sections->name_section = $section['sectionName'];
                         $sections->type_section = $section['type_section'];
                         $sections->fields = json_encode($fields);
-                        $sections->collapse = $section['collapse'];
+                        $sections->collapse = empty($section['collapse'])? 0 : $section['collapse'];
                         $sections->save();
                     }
 
