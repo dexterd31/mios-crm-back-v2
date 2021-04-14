@@ -133,7 +133,8 @@ class TrayController extends Controller
         $tray = Tray::where('id',$id)
             ->firstOrFail();
 
-        return $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
+        // return $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
+            return $tray->formAnswers()->get();
 
     }
 
