@@ -1,5 +1,5 @@
 <?php
-
+use App\Models\FormAnswer;
 /*
 |--------------------------------------------------------------------------
 | Application Routes
@@ -99,6 +99,14 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/escalations', 'EscalationController@validateScalation');
     //Rutas Permisos
     $router->get('/permission/{rolCiu}', 'PermissionCrmController@list');
+
+    $router->get('/prueba-jsoncontains/{formId}', function($formId){
+        $form_answers = FormAnswer::where('form_id', $formId)
+            ->whereJsonContains('structure_answer', ['key' => 'document', 'value' => '1032399970']);
+            
+        $form_answers = $form_answers->with('client')->paginate(10);
+        return $form_answers;
+    });
 
 });
 
