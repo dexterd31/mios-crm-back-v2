@@ -99,7 +99,7 @@ class FormController extends Controller
                         'name_section' => $section['sectionName'],
                         'type_section' => $section['type_section'],
                         'fields' => json_encode($fields),
-                        empty($section['collapse'])? 0 : $section['collapse']
+                        'collapse' => empty($section['collapse'])? 0 : $section['collapse']
                     ]);
                     $sections->save();
                 }
