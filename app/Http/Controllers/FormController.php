@@ -99,7 +99,7 @@ class FormController extends Controller
                         'name_section' => $section['sectionName'],
                         'type_section' => $section['type_section'],
                         'fields' => json_encode($fields),
-                        empty($section['collapse'])? 0 : $section['collapse']
+                        'collapse' => empty($section['collapse'])? 0 : $section['collapse']
                     ]);
                     $sections->save();
                 }
@@ -223,16 +223,15 @@ class FormController extends Controller
         // }
     }
 
-    public function report($form_id, $fecha_desde, $fecha_hasta, $parameters)
+    public function report(Request $request)
     {
-      $headers    = utf8_encode(base64_decode($parameters));
-      $headers = explode(",", $headers);
+      $headers    = $request->reportFields;
       $headers2 = [];
 
       $ids = [];
-      $formAnswers = FormAnswer::where('form_id',$form_id)
-                          ->where('created_at','>=', $fecha_desde)
-                          ->where('created_at','<=', $fecha_hasta)
+      $formAnswers = FormAnswer::where('form_id',$request->formId)
+                          ->where('created_at','>=', $request->date1)
+                          ->where('created_at','<=', $request->date2)
                           ->select('structure_answer')->get();
 
       if(count($formAnswers)==0){
