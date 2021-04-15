@@ -38,14 +38,15 @@ class FormAnswerController extends Controller
         // try {
             // Se valida si tiene permiso para hacer acciones en formAnswer
             if (Gate::allows('form_answer')) {
-
-                $json_body = $request['sections'];
+                $json_body = json_decode($request['sections'], true);
                 $obj = array();
                 $clientInfo = [];
                 $clientData = array();
                 $i = 0;
                 $form_answer = null;
 
+                $date_string = date('c');
+                
                 foreach ($json_body as $section) {
                     foreach ($section['fields'] as $field) {
                         if ($i == 0) {
@@ -54,6 +55,12 @@ class FormAnswerController extends Controller
                         $register['id'] = $field['id'];
                         $register['key'] = $field['key'];
                         $register['value'] = $field['value'];
+
+                        //manejo de adjuntos
+                        if($field['controlType'] == 'file'){
+                            $register['value'] = $request->file($field['id'])->store($date_string);
+                        }
+
                         array_push($obj, $register);
                     }
                     $i++;
@@ -63,7 +70,7 @@ class FormAnswerController extends Controller
                 $clientData = array();
 
 
-                if ($request['client_id'] == null) {
+                if (json_decode($request['client_id']) == null) {
                     $clientFind = Client::where('document', $clientInfo[0]['document'])->where('document_type_id', $clientInfo[0]['document_type_id'])->first();
 
                     if ($clientFind == null) {
@@ -90,7 +97,7 @@ class FormAnswerController extends Controller
 
                     foreach ($obj as $row) {
                         $sect = new KeyValue([
-                            'form_id' => $request['form_id'],
+                            'form_id' => json_decode($request['form_id']),
                             'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
                             'key' => $row['key'],
                             'value' => $row['value'],
@@ -101,17 +108,17 @@ class FormAnswerController extends Controller
                     }
 
                     $form_answer = new FormAnswer([
-                        'user_id' => $request['user_id'],
+                        'user_id' => json_decode($request['user_id']),
                         'channel_id' => 1,
                         'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
-                        'form_id' => $request['form_id'],
+                        'form_id' => json_decode($request['form_id']),
                         'structure_answer' => json_encode($obj)
                     ]);
 
                     $form_answer->save();
                     $message = 'Informacion guardada correctamente';
                 } else {
-                    $clientFind = Client::where('id', $request['client_id'])->first();
+                    $clientFind = Client::where('id', json_decode($request['client_id']))->first();
                     $clientFind->first_name         = isset($clientInfo[0]['firstName']) ? $clientInfo[0]['firstName'] : $clientFind->first_name;
                     $clientFind->middle_name        = isset($clientInfo[0]['middleName']) ? $clientInfo[0]['middleName'] : $clientFind->middle_name;
                     $clientFind->first_lastname     = isset($clientInfo[0]['lastName']) ? $clientInfo[0]['lastName'] : $clientFind->first_lastname;
@@ -122,7 +129,7 @@ class FormAnswerController extends Controller
 
                     foreach ($obj as $row) {
                         $sect = new KeyValue([
-                            'form_id' => $request['form_id'],
+                            'form_id' => json_decode($request['form_id']),
                             'client_id' => $clientFind['id'],
                             'key' => $row['key'],
                             'value' => $row['value'],
@@ -133,10 +140,10 @@ class FormAnswerController extends Controller
                     }
 
                     $form_answer = new FormAnswer([
-                        'user_id' => $request['user_id'],
+                        'user_id' => json_decode($request['user_id']),
                         'channel_id' => 1,
-                        'client_id' => $request['client_id'],
-                        'form_id' => $request['form_id'],
+                        'client_id' => json_decode($request['client_id']),
+                        'form_id' => json_decode($request['form_id']),
                         'structure_answer' => json_encode($obj)
                     ]);
 
@@ -403,5 +410,10 @@ class FormAnswerController extends Controller
         }
         
 
+    }
+
+    public function downloadFile(Request $request)
+    {
+        return response()->download(storage_path("app/" . $request->url));
     }
 }

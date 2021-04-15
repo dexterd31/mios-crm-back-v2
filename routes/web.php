@@ -36,6 +36,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/formanswer/filterform', 'FormAnswerController@filterForm');
     $router->get('/formanswer/historic/{id}', 'FormAnswerController@formAnswerHistoric');
     $router->put('/formanswer/update/{id}', 'FormAnswerController@updateInfo');
+    $router->post('formanswer/download', 'FormAnswerController@downloadFile');
 
     //consultar tipo de documento de los clientes
     $router->get('/searchdocumenttype', 'FormAnswerController@searchDocumentType');
