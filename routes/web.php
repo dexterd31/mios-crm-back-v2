@@ -24,7 +24,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->put('/editform/{id}', 'FormController@editForm');
     $router->put('/deleteform/{id}', 'FormController@deleteForm');
     //Reporte del formulario
-    $router->get('/report/{form_id}/{fecha_desde}/{fecha_hasta}/{parameters}','FormController@report');
+    $router->post('/report','FormController@report');
     $router->get('/formsbyuser/{idUser}', 'FormController@formsByUser');
 
     //Base de datos
