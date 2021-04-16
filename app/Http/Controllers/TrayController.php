@@ -60,7 +60,7 @@ class TrayController extends Controller
 
         if($request->query('showall', 0) == 0)
         {
-            $trays = $trays->having(DB::raw('count(tray_id)'), '>', 0);
+            $trays = $trays->where('state', 1)->having(DB::raw('count(tray_id)'), '>', 0);
         }
 
         $trays = $trays->selectRaw('trays.*, count(tray_id) as count')
