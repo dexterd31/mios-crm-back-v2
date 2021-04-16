@@ -7,6 +7,8 @@ use App\Models\FormAnswer;
 use App\Models\KeyValue;
 use App\Models\Section;
 use App\Models\Tray;
+use App\Models\Attachment;
+use App\Models\FormAnswerLog;
 use App\Services\CiuService;
 use App\Services\NominaService;
 use Helpers\ApiHelper;
@@ -153,6 +155,8 @@ class FormAnswerController extends Controller
 
                 // Manejar bandejas
                 $this->matchTrayFields($form_answer->form_id, $form_answer);
+                // Log FormAnswer
+                $this->logFormAnswer($form_answer);
 
 
             } else {
@@ -322,6 +326,9 @@ class FormAnswerController extends Controller
         // Manejar bandejas
         $this->matchTrayFields($form_answer->form_id, $form_answer);
 
+        // Log FormAnswer
+        $this->logFormAnswer($form_answer);
+
         return response()->json('Guardado' ,200);
     }
 
@@ -409,7 +416,15 @@ class FormAnswerController extends Controller
             }
         }
         
+    }
 
+    private function logFormAnswer($form_answer)
+    {
+        $log = new FormAnswerLog();
+        $log->form_answer_id = $form_answer->id;
+        $log->structure_answer = $form_answer->structure_answer;
+        $log->user_id = $form_answer->user_id;
+        $log->save();
     }
 
     public function downloadFile(Request $request)
