@@ -60,7 +60,11 @@ class FormAnswerController extends Controller
 
                         //manejo de adjuntos
                         if($field['controlType'] == 'file'){
-                            $register['value'] = $request->file($field['id'])->store($date_string);
+                            $attachment = new Attachment();
+                            $attachment->name = $request->file($field['id'])->getClientOriginalName();
+                            $attachment->source = $request->file($field['id'])->store($date_string);
+                            $attachment->save();
+                            $register['value'] = $attachment->id;
                         }
 
                         array_push($obj, $register);
@@ -182,18 +186,18 @@ class FormAnswerController extends Controller
                 $formId         = $json_body['form_id'];
                 $form_answers   = null;
 
-                $item1key   = !empty($json_body['item1_key']) ? $json_body['item1_key'] : '';
-                $item1value = !empty($json_body['item1_value']) ? $json_body['item1_value'] : '';
-                $item2key   = !empty($json_body['item2_key']) ? $json_body['item2_key'] : '';
-                $item2value = !empty($json_body['item2_value']) ? $json_body['item2_value'] : '';
-                $item3key   = !empty($json_body['item3_key']) ? $json_body['item3_key'] : '';
-                $item3value = !empty($json_body['item3_value']) ? $json_body['item3_value'] : '';
+                $item1key   = !empty($json_body['filter'][0]['key']) ? $json_body['filter'][0]['key'] : '';
+                $item1value = !empty($json_body['filter'][0]['value']) ? $json_body['filter'][0]['value'] : '';
+                $item2key   = !empty($json_body['filter'][1]['key']) ? $json_body['filter'][1]['key']: '';
+                $item2value = !empty($json_body['filter'][1]['value']) ? $json_body['filter'][1]['value'] : '';
+                $item3key   = !empty($json_body['filter'][2]['key']) ? $json_body['filter'][2]['key'] : '';
+                $item3value = !empty($json_body['filter'][2]['value']) ? $json_body['filter'][2]['value'] : '';
 
                 /*
                 * Se busca el si el cliente existe en el sistema
                 * Se busca si hay registros en Mios
                 */
-                $form_answers = $filterHelper->filterByGestions($formId, $item1value, $item2value, $item3value);
+                $form_answers = $filterHelper->filterByGestions($formId, $item1key, $item1value, $item2key, $item2value, $item3key, $item3value);
 
                 // Se valida si ya se ha encontrado inforación, sino se busca por id del cliente
                 $validador = $miosHelper->jsonDecodeResponse(json_encode($form_answers));
@@ -202,9 +206,9 @@ class FormAnswerController extends Controller
                     // Se buscan las gestiones por base de datos
                     $clientId = $filterHelper->searchClient($item1value, $item2value, $item3value);
 
-                    if ($clientId) {
+                    /* if ($clientId) {
                         $form_answers = $filterHelper->searchGestionByClientId($formId, $clientId);
-                    }
+                    } */
 
                     // Se valida si ya se ha encontrado inforación, sino se busca en base de datos
                     $validador = $miosHelper->jsonDecodeResponse(json_encode($form_answers));
@@ -234,7 +238,6 @@ class FormAnswerController extends Controller
                     }
                 } else {
                     // Cuando se regresa la respuesta vacia porque no incontro registro por ninguna fuente de información
-                    
                     $form_answers = $validador;
                     $form_answers['data'] = [];
                 }
@@ -429,6 +432,7 @@ class FormAnswerController extends Controller
 
     public function downloadFile(Request $request)
     {
-        return response()->download(storage_path("app/" . $request->url));
+        $attachment = Attachment::findOrfail($request->url);
+        return response()->download(storage_path("app/" . $attachment->source), $attachment->name);
     }
 }
