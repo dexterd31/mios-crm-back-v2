@@ -99,21 +99,6 @@ class TrayController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Tray  $tray
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        $tray = Tray::findOrFail($id);
-        $tray->state = 0;
-        $tray->update();
-
-        return $this->successResponse('Bandeja eliminada con exito');
-    }
-
-    /**
      * Display the specified resource.
      *
      * @param  \App\Models\Tray  $tray
