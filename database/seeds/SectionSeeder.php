@@ -15,6 +15,7 @@ class SectionSeeder extends Seeder
             [
                 'form_id' => '1',
                 'name_section' => 'Datos básicos del cliente',
+                'collapse' => 0,
                 'type_section' => 1,
                 'fields'=> array( 
                 [
@@ -210,6 +211,7 @@ class SectionSeeder extends Seeder
                 'form_id' => '1',
                 'name_section' => 'Datos de la mascota',
                 'type_section' => 2,
+                'collapse' => 0,
                 'fields' => array(
                 [
                     'id' => 616799311187,
@@ -258,6 +260,7 @@ class SectionSeeder extends Seeder
                 'form_id' => '2',
                 'name_section' => 'Datos básicos del cliente',
                 'type_section' => 1,
+                'collapse' => 0,
                 'fields'=> array( 
                     [
                         'id' => 1616799311180,
@@ -452,6 +455,7 @@ class SectionSeeder extends Seeder
                 'form_id' => '2',
                 'name_section' => 'Datos del carro',
                 'type_section' => 2,
+                'collapse' => 0,
                 'fields' => array(
                 [
                     'id' => 1616799311187,
@@ -500,6 +504,7 @@ class SectionSeeder extends Seeder
                 'form_id' => '3',
                 'name_section' => 'Datos básicos del cliente',
                 'type_section' => 1,
+                'collapse' => 0,
                 'fields'=> array( 
                     [
                         'id' => 1616799311180,
@@ -696,6 +701,7 @@ class SectionSeeder extends Seeder
                 'form_id' => '3',
                 "name_section" => "Gestion",
                 "type_section" => 2,
+                'collapse' => 0,
                 "fields" => array(
                 [
                     "id" => 1617067711134,
@@ -817,6 +823,7 @@ class SectionSeeder extends Seeder
             $Sections->form_id = $section['form_id'];
             $Sections->name_section = $section['name_section'];
             $Sections->type_section = $section['type_section'];
+            $Sections->collapse =0;
             $Sections->fields = json_encode($section['fields']);
             $Sections->save();
         }
