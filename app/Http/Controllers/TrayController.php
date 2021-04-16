@@ -57,7 +57,7 @@ class TrayController extends Controller
     public function show(Request $request, $id)
     {
         $trays = Tray::where('form_id', $id)->leftJoin('form_answers_trays', 'trays.id', '=', 'form_answers_trays.tray_id');
-        
+
         if($request->query('showall', 0) == 0)
         {
             $trays = $trays->having(DB::raw('count(tray_id)'), '>', 0);
@@ -65,7 +65,7 @@ class TrayController extends Controller
 
         $trays = $trays->selectRaw('trays.*, count(tray_id) as count')
             ->groupBy('trays.id')->get();
-        
+
         if(count($trays)==0) {
             return $this->successResponse([]);
         }
@@ -99,21 +99,6 @@ class TrayController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Tray  $tray
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        $tray = Tray::findOrFail($id);
-        $tray->state = 0;
-        $tray->update();
-
-        return $this->successResponse('Bandeja eliminada con exito');
-    }
-
-    /**
      * Display the specified resource.
      *
      * @param  \App\Models\Tray  $tray
@@ -139,6 +124,14 @@ class TrayController extends Controller
         // return $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
             return $tray->formAnswers()->get();
 
+    }
+
+    public function changeState($id){
+        $tray = Tray::find($id);
+        $tray->state = !$tray->state;
+        $tray->save();
+
+        return $this->successResponse($tray);
     }
 
 }

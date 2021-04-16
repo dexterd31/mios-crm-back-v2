@@ -36,6 +36,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/formanswer/filterform', 'FormAnswerController@filterForm');
     $router->get('/formanswer/historic/{id}', 'FormAnswerController@formAnswerHistoric');
     $router->put('/formanswer/update/{id}', 'FormAnswerController@updateInfo');
+    $router->post('formanswer/download', 'FormAnswerController@downloadFile');
 
     //consultar tipo de documento de los clientes
     $router->get('/searchdocumenttype', 'FormAnswerController@searchDocumentType');
@@ -93,6 +94,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/tray/{id}','TrayController@getTray');
     $router->put('/tray/{id}','TrayController@update');
     $router->get('/tray/formAnswersByTray/{id}','TrayController@formAnswersByTray');
+    $router->get('/tray/changeState/{id}','TrayController@changeState');
 
 
     //Rutas escalamientos
@@ -103,7 +105,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/prueba-jsoncontains/{formId}', function($formId){
         $form_answers = FormAnswer::where('form_id', $formId)
             ->whereJsonContains('structure_answer', ['key' => 'document', 'value' => '1032399970']);
-            
+
         $form_answers = $form_answers->with('client')->paginate(10);
         return $form_answers;
     });
