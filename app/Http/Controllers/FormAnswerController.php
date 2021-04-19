@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\FormAnswer;
 use App\Models\KeyValue;
 use App\Models\Section;
+use App\Models\Tray;
 use App\Services\CiuService;
 use App\Services\NominaService;
 use Helpers\ApiHelper;
@@ -37,13 +38,15 @@ class FormAnswerController extends Controller
         // try {
             // Se valida si tiene permiso para hacer acciones en formAnswer
             if (Gate::allows('form_answer')) {
-
-                $json_body = $request['sections'];
+                $json_body = json_decode($request['sections'], true);
                 $obj = array();
                 $clientInfo = [];
                 $clientData = array();
                 $i = 0;
+                $form_answer = null;
 
+                $date_string = date('c');
+                
                 foreach ($json_body as $section) {
                     foreach ($section['fields'] as $field) {
                         if ($i == 0) {
@@ -52,15 +55,22 @@ class FormAnswerController extends Controller
                         $register['id'] = $field['id'];
                         $register['key'] = $field['key'];
                         $register['value'] = $field['value'];
+
+                        //manejo de adjuntos
+                        if($field['controlType'] == 'file'){
+                            $register['value'] = $request->file($field['id'])->store($date_string);
+                        }
+
                         array_push($obj, $register);
                     }
                     $i++;
                 }
+
                 array_push($clientInfo, $clientData);
                 $clientData = array();
 
 
-                if ($request['client_id'] == null) {
+                if (json_decode($request['client_id']) == null) {
                     $clientFind = Client::where('document', $clientInfo[0]['document'])->where('document_type_id', $clientInfo[0]['document_type_id'])->first();
 
                     if ($clientFind == null) {
@@ -87,7 +97,7 @@ class FormAnswerController extends Controller
 
                     foreach ($obj as $row) {
                         $sect = new KeyValue([
-                            'form_id' => $request['form_id'],
+                            'form_id' => json_decode($request['form_id']),
                             'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
                             'key' => $row['key'],
                             'value' => $row['value'],
@@ -98,17 +108,17 @@ class FormAnswerController extends Controller
                     }
 
                     $form_answer = new FormAnswer([
-                        'user_id' => $request['user_id'],
+                        'user_id' => json_decode($request['user_id']),
                         'channel_id' => 1,
                         'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
-                        'form_id' => $request['form_id'],
+                        'form_id' => json_decode($request['form_id']),
                         'structure_answer' => json_encode($obj)
                     ]);
 
                     $form_answer->save();
                     $message = 'Informacion guardada correctamente';
                 } else {
-                    $clientFind = Client::where('id', $request['client_id'])->first();
+                    $clientFind = Client::where('id', json_decode($request['client_id']))->first();
                     $clientFind->first_name         = isset($clientInfo[0]['firstName']) ? $clientInfo[0]['firstName'] : $clientFind->first_name;
                     $clientFind->middle_name        = isset($clientInfo[0]['middleName']) ? $clientInfo[0]['middleName'] : $clientFind->middle_name;
                     $clientFind->first_lastname     = isset($clientInfo[0]['lastName']) ? $clientInfo[0]['lastName'] : $clientFind->first_lastname;
@@ -119,7 +129,7 @@ class FormAnswerController extends Controller
 
                     foreach ($obj as $row) {
                         $sect = new KeyValue([
-                            'form_id' => $request['form_id'],
+                            'form_id' => json_decode($request['form_id']),
                             'client_id' => $clientFind['id'],
                             'key' => $row['key'],
                             'value' => $row['value'],
@@ -130,16 +140,21 @@ class FormAnswerController extends Controller
                     }
 
                     $form_answer = new FormAnswer([
-                        'user_id' => $request['user_id'],
+                        'user_id' => json_decode($request['user_id']),
                         'channel_id' => 1,
-                        'client_id' => $request['client_id'],
-                        'form_id' => $request['form_id'],
+                        'client_id' => json_decode($request['client_id']),
+                        'form_id' => json_decode($request['form_id']),
                         'structure_answer' => json_encode($obj)
                     ]);
 
                     $form_answer->save();
                     $message = 'Informacion guardada correctamente';
                 }
+
+                // Manejar bandejas
+                $this->matchTrayFields($form_answer->form_id, $form_answer);
+
+
             } else {
                 $message = 'Tú rol no tiene permisos para ejecutar esta acción';
             }
@@ -214,10 +229,10 @@ class FormAnswerController extends Controller
                         unset($form['data']);
                     }
                 } else {
-                    // Cundo se regresa la respuesta vacia porque no incontro registro por ninua fuente de información
-                    $arrayData = $apiHelper->responseFilterMios([], $formId);
+                    // Cuando se regresa la respuesta vacia porque no incontro registro por ninguna fuente de información
+                    
                     $form_answers = $validador;
-                    $form_answers['data'] = [$arrayData];
+                    $form_answers['data'] = [];
                 }
 
 
@@ -304,6 +319,101 @@ class FormAnswerController extends Controller
         $form_answer->structure_answer = json_encode($obj);
         $form_answer->update();
 
+        // Manejar bandejas
+        $this->matchTrayFields($form_answer->form_id, $form_answer);
+
         return response()->json('Guardado' ,200);
+    }
+
+    public function matchTrayFields($formId, $formAnswer){
+
+        $trays = Tray::where('form_id',$formId)
+                        ->get();
+
+        foreach ($trays as $tray) {
+
+            /* entrada a bandeja */
+            $in_fields_matched = 0;
+            foreach(json_decode($tray->fields) as $field){
+
+                $estructura = json_decode($formAnswer->structure_answer);
+                // Filtrar que contenga el id del field buscado
+                $tray_in = collect($estructura)->filter( function ($value, $key) use ($field) {
+                    // si es tipo options, validar el valor del option
+                    if($field->type == "options"){
+                        if($value->id==$field->id){
+                            foreach($field->value as $fieldValue){
+                                if($value->value == $fieldValue->id){
+                                    return 1;
+                                }else{
+                                    return 0;
+                                }
+                            }
+                        }
+                    }else{
+                        // si es otro tipo validar que el valor no este vacio o nulo.
+                        if($value->id==$field->id && !empty($value->value)){
+                            return 1;
+                        }else{
+                            return 0;
+                        }
+                    }
+
+                });
+
+                if(count($tray_in)>=1){
+                    $in_fields_matched++;
+                }
+            }
+            
+            if((count(json_decode($tray->fields))> 0) && ($in_fields_matched == count(json_decode($tray->fields)))){
+                
+                $tray->FormAnswers()->attach($formAnswer->id);
+            }
+
+            /* salida a bandeja */
+            $exit_fields_matched = 0;
+            foreach(json_decode($tray->fields_exit) as $field_exit){
+
+                $estructura = json_decode($formAnswer->structure_answer);
+                // Filtrar que contenga el id del field buscado
+                $tray_out = collect($estructura)->filter( function ($value, $key) use ($field_exit) {
+                    // si es tipo options, validar el valor del option
+                    if($field_exit->type == "options"){
+                        if($value->id==$field_exit->id){
+                            foreach($field_exit->value as $fieldValue){
+                                if($value->value == $fieldValue->id){
+                                    return 1;
+                                }else{
+                                    return 0;
+                                }
+                            }
+                        }
+                    }else{
+                        // si es otro tipo validar que el valor no este vacio o nulo.
+                        if($value->id==$field_exit->id && !empty($value->value)){
+                            return 1;
+                        }else{
+                            return 0;
+                        }
+                    }
+
+                });
+
+                if(count($tray_out)>=1){
+                    $exit_fields_matched++;
+                }
+            }
+            if((count(json_decode($tray->fields_exit)) >0 ) && ($exit_fields_matched == count(json_decode($tray->fields_exit)))){
+                $tray->FormAnswers()->detach($formAnswer->id);
+            }
+        }
+        
+
+    }
+
+    public function downloadFile(Request $request)
+    {
+        return response()->download(storage_path("app/" . $request->url));
     }
 }
