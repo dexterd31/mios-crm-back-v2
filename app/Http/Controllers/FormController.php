@@ -229,16 +229,23 @@ class FormController extends Controller
       $headers2 = [];
 
       $ids = [];
-      $formAnswers = FormAnswer::where('form_id',$request->formId)
+      $formAnswers_count = FormAnswer::where('form_id',$request->formId)
                           ->where('created_at','>=', $request->date1)
                           ->where('created_at','<=', $request->date2)
-                          ->select('structure_answer')->get();
+                          ->select('structure_answer')->count();
 
-      if(count($formAnswers)==0){
+      if($formAnswers_count==0){
           // 406 Not Acceptable
           // se envia este error ya que no esta mapeado en interceptor angular.
         return $this->errorResponse('No se encontraron datos en el rango de fecha suministrado', 406);
-      }else{
+      } else if($formAnswers_count>1000){
+        return $this->errorResponse('El rango de fechas supera a los 1000 records', 413);
+      } else {
+
+        $formAnswers = FormAnswer::where('form_id',$request->formId)
+                          ->where('created_at','>=', $request->date1)
+                          ->where('created_at','<=', $request->date2)
+                          ->select('structure_answer')->get();
         $i=0;
 
         $data = [];
