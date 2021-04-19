@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\FormAnswer;
 use App\Models\Tray;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TrayController extends Controller
 {
@@ -18,7 +19,7 @@ class TrayController extends Controller
         $trays = Tray::all();
 
         if(!$trays) {
-            return $this->errorResponse('No se encontraron bandejas',404);
+            return $this->successResponse([]);
         }
 
         return $this->successResponse($trays);
@@ -38,6 +39,8 @@ class TrayController extends Controller
         $tray->name = $data['name'];
         $tray->form_id = $data['form_id'];
         $tray->fields = json_encode($data['fields']);
+        $tray->fields_exit = json_encode($data['field_exit']);
+        $tray->fields_table = json_encode($data['field_table']);
         $tray->rols = json_encode($data['rols']);
         $tray->state = 1;
         $tray->save();
@@ -51,18 +54,26 @@ class TrayController extends Controller
      * @param  \App\Models\Tray  $tray
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $trays = Tray::where('form_id', $id)->get();
-        // dd($trays);
+        $trays = Tray::where('form_id', $id)->leftJoin('form_answers_trays', 'trays.id', '=', 'form_answers_trays.tray_id');
+
+        if($request->query('showall', 0) == 0)
+        {
+            $trays = $trays->where('state', 1)->having(DB::raw('count(tray_id)'), '>', 0);
+        }
+
+        $trays = $trays->selectRaw('trays.*, count(tray_id) as count')
+            ->groupBy('trays.id')->get();
 
         if(count($trays)==0) {
-            return $this->errorResponse('No se encontraron bandejas',404);
+            return $this->successResponse([]);
         }
 
-        foreach($trays as $tray){
-           $tray->count = count($this->formAnswersByTray($tray->id));
-        }
+        // validar si el usuario actual puede visualizar trays dependiendo de su rol.
+        $trays = $trays->filter(function($x){
+            return count(array_intersect(auth()->user()->roles, json_decode($x->rols)));
+        });
 
         return $this->successResponse($trays);
     }
@@ -88,27 +99,12 @@ class TrayController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Tray  $tray
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        $tray = Tray::findOrFail($id);
-        $tray->state = 0;
-        $tray->update();
-
-        return $this->successResponse('Bandeja eliminada con exito');
-    }
-
-    /**
      * Display the specified resource.
      *
      * @param  \App\Models\Tray  $tray
      * @return \Illuminate\Http\Response
      */
-    public function getTray($id)
+    public function getTray(Request $request, $id)
     {
         $tray = Tray::where('id',$id)->with('form')->first();
         // dd($trays);
@@ -120,53 +116,22 @@ class TrayController extends Controller
         return $this->successResponse($tray);
     }
 
-    public function formAnswersByTray($id) {
+    public function formAnswersByTray(Request $request, $id) {
 
         $tray = Tray::where('id',$id)
-                        ->select('form_id','fields')
-                        ->first();
+            ->firstOrFail();
 
-        $formsAnswers = FormAnswer::where('form_id', $tray->form_id)
-                                    ->get();
-
-        $answers = array();
-        $i = 0;
-
-        foreach(json_decode($tray->fields) as $field){
-
-            foreach($formsAnswers as $formAnswer) {
-                $estructura = json_decode($formAnswer->structure_answer);
-
-                // Filtrar que contenga el id del field buscado
-                $estructura = collect($estructura)->filter( function ($value, $key) use ($field) {
-                    if($field->type == "options"){
-                        if($value->id==$field->id){
-                            foreach($field->value as $fieldValue){
-                                if($value->value == $fieldValue->id){
-                                    return 1;
-                                }else{
-                                    return 0;
-                                }
-                            }
-                    }
-                    }else{
-                        if($value->id==$field->id){
-                            if($value->value != '' || $value->value != null){
-                               return 1;
-                            }
-                        }else{
-                            return 0;
-                        }
-                    }
-
-                });
-                if(count($estructura)>=1){
-                    array_push($answers, json_decode($formAnswer));
-                }
-            }
-        }
-
-        return $answers;
+        // return $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
+            return $tray->formAnswers()->get();
 
     }
+
+    public function changeState($id){
+        $tray = Tray::find($id);
+        $tray->state = !$tray->state;
+        $tray->save();
+
+        return $this->successResponse($tray);
+    }
+
 }

@@ -87,7 +87,8 @@ class FormController extends Controller
                       'form_id' => $forms->id,
                       'name_section' => $section['sectionName'],
                       'type_section' => $section['type_section'],
-                      'fields' => json_encode($section['fields'])
+                      'fields' => json_encode($section['fields']),
+                      'collapse' => empty($section['collapse'])? 0 : $section['collapse']
                     ]);
                     $firstSection->save();
                 }else{
@@ -97,7 +98,8 @@ class FormController extends Controller
                         'form_id' => $forms->id,
                         'name_section' => $section['sectionName'],
                         'type_section' => $section['type_section'],
-                        'fields' => json_encode($fields)
+                        'fields' => json_encode($fields),
+                        'collapse' => empty($section['collapse'])? 0 : $section['collapse']
                     ]);
                     $sections->save();
                 }
@@ -168,6 +170,7 @@ class FormController extends Controller
                     $sections->name_section = $section['sectionName'];
                     $sections->type_section = $section['type_section'];
                     $sections->fields = json_encode($section['fields']);
+                    $sections->collapse = empty($section['collapse'])? 0 : $section['collapse'];
                     $sections->save();
                 } else {
                     $fields = $section['fields'];
@@ -179,7 +182,8 @@ class FormController extends Controller
                         'form_id' => $form->id,
                         'name_section' => $section['sectionName'],
                         'type_section' => $section['type_section'],
-                        'fields' => json_encode($fields)
+                        'fields' => json_encode($fields),
+                        'collapse' => empty($section['collapse'])? 0 : $section['collapse']
                         ]);
                         $sections->save();
 
@@ -187,6 +191,7 @@ class FormController extends Controller
                         $sections->name_section = $section['sectionName'];
                         $sections->type_section = $section['type_section'];
                         $sections->fields = json_encode($fields);
+                        $sections->collapse = empty($section['collapse'])? 0 : $section['collapse'];
                         $sections->save();
                     }
 
@@ -218,20 +223,21 @@ class FormController extends Controller
         // }
     }
 
-    public function report($form_id, $fecha_desde, $fecha_hasta, $parameters)
+    public function report(Request $request)
     {
-      $headers    = utf8_encode(base64_decode($parameters));
-      $headers = explode(",", $headers);
+      $headers    = $request->reportFields;
       $headers2 = [];
 
       $ids = [];
-      $formAnswers = FormAnswer::where('form_id',$form_id)
-                          ->where('created_at','>=', $fecha_desde)
-                          ->where('created_at','<=', $fecha_hasta)
+      $formAnswers = FormAnswer::where('form_id',$request->formId)
+                          ->where('created_at','>=', $request->date1)
+                          ->where('created_at','<=', $request->date2)
                           ->select('structure_answer')->get();
 
       if(count($formAnswers)==0){
-        return $this->errorResponse('No se encontraron datos en el rango de fecha suministrado', 500);
+          // 406 Not Acceptable
+          // se envia este error ya que no esta mapeado en interceptor angular.
+        return $this->errorResponse('No se encontraron datos en el rango de fecha suministrado', 406);
       }else{
         $i=0;
 
