@@ -46,21 +46,21 @@ class UploadController extends Controller
             //Eliminar registros de Directory
             Directory::where('form_id', $formId)->delete();
             //Se guardan los clientes
-            try {
+            //try {
                 Excel::import(new ClientImport, $file);
-                //Seguardan directory
-                try {
+                //Se guarda en directory
+                //try {
                     Excel::import(new FormAnswerImport($userId, $formId), $file);
                     $data = $miosHelper->jsonResponse(true, 200, 'message', 'Se realizó el cargue de forma exitosa');
                     return response()->json($data, $data['code']);
-                } catch (\Throwable $th) {
+                /* } catch (\Throwable $th) {
                     $data = $miosHelper->jsonResponse(false, 400, 'message', 'Ha ocurrido un error al importar el archivo');
                     return response()->json($data, $data['code']);
-                }
-            } catch (\Throwable $th) {
+                } */
+            /* } catch (\Throwable $th) {
                 $data = $miosHelper->jsonResponse(false, 400, 'message', 'Ha ocurrido un error al importar el archivo');
                 return response()->json($data, $data['code']);
-            }
+            } */
         } else {
             $data = $miosHelper->jsonResponse(false, 400, 'message', 'Faltan campos por ser diligenciados');
             return response()->json($data, $data['code']);
