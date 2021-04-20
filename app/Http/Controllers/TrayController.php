@@ -121,9 +121,31 @@ class TrayController extends Controller
         $tray = Tray::where('id',$id)
             ->firstOrFail();
 
-        // return $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
-            return $tray->formAnswers()->get();
+        $fieldsTable = json_decode($tray->fields_table);
 
+        $formsAnswers = $tray->formAnswers()->get();
+
+        // $formsAnswers = $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
+
+        foreach($formsAnswers as $form)
+        {
+            $tableValues = [];
+            foreach($fieldsTable as $field)
+            {
+                $structureAnswer = collect(json_decode($form->structure_answer));
+
+                $foundStructure = $structureAnswer->filter(function ($item, $key) use ($field) {
+                    return $item->id == $field->id;
+                })->values();
+                
+                if(!empty($foundStructure))
+                {
+                    $tableValues[] = $foundStructure[0];
+                }
+            }
+            $form->table_values = $tableValues;
+        }
+        return $formsAnswers;
     }
 
     public function changeState($id){
