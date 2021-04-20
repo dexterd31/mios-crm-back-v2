@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Exports\FormReportExport;
 use App\Models\Form;
+use App\Models\FormLog;
 use App\Models\FormAnswer;
 use App\Models\FormType;
 use App\Models\KeyValue;
 use App\Models\Section;
+use App\Models\User;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -146,6 +148,8 @@ class FormController extends Controller
                 $data = ['forms' => $forms , 'firstSection'=> json_decode($firstSection->fields),'sections' => json_decode($sections->fields), 'code' => 200,'message'=>'Formulario Guardado Correctamente'];
             }
 
+            $this->logForm($forms, $request['sections']);
+
            return response()->json($data, $data['code']);
 
         //   }catch(\Throwable $e){
@@ -236,6 +240,8 @@ class FormController extends Controller
             }
             $data = ['forms' => $form, 'sections' => json_decode($sections->fields), 'code' => 200, 'message' => 'Formulario editado Correctamente'];
 
+            $this->logForm($form, $request->sections);
+
             return response()->json($data, $data['code']);
         // } catch (\Throwable $e) {
         //     return $this->errorResponse('Error al editar el formulario', 500);
@@ -324,5 +330,21 @@ class FormController extends Controller
 
 
         return response()->json($data, $data['code']);
+    }
+
+    private function logForm($form, $sections)
+    {
+        $user = User::where('id_rhh', auth()->user()->id)->first();
+        $log = new FormLog();
+        $log->group_id = $form->group_id ;
+        $log->campaign_id = $form->campaign_id ;
+        $log->name_form = $form->name_form ;
+        $log->filters = $form->filters ;
+        $log->state = $form->state ;
+        $log->sections = json_encode($sections) ;
+        $log->user_id = $user->id ;
+        $log->form_id = $form->id;
+        $log->save();
+
     }
 }
