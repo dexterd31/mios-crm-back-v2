@@ -10,6 +10,7 @@ use App\Models\FormType;
 use App\Models\KeyValue;
 use App\Models\Section;
 use App\Models\User;
+use App\Services\CiuService;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +19,15 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class FormController extends Controller
 {
+    private $ciuService;
+    private $nominaService;
+
+    public function __construct(CiuService $ciuService)
+    {
+        $this->middleware('auth');
+        $this->ciuService = $ciuService;
+    }
+
     /**
      * Nicol Ramirez
      * 27-01-2020
