@@ -18,6 +18,7 @@ class FormSeeder extends Seeder
                 'form_type_id' => 1,
                 'name_form' => 'Laika',
                 'state' => 1,
+                'seeRoles'=> ["asesor", "admin"],
                 'filters' => array(
                     [
                         'type'=> 'text',
@@ -61,6 +62,7 @@ class FormSeeder extends Seeder
                 'form_type_id' => 1,
                 'name_form' => 'SOAT',
                 'state' => 1,
+                'seeRoles'=> ["asesor", "admin"],
                 'filters' => array(
                     [
                         'type'=> 'text',
@@ -104,6 +106,7 @@ class FormSeeder extends Seeder
                         'form_type_id' => 1,
                         'name_form' => 'Form dependencias',
                         'state' => 1,
+                        'seeRoles'=> ["asesor", "admin"],
                         'filters' => array(
                             [
                                 'type'=> 'text',
@@ -151,6 +154,7 @@ class FormSeeder extends Seeder
             $Form->name_form = $form['name_form'];
             $Form->filters = json_encode($form['filters']);
             $Form->state = $form['state'];
+            $Form->seeRoles = $form['seeRoles'];
             $Form->save();
         }
     }

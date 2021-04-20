@@ -23,10 +23,29 @@ class FormController extends Controller
      */
     public function FormsList()
     {
-        $forms = DB::table('forms')
-            ->join('form_types', 'forms.form_type_id', '=', 'form_types.id')
-            ->select('name_form', 'forms.id', 'name_type', 'state')
+        $roles = auth()->user()->roles;
+            $rolesArray = [];
+
+            foreach ($roles as $value) {
+                if (str_contains($value, 'crm::')) {
+                    $rolesArray[] = str_replace('crm::', '', $value);
+                }
+            }
+
+        $forms = Form::join('form_types', 'forms.form_type_id', '=', 'form_types.id')
+            ->select('name_form', 'forms.id', 'name_type', 'state', 'seeRoles')
             ->get();
+
+        foreach ($forms as $value) {
+
+            if (count(array_intersect($rolesArray, json_decode($value->seeRoles))) > 0) {
+                $value->roles = true;
+            } else {
+                $value->roles = false;
+            }
+ 
+        }
+            
         return $forms;
     }
 
@@ -41,6 +60,7 @@ class FormController extends Controller
             ->with('section')
             ->select('*')
             ->first();
+        $formsSections->seeRoles = json_decode($formsSections->seeRoles);
         $formsSections->filters = json_decode($formsSections->filters);
         for ($i = 0; $i < count($formsSections->section); $i++) {
             unset($formsSections->section[$i]['created_at']);
@@ -67,7 +87,8 @@ class FormController extends Controller
                 'form_type_id' => $request->input('type_form'),
                 'name_form' => $request->input('name_form'),
                 'filters' => json_encode($request->filters),
-                'state' => $request->state
+                'state' => $request->state,
+                'seeRoles' => json_encode($request->role)
             ]);
             $forms->save();
 
@@ -144,6 +165,7 @@ class FormController extends Controller
             $form->form_type_id = $request->type_form;
             $form->name_form = $request->name_form;
             $form->filters = json_encode($request->filters);
+            $form->seeRoles = json_encode($request->role);
             $form->save();
 
             $sections =  Section::where('form_id',$id)
