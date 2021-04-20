@@ -33,7 +33,7 @@ class FormController extends Controller
             }
 
         $forms = Form::join('form_types', 'forms.form_type_id', '=', 'form_types.id')
-            ->select('name_form', 'forms.id', 'name_type', 'state', 'seeRoles')
+            ->select('name_form', 'forms.id', 'name_type', 'state', 'seeRoles', 'forms.updated_at')
             ->get();
 
         foreach ($forms as $value) {
@@ -42,6 +42,21 @@ class FormController extends Controller
                 $value->roles = true;
             } else {
                 $value->roles = false;
+            }
+
+            $value->sections_number = $value->section()->count();
+            $value->fields_number = 0;
+
+            foreach($value->section as $section){
+                $value->fields_number += count(json_decode($section->fields));
+            }
+            unset($value->section);
+
+            $last_log = FormLog::where('form_id', $value->id)->orderBy('created_at', 'asc')->first();
+
+            if($last_log){
+                $user_info = $this->ciuService->fetchUser($last_log->user_id)->data;
+                $value->edited_by = $user_info->rrhh->first_name.' '.$user_info->rrhh->last_name;
             }
  
         }
