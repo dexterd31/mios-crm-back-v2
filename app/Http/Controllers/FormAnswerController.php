@@ -377,8 +377,9 @@ class FormAnswerController extends Controller
             }
             
             if((count(json_decode($tray->fields))> 0) && ($in_fields_matched == count(json_decode($tray->fields)))){
-                
-                $tray->FormAnswers()->attach($formAnswer->id);
+                if(!$tray->FormAnswers->contains($formAnswer->id)){
+                    $tray->FormAnswers()->attach($formAnswer->id);
+                }  
             }
 
             /* salida a bandeja */
