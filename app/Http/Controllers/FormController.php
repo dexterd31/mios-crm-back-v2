@@ -59,17 +59,37 @@ class FormController extends Controller
             $value->sections_number = $value->section()->count();
             $value->fields_number = 0;
 
+            $current_fields = [];
             foreach($value->section as $section){
                 $value->fields_number += count(json_decode($section->fields));
+                $current_fields[]= json_decode($section->fields);
             }
             unset($value->section);
 
-            $last_log = FormLog::where('form_id', $value->id)->orderBy('created_at', 'asc')->first();
+            
 
-            if($last_log){
-                $user_info = $this->ciuService->fetchUser($last_log->user_id)->data;
+            $last_logs = FormLog::where('form_id', $value->id)->orderBy('created_at', 'desc')->take(2)->get();
+
+            if(!empty($last_logs[0])){
+                $user_info = $this->ciuService->fetchUser($last_logs[0]->user_id)->data;
                 $value->edited_by = $user_info->rrhh->first_name.' '.$user_info->rrhh->last_name;
             }
+
+            $previous_fields = [];
+            if(!empty($last_logs[1])){
+                foreach(json_decode($last_logs[1]->sections) as $section){
+                    $previous_fields[]= $section->fields;
+                }
+            } 
+
+            $modified_fields =[];
+            foreach (array_merge(...$current_fields) as $field) {
+                if(!in_array($field, array_merge(...$previous_fields))){
+                    $modified_fields[] = $field;
+                }
+            }
+
+            $value->modified_fields = $modified_fields;
  
         }
             
