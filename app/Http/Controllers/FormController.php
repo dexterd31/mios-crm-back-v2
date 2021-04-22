@@ -84,11 +84,11 @@ class FormController extends Controller
 
             $modified_fields =[];
             foreach (array_merge(...$current_fields) as $field) {
-                if(!in_array($field, array_values(array_merge(...$previous_fields)))){
+                if(!in_array($field, array_merge(...$previous_fields))){
                     $modified_fields[] = $field;
                 }
             }
-            
+
             $value->modified_fields = $modified_fields;
  
         }
