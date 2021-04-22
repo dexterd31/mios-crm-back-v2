@@ -36,6 +36,7 @@ class UploadController extends Controller
         $file   = $request->file('excel');
         $userId = $request->user_id;
         $formId = $request->form_id;
+        $flag = $request->flag;
         if (isset($file) && isset($userId) && isset($formId)) {
             //Se agrega en la tabla de uploads
             $upload             = new Upload();
@@ -44,7 +45,10 @@ class UploadController extends Controller
             $upload->form_id    = $formId;
             $upload->save();
             //Eliminar registros de Directory
-            Directory::where('form_id', $formId)->delete();
+            if($flag != 'append'){
+                Directory::where('form_id', $formId)->delete();
+            }
+            
             //Se guardan los clientes
             //try {
                 Excel::import(new ClientImport, $file);
@@ -65,5 +69,46 @@ class UploadController extends Controller
             $data = $miosHelper->jsonResponse(false, 400, 'message', 'Faltan campos por ser diligenciados');
             return response()->json($data, $data['code']);
         }
+    }
+
+    public function exportDatabase(Request $request)
+    {
+      $headers    = $request->reportFields;
+      $headers2 = [];
+
+      $ids = [];
+      $formAnswers_count = Directory::where('form_id',$request->formId)
+                          ->where('created_at','>=', $request->date1)
+                          ->where('created_at','<=', $request->date2)
+                          ->select('structure_answer')->count();
+
+      if($formAnswers_count==0){
+          // 406 Not Acceptable
+          // se envia este error ya que no esta mapeado en interceptor angular.
+        return $this->errorResponse('No se encontraron datos en el rango de fecha suministrado', 406);
+      } else if($formAnswers_count>1000){
+        return $this->errorResponse('El rango de fechas supera a los 1000 records', 413);
+      } else {
+
+        $formAnswers = Directory::where('form_id',$request->formId)
+                          ->where('created_at','>=', $request->date1)
+                          ->where('created_at','<=', $request->date2)
+                          ->select('structure_answer')->get();
+        $i=0;
+
+        $data = [];
+        foreach($formAnswers as $answer){
+          foreach(json_decode($answer->structure_answer) as $field){
+            if(in_array($field->key, $headers)){
+                $ids[$i][$field->key] = $field->value;
+                if($i==0){
+                  array_push($headers2, $field->key);
+                }
+              }
+          }
+          $i++;
+        }
+      }
+      return Excel::download(new FormReportExport($ids, $headers2), 'base_de_datos.xlsx');
     }
 }

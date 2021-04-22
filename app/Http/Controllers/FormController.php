@@ -82,9 +82,11 @@ class FormController extends Controller
                 }
             } 
 
+            $current_fields = count($current_fields) ?array_merge(...$current_fields) : $current_fields;
+            $previous_fields = count($previous_fields) ?array_merge(...$previous_fields) : $previous_fields;
             $modified_fields =[];
-            foreach (array_merge(...$current_fields) as $field) {
-                if(!in_array($field, array_merge(...$previous_fields))){
+            foreach ($current_fields as $field) {
+                if(!in_array($field, $previous_fields)){
                     $modified_fields[] = $field;
                 }
             }
