@@ -10,6 +10,7 @@ use Helpers\MiosHelper;
 use App\Models\Upload;
 use App\Models\Directory;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\FormReportExport;
 
 class UploadController extends Controller
 {
@@ -80,7 +81,7 @@ class UploadController extends Controller
       $formAnswers_count = Directory::where('form_id',$request->formId)
                           ->where('created_at','>=', $request->date1)
                           ->where('created_at','<=', $request->date2)
-                          ->select('structure_answer')->count();
+                          ->select('data')->count();
 
       if($formAnswers_count==0){
           // 406 Not Acceptable
@@ -93,12 +94,13 @@ class UploadController extends Controller
         $formAnswers = Directory::where('form_id',$request->formId)
                           ->where('created_at','>=', $request->date1)
                           ->where('created_at','<=', $request->date2)
-                          ->select('structure_answer')->get();
+                          ->select('data')->get();
         $i=0;
 
         $data = [];
+        
         foreach($formAnswers as $answer){
-          foreach(json_decode($answer->structure_answer) as $field){
+          foreach(json_decode($answer->data) as $field){
             if(in_array($field->key, $headers)){
                 $ids[$i][$field->key] = $field->value;
                 if($i==0){
