@@ -154,7 +154,7 @@ class FormSeeder extends Seeder
             $Form->name_form = $form['name_form'];
             $Form->filters = json_encode($form['filters']);
             $Form->state = $form['state'];
-            $Form->seeRoles = $form['seeRoles'];
+            $Form->seeRoles = json_encode($form['seeRoles']);
             $Form->save();
         }
     }
