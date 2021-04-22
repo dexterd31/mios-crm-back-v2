@@ -8,7 +8,7 @@ class Form extends Model
 {
     protected $table = 'forms';
     protected $PrimaryKey = 'id';
-    protected $fillable = ['group_id', 'campaign_id', 'form_type_id', 'name_form','filters','state'];
+    protected $fillable = ['group_id', 'campaign_id', 'form_type_id', 'name_form','filters','state', 'seeRoles'];
 
     public function formtype(){
         return $this->belongsTo('App\Models\FormType', 'form_type_id');
