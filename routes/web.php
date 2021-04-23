@@ -33,6 +33,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/form/dowload/{parameters:.*}', 'UploadController@exportExcel');
     $router->post('/form/download/db', 'UploadController@exportDatabase');
     $router->post('/form/upload', 'UploadController@importExcel');
+    $router->post('form/dbHistory/{form_id}', 'UploadController@index');
 
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
