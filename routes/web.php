@@ -31,7 +31,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     // la variable parameters esta en base64 y puede contener el caracter '/', lo cual lanza error 404, 
     // por eso se usa el regex para capturar todo el contenido de la url
     $router->get('/form/dowload/{parameters:.*}', 'UploadController@exportExcel');
+    $router->post('/form/download/db', 'UploadController@exportDatabase');
     $router->post('/form/upload', 'UploadController@importExcel');
+    $router->post('form/dbHistory/{form_id}', 'UploadController@index');
 
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
