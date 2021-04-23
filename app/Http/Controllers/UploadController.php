@@ -83,7 +83,7 @@ class UploadController extends Controller
                     $upload->user_id    = $userId;
                     $upload->form_id    = $formId;
                     $upload->count = $form_import->getRowCount();
-                    $upload->method = $request->flag;
+                    $upload->method = empty($request->flag) ? 'replace': $request->flag;
                     $upload->save();
                     
                     $data = $miosHelper->jsonResponse(true, 200, 'message', 'Se realizó el cargue de forma exitosa');
