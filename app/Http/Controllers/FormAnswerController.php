@@ -267,22 +267,16 @@ class FormAnswerController extends Controller
     }
 
     /**
-     * Olme Marin
-     * 02-03-2021
-     * Método para consultar los registro de un cliente en from answer
+     * Jair Celis
+     * 22-04-2021
+     * Método para consultar un formAnswer
+     * @param id Id del formAnswer a consultar
      */
-    public function formAnswerHistoric($id, MiosHelper $miosHelper)
+    public function formAnswerHistoric($id)
     {
         // try {
-            $form_answers = FormAnswer::where('id', $id)->with('channel', 'client')->paginate(10);
-            foreach ($form_answers  as $form) {
-                $userData     = $this->ciuService->fetchUser($form->user_id)->data;
-                $form->structure_answer = $miosHelper->jsonDecodeResponse($form->structure_answer);
-                $form->user = $userData;
-            }
-
-            $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
-            return response()->json($data, $data['code']);
+            $form_answer = FormAnswer::where('id', $id)->first();
+            return response()->json($form_answer, 200);
         // } catch (\Throwable $e) {
         //     return $this->errorResponse('Error al buscar la gestion', 500);
         // }

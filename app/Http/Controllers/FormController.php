@@ -20,7 +20,6 @@ use Maatwebsite\Excel\Facades\Excel;
 class FormController extends Controller
 {
     private $ciuService;
-    private $nominaService;
 
     public function __construct(CiuService $ciuService)
     {
@@ -71,7 +70,7 @@ class FormController extends Controller
             $last_logs = FormLog::where('form_id', $value->id)->orderBy('created_at', 'desc')->take(2)->get();
 
             if(!empty($last_logs[0])){
-                $user_info = $this->ciuService->fetchUser($last_logs[0]->user_id)->data;
+                $user_info = $this->ciuService->fetchUserByRrhhId($last_logs[0]->user_id);
                 $value->edited_by = $user_info->rrhh->first_name.' '.$user_info->rrhh->last_name;
             }
 

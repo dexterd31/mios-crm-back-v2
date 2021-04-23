@@ -20,6 +20,7 @@ class FormAnswerImport implements ToModel, WithBatchInserts
     public $headers;
     public $num = 0;
     public $sections = [];
+    private $rows_count = 0;
 
     public function __construct($userId, $formId)
     {
@@ -80,6 +81,8 @@ class FormAnswerImport implements ToModel, WithBatchInserts
             // Se normaliza el objeto de FormAnswer
             $formAnswer = $formAnswerHelper->structureAnswer($this->formId, $this->sections);
 
+            $this->rows_count++;
+
             // Se crea el objecto para guardar la respuesta
             return new Directory([
                 'user_id' => $this->userId,
@@ -93,5 +96,10 @@ class FormAnswerImport implements ToModel, WithBatchInserts
     public function batchSize(): int
     {
         return 1000;
+    }
+
+    public function getRowCount()
+    {
+        return $this->rows_count;
     }
 }
