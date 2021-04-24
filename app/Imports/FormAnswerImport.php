@@ -20,6 +20,7 @@ class FormAnswerImport implements ToModel, WithBatchInserts
     public $headers;
     public $num = 0;
     public $sections = [];
+    private $rows_count = 0;
 
     public function __construct($userId, $formId)
     {
@@ -41,6 +42,7 @@ class FormAnswerImport implements ToModel, WithBatchInserts
 
             // Se pasan los labels para obtener los keyvalues del formulario
             $keyValues = $formAnswerHelper->getKeysValuesForExcel($this->headers, $this->formId);
+            //dd($keyValues);
             // Se construye el formato del objeto de FormAnswer
             $temporal         = array(); // Array para hacer una lista de los keys del formulario
             $responseTemporal = []; // Array para llenar los key del formulario con los registros del excel
@@ -52,7 +54,13 @@ class FormAnswerImport implements ToModel, WithBatchInserts
             $count = count($row);
             $curso = array();
             for ($i = 0; $i < $count; $i++) {
-                $curso[$temporal[$i]] = $row[$i];
+
+                if($row[$i] === null){
+                    break;
+                } else {
+                    $curso[$temporal[$i]] = $row[$i];
+                }
+
             }
             array_push($responseTemporal, $curso);
             
@@ -61,7 +69,9 @@ class FormAnswerImport implements ToModel, WithBatchInserts
             $arrayTemporal = array();
             foreach ($keyValues as $key) {
                 foreach($key as $excelKey => $value){
-                    $arrayTemporal[$excelKey] = trim($responseTemporal[0][$excelKey]);
+                    if(isset($responseTemporal[0][$excelKey])){
+                        $arrayTemporal[$excelKey] = trim($responseTemporal[0][$excelKey]);
+                    }
                 }
                 array_push($this->sections, $arrayTemporal);
                 $arrayTemporal= array();
@@ -70,6 +80,8 @@ class FormAnswerImport implements ToModel, WithBatchInserts
 
             // Se normaliza el objeto de FormAnswer
             $formAnswer = $formAnswerHelper->structureAnswer($this->formId, $this->sections);
+
+            $this->rows_count++;
 
             // Se crea el objecto para guardar la respuesta
             return new Directory([
@@ -84,5 +96,10 @@ class FormAnswerImport implements ToModel, WithBatchInserts
     public function batchSize(): int
     {
         return 1000;
+    }
+
+    public function getRowCount()
+    {
+        return $this->rows_count;
     }
 }

@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Exports\FormReportExport;
 use App\Models\Form;
+use App\Models\FormLog;
 use App\Models\FormAnswer;
 use App\Models\FormType;
 use App\Models\KeyValue;
 use App\Models\Section;
+use App\Models\User;
+use App\Services\CiuService;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +19,14 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class FormController extends Controller
 {
+    private $ciuService;
+
+    public function __construct(CiuService $ciuService)
+    {
+        $this->middleware('auth');
+        $this->ciuService = $ciuService;
+    }
+
     /**
      * Nicol Ramirez
      * 27-01-2020
@@ -23,10 +34,66 @@ class FormController extends Controller
      */
     public function FormsList()
     {
-        $forms = DB::table('forms')
-            ->join('form_types', 'forms.form_type_id', '=', 'form_types.id')
-            ->select('name_form', 'forms.id', 'name_type', 'state')
+        $roles = auth()->user()->roles;
+            $rolesArray = [];
+
+            foreach ($roles as $value) {
+                if (str_contains($value, 'crm::')) {
+                    $rolesArray[] = str_replace('crm::', '', $value);
+                }
+            }
+
+        $forms = Form::join('form_types', 'forms.form_type_id', '=', 'form_types.id')
+            ->select('name_form', 'forms.id', 'name_type', 'state', 'seeRoles', 'forms.updated_at')
             ->get();
+
+        foreach ($forms as $value) {
+
+            if (count(array_intersect($rolesArray, json_decode($value->seeRoles))) > 0) {
+                $value->roles = true;
+            } else {
+                $value->roles = false;
+            }
+
+            $value->sections_number = $value->section()->count();
+            $value->fields_number = 0;
+
+            $current_fields = [];
+            foreach($value->section as $section){
+                $value->fields_number += count(json_decode($section->fields));
+                $current_fields[]= json_decode($section->fields);
+            }
+            unset($value->section);
+
+            
+
+            $last_logs = FormLog::where('form_id', $value->id)->orderBy('created_at', 'desc')->take(2)->get();
+
+            if(!empty($last_logs[0])){
+                $user_info = $this->ciuService->fetchUserByRrhhId($last_logs[0]->user_id);
+                $value->edited_by = $user_info->rrhh->first_name.' '.$user_info->rrhh->last_name;
+            }
+
+            $previous_fields = [];
+            if(!empty($last_logs[1])){
+                foreach(json_decode($last_logs[1]->sections) as $section){
+                    $previous_fields[]= $section->fields;
+                }
+            } 
+
+            $current_fields = count($current_fields) ?array_merge(...$current_fields) : $current_fields;
+            $previous_fields = count($previous_fields) ?array_merge(...$previous_fields) : $previous_fields;
+            $modified_fields =[];
+            foreach ($current_fields as $field) {
+                if(!in_array($field, $previous_fields)){
+                    $modified_fields[] = $field;
+                }
+            }
+
+            $value->modified_fields = $modified_fields;
+ 
+        }
+            
         return $forms;
     }
 
@@ -41,6 +108,7 @@ class FormController extends Controller
             ->with('section')
             ->select('*')
             ->first();
+        $formsSections->seeRoles = json_decode($formsSections->seeRoles);
         $formsSections->filters = json_decode($formsSections->filters);
         for ($i = 0; $i < count($formsSections->section); $i++) {
             unset($formsSections->section[$i]['created_at']);
@@ -67,7 +135,8 @@ class FormController extends Controller
                 'form_type_id' => $request->input('type_form'),
                 'name_form' => $request->input('name_form'),
                 'filters' => json_encode($request->filters),
-                'state' => $request->state
+                'state' => $request->state,
+                'seeRoles' => json_encode($request->role)
             ]);
             $forms->save();
 
@@ -110,6 +179,8 @@ class FormController extends Controller
                 $data = ['forms' => $forms , 'firstSection'=> json_decode($firstSection->fields),'sections' => json_decode($sections->fields), 'code' => 200,'message'=>'Formulario Guardado Correctamente'];
             }
 
+            $this->logForm($forms, $request['sections']);
+
            return response()->json($data, $data['code']);
 
         //   }catch(\Throwable $e){
@@ -144,6 +215,7 @@ class FormController extends Controller
             $form->form_type_id = $request->type_form;
             $form->name_form = $request->name_form;
             $form->filters = json_encode($request->filters);
+            $form->seeRoles = json_encode($request->role);
             $form->save();
 
             $sections =  Section::where('form_id',$id)
@@ -199,6 +271,8 @@ class FormController extends Controller
             }
             $data = ['forms' => $form, 'sections' => json_decode($sections->fields), 'code' => 200, 'message' => 'Formulario editado Correctamente'];
 
+            $this->logForm($form, $request->sections);
+
             return response()->json($data, $data['code']);
         // } catch (\Throwable $e) {
         //     return $this->errorResponse('Error al editar el formulario', 500);
@@ -229,16 +303,23 @@ class FormController extends Controller
       $headers2 = [];
 
       $ids = [];
-      $formAnswers = FormAnswer::where('form_id',$request->formId)
+      $formAnswers_count = FormAnswer::where('form_id',$request->formId)
                           ->where('created_at','>=', $request->date1)
                           ->where('created_at','<=', $request->date2)
-                          ->select('structure_answer')->get();
+                          ->select('structure_answer')->count();
 
-      if(count($formAnswers)==0){
+      if($formAnswers_count==0){
           // 406 Not Acceptable
           // se envia este error ya que no esta mapeado en interceptor angular.
         return $this->errorResponse('No se encontraron datos en el rango de fecha suministrado', 406);
-      }else{
+      } else if($formAnswers_count>1000){
+        return $this->errorResponse('El rango de fechas supera a los 1000 records', 413);
+      } else {
+
+        $formAnswers = FormAnswer::where('form_id',$request->formId)
+                          ->where('created_at','>=', $request->date1)
+                          ->where('created_at','<=', $request->date2)
+                          ->select('structure_answer')->get();
         $i=0;
 
         $data = [];
@@ -280,5 +361,21 @@ class FormController extends Controller
 
 
         return response()->json($data, $data['code']);
+    }
+
+    private function logForm($form, $sections)
+    {
+        $user = User::where('id_rhh', auth()->user()->id)->first();
+        $log = new FormLog();
+        $log->group_id = $form->group_id ;
+        $log->campaign_id = $form->campaign_id ;
+        $log->name_form = $form->name_form ;
+        $log->filters = $form->filters ;
+        $log->state = $form->state ;
+        $log->sections = json_encode($sections) ;
+        $log->user_id = $user->id ;
+        $log->form_id = $form->id;
+        $log->save();
+
     }
 }
