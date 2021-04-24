@@ -21,5 +21,12 @@ class CiuService
         return $this->request('GET', '/api/users/'.$id);
     }
 
+    /**
+     * buscar usuario por id de rrhh
+     */
+    public function fetchUserByRrhhId($id){
+        return $this->request('GET', '/api/users/showByRrhhId/'.$id)->data;
+    }
+
 }
 

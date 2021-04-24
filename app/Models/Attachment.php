@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Attachment extends Model
 {
-    protected $fillable = ['form_answer_id','name','source'];
+    protected $fillable = ['name','source'];
 
     public function formAnswer(){
         return $this->belongsTo(FormAnswer::class);

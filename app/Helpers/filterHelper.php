@@ -11,14 +11,24 @@ class FilterHelper
 {
 
     // Funcion para filtar por gestiones de mios
-    function filterByGestions($formId, $item1value, $item2value, $item3value)
+    function filterByGestions($formId, $item1key, $item1value, $item2key, $item2value, $item3key, $item3value)
     {
         // Se continua la busqueda por gestiones
+        // siempre hay al menos un item de filtro
         $form_answers = FormAnswer::where('form_id', $formId)
-            ->where('structure_answer', 'like', '%' . $item1value .'%')
-            ->where('structure_answer', 'like', '%' . $item2value. '%')
-            ->where('structure_answer', 'like', '%' . $item3value. '%')
-            ->with('client')->paginate(10);
+            ->whereRaw("json_unquote(json_extract(structure_answer, json_unquote(replace(json_search(structure_answer,'one', '$item1key'), '.key', '.value')))) like '%$item1value%'");
+        
+        if(!empty($item2key)){
+            $form_answers = $form_answers
+                ->whereRaw("json_unquote(json_extract(structure_answer, json_unquote(replace(json_search(structure_answer,'one', '$item2key'), '.key', '.value')))) like '%$item2value%'");
+        }
+
+        if(!empty($item3key)){
+            $form_answers = $form_answers
+                ->whereRaw("json_unquote(json_extract(structure_answer, json_unquote(replace(json_search(structure_answer,'one', '$item3key'), '.key', '.value')))) like '%$item3value%'");
+        }
+            
+        $form_answers = $form_answers->with('client')->paginate(10);
         return $form_answers;
     }
 

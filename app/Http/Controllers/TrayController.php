@@ -45,6 +45,8 @@ class TrayController extends Controller
         $tray->state = 1;
         $tray->save();
 
+        $this->matchTrayFields($tray, FormAnswer::all());
+
         return $this->successResponse('Bandeja creada con exito');
     }
 
@@ -121,9 +123,31 @@ class TrayController extends Controller
         $tray = Tray::where('id',$id)
             ->firstOrFail();
 
-        // return $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
-            return $tray->formAnswers()->get();
+        $fieldsTable = json_decode($tray->fields_table);
 
+        $formsAnswers = $tray->formAnswers()->get();
+
+        // $formsAnswers = $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
+
+        foreach($formsAnswers as $form)
+        {
+            $tableValues = [];
+            foreach($fieldsTable as $field)
+            {
+                $structureAnswer = collect(json_decode($form->structure_answer));
+
+                $foundStructure = $structureAnswer->filter(function ($item, $key) use ($field) {
+                    return $item->id == $field->id;
+                })->values();
+                
+                if(!empty($foundStructure))
+                {
+                    $tableValues[] = $foundStructure[0];
+                }
+            }
+            $form->table_values = $tableValues;
+        }
+        return $formsAnswers;
     }
 
     public function changeState($id){
@@ -132,6 +156,53 @@ class TrayController extends Controller
         $tray->save();
 
         return $this->successResponse($tray);
+    }
+
+    public function matchTrayFields($tray, $formAnswers){
+
+        foreach ($formAnswers as $formAnswer) {
+
+            /* entrada a bandeja */
+            $in_fields_matched = 0;
+            foreach(json_decode($tray->fields) as $field){
+
+                $estructura = json_decode($formAnswer->structure_answer);
+                // Filtrar que contenga el id del field buscado
+                $tray_in = collect($estructura)->filter( function ($value, $key) use ($field) {
+                    // si es tipo options, validar el valor del option
+                    if($field->type == "options"){
+                        if($value->id==$field->id){
+                            foreach($field->value as $fieldValue){
+                                if($value->value == $fieldValue->id){
+                                    return 1;
+                                }else{
+                                    return 0;
+                                }
+                            }
+                        }
+                    }else{
+                        // si es otro tipo validar que el valor no este vacio o nulo.
+                        if($value->id==$field->id && !empty($value->value)){
+                            return 1;
+                        }else{
+                            return 0;
+                        }
+                    }
+
+                });
+
+                if(count($tray_in)>=1){
+                    $in_fields_matched++;
+                }
+            }
+            
+            if((count(json_decode($tray->fields))> 0) && ($in_fields_matched == count(json_decode($tray->fields)))){
+                
+                $tray->FormAnswers()->attach($formAnswer->id);
+            }
+
+        }
+        
     }
 
 }
