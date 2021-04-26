@@ -67,7 +67,9 @@ class FormAnswerController extends Controller
                             $register['value'] = $attachment->id;
                         }
 
-                        array_push($obj, $register);
+                        if(!empty($register['value'])){
+                            array_push($obj, $register);
+                        }
                     }
                     $i++;
                 }
@@ -335,6 +337,9 @@ class FormAnswerController extends Controller
         return response()->json('Guardado' ,200);
     }
 
+    /**
+     * revisa la bandeja a ver si hay salida o entrada de la gestion a una bandeja
+     */
     public function matchTrayFields($formId, $formAnswer){
 
         $trays = Tray::where('form_id',$formId)
