@@ -124,7 +124,7 @@ class FormAnswerController extends Controller
                     ]);
 
                     $form_answer->save();
-                    $message = 'Informacion guardada correctamente';
+                    $message = 'Información guardada correctamente';
                 } else {
                     $clientFind = Client::where('id', json_decode($request['client_id']))->first();
                     $clientFind->first_name         = isset($clientInfo[0]['firstName']) ? $clientInfo[0]['firstName'] : $clientFind->first_name;
@@ -156,7 +156,7 @@ class FormAnswerController extends Controller
                     ]);
 
                     $form_answer->save();
-                    $message = 'Informacion guardada correctamente';
+                    $message = 'Información guardada correctamente';
                 }
 
                 // Manejar bandejas
