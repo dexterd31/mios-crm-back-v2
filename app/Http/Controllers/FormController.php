@@ -365,7 +365,7 @@ class FormController extends Controller
 
     private function logForm($form, $sections)
     {
-        $user = User::where('id_rhh', auth()->user()->id)->first();
+        $user = User::where('id_rhh', auth()->user()->id_rrhh)->first();
         $log = new FormLog();
         $log->group_id = $form->group_id ;
         $log->campaign_id = $form->campaign_id ;
