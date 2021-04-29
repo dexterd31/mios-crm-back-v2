@@ -54,7 +54,7 @@ class FormAnswerImport implements ToModel, WithBatchInserts
                     array_push($temporal, $excelKey);
                 }
             }
-            
+
             $count = count($row);
             $curso = array();
             for ($i = 0; $i < $count; $i++) {
@@ -82,7 +82,8 @@ class FormAnswerImport implements ToModel, WithBatchInserts
                             'client_id' => $client->id,
                             'key' => $excelKey,
                             'value' => trim($responseTemporal[0][$excelKey]),
-                            'description' => $this->ids[$j]
+                            'description' => null,
+                            'field_id' => $this->ids[$j]
                         ]);
                         $key_value->save();
                     }
