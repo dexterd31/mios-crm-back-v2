@@ -57,6 +57,7 @@ class FormAnswerController extends Controller
                         $register['id'] = $field['id'];
                         $register['key'] = $field['key'];
                         $register['value'] = $field['value'];
+                        $register['preloaded'] = $field['preloaded'];
 
                         //manejo de adjuntos
                         if($field['controlType'] == 'file'){
@@ -104,15 +105,18 @@ class FormAnswerController extends Controller
                     }
 
                     foreach ($obj as $row) {
-                        $sect = new KeyValue([
-                            'form_id' => json_decode($request['form_id']),
-                            'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
-                            'key' => $row['key'],
-                            'value' => $row['value'],
-                            'description' => null
-                        ]);
-
-                        $sect->save();
+                        if($row['preloaded'] == true){
+                            $sect = new KeyValue([
+                                'form_id' => json_decode($request['form_id']),
+                                'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
+                                'key' => $row['key'],
+                                'value' => $row['value'],
+                                'description' => null
+                            ]);
+    
+                            $sect->save();
+                        }
+                        
                     }
 
                     $form_answer = new FormAnswer([
@@ -136,15 +140,17 @@ class FormAnswerController extends Controller
                     $clientFind->update();
 
                     foreach ($obj as $row) {
-                        $sect = new KeyValue([
-                            'form_id' => json_decode($request['form_id']),
-                            'client_id' => $clientFind['id'],
-                            'key' => $row['key'],
-                            'value' => $row['value'],
-                            'description' => null
-                        ]);
+                        if($row['preloaded'] == true){
+                            $sect = new KeyValue([
+                                'form_id' => json_decode($request['form_id']),
+                                'client_id' => $clientFind['id'],
+                                'key' => $row['key'],
+                                'value' => $row['value'],
+                                'description' => null
+                            ]);
 
-                        $sect->save();
+                            $sect->save();
+                        }
                     }
 
                     $form_answer = new FormAnswer([
@@ -246,6 +252,7 @@ class FormAnswerController extends Controller
 
 
                 $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
+                $data['preloaded'] =
             } else {
                 $data = $miosHelper->jsonResponse(false, 403, 'message', 'Tú rol no tiene permisos para ejecutar esta acción');
             }

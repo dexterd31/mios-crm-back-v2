@@ -74,7 +74,7 @@ class UploadController extends Controller
                 Excel::import(new ClientImport, $file);
                 //Se guarda en directory
                 //try {
-                    $form_import =new FormAnswerImport($userId, $formId);
+                    $form_import =new FormAnswerImport($userId, $formId, json_decode($request->ids));
                     Excel::import( $form_import, $file);
 
                     //Se agrega en la tabla de uploads

@@ -158,6 +158,10 @@ class TrayController extends Controller
         return $this->successResponse($tray);
     }
 
+    /**
+     * revisa la bandeja a ver si hay salida o entrada de la gestion a una bandeja
+     * se ejecuta al crearse una bandeja nueva
+     */
     public function matchTrayFields($tray, $formAnswers){
 
         foreach ($formAnswers as $formAnswer) {
