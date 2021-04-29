@@ -453,19 +453,22 @@ class FormAnswerController extends Controller
     private function preloaded($form_id, $client_id)
     {
         $form = Form::find($form_id);
-
+        $structure_data = [];
         foreach($form->section as $section){
             $section->fields =json_decode($section->fields);
             foreach ( $section->fields as $field) {
                 if($field->preloaded == true){
-                    $key_value = KeyValue::where('client_id', $client_id)->where('field_id', $field->id)->latest()->first();
+                    $key_value = KeyValue::where('client_id', $client_id)->where('field_id', $field->id)->select('field_id', 'value', 'key')->latest()->first();
                     if($key_value){
-                        $field->value = $key_value->value;
+                        $key_value->id = $key_value->field_id;
+                        unset($key_value->field_id);
+                        $structure_data[] = $key_value;
+
                     }
                 }
             }
         }
 
-        return $form;
+        return $structure_data;
     }
 }
