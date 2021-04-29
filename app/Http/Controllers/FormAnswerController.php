@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\FormAnswer;
+use App\Models\Form;
 use App\Models\KeyValue;
 use App\Models\Section;
 use App\Models\Tray;
@@ -252,7 +253,7 @@ class FormAnswerController extends Controller
 
 
                 $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
-                $data['preloaded'] =
+                $data['preloaded'] = $this->preloaded($formId, $form_answers[0]['client']['id']);
             } else {
                 $data = $miosHelper->jsonResponse(false, 403, 'message', 'Tú rol no tiene permisos para ejecutar esta acción');
             }
@@ -447,5 +448,24 @@ class FormAnswerController extends Controller
     {
         $attachment = Attachment::findOrfail($request->url);
         return response()->download(storage_path("app/" . $attachment->source), $attachment->name);
+    }
+
+    private function preloaded($form_id, $client_id)
+    {
+        $form = Form::find($form_id);
+
+        foreach($form->section as $section){
+            $section->fields =json_decode($section->fields);
+            foreach ( $section->fields as $field) {
+                if($field->preloaded == true){
+                    $key_value = KeyValue::where('client_id', $client_id)->where('field_id', $field->id)->latest()->first();
+                    if($key_value){
+                        $field->value = $key_value->value;
+                    }
+                }
+            }
+        }
+
+        return $form;
     }
 }
