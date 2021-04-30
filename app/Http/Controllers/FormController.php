@@ -319,11 +319,13 @@ class FormController extends Controller
         $formAnswers = FormAnswer::where('form_id',$request->formId)
                           ->where('created_at','>=', $request->date1)
                           ->where('created_at','<=', $request->date2)
-                          ->select('structure_answer')->get();
+                          ->select('id', 'structure_answer', 'created_at', 'updated_at')->get();
         $i=0;
 
         $data = [];
+        $headers2 []= 'id';
         foreach($formAnswers as $answer){
+          $ids[$i]['id'] = $answer->id;
           foreach(json_decode($answer->structure_answer) as $field){
             if(in_array($field->key, $headers)){
                 $ids[$i][$field->key] = $field->value;
@@ -332,8 +334,14 @@ class FormController extends Controller
                 }
               }
           }
+          $ids[$i]['created_at'] = $answer->created_at->format('c');
+          $ids[$i]['updated_at'] = $answer->updated_at->format('c');
+
           $i++;
         }
+
+        $headers2[] = 'Fecha de creación';
+        $headers2[] = 'Fecha de actualización';
       }
       return Excel::download(new FormReportExport($ids, $headers2), 'reporte_formulario.xlsx');
     }
