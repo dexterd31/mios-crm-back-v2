@@ -35,6 +35,10 @@ class TrayController extends Controller
     {
         $data = $request['entries'];
 
+        if(!in_array('crm::admin', $data['rols'])){
+            $data['rols'][] = 'crm::admin';
+        }
+
         $tray = new Tray;
         $tray->name = $data['name'];
         $tray->form_id = $data['form_id'];
@@ -158,6 +162,10 @@ class TrayController extends Controller
         return $this->successResponse($tray);
     }
 
+    /**
+     * revisa la bandeja a ver si hay salida o entrada de la gestion a una bandeja
+     * se ejecuta al crearse una bandeja nueva
+     */
     public function matchTrayFields($tray, $formAnswers){
 
         foreach ($formAnswers as $formAnswer) {

@@ -15,18 +15,22 @@ class FilterHelper
     {
         // Se continua la busqueda por gestiones
         // siempre hay al menos un item de filtro
+        //dd("json_contains(structure_answer, '{\"key\":\"$item1key\", \"value\":\"$item1value\"}')");
         $form_answers = FormAnswer::where('form_id', $formId)
-            ->whereRaw("json_unquote(json_extract(structure_answer, json_unquote(replace(json_search(structure_answer,'one', '$item1key'), '.key', '.value')))) like '%$item1value%'");
+            ->whereRaw("json_contains(lower(structure_answer), lower('{\"key\":\"$item1key\", \"value\":\"$item1value\"}'))");
+            
         
         if(!empty($item2key)){
             $form_answers = $form_answers
-                ->whereRaw("json_unquote(json_extract(structure_answer, json_unquote(replace(json_search(structure_answer,'one', '$item2key'), '.key', '.value')))) like '%$item2value%'");
+            ->whereRaw("json_contains(lower(structure_answer), lower('{\"key\":\"$item2key\", \"value\":\"$item2value\"}'))");
+                
         }
 
         if(!empty($item3key)){
             $form_answers = $form_answers
-                ->whereRaw("json_unquote(json_extract(structure_answer, json_unquote(replace(json_search(structure_answer,'one', '$item3key'), '.key', '.value')))) like '%$item3value%'");
-        }
+            ->whereRaw("json_contains(lower(structure_answer), lower('{\"key\":\"$item3key\", \"value\":\"$item3value\"}'))");
+                
+        } 
             
         $form_answers = $form_answers->with('client')->paginate(10);
         return $form_answers;

@@ -19,6 +19,7 @@ class FormSeeder extends Seeder
                 'name_form' => 'Laika',
                 'state' => 1,
                 'seeRoles'=> ["asesor", "admin"],
+                'tooltip' => ["have"=> false, "content"=> ''],
                 'filters' => array(
                     [
                         'type'=> 'text',
@@ -63,6 +64,7 @@ class FormSeeder extends Seeder
                 'name_form' => 'SOAT',
                 'state' => 1,
                 'seeRoles'=> ["asesor", "admin"],
+                'tooltip' => ["have"=> false, "content"=> ''],
                 'filters' => array(
                     [
                         'type'=> 'text',
@@ -107,6 +109,7 @@ class FormSeeder extends Seeder
                         'name_form' => 'Form dependencias',
                         'state' => 1,
                         'seeRoles'=> ["asesor", "admin"],
+                        'tooltip' => ["have"=> false, "content"=> ''],
                         'filters' => array(
                             [
                                 'type'=> 'text',

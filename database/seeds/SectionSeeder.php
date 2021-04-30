@@ -86,7 +86,7 @@ class SectionSeeder extends Seeder
                     'type'=> 'text',
                     'controlType'=> 'textbox',
                     'key'=> 'secondLastName',
-                    'label'=> 'primer apellido',
+                    'label'=> 'segundo apellido',
                     'value'=> '',
                     'disabled'=> false,
                     'required'=> true,

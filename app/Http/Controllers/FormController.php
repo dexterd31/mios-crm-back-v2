@@ -319,11 +319,13 @@ class FormController extends Controller
         $formAnswers = FormAnswer::where('form_id',$request->formId)
                           ->where('created_at','>=', $request->date1)
                           ->where('created_at','<=', $request->date2)
-                          ->select('structure_answer')->get();
+                          ->select('id', 'structure_answer', 'created_at', 'updated_at')->get();
         $i=0;
 
         $data = [];
+        $headers2 []= 'id';
         foreach($formAnswers as $answer){
+          $ids[$i]['id'] = $answer->id;
           foreach(json_decode($answer->structure_answer) as $field){
             if(in_array($field->key, $headers)){
                 $ids[$i][$field->key] = $field->value;
@@ -332,8 +334,14 @@ class FormController extends Controller
                 }
               }
           }
+          $ids[$i]['created_at'] = $answer->created_at->format('c');
+          $ids[$i]['updated_at'] = $answer->updated_at->format('c');
+
           $i++;
         }
+
+        $headers2[] = 'Fecha de creación';
+        $headers2[] = 'Fecha de actualización';
       }
       return Excel::download(new FormReportExport($ids, $headers2), 'reporte_formulario.xlsx');
     }
@@ -365,7 +373,7 @@ class FormController extends Controller
 
     private function logForm($form, $sections)
     {
-        $user = User::where('id_rhh', auth()->user()->id)->first();
+        $user = auth()->user()->rrhh_id;
         $log = new FormLog();
         $log->group_id = $form->group_id ;
         $log->campaign_id = $form->campaign_id ;
@@ -373,9 +381,34 @@ class FormController extends Controller
         $log->filters = $form->filters ;
         $log->state = $form->state ;
         $log->sections = json_encode($sections) ;
-        $log->user_id = $user->id ;
+        $log->user_id = $user ;
         $log->form_id = $form->id;
         $log->save();
 
+    }
+
+    public function searchPrechargeFields($id)
+    {
+        $formsSections = Form::where('id', $id)
+            ->with('section')
+            ->select('*')
+            ->first();
+        $formsSections->seeRoles = json_decode($formsSections->seeRoles);
+        $formsSections->filters = json_decode($formsSections->filters);
+        for ($i = 0; $i < count($formsSections->section); $i++) {
+            unset($formsSections->section[$i]['created_at']);
+            unset($formsSections->section[$i]['updated_at']);
+            unset($formsSections->section[$i]['form_id']);
+            // $formsSections->section[$i]['fields'] = json_decode($formsSections->section[$i]['fields']);
+            $fields = collect(json_decode($formsSections->section[$i]['fields']));
+
+            $fields = $fields->filter(function($x){
+                return $x->preloaded == true;
+            });
+
+            $formsSections->section[$i]['fields'] = $fields;
+        }
+
+        return response()->json($formsSections);
     }
 }
