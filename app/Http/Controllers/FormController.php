@@ -373,7 +373,7 @@ class FormController extends Controller
         $log->filters = $form->filters ;
         $log->state = $form->state ;
         $log->sections = json_encode($sections) ;
-        $log->user_id = $user->id ;
+        $log->user_id = $user ;
         $log->form_id = $form->id;
         $log->save();
 
