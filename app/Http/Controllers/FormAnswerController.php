@@ -246,6 +246,18 @@ class FormAnswerController extends Controller
                         $form['structure_answer'] = isset($form['data']) ? $miosHelper->jsonDecodeResponse($form['data']) : $miosHelper->jsonDecodeResponse($form['structure_answer']);
                         $form['userdata'] = $userData;
                         unset($form['data']);
+
+                        $new_structure_answer = [];
+                        foreach ($form['structure_answer'] as $value) {
+                            $select = $this->findSelect($formId, $value['id'], $value['value']);
+                            if($select){
+                                $value['value'] = $select;
+                                $new_structure_answer[] = $value;
+                            } else {
+                                $new_structure_answer[] = $value;
+                            }
+                        }
+                        $form['structure_answer'] = $new_structure_answer;
                     }
                 } else {
                     // Cuando se regresa la respuesta vacia porque no incontro registro por ninguna fuente de información
@@ -287,8 +299,27 @@ class FormAnswerController extends Controller
     public function formAnswerHistoric($id)
     {
         // try {
-            $form_answer = FormAnswer::where('id', $id)->first();
-            return response()->json($form_answer, 200);
+            $form_answers = FormAnswer::where('id', $id)->with('channel', 'client')->paginate(10);
+            foreach ($form_answers  as $form) {
+                $userData     = $this->ciuService->fetchUser($form->user_id)->data;
+                $form->structure_answer = $miosHelper->jsonDecodeResponse($form->structure_answer);
+
+                $new_structure_answer = [];
+                foreach($form->structure_answer as $field){
+                        $select = $this->findSelect($form->form_id, $field['id'], $field['value']);
+                        if($select){
+                            $field['value'] = $select;
+                            $new_structure_answer[] = $field;
+                        } else {
+                            $new_structure_answer[] = $field;
+                        }
+                }
+                $form->structure_answer = $new_structure_answer;
+                $form->user = $userData;
+            }
+
+            $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
+            return response()->json($data, $data['code']);
         // } catch (\Throwable $e) {
         //     return $this->errorResponse('Error al buscar la gestion', 500);
         // }
@@ -466,5 +497,24 @@ class FormAnswerController extends Controller
         }
 
         return $structure_data;
+    }
+
+    private function findSelect($form_id, $field_id, $value)
+    {
+        $fields = json_decode(Section::where('form_id', $form_id)
+        ->whereJsonContains('fields', ['id' => $field_id])
+        ->first()->fields);
+        $field = collect($fields)->filter(function($x) use ($field_id){
+            return $x->id == $field_id;
+        })->first();
+        
+        if($field->controlType == 'dropdown'){
+            $field_name = collect($field->options)->filter(function($x) use ($value){
+                return $x->id == $value;
+            })->first()->name;
+            return $field_name;
+        } else {
+            return null;
+        }
     }
 }
