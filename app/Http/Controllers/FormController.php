@@ -378,4 +378,29 @@ class FormController extends Controller
         $log->save();
 
     }
+
+    public function searchFields($id)
+    {
+        $formsSections = Form::where('id', $id)
+            ->with('section')
+            ->select('*')
+            ->first();
+        $formsSections->seeRoles = json_decode($formsSections->seeRoles);
+        $formsSections->filters = json_decode($formsSections->filters);
+        for ($i = 0; $i < count($formsSections->section); $i++) {
+            unset($formsSections->section[$i]['created_at']);
+            unset($formsSections->section[$i]['updated_at']);
+            unset($formsSections->section[$i]['form_id']);
+            // $formsSections->section[$i]['fields'] = json_decode($formsSections->section[$i]['fields']);
+            $fields = collect(json_decode($formsSections->section[$i]['fields']));
+
+            $fields = $fields->filter(function($x){
+                return $x->preloaded == true;
+            });
+
+            $formsSections->section[$i]['fields'] = $fields;
+        }
+
+        return response()->json($formsSections);
+    }
 }
