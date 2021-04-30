@@ -100,18 +100,9 @@ class FormAnswerHelper
             $count      = count($register);
             
             for ($i = 0; $i < $count; $i++) {
-                
-                if (trim($labels[$i]) == 'Tipo de documento') {
-                    $arraySections['document_type_id'] = NULL;
-                } else {
-
-                    \Log::error( trim($register[$i]['label'])); 
-                    \Log::error('--------------'); 
                    if(in_array(trim($register[$i]['label']), $labels)){
                     $arraySections[$register[$i]['key']] = NULL;
                    }
-                }
-                
             }
             array_push($arrayKeyValues, $arraySections);
             $arraySections = array();

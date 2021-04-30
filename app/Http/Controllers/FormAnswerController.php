@@ -112,7 +112,8 @@ class FormAnswerController extends Controller
                                 'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
                                 'key' => $row['key'],
                                 'value' => $row['value'],
-                                'description' => null
+                                'description' => null,
+                                'field_id' => $row['id']
                             ]);
     
                             $sect->save();
@@ -147,7 +148,8 @@ class FormAnswerController extends Controller
                                 'client_id' => $clientFind['id'],
                                 'key' => $row['key'],
                                 'value' => $row['value'],
-                                'description' => null
+                                'description' => null,
+                                'field_id' => $row['id']
                             ]);
 
                             $sect->save();
