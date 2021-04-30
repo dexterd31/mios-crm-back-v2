@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\FormAnswer;
+use App\Models\Form;
 use App\Models\KeyValue;
 use App\Models\Section;
 use App\Models\Tray;
@@ -57,6 +58,7 @@ class FormAnswerController extends Controller
                         $register['id'] = $field['id'];
                         $register['key'] = $field['key'];
                         $register['value'] = $field['value'];
+                        $register['preloaded'] = $field['preloaded'];
 
                         //manejo de adjuntos
                         if($field['controlType'] == 'file'){
@@ -104,15 +106,18 @@ class FormAnswerController extends Controller
                     }
 
                     foreach ($obj as $row) {
-                        $sect = new KeyValue([
-                            'form_id' => json_decode($request['form_id']),
-                            'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
-                            'key' => $row['key'],
-                            'value' => $row['value'],
-                            'description' => null
-                        ]);
-
-                        $sect->save();
+                        if($row['preloaded'] == true){
+                            $sect = new KeyValue([
+                                'form_id' => json_decode($request['form_id']),
+                                'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
+                                'key' => $row['key'],
+                                'value' => $row['value'],
+                                'description' => null
+                            ]);
+    
+                            $sect->save();
+                        }
+                        
                     }
 
                     $form_answer = new FormAnswer([
@@ -136,15 +141,17 @@ class FormAnswerController extends Controller
                     $clientFind->update();
 
                     foreach ($obj as $row) {
-                        $sect = new KeyValue([
-                            'form_id' => json_decode($request['form_id']),
-                            'client_id' => $clientFind['id'],
-                            'key' => $row['key'],
-                            'value' => $row['value'],
-                            'description' => null
-                        ]);
+                        if($row['preloaded'] == true){
+                            $sect = new KeyValue([
+                                'form_id' => json_decode($request['form_id']),
+                                'client_id' => $clientFind['id'],
+                                'key' => $row['key'],
+                                'value' => $row['value'],
+                                'description' => null
+                            ]);
 
-                        $sect->save();
+                            $sect->save();
+                        }
                     }
 
                     $form_answer = new FormAnswer([
@@ -246,6 +253,7 @@ class FormAnswerController extends Controller
 
 
                 $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
+                $data['preloaded'] = $this->preloaded($formId, $form_answers[0]['client']['id']);
             } else {
                 $data = $miosHelper->jsonResponse(false, 403, 'message', 'Tú rol no tiene permisos para ejecutar esta acción');
             }
@@ -434,5 +442,27 @@ class FormAnswerController extends Controller
     {
         $attachment = Attachment::findOrfail($request->url);
         return response()->download(storage_path("app/" . $attachment->source), $attachment->name);
+    }
+
+    private function preloaded($form_id, $client_id)
+    {
+        $form = Form::find($form_id);
+        $structure_data = [];
+        foreach($form->section as $section){
+            $section->fields =json_decode($section->fields);
+            foreach ( $section->fields as $field) {
+                if($field->preloaded == true){
+                    $key_value = KeyValue::where('client_id', $client_id)->where('field_id', $field->id)->select('field_id', 'value', 'key')->latest()->first();
+                    if($key_value){
+                        $key_value->id = $key_value->field_id;
+                        unset($key_value->field_id);
+                        $structure_data[] = $key_value;
+
+                    }
+                }
+            }
+        }
+
+        return $structure_data;
     }
 }
