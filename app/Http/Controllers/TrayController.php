@@ -35,6 +35,10 @@ class TrayController extends Controller
     {
         $data = $request['entries'];
 
+        if(!in_array('crm::admin', $data['rols'])){
+            $data['rols'][] = 'crm::admin';
+        }
+
         $tray = new Tray;
         $tray->name = $data['name'];
         $tray->form_id = $data['form_id'];
