@@ -379,7 +379,7 @@ class FormController extends Controller
 
     }
 
-    public function searchFields($id)
+    public function searchPrechargeFields($id)
     {
         $formsSections = Form::where('id', $id)
             ->with('section')
