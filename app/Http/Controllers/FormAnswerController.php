@@ -267,7 +267,10 @@ class FormAnswerController extends Controller
 
 
                 $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
-                $data['preloaded'] = $this->preloaded($formId, $form_answers[0]['client']['id']);
+                if( !empty($form_answers[0]['client']['id'])){
+                    $data['preloaded'] = $this->preloaded($formId, $form_answers[0]['client']['id']);
+                }
+                
             } else {
                 $data = $miosHelper->jsonResponse(false, 403, 'message', 'Tú rol no tiene permisos para ejecutar esta acción');
             }
@@ -296,17 +299,17 @@ class FormAnswerController extends Controller
      * Método para consultar un formAnswer
      * @param id Id del formAnswer a consultar
      */
-    public function formAnswerHistoric($id)
+    public function formAnswerHistoric($id, MiosHelper $miosHelper)
     {
         // try {
-            $form_answers = FormAnswer::where('id', $id)->with('channel', 'client')->paginate(10);
-            foreach ($form_answers  as $form) {
-                $userData     = $this->ciuService->fetchUser($form->user_id)->data;
-                $form->structure_answer = $miosHelper->jsonDecodeResponse($form->structure_answer);
+            $form_answers = FormAnswer::where('id', $id)->with('channel', 'client')->first();
+            
+                $userData     = $this->ciuService->fetchUser($form_answers->user_id)->data;
+                $form_answers->structure_answer = $miosHelper->jsonDecodeResponse($form_answers->structure_answer);
 
                 $new_structure_answer = [];
-                foreach($form->structure_answer as $field){
-                        $select = $this->findSelect($form->form_id, $field['id'], $field['value']);
+                foreach($form_answers->structure_answer as $field){
+                        $select = $this->findSelect($form_answers->form_id, $field['id'], $field['value']);
                         if($select){
                             $field['value'] = $select;
                             $new_structure_answer[] = $field;
@@ -314,9 +317,8 @@ class FormAnswerController extends Controller
                             $new_structure_answer[] = $field;
                         }
                 }
-                $form->structure_answer = $new_structure_answer;
-                $form->user = $userData;
-            }
+                $form_answers->structure_answer = $new_structure_answer;
+                $form_answers->user = $userData;
 
             $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
             return response()->json($data, $data['code']);
