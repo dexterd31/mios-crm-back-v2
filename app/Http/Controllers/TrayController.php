@@ -129,7 +129,7 @@ class TrayController extends Controller
 
         $fieldsTable = json_decode($tray->fields_table);
 
-        $formsAnswers = $tray->formAnswers()->get();
+        $formsAnswers = $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
 
         // $formsAnswers = $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
 
