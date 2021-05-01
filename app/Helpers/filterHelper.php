@@ -32,7 +32,7 @@ class FilterHelper
                 
         } 
             
-        $form_answers = $form_answers->with('client')->paginate(10);
+        $form_answers = $form_answers->with('client')->paginate(5);
         return $form_answers;
     }
 
@@ -51,7 +51,7 @@ class FilterHelper
     function searchGestionByClientId($formId, $clientId)
     {
         $where = ['form_id' => $formId, 'client_id' => $clientId];
-        $form_answers = FormAnswer::where($where)->with('client')->paginate(10);
+        $form_answers = FormAnswer::where($where)->with('client')->paginate(5);
         return $form_answers;
     }
 
@@ -62,13 +62,13 @@ class FilterHelper
         if ($clientId != null) {
             // Se continua en directory
             $where = ['form_id' => $formId, 'client_id' => $clientId];
-            $form_answers = Directory::where($where)->with('client')->paginate(10);
+            $form_answers = Directory::where($where)->with('client')->paginate(5);
         } else {
             $form_answers = Directory::where('form_id', $formId)
                             ->where('data', 'like', '%' . $item1value . '%')
                             ->where('data', 'like', '%' . $item2value . '%')
                             ->where('data', 'like', '%' . $item3value . '%')
-                            ->with('client')->paginate(10);
+                            ->with('client')->paginate(5);
         }
 
         return $form_answers;
@@ -103,7 +103,7 @@ class FilterHelper
             if($form_answers != null) {
                 $answerApi = [];
                 array_push($answerApi, $form_answers);
-                $form_answers = $miosHelper->paginate($answerApi, $perPage = 15, $page = null);
+                $form_answers = $miosHelper->paginate($answerApi, $perPage = 5, $page = null);
             }
 
         }

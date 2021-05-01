@@ -129,7 +129,7 @@ class TrayController extends Controller
 
         $fieldsTable = json_decode($tray->fields_table);
 
-        $formsAnswers = $tray->formAnswers()->get();
+        $formsAnswers = $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
 
         // $formsAnswers = $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
 
@@ -143,10 +143,12 @@ class TrayController extends Controller
                 $foundStructure = $structureAnswer->filter(function ($item, $key) use ($field) {
                     return $item->id == $field->id;
                 })->values();
+
+                // return $foundStructure;
                 
                 if(!empty($foundStructure))
                 {
-                    $tableValues[] = $foundStructure[0];
+                    $tableValues[] = $foundStructure;
                 }
             }
             $form->table_values = $tableValues;
