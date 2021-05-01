@@ -143,10 +143,12 @@ class TrayController extends Controller
                 $foundStructure = $structureAnswer->filter(function ($item, $key) use ($field) {
                     return $item->id == $field->id;
                 })->values();
+
+                // return $foundStructure;
                 
                 if(!empty($foundStructure))
                 {
-                    $tableValues[] = $foundStructure[0];
+                    $tableValues[] = $foundStructure;
                 }
             }
             $form->table_values = $tableValues;
