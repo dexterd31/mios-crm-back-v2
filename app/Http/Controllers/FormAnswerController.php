@@ -355,7 +355,9 @@ class FormAnswerController extends Controller
                 $register['id'] = $field['id'];
                 $register['key'] = $field['key'];
                 $register['value'] = $field['value'];
-                array_push($obj, $register);
+                if(!empty($register['value'])){
+                    array_push($obj, $register);
+                }
             }
             $i++;
         }
