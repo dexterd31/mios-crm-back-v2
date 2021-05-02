@@ -100,53 +100,57 @@ class EscalationController extends Controller
         $form_id = $request->form_id;
         $form = json_decode($request->form, true);
 
-        $scalation = Escalation::where('form_id', $form_id)->first();
-        
-        if($scalation){
-            //campos validados
-            $validated_fields = 0;
-            //iterar cada uno de los campos a validar
-            foreach ($scalation->fields as $compare) {
-                //iterar secciones de formulario
-                foreach ($form as $form_section) {
-                    //iterar campos del formulario
-                    foreach ($form_section['fields'] as $form_field) {
-                        //hacer interseccion de campos de formulario con los campos a validar
-                        $compare_values = count(array_intersect_assoc($compare, $form_field));
-                        // si hay interseccion de tanto el id como el value en campo a validar y en campo de formularion entonces esta validado
-                        if ($compare_values == 2) {
-                            $validated_fields +=1;
-                        }
-                    }
-                }
-            }
-            //dd($form['sections'][0]['fields']);
-            // revisar que todos los campos se hayan validado correctamente
-            if($validated_fields == count($scalation->fields)){
-                
-                if(json_decode($request->client_id)){
-                    // si se envia el id del cliente en el request usar esa info
-                    $client_json = json_encode(Client::findOrFail($request->client_id));
-                } else {
-                    //si no se envia en el request buscar en el formulario la informacion del cliente
-                    $document = null;
-                    $document_type_id = null;
-                    foreach ($form[0]['fields'] as $value) {
-                        if ($value['key']== 'document'){
-                            $document = $value['value'];
-                        }
-                        if($value['key'] == 'document_type_id'){
-                            $document_type_id = $value['value'];
-                        }
-                    }
-                    $client_json = json_encode(Client::where('document', $document)->where('document_type_id', $document_type_id)->firstOrFail());
-                }
+        $scalations = Escalation::where('form_id', $form_id)->get();
 
-                $form_data = (object) ['sections' => json_decode($request->form)];
-                $this->pqrsService->createEscalation($scalation->asunto_id, $scalation->estado_id, $client_json, 1, json_encode($form_data), null, 'hola');
-                return $this->successResponse('Peticion escalada');
+        foreach($scalations as $scalation){
+            if($scalation){
+                //campos validados
+                $validated_fields = 0;
+                //iterar cada uno de los campos a validar
+                foreach ($scalation->fields as $compare) {
+                    //iterar secciones de formulario
+                    foreach ($form as $form_section) {
+                        //iterar campos del formulario
+                        foreach ($form_section['fields'] as $form_field) {
+                            //hacer interseccion de campos de formulario con los campos a validar
+                            $compare_values = count(array_intersect_assoc($compare, $form_field));
+                            // si hay interseccion de tanto el id como el value en campo a validar y en campo de formularion entonces esta validado
+                            if ($compare_values == 2) {
+                                $validated_fields +=1;
+                            }
+                        }
+                    }
+                }
+                //dd($form['sections'][0]['fields']);
+                // revisar que todos los campos se hayan validado correctamente
+                if($validated_fields == count($scalation->fields)){
+                    
+                    if(json_decode($request->client_id)){
+                        // si se envia el id del cliente en el request usar esa info
+                        $client_json = json_encode(Client::findOrFail($request->client_id));
+                    } else {
+                        //si no se envia en el request buscar en el formulario la informacion del cliente
+                        $document = null;
+                        $document_type_id = null;
+                        foreach ($form[0]['fields'] as $value) {
+                            if ($value['key']== 'document'){
+                                $document = $value['value'];
+                            }
+                            if($value['key'] == 'document_type_id'){
+                                $document_type_id = $value['value'];
+                            }
+                        }
+                        $client_json = json_encode(Client::where('document', $document)->where('document_type_id', $document_type_id)->firstOrFail());
+                    }
+
+                    $form_data = (object) ['sections' => json_decode($request->form)];
+                    $this->pqrsService->createEscalation($scalation->asunto_id, $scalation->estado_id, $client_json, 1, json_encode($form_data), null, 'hola');
+                    // return $this->successResponse('Peticion escalada');
+                }
             }
         }
-        return $this->successResponse('Peticion no escalada');
+        
+        
+        return $this->successResponse('Peticion procesada');
     }
 }
