@@ -15,20 +15,24 @@ class FilterHelper
     {
         // Se continua la busqueda por gestiones
         // siempre hay al menos un item de filtro
+        //dd("json_contains(structure_answer, '{\"key\":\"$item1key\", \"value\":\"$item1value\"}')");
         $form_answers = FormAnswer::where('form_id', $formId)
-            ->whereRaw("json_unquote(json_extract(structure_answer, json_unquote(replace(json_search(structure_answer,'one', '$item1key'), '.key', '.value')))) like '%$item1value%'");
+            ->whereRaw("json_contains(lower(structure_answer), lower('{\"key\":\"$item1key\", \"value\":\"$item1value\"}'))");
+            
         
         if(!empty($item2key)){
             $form_answers = $form_answers
-                ->whereRaw("json_unquote(json_extract(structure_answer, json_unquote(replace(json_search(structure_answer,'one', '$item2key'), '.key', '.value')))) like '%$item2value%'");
+            ->whereRaw("json_contains(lower(structure_answer), lower('{\"key\":\"$item2key\", \"value\":\"$item2value\"}'))");
+                
         }
 
         if(!empty($item3key)){
             $form_answers = $form_answers
-                ->whereRaw("json_unquote(json_extract(structure_answer, json_unquote(replace(json_search(structure_answer,'one', '$item3key'), '.key', '.value')))) like '%$item3value%'");
-        }
+            ->whereRaw("json_contains(lower(structure_answer), lower('{\"key\":\"$item3key\", \"value\":\"$item3value\"}'))");
+                
+        } 
             
-        $form_answers = $form_answers->with('client')->paginate(10);
+        $form_answers = $form_answers->with('client')->paginate(5);
         return $form_answers;
     }
 
@@ -47,7 +51,7 @@ class FilterHelper
     function searchGestionByClientId($formId, $clientId)
     {
         $where = ['form_id' => $formId, 'client_id' => $clientId];
-        $form_answers = FormAnswer::where($where)->with('client')->paginate(10);
+        $form_answers = FormAnswer::where($where)->with('client')->paginate(5);
         return $form_answers;
     }
 
@@ -58,13 +62,13 @@ class FilterHelper
         if ($clientId != null) {
             // Se continua en directory
             $where = ['form_id' => $formId, 'client_id' => $clientId];
-            $form_answers = Directory::where($where)->with('client')->paginate(10);
+            $form_answers = Directory::where($where)->with('client')->paginate(5);
         } else {
             $form_answers = Directory::where('form_id', $formId)
                             ->where('data', 'like', '%' . $item1value . '%')
                             ->where('data', 'like', '%' . $item2value . '%')
                             ->where('data', 'like', '%' . $item3value . '%')
-                            ->with('client')->paginate(10);
+                            ->with('client')->paginate(5);
         }
 
         return $form_answers;
@@ -99,7 +103,7 @@ class FilterHelper
             if($form_answers != null) {
                 $answerApi = [];
                 array_push($answerApi, $form_answers);
-                $form_answers = $miosHelper->paginate($answerApi, $perPage = 15, $page = null);
+                $form_answers = $miosHelper->paginate($answerApi, $perPage = 5, $page = null);
             }
 
         }

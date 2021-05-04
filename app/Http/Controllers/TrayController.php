@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\FormAnswer;
 use App\Models\Tray;
+use App\Models\Section;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -34,6 +35,10 @@ class TrayController extends Controller
     public function store(Request $request)
     {
         $data = $request['entries'];
+
+        if(!in_array('crm::admin', $data['rols'])){
+            $data['rols'][] = 'crm::admin';
+        }
 
         $tray = new Tray;
         $tray->name = $data['name'];
@@ -125,7 +130,7 @@ class TrayController extends Controller
 
         $fieldsTable = json_decode($tray->fields_table);
 
-        $formsAnswers = $tray->formAnswers()->get();
+        $formsAnswers = $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
 
         // $formsAnswers = $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
 
@@ -134,17 +139,30 @@ class TrayController extends Controller
             $tableValues = [];
             foreach($fieldsTable as $field)
             {
-                $structureAnswer = collect(json_decode($form->structure_answer));
+                $structureAnswer = json_decode($form->structure_answer);
 
-                $foundStructure = $structureAnswer->filter(function ($item, $key) use ($field) {
+                $new_structure_answer = [];
+
+                foreach($structureAnswer as $field2){
+                    $select = $this->findSelect($form->form_id, $field2->id, $field2->value);
+                    if($select){
+                        $field2->value = $select;
+                        $new_structure_answer[] = $field2;
+                    } else {
+                        $new_structure_answer[] = $field2;
+                    }
+                }
+                $foundStructure = collect($new_structure_answer)->filter(function ($item, $key) use ($field) {
                     return $item->id == $field->id;
                 })->values();
+
                 
                 if(!empty($foundStructure))
                 {
-                    $tableValues[] = $foundStructure[0];
+                    $tableValues[] = $foundStructure;
                 }
             }
+
             $form->table_values = $tableValues;
         }
         return $formsAnswers;
@@ -158,6 +176,10 @@ class TrayController extends Controller
         return $this->successResponse($tray);
     }
 
+    /**
+     * revisa la bandeja a ver si hay salida o entrada de la gestion a una bandeja
+     * se ejecuta al crearse una bandeja nueva
+     */
     public function matchTrayFields($tray, $formAnswers){
 
         foreach ($formAnswers as $formAnswer) {
@@ -203,6 +225,25 @@ class TrayController extends Controller
 
         }
         
+    }
+
+    private function findSelect($form_id, $field_id, $value)
+    {
+        $fields = json_decode(Section::where('form_id', $form_id)
+        ->whereJsonContains('fields', ['id' => $field_id])
+        ->first()->fields);
+        $field = collect($fields)->filter(function($x) use ($field_id){
+            return $x->id == $field_id;
+        })->first();
+        
+        if($field->controlType == 'dropdown'){
+            $field_name = collect($field->options)->filter(function($x) use ($value){
+                return $x->id == $value;
+            })->first()->name;
+            return $field_name;
+        } else {
+            return null;
+        }
     }
 
 }

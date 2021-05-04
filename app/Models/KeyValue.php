@@ -8,7 +8,7 @@ class KeyValue extends Model
 {
     protected $table = 'key_values';
     protected $PrimaryKey = 'id';
-    protected $fillable = ['form_id','client_id','key','value','description'];
+    protected $fillable = ['form_id','client_id','key','value','description', 'field_id'];
 
     public function client(){
         return $this->hasMany('App\Models\Client','id');
