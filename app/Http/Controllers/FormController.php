@@ -408,14 +408,27 @@ class FormController extends Controller
             // $formsSections->section[$i]['fields'] = json_decode($formsSections->section[$i]['fields']);
             $fields = collect(json_decode($formsSections->section[$i]['fields']));
 
-            $fields = $fields->filter(function($x){
-                return $x->preloaded == true;
-            });
+            if($i==0){
+                for($j=0;$j<count($fields);$j++){
+                    if($j>=7){
+                       if($fields[$j]->preloaded == false){
+                            unset($fields[$j]);
+                       } 
+                    }
+                }
+            }
+            else{
+                $fields = $fields->filter(function($x){
+                                return $x->preloaded == true;
+                            });
+            }
 
-            $formsSections->section[$i]['fields'] = $fields;
+            $formsSections->section[$i]['fields'] = array_values($fields->toArray());
         }
 
         return response()->json($formsSections);
+
+        
 
     }
 
