@@ -143,9 +143,11 @@ class FormController extends Controller
            foreach($request['sections'] as $section)
            {
                 for($i=0; $i<count($section['fields']); $i++){
+                    $cadena = (string)$i;
                     if($section['fields'][$i]['key'] == 'null'){
                         $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
                        $section['fields'][$i]['key'] =  strtolower( str_replace(' ','-',$section['fields'][$i]['label']) );
+                       $section['fields'][$i]['key'] = $section['fields'][$i]['key'].$cadena;
                     }
                }
 
@@ -230,9 +232,11 @@ class FormController extends Controller
             foreach($request->sections as $section)
             {
                 for($i=0; $i<count($section['fields']); $i++){
+                    $cadena = (string)$i;
                     if($section['fields'][$i]['key'] == 'null'){
                         $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
                        $section['fields'][$i]['key'] =  strtolower( str_replace(' ','-',$section['fields'][$i]['label']) );
+                       $section['fields'][$i]['key'] = $section['fields'][$i]['key'].$cadena;
                     }
                 }
 
