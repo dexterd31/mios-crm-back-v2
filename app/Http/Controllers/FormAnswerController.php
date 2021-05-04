@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\FormAnswer;
+use App\Models\Form;
 use App\Models\KeyValue;
 use App\Models\Section;
 use App\Models\Tray;
@@ -57,6 +58,7 @@ class FormAnswerController extends Controller
                         $register['id'] = $field['id'];
                         $register['key'] = $field['key'];
                         $register['value'] = $field['value'];
+                        $register['preloaded'] = $field['preloaded'];
 
                         //manejo de adjuntos
                         if($field['controlType'] == 'file'){
@@ -67,7 +69,9 @@ class FormAnswerController extends Controller
                             $register['value'] = $attachment->id;
                         }
 
-                        array_push($obj, $register);
+                        if(!empty($register['value'])){
+                            array_push($obj, $register);
+                        }
                     }
                     $i++;
                 }
@@ -102,15 +106,19 @@ class FormAnswerController extends Controller
                     }
 
                     foreach ($obj as $row) {
-                        $sect = new KeyValue([
-                            'form_id' => json_decode($request['form_id']),
-                            'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
-                            'key' => $row['key'],
-                            'value' => $row['value'],
-                            'description' => null
-                        ]);
-
-                        $sect->save();
+                        if($row['preloaded'] == true){
+                            $sect = new KeyValue([
+                                'form_id' => json_decode($request['form_id']),
+                                'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
+                                'key' => $row['key'],
+                                'value' => $row['value'],
+                                'description' => null,
+                                'field_id' => $row['id']
+                            ]);
+    
+                            $sect->save();
+                        }
+                        
                     }
 
                     $form_answer = new FormAnswer([
@@ -122,7 +130,7 @@ class FormAnswerController extends Controller
                     ]);
 
                     $form_answer->save();
-                    $message = 'Informacion guardada correctamente';
+                    $message = 'Información guardada correctamente';
                 } else {
                     $clientFind = Client::where('id', json_decode($request['client_id']))->first();
                     $clientFind->first_name         = isset($clientInfo[0]['firstName']) ? $clientInfo[0]['firstName'] : $clientFind->first_name;
@@ -134,15 +142,18 @@ class FormAnswerController extends Controller
                     $clientFind->update();
 
                     foreach ($obj as $row) {
-                        $sect = new KeyValue([
-                            'form_id' => json_decode($request['form_id']),
-                            'client_id' => $clientFind['id'],
-                            'key' => $row['key'],
-                            'value' => $row['value'],
-                            'description' => null
-                        ]);
+                        if($row['preloaded'] == true){
+                            $sect = new KeyValue([
+                                'form_id' => json_decode($request['form_id']),
+                                'client_id' => $clientFind['id'],
+                                'key' => $row['key'],
+                                'value' => $row['value'],
+                                'description' => null,
+                                'field_id' => $row['id']
+                            ]);
 
-                        $sect->save();
+                            $sect->save();
+                        }
                     }
 
                     $form_answer = new FormAnswer([
@@ -154,7 +165,7 @@ class FormAnswerController extends Controller
                     ]);
 
                     $form_answer->save();
-                    $message = 'Informacion guardada correctamente';
+                    $message = 'Información guardada correctamente';
                 }
 
                 // Manejar bandejas
@@ -235,6 +246,18 @@ class FormAnswerController extends Controller
                         $form['structure_answer'] = isset($form['data']) ? $miosHelper->jsonDecodeResponse($form['data']) : $miosHelper->jsonDecodeResponse($form['structure_answer']);
                         $form['userdata'] = $userData;
                         unset($form['data']);
+
+                        $new_structure_answer = [];
+                        foreach ($form['structure_answer'] as $value) {
+                            $select = $this->findSelect($formId, $value['id'], $value['value']);
+                            if($select){
+                                $value['value'] = $select;
+                                $new_structure_answer[] = $value;
+                            } else {
+                                $new_structure_answer[] = $value;
+                            }
+                        }
+                        $form['structure_answer'] = $new_structure_answer;
                     }
                 } else {
                     // Cuando se regresa la respuesta vacia porque no incontro registro por ninguna fuente de información
@@ -244,6 +267,10 @@ class FormAnswerController extends Controller
 
 
                 $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
+                if( !empty($form_answers[0]['client']['id'])){
+                    $data['preloaded'] = $this->preloaded($formId, $form_answers[0]['client']['id']);
+                }
+                
             } else {
                 $data = $miosHelper->jsonResponse(false, 403, 'message', 'Tú rol no tiene permisos para ejecutar esta acción');
             }
@@ -272,11 +299,29 @@ class FormAnswerController extends Controller
      * Método para consultar un formAnswer
      * @param id Id del formAnswer a consultar
      */
-    public function formAnswerHistoric($id)
+    public function formAnswerHistoric($id, MiosHelper $miosHelper)
     {
         // try {
-            $form_answer = FormAnswer::where('id', $id)->first();
-            return response()->json($form_answer, 200);
+            $form_answers = FormAnswer::where('id', $id)->with('channel', 'client')->first();
+            
+                $userData     = $this->ciuService->fetchUser($form_answers->user_id)->data;
+                $form_answers->structure_answer = $miosHelper->jsonDecodeResponse($form_answers->structure_answer);
+
+                $new_structure_answer = [];
+                foreach($form_answers->structure_answer as $field){
+                        $select = $this->findSelect($form_answers->form_id, $field['id'], $field['value']);
+                        if($select){
+                            $field['value'] = $select;
+                            $new_structure_answer[] = $field;
+                        } else {
+                            $new_structure_answer[] = $field;
+                        }
+                }
+                $form_answers->structure_answer = $new_structure_answer;
+                $form_answers->user = $userData;
+
+            $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
+            return response()->json($data, $data['code']);
         // } catch (\Throwable $e) {
         //     return $this->errorResponse('Error al buscar la gestion', 500);
         // }
@@ -310,7 +355,9 @@ class FormAnswerController extends Controller
                 $register['id'] = $field['id'];
                 $register['key'] = $field['key'];
                 $register['value'] = $field['value'];
-                array_push($obj, $register);
+                if(!empty($register['value'])){
+                    array_push($obj, $register);
+                }
             }
             $i++;
         }
@@ -329,6 +376,9 @@ class FormAnswerController extends Controller
         return response()->json('Guardado' ,200);
     }
 
+    /**
+     * revisa la bandeja a ver si hay salida o entrada de la gestion a una bandeja
+     */
     public function matchTrayFields($formId, $formAnswer){
 
         $trays = Tray::where('form_id',$formId)
@@ -429,5 +479,46 @@ class FormAnswerController extends Controller
     {
         $attachment = Attachment::findOrfail($request->url);
         return response()->download(storage_path("app/" . $attachment->source), $attachment->name);
+    }
+
+    private function preloaded($form_id, $client_id)
+    {
+        $form = Form::find($form_id);
+        $structure_data = [];
+        foreach($form->section as $section){
+            $section->fields =json_decode($section->fields);
+            foreach ( $section->fields as $field) {
+                if($field->preloaded == true){
+                    $key_value = KeyValue::where('client_id', $client_id)->where('field_id', $field->id)->select('field_id', 'value', 'key')->latest()->first();
+                    if($key_value){
+                        $key_value->id = $key_value->field_id;
+                        unset($key_value->field_id);
+                        $structure_data[] = $key_value;
+
+                    }
+                }
+            }
+        }
+
+        return $structure_data;
+    }
+
+    private function findSelect($form_id, $field_id, $value)
+    {
+        $fields = json_decode(Section::where('form_id', $form_id)
+        ->whereJsonContains('fields', ['id' => $field_id])
+        ->first()->fields);
+        $field = collect($fields)->filter(function($x) use ($field_id){
+            return $x->id == $field_id;
+        })->first();
+        
+        if($field->controlType == 'dropdown'){
+            $field_name = collect($field->options)->filter(function($x) use ($value){
+                return $x->id == $value;
+            })->first()->name;
+            return $field_name;
+        } else {
+            return null;
+        }
     }
 }

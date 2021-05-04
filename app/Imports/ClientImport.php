@@ -30,6 +30,16 @@ class ClientImport implements ToModel, WithBatchInserts
                     'phone' => $row[6],
                     'email' => $row[7],
                 ]);
+            } else {
+                $client->first_name = $row[0];
+                $client->middle_name = $row[1];
+                $client->first_lastname = $row[2];
+                $client->second_lastname = $row[3];
+                $client->document_type_id = $row[4];
+                $client->document = $row[5];
+                $client->phone = $row[6];
+                $client->email = $row[7];
+                $client->save();
             }
         }
     }
