@@ -29,8 +29,14 @@ class GroupController extends Controller
         $groups =  DB::table('groups')
             ->select('groups.id', 'groups.name_group', 'groups.description', 'groups.state')
             ->join('group_users', 'group_users.group_id', 'groups.id')
-            ->where('groups.campaign_id', $request->campaign_id)
-            ->where('group_users.User_id', $userId)->get();
+            ->where('group_users.User_id', $userId);
+
+        if(!is_null($request->campaign_id) && $request->campaign_id != "null")
+        {
+            $groups = $groups->where('groups.campaign_id', $request->campaign_id);
+        }
+
+        $groups = $groups->get();
         return $groups;
     }
 
