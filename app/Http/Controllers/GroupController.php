@@ -25,8 +25,12 @@ class GroupController extends Controller
      */
     public function groupslist(Request $request)
     {
-        $groups = Group::select('id', 'name_group', 'description', 'state')
-            ->where('campaign_id', $request->campaign_id)->get();
+        $userId = auth()->user()->id;
+        $groups =  DB::table('groups')
+            ->select('groups.id', 'groups.name_group', 'groups.description', 'groups.state')
+            ->join('group_users', 'group_users.group_id', 'groups.id')
+            ->where('groups.campaign_id', $request->campaign_id)
+            ->where('group_users.User_id', $userId)->get();
         return $groups;
     }
 
