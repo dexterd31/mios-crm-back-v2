@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use App\Services\CiuService;
 use App\Services\NominaService;
-use App\Models\Campaing;
 use Helpers\MiosHelper;
 
 class CampaignController extends Controller
@@ -26,12 +25,12 @@ class CampaignController extends Controller
         //Litar todas las campañas de los grupos a los que pertenece el usuario.
         //Si el usuario es administrador o supervisor, puede ver las campanas inactivas
         try {
-            $groupsIds = $groupController->getIdCampaignByUserId(auth()->user()->id);
+            $campaignsIds = $groupController->getIdCampaignByUserId(auth()->user()->id);
             $states = array(1);
             if(Gate::allows('admin') || Gate::allows('supervisor')){
                 $states = array_push($states, 0);
             }
-            $campaigns = $this->nominaService->fetchSpecificCampaigns($groupsIds, $states);
+            $campaigns = $this->nominaService->fetchSpecificCampaigns($campaignsIds, $states);
             return $this->successResponse($campaigns->data);
         }catch (\Throwable $th) {
             return $this->errorResponse('Ocurrio un error al intentar mostrar las campañas.', 500);
@@ -53,14 +52,13 @@ class CampaignController extends Controller
      * 25-03-2021
      * Método para consultar el listado de las campañas asignadas a un usuario por grupo
      */
-    public function campaignsByUser(MiosHelper $miosHelper, $idUser)
+    public function campaignsByUser(MiosHelper $miosHelper, $idUser, GroupController $groupController)
     {
-
         try {
-
             // Se obtienes los grupor por usuarios
-            $groupsIds = $miosHelper->groupsByUserId($idUser);
-            $campaigns = Campaing::where('group_id', $groupsIds)->get();
+            $campaignsIds = $groupController->getIdCampaignByUserId($idUser);
+            $states = array(1);
+            $campaigns = $this->nominaService->fetchSpecificCampaigns($campaignsIds, $states);
             $data = $miosHelper->jsonResponse(true, 200, 'campaigns', $campaigns);
         } catch (\Throwable $th) {
             $data = $miosHelper->jsonResponse(true, 500, 'message', 'Ha ocurrido un error: ' . $th);
