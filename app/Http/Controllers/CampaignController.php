@@ -21,12 +21,12 @@ class CampaignController extends Controller
         $this->nominaService = $nominaService;
     }
 
-    public function index(Request $request, MiosHelper $miosHelper)
+    public function index(Request $request, GroupController $groupController)
     {
         //Litar todas las campañas de los grupos a los que pertenece el usuario.
         //Si el usuario es administrador o supervisor, puede ver las campanas inactivas
         try {
-            $groupsIds = $miosHelper->groupsByUserId(auth()->user()->id);
+            $groupsIds = $groupController->getIdCampaignByUserId(auth()->user()->id);
             $states = array(1);
             if(Gate::allows('admin') || Gate::allows('supervisor')){
                 $states = array_push($states, 0);

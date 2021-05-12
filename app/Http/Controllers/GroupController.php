@@ -219,4 +219,22 @@ class GroupController extends Controller
 
         return response()->json($data, $data['code']);
     }
+
+    /**
+     * Joao Beleno
+     * 12-05-2021
+     * Funcion para obtener las campaign que pertenecen a los grupos del usuario por id de usuario
+     */
+    public function getIdCampaignByUserId($userId)
+    {
+        $groups = Group::select('campaign_id')
+            ->distinct()
+            ->join('group_users', 'group_users.group_id', 'groups.id')
+            ->where('group_users.User_id', $userId)->get();
+        $groupsIds = [];
+        foreach ($groups as $group) {
+            array_push($groupsIds, $group['campaign_id']);
+        }
+        return $groupsIds;
+    }
 }
