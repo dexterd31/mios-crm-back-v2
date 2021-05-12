@@ -26,11 +26,7 @@ class CampaignController extends Controller
         //Si el usuario es administrador o supervisor, puede ver las campanas inactivas
         try {
             $campaignsIds = $groupController->getIdCampaignByUserId(auth()->user()->id);
-            $states = array(1);
-            if(Gate::allows('admin') || Gate::allows('supervisor')){
-                $states = array_push($states, 0);
-            }
-            $campaigns = $this->nominaService->fetchSpecificCampaigns($campaignsIds, $states);
+            $campaigns = $this->nominaService->fetchSpecificCampaigns($campaignsIds);
             return $this->successResponse($campaigns->data);
         }catch (\Throwable $th) {
             return $this->errorResponse('Ocurrio un error al intentar mostrar las campañas.', 500);
@@ -57,8 +53,7 @@ class CampaignController extends Controller
         try {
             // Se obtienes los grupor por usuarios
             $campaignsIds = $groupController->getIdCampaignByUserId($idUser);
-            $states = array(1);
-            $campaigns = $this->nominaService->fetchSpecificCampaigns($campaignsIds, $states);
+            $campaigns = $this->nominaService->fetchSpecificCampaigns($campaignsIds);
             $data = $miosHelper->jsonResponse(true, 200, 'campaigns', $campaigns);
         } catch (\Throwable $th) {
             $data = $miosHelper->jsonResponse(true, 500, 'message', 'Ha ocurrido un error: ' . $th);

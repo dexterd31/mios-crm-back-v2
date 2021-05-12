@@ -38,11 +38,10 @@ class NominaService
         return $this->request('PUT', '/api/campaigns/' .$id.'/updateState', $requestBody);
     }
 
-    public function fetchSpecificCampaigns($ids, $state)
+    public function fetchSpecificCampaigns($ids)
     {
         $requestBody =array(
-            "campaignIds" => $ids,
-            "state" => $state
+            "campaignIds" => $ids
         );
         return $this->request('Post', '/api/campaigns/specificCampaigns', $requestBody);
     }
