@@ -23,7 +23,7 @@ class CampaignController extends Controller
 
     public function index(Request $request, MiosHelper $miosHelper)
     {
-        //Lita todas las campañas de los grupos a los que pertenece el usuario.
+        //Litar todas las campañas de los grupos a los que pertenece el usuario.
         //Si el usuario es administrador o supervisor, puede ver las campanas inactivas
         try {
             $groupsIds = $miosHelper->groupsByUserId(auth()->user()->id);
