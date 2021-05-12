@@ -21,25 +21,19 @@ class CampaignController extends Controller
         $this->nominaService = $nominaService;
     }
 
-    public function index(Request $request)
+    public function index(Request $request, MiosHelper $miosHelper)
     {
+        //Lita todas las campañas de los grupos a los que pertenece el usuario.
+        //Si el usuario es administrador o supervisor, puede ver las campanas inactivas
         try {
-            // si es admin mostrar todas las campañas
-            if(Gate::allows('admin') || Gate::allows('supervisor') ){
-                $campaigns = $this->nominaService->fetchAllCampaigns(0);
-                return $this->successResponse($campaigns);
-            } else {
-                // si no, solo mostrar la asociada al usuario
-                $user = $this->ciuService->fetchUser(auth()->user()->id)->data;
-                try {
-                    $campaign = $this->nominaService->fetchCampaign($user->rrhh->campaign_id);
-                    return $this->successResponse([$campaign]);
-                } catch (\Throwable $th) {
-                    // si hay un error, es que la campaña esta desactivada
-                    return $this->successResponse([]);;
-                }
+            $groupsIds = $miosHelper->groupsByUserId(auth()->user()->id);
+            $states = array(1);
+            if(Gate::allows('admin') || Gate::allows('supervisor')){
+                $states = array_push($states, 0);
             }
-        } catch (\Throwable $th) {
+            $campaigns = $this->nominaService->fetchSpecificCampaigns($groupsIds, $states);
+            return $this->successResponse($campaigns->data);
+        }catch (\Throwable $th) {
             return $this->errorResponse('Ocurrio un error al intentar mostrar las campañas.', 500);
         }
     }
