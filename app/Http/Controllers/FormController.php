@@ -34,6 +34,7 @@ class FormController extends Controller
      */
     public function FormsList()
     {
+        $userId = auth()->user()->id;
         $roles = auth()->user()->roles;
             $rolesArray = [];
 
@@ -44,7 +45,10 @@ class FormController extends Controller
             }
 
         $forms = Form::join('form_types', 'forms.form_type_id', '=', 'form_types.id')
-            ->select('name_form', 'forms.id', 'name_type', 'state', 'seeRoles', 'forms.updated_at')
+            ->join("groups", "groups.id", "forms.group_id")
+            ->join('group_users', 'group_users.group_id', 'groups.id')
+            ->select('name_form', 'forms.id', 'name_type', 'forms.state', 'seeRoles', 'forms.updated_at')
+            ->where('group_users.User_id', $userId)
             ->get();
 
         foreach ($forms as $value) {
