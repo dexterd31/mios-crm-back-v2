@@ -27,7 +27,7 @@ class CampaignController extends Controller
         try {
             $campaignsIds = $groupController->getIdCampaignByUserId(auth()->user()->id);
             $campaigns = $this->nominaService->fetchSpecificCampaigns($campaignsIds);
-            return $this->successResponse($campaigns->data);
+            return $this->successResponse($campaigns);
         }catch (\Throwable $th) {
             return $this->errorResponse('Ocurrio un error al intentar mostrar las campañas.', 500);
         }
