@@ -45,7 +45,7 @@ class FormController extends Controller
             }
         }
 
-        $forms = $this->getFormsByIdUser($userLocal, true);
+        $forms = $this->getFormsByIdUser($userLocal->id, true);
         foreach ($forms as $value) {
 
             if (count(array_intersect($rolesArray, json_decode($value->seeRoles))) > 0) {
