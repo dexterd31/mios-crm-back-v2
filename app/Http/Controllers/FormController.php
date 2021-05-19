@@ -34,19 +34,17 @@ class FormController extends Controller
      */
     public function FormsList()
     {
+        $userId = auth()->user()->id;
         $roles = auth()->user()->roles;
-            $rolesArray = [];
+        $rolesArray = [];
 
-            foreach ($roles as $value) {
-                if (str_contains($value, 'crm::')) {
-                    $rolesArray[] = str_replace('crm::', '', $value);
-                }
+        foreach ($roles as $value) {
+            if (str_contains($value, 'crm::')) {
+                $rolesArray[] = str_replace('crm::', '', $value);
             }
+        }
 
-        $forms = Form::join('form_types', 'forms.form_type_id', '=', 'form_types.id')
-            ->select('name_form', 'forms.id', 'name_type', 'state', 'seeRoles', 'forms.updated_at')
-            ->get();
-
+        $forms = $this->getFormsByIdUser($userId);
         foreach ($forms as $value) {
 
             if (count(array_intersect($rolesArray, json_decode($value->seeRoles))) > 0) {
@@ -363,21 +361,11 @@ class FormController extends Controller
      */
     public function formsByUser(MiosHelper $miosHelper, $idUser)
     {
-
-        // try {
-            // Se obtienes los grupor por usuarios
-            $groupsIds  = $miosHelper->groupsByUserId($idUser);
-            $where      = ['state' => 1, 'group_id' => $groupsIds];
-            $forms      = Form::where($where)->get()->load('formtype');
+        $forms = $this->getFormsByIdUser($idUser);
             foreach ($forms as $form) {
                 $form->filters = $miosHelper->jsonDecodeResponse($form->filters);
             }
-            $data       = $miosHelper->jsonResponse(true, 200, 'forms', $forms);
-        // } catch (\Throwable $th) {
-        //     $data       = $miosHelper->jsonResponse(true, 500, 'message', 'Ha ocurrido un error: ' . $th);
-        // }
-
-
+            $data = $miosHelper->jsonResponse(true, 200, 'forms', $forms);
         return response()->json($data, $data['code']);
     }
 
@@ -453,5 +441,15 @@ class FormController extends Controller
         } else {
             return null;
         }
+    }
+
+    private function getFormsByIdUser($userId)
+    {
+        return Form::join('form_types', 'forms.form_type_id', '=', 'form_types.id')
+            ->join("groups", "groups.id", "forms.group_id")
+            ->join('group_users', 'group_users.group_id', 'groups.id')
+            ->select('name_form', 'forms.id', 'name_type', 'forms.state', 'seeRoles', 'forms.updated_at')
+            ->where('group_users.User_id', $userId)
+            ->get();
     }
 }
