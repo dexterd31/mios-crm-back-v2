@@ -25,7 +25,7 @@ class EscalationController extends Controller
      */
     public function index()
     {
-        $trays = Scalation::all();
+        $trays = Escalation::all();
 
         if(!$trays) {
             return $this->errorResponse('No se encontraron escalamientos',404);
@@ -45,7 +45,7 @@ class EscalationController extends Controller
         $data = $request->all();
         $data['state'] = 1;
 
-        $tray = Scalation::create($data);
+        $tray = Escalation::create($data);
         $tray->save();
 
         return $this->successResponse('Bandeja creada con exito');
@@ -71,12 +71,12 @@ class EscalationController extends Controller
      */
     public function update(Request $request, Tray $tray)
     {
-        $tray = Scalation::whereId($tray)->first();
+        $tray = Escalation::whereId($tray)->first();
         if(!$tray) return $this->errorResponse('Bandeja no encontrada', 404);
 
         $data = $request->all();
 
-        Scalation::whereId($tray)->update($data);
+        Escalation::whereId($tray)->update($data);
         return $this->successResponse('Bandeja actualizada con exito');
     }
 
@@ -88,7 +88,7 @@ class EscalationController extends Controller
      */
     public function destroy(Tray $tray)
     {
-        $tray = Scalation::findOrFail($tray);
+        $tray = Escalation::findOrFail($tray);
         $tray->state = 0;
         $tray->update();
 
