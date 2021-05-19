@@ -34,7 +34,7 @@ class FormController extends Controller
      */
     public function FormsList()
     {
-        $userId = auth()->user()->id;
+        $userId = auth()->user()->rrhh_id;
         $roles = auth()->user()->roles;
         $rolesArray = [];
 
