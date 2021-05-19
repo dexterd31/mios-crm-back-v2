@@ -35,6 +35,7 @@ class FormController extends Controller
     public function FormsList()
     {
         $userId = auth()->user()->rrhh_id;
+        $userLocal = User::where('id_rhh','=',$userId)->firstOrFail();
         $roles = auth()->user()->roles;
         $rolesArray = [];
 
@@ -44,7 +45,7 @@ class FormController extends Controller
             }
         }
 
-        $forms = $this->getFormsByIdUser($userId, true);
+        $forms = $this->getFormsByIdUser($userLocal, true);
         foreach ($forms as $value) {
 
             if (count(array_intersect($rolesArray, json_decode($value->seeRoles))) > 0) {
