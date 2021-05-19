@@ -25,8 +25,17 @@ class GroupController extends Controller
      */
     public function groupslist(Request $request)
     {
-        $groups = Group::select('id', 'name_group', 'description', 'state')
-            ->where('campaign_id', $request->campaign_id)->get();
+        $userId = auth()->user()->id;
+        $groups =  Group::select('groups.id', 'groups.name_group', 'groups.description', 'groups.state')
+            ->join('group_users', 'group_users.group_id', 'groups.id')
+            ->where('group_users.User_id', $userId);
+
+        if(!is_null($request->campaign_id) && $request->campaign_id != "null")
+        {
+            $groups = $groups->where('groups.campaign_id', $request->campaign_id);
+        }
+
+        $groups = $groups->get();
         return $groups;
     }
 
@@ -209,5 +218,23 @@ class GroupController extends Controller
         }
 
         return response()->json($data, $data['code']);
+    }
+
+    /**
+     * Joao Beleno
+     * 12-05-2021
+     * Funcion para obtener las campaign que pertenecen a los grupos del usuario por id de usuario
+     */
+    public function getIdCampaignByUserId($userId)
+    {
+        $groups = Group::select('campaign_id')
+            ->distinct()
+            ->join('group_users', 'group_users.group_id', 'groups.id')
+            ->where('group_users.User_id', $userId)->get();
+        $groupsIds = [];
+        foreach ($groups as $group) {
+            array_push($groupsIds, $group['campaign_id']);
+        }
+        return $groupsIds;
     }
 }

@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use App\Services\CiuService;
 use App\Services\NominaService;
-use App\Models\Campaing;
 use Helpers\MiosHelper;
 
 class CampaignController extends Controller
@@ -21,27 +20,18 @@ class CampaignController extends Controller
         $this->nominaService = $nominaService;
     }
 
-    public function index(Request $request)
+    public function index(Request $request, GroupController $groupController)
     {
-        try {
-            // si es admin mostrar todas las campañas
-            if(Gate::allows('admin') || Gate::allows('supervisor') ){
-                $campaigns = $this->nominaService->fetchAllCampaigns(0);
-                return $this->successResponse($campaigns);
-            } else {
-                // si no, solo mostrar la asociada al usuario
-                $user = $this->ciuService->fetchUser(auth()->user()->id)->data;
-                try {
-                    $campaign = $this->nominaService->fetchCampaign($user->rrhh->campaign_id);
-                    return $this->successResponse([$campaign]);
-                } catch (\Throwable $th) {
-                    // si hay un error, es que la campaña esta desactivada
-                    return $this->successResponse([]);;
-                }
-            }
-        } catch (\Throwable $th) {
+        //Litar todas las campañas de los grupos a los que pertenece el usuario.
+        //Si el usuario es administrador o supervisor, puede ver las campanas inactivas
+        //try {
+            $user = $this->ciuService->fetchUser(auth()->user()->id)->data;
+            //Se traen las campañas por el id de campaña
+            $campaign = $this->nominaService->fetchSpecificCampaigns([$user->rrhh->campaign_id]);
+            return $this->successResponse($campaign);
+        /*}catch (\Throwable $th) {
             return $this->errorResponse('Ocurrio un error al intentar mostrar las campañas.', 500);
-        }
+        }*/
     }
 
     public function updateState(Request $request, $id)
@@ -59,14 +49,12 @@ class CampaignController extends Controller
      * 25-03-2021
      * Método para consultar el listado de las campañas asignadas a un usuario por grupo
      */
-    public function campaignsByUser(MiosHelper $miosHelper, $idUser)
+    public function campaignsByUser(MiosHelper $miosHelper, $idUser, GroupController $groupController)
     {
-
         try {
-
             // Se obtienes los grupor por usuarios
-            $groupsIds = $miosHelper->groupsByUserId($idUser);
-            $campaigns = Campaing::where('group_id', $groupsIds)->get();
+            $campaignsIds = $groupController->getIdCampaignByUserId($idUser);
+            $campaigns = $this->nominaService->fetchSpecificCampaigns($campaignsIds);
             $data = $miosHelper->jsonResponse(true, 200, 'campaigns', $campaigns);
         } catch (\Throwable $th) {
             $data = $miosHelper->jsonResponse(true, 500, 'message', 'Ha ocurrido un error: ' . $th);
