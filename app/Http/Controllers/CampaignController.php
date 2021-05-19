@@ -25,8 +25,8 @@ class CampaignController extends Controller
         //Litar todas las campañas de los grupos a los que pertenece el usuario.
         //Si el usuario es administrador o supervisor, puede ver las campanas inactivas
         try {
-            $campaignId = $groupController->getIdCampaignByUserId(auth()->user()->id);
-            $campaign = $this->nominaService->fetchSpecificCampaigns($campaignId);
+            $user = $this->ciuService->fetchUser(auth()->user()->id)->data;
+            $campaign = $this->nominaService->fetchSpecificCampaigns([$user->rrhh->campaign_id]);
             return $this->successResponse($campaign);
         }catch (\Throwable $th) {
             return $this->errorResponse('Ocurrio un error al intentar mostrar las campañas.', 500);
