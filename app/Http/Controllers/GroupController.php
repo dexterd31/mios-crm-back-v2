@@ -25,10 +25,11 @@ class GroupController extends Controller
      */
     public function groupslist(Request $request)
     {
-        $userId = auth()->user()->id;
+        $userId = auth()->user()->rrhh_id;
+        $userLocal = User::where('id_rhh','=',$userId)->firstOrFail();
         $groups =  Group::select('groups.id', 'groups.name_group', 'groups.description', 'groups.state')
             ->join('group_users', 'group_users.group_id', 'groups.id')
-            ->where('group_users.User_id', $userId);
+            ->where('group_users.User_id', $userLocal->id);
 
         if(!is_null($request->campaign_id) && $request->campaign_id != "null")
         {
