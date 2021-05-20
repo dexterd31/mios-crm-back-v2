@@ -32,7 +32,7 @@ class FormController extends Controller
      * 27-01-2020
      * Método para consultar los formularios existentes en la BD
      */
-    public function FormsList()
+    public function FormsList(Request $request)
     {
         $userId = auth()->user()->id;
         $roles = auth()->user()->roles;
@@ -44,7 +44,8 @@ class FormController extends Controller
             }
         }
 
-        $forms = $this->getFormsByIdUser($userId, true);
+        $paginate = $request->query('n', 5);
+        $forms = $this->getFormsByIdUser($userId, $paginate);
         foreach ($forms as $value) {
 
             if (count(array_intersect($rolesArray, json_decode($value->seeRoles))) > 0) {
@@ -359,9 +360,10 @@ class FormController extends Controller
      * 25-03-2021
      * Método para consultar el listado de los formularios asignados a un usuario por grupo
      */
-    public function formsByUser(MiosHelper $miosHelper, $idUser)
+    public function formsByUser(MiosHelper $miosHelper, $idUser, Request $request)
     {
-        $forms = $this->getFormsByIdUser($idUser);
+        $paginate = $request->query('n', 5);
+        $forms = $this->getFormsByIdUser($idUser, $paginate);
             foreach ($forms as $form) {
                 $form->filters = $miosHelper->jsonDecodeResponse($form->filters);
             }
@@ -443,21 +445,14 @@ class FormController extends Controller
         }
     }
 
-    private function getFormsByIdUser($userId, $paginate = false)
+    private function getFormsByIdUser($userId, $paginate)
     {
         $forms = Form::join('form_types', 'forms.form_type_id', '=', 'form_types.id')
             ->join("groups", "groups.id", "forms.group_id")
             ->join('group_users', 'group_users.group_id', 'groups.id')
             ->select('name_form', 'forms.id', 'name_type', 'forms.state', 'seeRoles', 'forms.updated_at')
-            ->where('group_users.User_id', $userId);
-        if($paginate)
-        {
-            $forms = $forms->paginate(5);
-        }
-        else
-        {
-            $forms = $forms->get();
-        }
+            ->where('group_users.User_id', $userId)
+            ->paginate($paginate)->withQueryString();
         return $forms;
     }
 }
