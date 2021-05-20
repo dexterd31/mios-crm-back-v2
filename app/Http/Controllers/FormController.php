@@ -34,7 +34,8 @@ class FormController extends Controller
      */
     public function FormsList()
     {
-        $userId = auth()->user()->id;
+        $userId = auth()->user()->rrhh_id;
+        $userLocal = User::where('id_rhh','=',$userId)->firstOrFail();
         $roles = auth()->user()->roles;
         $rolesArray = [];
 
@@ -44,7 +45,7 @@ class FormController extends Controller
             }
         }
 
-        $forms = $this->getFormsByIdUser($userId);
+        $forms = $this->getFormsByIdUser($userLocal->id, true);
         foreach ($forms as $value) {
 
             if (count(array_intersect($rolesArray, json_decode($value->seeRoles))) > 0) {
@@ -443,13 +444,21 @@ class FormController extends Controller
         }
     }
 
-    private function getFormsByIdUser($userId)
+    private function getFormsByIdUser($userId, $paginate = false)
     {
-        return Form::join('form_types', 'forms.form_type_id', '=', 'form_types.id')
+        $forms = Form::join('form_types', 'forms.form_type_id', '=', 'form_types.id')
             ->join("groups", "groups.id", "forms.group_id")
             ->join('group_users', 'group_users.group_id', 'groups.id')
             ->select('name_form', 'forms.id', 'name_type', 'forms.state', 'seeRoles', 'forms.updated_at')
-            ->where('group_users.User_id', $userId)
-            ->get();
+            ->where('group_users.User_id', $userId);
+        if($paginate)
+        {
+            $forms = $forms->paginate(5);
+        }
+        else
+        {
+            $forms = $forms->get();
+        }
+        return $forms;
     }
 }

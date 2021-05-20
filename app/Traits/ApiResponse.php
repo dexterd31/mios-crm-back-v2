@@ -9,7 +9,7 @@ trait ApiResponse
 
     public function successResponse($data, $statusCode = Response::HTTP_OK)
     {
-        return response()->json($data, $statusCode);
+        return response()->json(['data' => $data], $statusCode);
     }
 
     public function errorResponse($errorMessage, $statusCode)
