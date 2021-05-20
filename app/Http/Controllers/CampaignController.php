@@ -28,10 +28,10 @@ class CampaignController extends Controller
             $user = $this->ciuService->fetchUser(auth()->user()->id)->data;
             //Se traen las campañas por el id de campaña
             $campaign = $this->nominaService->fetchSpecificCampaigns([$user->rrhh->campaign_id]);
-            return $this->successResponse($campaign);
-        }catch (\Throwable $th) {
+            return $this->successResponse($campaign->data);
+        } catch (\Throwable $th) {
             return $this->errorResponse('Ocurrio un error al intentar mostrar las campañas.', 500);
-        }*/
+        }
     }
 
     public function updateState(Request $request, $id)
