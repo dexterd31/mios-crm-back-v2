@@ -31,7 +31,7 @@ class CampaignController extends Controller
             return $this->successResponse($campaign);
         }catch (\Throwable $th) {
             return $this->errorResponse('Ocurrio un error al intentar mostrar las campañas.', 500);
-        }*/
+        }
     }
 
     public function updateState(Request $request, $id)
