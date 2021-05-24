@@ -16,7 +16,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
-
 class FormController extends Controller
 {
     private $ciuService;
@@ -46,7 +45,13 @@ class FormController extends Controller
         }
 
         $forms = $this->getFormsByIdUser($userLocal->id, true);
-        foreach ($forms as $value) {
+
+        /**
+         * @author Leo Giraldo
+         * Se comentan todo el forech pues la data aqui tratada es inecesaria para la lista de forms
+         */
+
+        /*foreach ($forms as $value) {
 
             if (count(array_intersect($rolesArray, json_decode($value->seeRoles))) > 0) {
                 $value->roles = true;
@@ -58,13 +63,13 @@ class FormController extends Controller
             $value->fields_number = 0;
 
             $current_fields = [];
+
             foreach($value->section as $section){
                 $value->fields_number += count(json_decode($section->fields));
                 $current_fields[]= json_decode($section->fields);
             }
-            unset($value->section);
 
-            
+            unset($value->section);
 
             $last_logs = FormLog::where('form_id', $value->id)->orderBy('created_at', 'desc')->take(2)->get();
 
@@ -78,7 +83,7 @@ class FormController extends Controller
                 foreach(json_decode($last_logs[1]->sections) as $section){
                     $previous_fields[]= $section->fields;
                 }
-            } 
+            }
 
             $current_fields = count($current_fields) ?array_merge(...$current_fields) : $current_fields;
             $previous_fields = count($previous_fields) ?array_merge(...$previous_fields) : $previous_fields;
@@ -90,9 +95,9 @@ class FormController extends Controller
             }
 
             $value->modified_fields = $modified_fields;
- 
-        }
-            
+
+        }*/
+
         return $forms;
     }
 
@@ -337,7 +342,7 @@ class FormController extends Controller
                 } else {
                     $ids[$i][$field->key] = $field->value;
                 }
-                
+
                 if($i==0){
                   array_push($headers2, $field->key);
                 }
@@ -406,7 +411,7 @@ class FormController extends Controller
                     if($j>=7){
                        if($fields[$j]->preloaded == false){
                             unset($fields[$j]);
-                       } 
+                       }
                     }
                 }
             }
@@ -421,7 +426,7 @@ class FormController extends Controller
 
         return response()->json($formsSections);
 
-        
+
 
     }
 
@@ -433,7 +438,7 @@ class FormController extends Controller
         $field = collect($fields)->filter(function($x) use ($field_id){
             return $x->id == $field_id;
         })->first();
-        
+
         if($field->controlType == 'dropdown'){
             $field_name = collect($field->options)->filter(function($x) use ($value){
                 return $x->id == $value;
