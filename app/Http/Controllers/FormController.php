@@ -44,20 +44,9 @@ class FormController extends Controller
             }
         }
 
-<<<<<<< HEAD
-        $forms = $this->getFormsByIdUser($userLocal->id, true);
-
-        /**
-         * @author Leo Giraldo
-         * Se comentan todo el forech pues la data aqui tratada es inecesaria para la lista de forms
-         */
-
-        /*foreach ($forms as $value) {
-=======
         $paginate = $request->query('n', 5);
         $forms = $this->getFormsByIdUser($userId, $paginate);
         foreach ($forms as $value) {
->>>>>>> 4f8926ebeb9331c7ece4b281e7c80b1d602b783e
 
             if (count(array_intersect($rolesArray, json_decode($value->seeRoles))) > 0) {
                 $value->roles = true;
@@ -102,7 +91,7 @@ class FormController extends Controller
 
             $value->modified_fields = $modified_fields;
 
-        }*/
+        }
 
         return $forms;
     }
