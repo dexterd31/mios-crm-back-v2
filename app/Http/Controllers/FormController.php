@@ -46,7 +46,12 @@ class FormController extends Controller
 
         $paginate = $request->query('n', 5);
         $forms = $this->getFormsByIdUser($userId, $paginate);
-        foreach ($forms as $value) {
+
+        /**
+         * @author: Leonardo Giraldo
+         * Se comenta este forech nos envia datos inecesarios al front y retrasa la carga de formularios
+         */
+        /*foreach ($forms as $value) {
 
             if (count(array_intersect($rolesArray, json_decode($value->seeRoles))) > 0) {
                 $value->roles = true;
@@ -91,7 +96,7 @@ class FormController extends Controller
 
             $value->modified_fields = $modified_fields;
 
-        }
+        }*/
 
         return $forms;
     }

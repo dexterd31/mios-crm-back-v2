@@ -32,7 +32,7 @@ class CampaignController extends Controller
             /**
              * @author: Leogiraldoq
              * Se quitan los elementos inecesarios en para el front,
-             * ?se realiza for para tener en cuenta el momento que se listen mas de una campaña (SuperAdministrador)
+             * ? se realiza for para tener en cuenta el momento que se listen mas de una campaña (SuperAdministrador)
             */
             for($c=0;$c<count($campaign->data);$c++){
                 unset($campaign->data[$c]->rrhh_id);
