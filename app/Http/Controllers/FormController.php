@@ -112,6 +112,7 @@ class FormController extends Controller
             ->with('section')
             ->select('*')
             ->first();
+
         $formsSections->seeRoles = json_decode($formsSections->seeRoles);
         $formsSections->filters = json_decode($formsSections->filters);
         for ($i = 0; $i < count($formsSections->section); $i++) {
@@ -119,6 +120,7 @@ class FormController extends Controller
             unset($formsSections->section[$i]['updated_at']);
             unset($formsSections->section[$i]['form_id']);
             $formsSections->section[$i]['fields'] = json_decode($formsSections->section[$i]['fields']);
+
         }
 
         return response()->json($formsSections);

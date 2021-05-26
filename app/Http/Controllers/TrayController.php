@@ -63,8 +63,8 @@ class TrayController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $trays = Tray::where('form_id', $id)->leftJoin('form_answers_trays', 'trays.id', '=', 'form_answers_trays.tray_id');
 
+        $trays = Tray::where('form_id', $id)->leftJoin('form_answers_trays', 'trays.id', '=', 'form_answers_trays.tray_id');
         if($request->query('showall', 0) == 0)
         {
             $trays = $trays->where('state', 1)->having(DB::raw('count(tray_id)'), '>', 0);
@@ -72,7 +72,6 @@ class TrayController extends Controller
 
         $trays = $trays->selectRaw('trays.*, count(tray_id) as count')
             ->groupBy('trays.id')->get();
-
         if(count($trays)==0) {
             return $this->successResponse([]);
         }
@@ -132,7 +131,7 @@ class TrayController extends Controller
 
         $formsAnswers = $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
 
-        // $formsAnswers = $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
+        //$formsAnswers = $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
 
         foreach($formsAnswers as $form)
         {
@@ -156,7 +155,7 @@ class TrayController extends Controller
                     return $item->id == $field->id;
                 })->values();
 
-                
+
                 if(!empty($foundStructure))
                 {
                     $tableValues[] = $foundStructure;
@@ -217,14 +216,14 @@ class TrayController extends Controller
                     $in_fields_matched++;
                 }
             }
-            
+
             if((count(json_decode($tray->fields))> 0) && ($in_fields_matched == count(json_decode($tray->fields)))){
-                
+
                 $tray->FormAnswers()->attach($formAnswer->id);
             }
 
         }
-        
+
     }
 
     private function findSelect($form_id, $field_id, $value)
@@ -235,7 +234,7 @@ class TrayController extends Controller
         $field = collect($fields)->filter(function($x) use ($field_id){
             return $x->id == $field_id;
         })->first();
-        
+
         if($field->controlType == 'dropdown'){
             $field_name = collect($field->options)->filter(function($x) use ($value){
                 return $x->id == $value;
