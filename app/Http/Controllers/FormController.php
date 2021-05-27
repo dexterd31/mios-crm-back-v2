@@ -64,7 +64,7 @@ class FormController extends Controller
             }
             unset($value->section);
 
-            
+
 
             $last_logs = FormLog::where('form_id', $value->id)->orderBy('created_at', 'desc')->take(2)->get();
 
@@ -78,7 +78,7 @@ class FormController extends Controller
                 foreach(json_decode($last_logs[1]->sections) as $section){
                     $previous_fields[]= $section->fields;
                 }
-            } 
+            }
 
             $current_fields = count($current_fields) ?array_merge(...$current_fields) : $current_fields;
             $previous_fields = count($previous_fields) ?array_merge(...$previous_fields) : $previous_fields;
@@ -90,9 +90,9 @@ class FormController extends Controller
             }
 
             $value->modified_fields = $modified_fields;
- 
+
         }
-            
+
         return $forms;
     }
 
@@ -337,15 +337,14 @@ class FormController extends Controller
                 } else {
                     $ids[$i][$field->key] = $field->value;
                 }
-                
+
                 if($i==0){
                   array_push($headers2, $field->key);
                 }
               }
           }
-          $ids[$i]['created_at'] = $answer->created_at->format('c');
-          $ids[$i]['updated_at'] = $answer->updated_at->format('c');
-
+          $ids[$i]['created_at'] = $answer->created_at;
+          $ids[$i]['updated_at'] = $answer->updated_at;
           $i++;
         }
 
@@ -406,7 +405,7 @@ class FormController extends Controller
                     if($j>=7){
                        if($fields[$j]->preloaded == false){
                             unset($fields[$j]);
-                       } 
+                       }
                     }
                 }
             }
@@ -421,7 +420,7 @@ class FormController extends Controller
 
         return response()->json($formsSections);
 
-        
+
 
     }
 
@@ -433,7 +432,7 @@ class FormController extends Controller
         $field = collect($fields)->filter(function($x) use ($field_id){
             return $x->id == $field_id;
         })->first();
-        
+
         if($field->controlType == 'dropdown'){
             $field_name = collect($field->options)->filter(function($x) use ($value){
                 return $x->id == $value;
