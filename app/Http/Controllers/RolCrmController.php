@@ -8,22 +8,23 @@ use App\Models\PermissionCrm;
 
 class RolCrmController extends Controller
 {
-    private $permissionCrm;
+    private $permissionCrmController;
 
-    public function __construct(PermissionCrm $permissionCrm)
+    public function __construct(PermissionCrmController $permissionCrmController)
     {
-        $this->permissionCrm = $permissionCrm;
+        $this->permissionCrmController = $permissionCrmController;
     }
     public function createRolCrm(Request $request)
     {
         $rol = $request->roles;
         $rolCrm = new RolCrm([
-            'ciu_id'=> $rol['ciu_id'],
+            'ciu_id'=> $rol['id'],
             'name' => $rol['name'],
             'key' => $rol['key'],
             'status' => 1
         ]);
+
         $rolCrm->save();
-        $this->permissionCrm->createPermissionCrm($rol['modulos'], $rolCrm->id);
+        $this->permissionCrmController->createPermissionCrm($rol['menu_ids'], $rolCrm->id);
     }
 }

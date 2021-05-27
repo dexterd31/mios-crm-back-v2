@@ -57,7 +57,7 @@ class PermissionCrmController extends Controller
 
     public function createPermissionCrm($idMenusCiu, $idRolCrm)
     {
-        $modulosCrm = ModuleCrm::wereIn($idMenusCiu);
+        $modulosCrm = ModuleCrm::whereIn("menu_ciu_id", $idMenusCiu);
         $permissions = array();
         foreach($modulosCrm as $moduloCrm)
         {
