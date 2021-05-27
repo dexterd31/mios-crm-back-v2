@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
+use Carbon\Carbon;
 
 class FormController extends Controller
 {
@@ -64,7 +65,7 @@ class FormController extends Controller
             }
             unset($value->section);
 
-            
+
 
             $last_logs = FormLog::where('form_id', $value->id)->orderBy('created_at', 'desc')->take(2)->get();
 
@@ -78,7 +79,7 @@ class FormController extends Controller
                 foreach(json_decode($last_logs[1]->sections) as $section){
                     $previous_fields[]= $section->fields;
                 }
-            } 
+            }
 
             $current_fields = count($current_fields) ?array_merge(...$current_fields) : $current_fields;
             $previous_fields = count($previous_fields) ?array_merge(...$previous_fields) : $previous_fields;
@@ -90,9 +91,9 @@ class FormController extends Controller
             }
 
             $value->modified_fields = $modified_fields;
- 
+
         }
-            
+
         return $forms;
     }
 
@@ -318,13 +319,11 @@ class FormController extends Controller
       } else if($formAnswers_count>1000){
         return $this->errorResponse('El rango de fechas supera a los 1000 records', 413);
       } else {
-
         $formAnswers = FormAnswer::where('form_id',$request->formId)
                           ->where('created_at','>=', $request->date1)
                           ->where('created_at','<=', $request->date2)
                           ->select('id', 'structure_answer', 'created_at', 'updated_at')->get();
         $i=0;
-
         $data = [];
         $headers2 []= 'id';
         foreach($formAnswers as $answer){
@@ -337,15 +336,15 @@ class FormController extends Controller
                 } else {
                     $ids[$i][$field->key] = $field->value;
                 }
-                
+
                 if($i==0){
                   array_push($headers2, $field->key);
                 }
               }
           }
-          $ids[$i]['created_at'] = $answer->created_at->format('c');
-          $ids[$i]['updated_at'] = $answer->updated_at->format('c');
 
+          $ids[$i]['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
+          $ids[$i]['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
           $i++;
         }
 
@@ -406,7 +405,7 @@ class FormController extends Controller
                     if($j>=7){
                        if($fields[$j]->preloaded == false){
                             unset($fields[$j]);
-                       } 
+                       }
                     }
                 }
             }
@@ -421,7 +420,7 @@ class FormController extends Controller
 
         return response()->json($formsSections);
 
-        
+
 
     }
 
@@ -433,7 +432,7 @@ class FormController extends Controller
         $field = collect($fields)->filter(function($x) use ($field_id){
             return $x->id == $field_id;
         })->first();
-        
+
         if($field->controlType == 'dropdown'){
             $field_name = collect($field->options)->filter(function($x) use ($value){
                 return $x->id == $value;
