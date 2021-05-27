@@ -20,6 +20,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
+use Carbon\Carbon;
+
 class FormAnswerController extends Controller
 {
     private $ciuService;
@@ -41,6 +43,7 @@ class FormAnswerController extends Controller
         // try {
             // Se valida si tiene permiso para hacer acciones en formAnswer
             if (Gate::allows('form_answer')) {
+                $now=Carbon::now('America/Bogota')->format('Y-m-d H:i:s');
                 $json_body = json_decode($request['sections'], true);
                 $obj = array();
                 $clientInfo = [];
@@ -49,7 +52,7 @@ class FormAnswerController extends Controller
                 $form_answer = null;
 
                 $date_string = date('c');
-                
+
                 foreach ($json_body as $section) {
                     foreach ($section['fields'] as $field) {
                         if ($i == 0) {
@@ -115,10 +118,10 @@ class FormAnswerController extends Controller
                                 'description' => null,
                                 'field_id' => $row['id']
                             ]);
-    
+
                             $sect->save();
                         }
-                        
+
                     }
 
                     $form_answer = new FormAnswer([
@@ -126,7 +129,8 @@ class FormAnswerController extends Controller
                         'channel_id' => 1,
                         'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
                         'form_id' => json_decode($request['form_id']),
-                        'structure_answer' => json_encode($obj)
+                        'structure_answer' => json_encode($obj),
+                        'created_at' => $now
                     ]);
 
                     $form_answer->save();
@@ -161,7 +165,8 @@ class FormAnswerController extends Controller
                         'channel_id' => 1,
                         'client_id' => json_decode($request['client_id']),
                         'form_id' => json_decode($request['form_id']),
-                        'structure_answer' => json_encode($obj)
+                        'structure_answer' => json_encode($obj),
+                        'created_at' => $now
                     ]);
 
                     $form_answer->save();
@@ -270,7 +275,7 @@ class FormAnswerController extends Controller
                 if( !empty($form_answers[0]['client']['id'])){
                     $data['preloaded'] = $this->preloaded($formId, $form_answers[0]['client']['id']);
                 }
-                
+
             } else {
                 $data = $miosHelper->jsonResponse(false, 403, 'message', 'Tú rol no tiene permisos para ejecutar esta acción');
             }
@@ -303,7 +308,7 @@ class FormAnswerController extends Controller
     {
         // try {
             $form_answers = FormAnswer::where('id', $id)->with('channel', 'client')->first();
-            
+
                 $userData     = $this->ciuService->fetchUser($form_answers->user_id)->data;
                 $form_answers->structure_answer = $miosHelper->jsonDecodeResponse($form_answers->structure_answer);
 
@@ -419,11 +424,11 @@ class FormAnswerController extends Controller
                     $in_fields_matched++;
                 }
             }
-            
+
             if((count(json_decode($tray->fields))> 0) && ($in_fields_matched == count(json_decode($tray->fields)))){
                 if(!$tray->FormAnswers->contains($formAnswer->id)){
                     $tray->FormAnswers()->attach($formAnswer->id);
-                }  
+                }
             }
 
             /* salida a bandeja */
@@ -463,7 +468,7 @@ class FormAnswerController extends Controller
                 $tray->FormAnswers()->detach($formAnswer->id);
             }
         }
-        
+
     }
 
     private function logFormAnswer($form_answer)
@@ -500,7 +505,10 @@ class FormAnswerController extends Controller
             }
         }
 
-        return $structure_data;
+        $answer['data']=$structure_data;
+        $answer['client_id']=$client_id;
+        return $answer;
+
     }
 
     private function findSelect($form_id, $field_id, $value)
@@ -511,7 +519,7 @@ class FormAnswerController extends Controller
         $field = collect($fields)->filter(function($x) use ($field_id){
             return $x->id == $field_id;
         })->first();
-        
+
         if($field->controlType == 'dropdown'){
             $field_name = collect($field->options)->filter(function($x) use ($value){
                 return $x->id == $value;
