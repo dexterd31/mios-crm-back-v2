@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 use Carbon\Carbon;
-
+use Illuminate\Support\Facades\Log;
 class FormController extends Controller
 {
     private $ciuService;
@@ -331,6 +331,7 @@ class FormController extends Controller
           foreach(json_decode($answer->structure_answer) as $field){
             if(in_array($field->key, $headers)){
                 $select = $this->findSelect($request->formId, $field->id, $field->value);
+                Log::emergency($select);
                 if($select){
                     $ids[$i][$field->key] = $select;
                 } else {
@@ -433,7 +434,7 @@ class FormController extends Controller
             return $x->id == $field_id;
         })->first();
 
-        if($field->controlType == 'dropdown'){
+        if($field->controlType == 'dropdown' || $field->controlType == 'autocomplete'){
             $field_name = collect($field->options)->filter(function($x) use ($value){
                 return $x->id == $value;
             })->first()->name;
