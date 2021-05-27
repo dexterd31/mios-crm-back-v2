@@ -101,11 +101,13 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/tray/formAnswersByTray/{id}','TrayController@formAnswersByTray');
     $router->get('/tray/changeState/{id}','TrayController@changeState');
 
-
     //Rutas escalamientos
     $router->post('/escalations', 'EscalationController@validateScalation');
     //Rutas Permisos
     $router->get('/permission/{rolCiu}', 'PermissionCrmController@list');
+
+    $router->post('/createRoles', 'RolCrmController@createRolCrm');
+
 
     $router->get('/prueba-jsoncontains/{formId}', function($formId){
         $form_answers = FormAnswer::where('form_id', $formId)
