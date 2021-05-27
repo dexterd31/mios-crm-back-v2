@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
+use Carbon\Carbon;
 
 class FormController extends Controller
 {
@@ -318,13 +319,11 @@ class FormController extends Controller
       } else if($formAnswers_count>1000){
         return $this->errorResponse('El rango de fechas supera a los 1000 records', 413);
       } else {
-
         $formAnswers = FormAnswer::where('form_id',$request->formId)
                           ->where('created_at','>=', $request->date1)
                           ->where('created_at','<=', $request->date2)
                           ->select('id', 'structure_answer', 'created_at', 'updated_at')->get();
         $i=0;
-
         $data = [];
         $headers2 []= 'id';
         foreach($formAnswers as $answer){
@@ -343,8 +342,9 @@ class FormController extends Controller
                 }
               }
           }
-          $ids[$i]['created_at'] = $answer->created_at;
-          $ids[$i]['updated_at'] = $answer->updated_at;
+
+          $ids[$i]['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
+          $ids[$i]['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
           $i++;
         }
 
