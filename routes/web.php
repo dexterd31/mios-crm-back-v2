@@ -12,7 +12,8 @@ use App\Models\FormAnswer;
 */
 
 $router->get('/', function () use ($router) {
-    return $router->app->version();
+    // return $router->app->version();
+    return 'Api Services de CRM';
 });
 $router->group(['prefix' => 'api'], function () use ($router) {
 
