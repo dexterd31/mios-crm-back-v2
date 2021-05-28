@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
+
 class FormController extends Controller
 {
     private $ciuService;
@@ -301,58 +301,72 @@ class FormController extends Controller
         // }
     }
 
+    /**
+     * @author: Leonardo Giraldo
+     * Se cambia la funcion reportes evalua primero los campos que se deben reportar y despues compara con las respuestas
+     */
     public function report(Request $request)
     {
-      $headers    = $request->reportFields;
-      $headers2 = [];
-
-      $ids = [];
-      $formAnswers_count = FormAnswer::where('form_id',$request->formId)
-                          ->where('created_at','>=', $request->date1)
-                          ->where('created_at','<=', $request->date2)
-                          ->select('structure_answer')->count();
-
-      if($formAnswers_count==0){
-          // 406 Not Acceptable
-          // se envia este error ya que no esta mapeado en interceptor angular.
-        return $this->errorResponse('No se encontraron datos en el rango de fecha suministrado', 406);
-      } else if($formAnswers_count>1000){
-        return $this->errorResponse('El rango de fechas supera a los 1000 records', 413);
-      } else {
-        $formAnswers = FormAnswer::where('form_id',$request->formId)
+      $sections=Section::select('fields')->where("form_id",$request->formId)->get();
+      $formAnswers = FormAnswer::where('form_id',$request->formId)
                           ->where('created_at','>=', $request->date1)
                           ->where('created_at','<=', $request->date2)
                           ->select('id', 'structure_answer', 'created_at', 'updated_at')->get();
-        $i=0;
-        $data = [];
-        $headers2 []= 'id';
+      if(count($formAnswers)==0){
+            // 406 Not Acceptable
+            // se envia este error ya que no esta mapeado en interceptor angular.
+            return $this->errorResponse('No se encontraron datos en el rango de fecha suministrado', 406);
+      } else if(count($formAnswers)>1000){
+            return $this->errorResponse('El rango de fechas supera a los 1000 records', 413);
+      } else {
+        $inputReport=[];
+        $titleHeaders=['Id'];
+        $r=0;
+        $rows=[];
+        //Verificamos cuales son los campos que deben ir en el reporte o que su elemento inReport sea true
+        foreach($sections as $section){
+            foreach(json_decode($section->fields) as $input){
+                if($input->inReport){
+                    array_push($titleHeaders,$input->label);
+                    array_push($inputReport,$input);
+                }
+            }
+        }
         foreach($formAnswers as $answer){
-          $ids[$i]['id'] = $answer->id;
-          foreach(json_decode($answer->structure_answer) as $field){
-            if(in_array($field->key, $headers)){
-                $select = $this->findSelect($request->formId, $field->id, $field->value);
-                Log::emergency($select);
-                if($select){
-                    $ids[$i][$field->key] = $select;
-                } else {
-                    $ids[$i][$field->key] = $field->value;
+            $rows[$r]['id'] = $answer->id;
+            //Evaluamos los campos que deben ir en el reporte contra las respuestas
+            foreach($inputReport as $input){
+                foreach(json_decode($answer->structure_answer) as $field){
+                    if($field->id==$input->id){
+                        $select = $this->findSelect($request->formId, $field->id, $field->value);
+                        if($select){
+                            $rows[$r][$field->id] = $select;
+                        } else {
+                            $rows[$r][$field->id] = $field->value;
+                        }
+                        break;
+                    }else if($field->key==$input->key){
+                        $select = $this->findSelect($request->formId, $input->id, $field->value);
+                        if($select){
+                            $rows[$r][$input->id] = $select;
+                        } else {
+                            $rows[$r][$input->id] = $field->value;
+                        }
+                        break;
+                    }
                 }
-
-                if($i==0){
-                  array_push($headers2, $field->key);
+                if(!isset($rows[$r][$input->id])){
+                    $rows[$r][$input->id]="-";
                 }
-              }
+            }
+            $rows[$r]['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
+            $rows[$r]['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
+            $r++;
           }
-
-          $ids[$i]['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
-          $ids[$i]['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
-          $i++;
+          array_push($titleHeaders,'Fecha de creación','Fecha de actualización');
         }
 
-        $headers2[] = 'Fecha de creación';
-        $headers2[] = 'Fecha de actualización';
-      }
-      return Excel::download(new FormReportExport($ids, $headers2), 'reporte_formulario.xlsx');
+      return Excel::download(new FormReportExport($rows, $titleHeaders), 'reporte_formulario.xlsx');
     }
 
     /**
@@ -434,7 +448,7 @@ class FormController extends Controller
             return $x->id == $field_id;
         })->first();
 
-        if($field->controlType == 'dropdown' || $field->controlType == 'autocomplete'){
+        if($field->controlType == 'dropdown' || $field->controlType == 'autocomplete' || $field->controlType == 'radiobutton'){
             $field_name = collect($field->options)->filter(function($x) use ($value){
                 return $x->id == $value;
             })->first()->name;
