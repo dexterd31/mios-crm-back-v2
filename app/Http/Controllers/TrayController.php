@@ -156,7 +156,7 @@ class TrayController extends Controller
                     return $item->id == $field->id;
                 })->values();
 
-                
+
                 if(!empty($foundStructure))
                 {
                     $tableValues[] = $foundStructure;
@@ -194,13 +194,26 @@ class TrayController extends Controller
                     // si es tipo options, validar el valor del option
                     if($field->type == "options"){
                         if($value->id==$field->id){
+                            $validate = false;
                             foreach($field->value as $fieldValue){
                                 if($value->value == $fieldValue->id){
-                                    return 1;
-                                }else{
-                                    return 0;
+                                    $validate = true;
+                                    // return 1;
+                                // }else{
+                                //     if($validate == true){
+                                //         $validate = true;
+                                //     }else{
+                                //         $validate = false;
+                                //     }
+                                //     // return 0;
                                 }
                             }
+                            if($validate == true){
+                                return 1;
+                            }else{
+                                return 0;
+                            }
+                            // return = $validate ? 1 : 0;
                         }
                     }else{
                         // si es otro tipo validar que el valor no este vacio o nulo.
@@ -210,21 +223,20 @@ class TrayController extends Controller
                             return 0;
                         }
                     }
-
-                });
+            });
 
                 if(count($tray_in)>=1){
                     $in_fields_matched++;
                 }
             }
-            
+
             if((count(json_decode($tray->fields))> 0) && ($in_fields_matched == count(json_decode($tray->fields)))){
-                
+
                 $tray->FormAnswers()->attach($formAnswer->id);
             }
 
         }
-        
+
     }
 
     private function findSelect($form_id, $field_id, $value)
@@ -235,7 +247,7 @@ class TrayController extends Controller
         $field = collect($fields)->filter(function($x) use ($field_id){
             return $x->id == $field_id;
         })->first();
-        
+
         if($field->controlType == 'dropdown'){
             $field_name = collect($field->options)->filter(function($x) use ($value){
                 return $x->id == $value;

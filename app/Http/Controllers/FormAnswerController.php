@@ -401,12 +401,25 @@ class FormAnswerController extends Controller
                     // si es tipo options, validar el valor del option
                     if($field->type == "options"){
                         if($value->id==$field->id){
+                            $validate = false;
                             foreach($field->value as $fieldValue){
                                 if($value->value == $fieldValue->id){
-                                    return 1;
-                                }else{
-                                    return 0;
+                                    $validate = true;
+                                    // return 1;
+                                // }else{
+                                //     if($validate == true){
+                                //         $validate = true;
+                                //     }else{
+                                //         $validate = false;
+                                //     }
+                                //     // return 0;
                                 }
+                            }
+                            if($validate == true){
+                                return 1;
+                            }else{
+                                return 0;
+
                             }
                         }
                     }else{
@@ -441,12 +454,24 @@ class FormAnswerController extends Controller
                     // si es tipo options, validar el valor del option
                     if($field_exit->type == "options"){
                         if($value->id==$field_exit->id){
+                            $validate = false;
                             foreach($field_exit->value as $fieldValue){
                                 if($value->value == $fieldValue->id){
-                                    return 1;
-                                }else{
-                                    return 0;
+                                    $validate = true;
+                                    // return 1;
+                                // }else{
+                                //     if($validate == true){
+                                //         $validate = true;
+                                //     }else{
+                                //         $validate = false;
+                                //     }
+                                //     // return 0;
                                 }
+                            }
+                            if($validate == true){
+                                return 1;
+                            }else{
+                                return 0;
                             }
                         }
                     }else{
