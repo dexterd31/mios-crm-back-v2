@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\PermissionCrm;
 use App\Models\RolCrm;
 use Helpers\MiosHelper;
+use Illuminate\Support\Facades\Log;
 
 class PermissionCrmController extends Controller
 {
@@ -57,7 +58,7 @@ class PermissionCrmController extends Controller
 
     public function createPermissionCrm($idMenusCiu, $idRolCrm)
     {
-        $modulosCrm = ModuleCrm::whereIn("menu_ciu_id", $idMenusCiu);
+        $modulosCrm = ModuleCrm::whereIn("menu_ciu_id", $idMenusCiu)->get();
         $permissions = array();
         foreach($modulosCrm as $moduloCrm)
         {
