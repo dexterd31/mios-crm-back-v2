@@ -70,7 +70,8 @@ class PermissionCrmController extends Controller
                 'view' => 1,
                 'edit' => 1,
                 'change' => 1,
-                'status' => 1
+                'status' => 1,
+                'all' => 1
             ];
             array_push($permissions, $permission);
         }
