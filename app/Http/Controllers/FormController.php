@@ -18,6 +18,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 use Carbon\Carbon;
 
+
 class FormController extends Controller
 {
     private $ciuService;
@@ -364,8 +365,7 @@ class FormController extends Controller
             $r++;
           }
           array_push($titleHeaders,'Fecha de creación','Fecha de actualización');
-        }
-
+      }
       return Excel::download(new FormReportExport($rows, $titleHeaders), 'reporte_formulario.xlsx');
     }
 
