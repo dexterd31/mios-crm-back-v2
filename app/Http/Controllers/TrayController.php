@@ -193,13 +193,26 @@ class TrayController extends Controller
                     // si es tipo options, validar el valor del option
                     if($field->type == "options"){
                         if($value->id==$field->id){
+                            $validate = false;
                             foreach($field->value as $fieldValue){
                                 if($value->value == $fieldValue->id){
-                                    return 1;
-                                }else{
-                                    return 0;
+                                    $validate = true;
+                                    // return 1;
+                                // }else{
+                                //     if($validate == true){
+                                //         $validate = true;
+                                //     }else{
+                                //         $validate = false;
+                                //     }
+                                //     // return 0;
                                 }
                             }
+                            if($validate == true){
+                                return 1;
+                            }else{
+                                return 0;
+                            }
+                            // return = $validate ? 1 : 0;
                         }
                     }else{
                         // si es otro tipo validar que el valor no este vacio o nulo.
@@ -209,8 +222,7 @@ class TrayController extends Controller
                             return 0;
                         }
                     }
-
-                });
+            });
 
                 if(count($tray_in)>=1){
                     $in_fields_matched++;

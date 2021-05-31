@@ -20,6 +20,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
+use Carbon\Carbon;
+
 class FormAnswerController extends Controller
 {
     private $ciuService;
@@ -41,6 +43,7 @@ class FormAnswerController extends Controller
         // try {
             // Se valida si tiene permiso para hacer acciones en formAnswer
             if (Gate::allows('form_answer')) {
+                $now=Carbon::now('America/Bogota')->format('Y-m-d H:i:s');
                 $json_body = json_decode($request['sections'], true);
                 $obj = array();
                 $clientInfo = [];
@@ -125,7 +128,8 @@ class FormAnswerController extends Controller
                         'channel_id' => 1,
                         'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
                         'form_id' => json_decode($request['form_id']),
-                        'structure_answer' => json_encode($obj)
+                        'structure_answer' => json_encode($obj),
+                        'created_at' => $now
                     ]);
 
                     $form_answer->save();
@@ -160,7 +164,8 @@ class FormAnswerController extends Controller
                         'channel_id' => 1,
                         'client_id' => json_decode($request['client_id']),
                         'form_id' => json_decode($request['form_id']),
-                        'structure_answer' => json_encode($obj)
+                        'structure_answer' => json_encode($obj),
+                        'created_at' => $now
                     ]);
 
                     $form_answer->save();
@@ -392,12 +397,25 @@ class FormAnswerController extends Controller
                     // si es tipo options, validar el valor del option
                     if($field->type == "options"){
                         if($value->id==$field->id){
+                            $validate = false;
                             foreach($field->value as $fieldValue){
                                 if($value->value == $fieldValue->id){
-                                    return 1;
-                                }else{
-                                    return 0;
+                                    $validate = true;
+                                    // return 1;
+                                // }else{
+                                //     if($validate == true){
+                                //         $validate = true;
+                                //     }else{
+                                //         $validate = false;
+                                //     }
+                                //     // return 0;
                                 }
+                            }
+                            if($validate == true){
+                                return 1;
+                            }else{
+                                return 0;
+
                             }
                         }
                     }else{
@@ -432,12 +450,24 @@ class FormAnswerController extends Controller
                     // si es tipo options, validar el valor del option
                     if($field_exit->type == "options"){
                         if($value->id==$field_exit->id){
+                            $validate = false;
                             foreach($field_exit->value as $fieldValue){
                                 if($value->value == $fieldValue->id){
-                                    return 1;
-                                }else{
-                                    return 0;
+                                    $validate = true;
+                                    // return 1;
+                                // }else{
+                                //     if($validate == true){
+                                //         $validate = true;
+                                //     }else{
+                                //         $validate = false;
+                                //     }
+                                //     // return 0;
                                 }
+                            }
+                            if($validate == true){
+                                return 1;
+                            }else{
+                                return 0;
                             }
                         }
                     }else{
@@ -495,9 +525,11 @@ class FormAnswerController extends Controller
                 }
             }
         }
+
         $answer['data']=$structure_data;
         $answer['client_id']=$client_id;
         return $answer;
+
     }
 
     private function findSelect($form_id, $field_id, $value)
