@@ -16,11 +16,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
-<<<<<<< HEAD
-=======
 use Carbon\Carbon;
 
->>>>>>> f17dbc37bf5159b71c016ddabc9fe6a738a69cde
 class FormController extends Controller
 {
     private $ciuService;
@@ -52,11 +49,7 @@ class FormController extends Controller
         $paginate = $request->query('n', 5);
         $forms = $this->getFormsByIdUser($userId, $paginate);
 
-        /**
-         * @author: Leonardo Giraldo
-         * Se comenta este forech nos envia datos inecesarios al front y retrasa la carga de formularios
-         */
-        /*foreach ($forms as $value) {
+        foreach ($forms as $value) {
 
             if (count(array_intersect($rolesArray, json_decode($value->seeRoles))) > 0) {
                 $value->roles = true;
@@ -74,11 +67,7 @@ class FormController extends Controller
                 $current_fields[]= json_decode($section->fields);
             }
 
-<<<<<<< HEAD
             unset($value->section);
-=======
-
->>>>>>> f17dbc37bf5159b71c016ddabc9fe6a738a69cde
 
             $last_logs = FormLog::where('form_id', $value->id)->orderBy('created_at', 'desc')->take(2)->get();
 
@@ -105,11 +94,7 @@ class FormController extends Controller
 
             $value->modified_fields = $modified_fields;
 
-<<<<<<< HEAD
-        }*/
-=======
         }
->>>>>>> f17dbc37bf5159b71c016ddabc9fe6a738a69cde
 
         return $forms;
     }
@@ -468,11 +453,7 @@ class FormController extends Controller
             return $x->id == $field_id;
         })->first();
 
-<<<<<<< HEAD
-        if($field->controlType == 'dropdown'){
-=======
         if($field->controlType == 'dropdown' || $field->controlType == 'autocomplete' || $field->controlType == 'radiobutton'){
->>>>>>> f17dbc37bf5159b71c016ddabc9fe6a738a69cde
             $field_name = collect($field->options)->filter(function($x) use ($value){
                 return $x->id == $value;
             })->first()->name;
