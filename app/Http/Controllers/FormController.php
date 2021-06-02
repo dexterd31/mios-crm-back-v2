@@ -224,6 +224,7 @@ class FormController extends Controller
             $form->seeRoles = json_encode($request->role);
             $form->save();
 
+            //Se elimina el delete de sections pues no debe eliminar la seccion al actualizar
             foreach($request->sections as $section)
             {
                 for($i=0; $i<count($section['fields']); $i++){
