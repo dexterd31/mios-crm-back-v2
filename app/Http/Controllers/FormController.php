@@ -222,15 +222,6 @@ class FormController extends Controller
             $form->seeRoles = json_encode($request->role);
             $form->save();
 
-            $sections =  Section::where('form_id',$id)
-                                  ->where('name_section','<>','Datos básicos del cliente')
-                                  ->get();
-
-            foreach($sections  as $section)
-            {
-              $section->delete();
-            }
-
             foreach($request->sections as $section)
             {
                 for($i=0; $i<count($section['fields']); $i++){
