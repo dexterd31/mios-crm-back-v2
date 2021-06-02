@@ -18,6 +18,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 use Carbon\Carbon;
 
+
 class FormController extends Controller
 {
     private $ciuService;
@@ -220,15 +221,6 @@ class FormController extends Controller
             $form->seeRoles = json_encode($request->role);
             $form->save();
 
-            $sections =  Section::where('form_id',$id)
-                                  ->where('name_section','<>','Datos básicos del cliente')
-                                  ->get();
-
-            foreach($sections  as $section)
-            {
-              $section->delete();
-            }
-
             foreach($request->sections as $section)
             {
                 for($i=0; $i<count($section['fields']); $i++){
@@ -364,8 +356,7 @@ class FormController extends Controller
             $r++;
           }
           array_push($titleHeaders,'Fecha de creación','Fecha de actualización');
-        }
-
+      }
       return Excel::download(new FormReportExport($rows, $titleHeaders), 'reporte_formulario.xlsx');
     }
 
