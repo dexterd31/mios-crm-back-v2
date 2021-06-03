@@ -18,6 +18,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 use Carbon\Carbon;
 
+
 class FormController extends Controller
 {
     private $ciuService;
@@ -224,7 +225,6 @@ class FormController extends Controller
             $form->seeRoles = json_encode($request->role);
             $form->save();
 
-            //Se elimina el delete de sections pues no debe eliminar la seccion al actualizar
             foreach($request->sections as $section)
             {
                 for($i=0; $i<count($section['fields']); $i++){
@@ -360,8 +360,7 @@ class FormController extends Controller
             $r++;
           }
           array_push($titleHeaders,'Fecha de creación','Fecha de actualización');
-        }
-
+      }
       return Excel::download(new FormReportExport($rows, $titleHeaders), 'reporte_formulario.xlsx');
     }
 
