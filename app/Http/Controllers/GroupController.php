@@ -129,33 +129,33 @@ class GroupController extends Controller
      */
     public function searchGroup($id)
     {
-        $usersRhh = $this->rrhhService->fetchUsersByCampaign(3);
-        $idsRrhh = $this->getIdsRrhh($usersRhh);
-        $subquery = DB::table('group_users')
-            ->select('group_users.user_id','group_users.group_id', 'group_users.id')
-            ->where('group_id', $id);
+        $idCampaign = Group::select('groups.campaign_id')->where('groups.id', $id)->firstOrFail($id)->campaign_id;
+        $usersRhh = $this->rrhhService->fetchUsersByCampaign($idCampaign);
+        $idsRrhh = $this->getIdsRrhhUsers($usersRhh);
 
-        $groupusers = DB::table('group_users')
-            ->join('groups', 'group_users.group_id', '=', 'groups.id')
+        $queryUsersMembers = GroupUser::join('groups', 'group_users.group_id', '=', 'groups.id')
             ->join('users', 'group_users.user_id', '=', 'users.id')
             ->where('groups.id', $id)
-            ->select('name_group', 'groups.description', 'group_users.user_id', 'users.id_rhh')->get();
+            ->select('name_group', 'groups.description', 'group_users.user_id',
+                'users.id_rhh', 'group_users.id', 'group_users.group_id', 'groups.campaign_id');
+        $usersMembers = $queryUsersMembers->get();
 
-        $users = User::select('users.id', 'users.id_rhh')
-            ->leftJoinSub($subquery, 'group_users', function ($join) {
+        $usersAvailable = User::select('users.id', 'users.id_rhh')
+            ->leftJoinSub($queryUsersMembers, 'group_users', function ($join)
+            {
                 $join->on('users.id', 'group_users.user_id');
             })
             ->where('group_users.id', null)
             ->whereIn('users.id_rhh', $idsRrhh)
             ->get();
 
-        $merged_data = $this->mergeUserCrmWithRrhh($groupusers, $usersRhh);
-        $merged_data2 = $this->mergeUserCrmWithRrhh($users, $usersRhh);
-        $data = ['available' => $merged_data2, 'members' => $merged_data];
+        $usersMembers = $this->mergeUserCrmWithUserRrhh($usersMembers, $usersRhh);
+        $usersAvailable = $this->mergeUserCrmWithUserRrhh($usersAvailable, $usersRhh);
+        $data = ['available' => $usersAvailable, 'members' => $usersMembers];
         return $data;
     }
 
-    private function mergeUserCrmWithRrhh($userscrm, $usersRhh)
+    private function mergeUserCrmWithUserRrhh($userscrm, $usersRhh)
     {
         foreach ($userscrm as $usercrm)
         {
@@ -173,7 +173,7 @@ class GroupController extends Controller
         return $userscrm;
     }
 
-    private function getIdsRrhh($usersRhh)
+    private function getIdsRrhhUsers($usersRhh)
     {
         $idsRrhh = array();
         foreach ($usersRhh as $userRhh)
