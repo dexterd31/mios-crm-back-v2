@@ -149,13 +149,13 @@ class GroupController extends Controller
             ->whereIn('users.id_rhh', $idsRrhh)
             ->get();
 
-        $usersMembers = $this->mergeUserCrmWithUserRrhh($usersMembers, $usersRhh);
-        $usersAvailable = $this->mergeUserCrmWithUserRrhh($usersAvailable, $usersRhh);
+        $usersMembers = $this->mergeUserCrmWithUserRrhh($usersMembers, $usersRhh, true);
+        $usersAvailable = $this->mergeUserCrmWithUserRrhh($usersAvailable, $usersRhh, false);
         $data = ['available' => $usersAvailable, 'members' => $usersMembers];
         return $data;
     }
 
-    private function mergeUserCrmWithUserRrhh($userscrm, $usersRhh)
+    private function mergeUserCrmWithUserRrhh($userscrm, $usersRhh, $removerId)
     {
         foreach ($userscrm as $usercrm)
         {
@@ -164,9 +164,12 @@ class GroupController extends Controller
                 if($userRhh->id == $usercrm->id_rhh)
                 {
                     $usercrm->name = $userRhh->name;
-                    $usercrm->documento = $userRhh->documento;
-                    $usercrm->state = $userRhh->state;
-                    $usercrm->email = $userRhh->email;
+                    unset($usercrm->group_id);
+                    unset($usercrm->campaign_id);
+                    if ($removerId)
+                    {
+                        unset($usercrm->id);
+                    }
                 }
             }
         }
