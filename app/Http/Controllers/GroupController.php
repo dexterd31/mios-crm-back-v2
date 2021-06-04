@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Services\RrhhService;
 use Helpers\MiosHelper;
+use Log;
 
 class GroupController extends Controller
 {
@@ -128,53 +129,61 @@ class GroupController extends Controller
      */
     public function searchGroup($id)
     {
-        $subquery = GroupUser::select('user_id')->where('group_id', $id);
+        $idCampaign = Group::select('groups.campaign_id')->where('groups.id', $id)->firstOrFail($id)->campaign_id;
+        $usersRhh = $this->rrhhService->fetchUsersByCampaign($idCampaign);
+        $idsRrhh = $this->getIdsRrhhUsers($usersRhh);
 
-        $groupusers = DB::table('group_users')
-            ->join('groups', 'group_users.group_id', '=', 'groups.id')
+        $queryUsersMembers = GroupUser::join('groups', 'group_users.group_id', '=', 'groups.id')
             ->join('users', 'group_users.user_id', '=', 'users.id')
             ->where('groups.id', $id)
-            ->select('name_group', 'groups.description', 'group_users.user_id')->get();
+            ->select('name_group', 'groups.description', 'group_users.user_id',
+                'users.id_rhh', 'group_users.id', 'group_users.group_id', 'groups.campaign_id');
+        $usersMembers = $queryUsersMembers->get();
 
-        $users = User::select('users.id')
-            ->distinct()
-            ->leftjoin('group_users', 'users.id', '=', 'group_users.user_id')
-            ->leftjoin('groups', 'group_users.group_id', '=', 'groups.id')
-            ->where('group_users.user_id', null)
-            ->orWhere('group_users.group_id', '!=', $id)
-            ->whereNotIn('group_users.user_id', $subquery)
+        $usersAvailable = User::select('users.id', 'users.id_rhh')
+            ->leftJoinSub($queryUsersMembers, 'group_users', function ($join)
+            {
+                $join->on('users.id', 'group_users.user_id');
+            })
+            ->where('group_users.id', null)
+            ->whereIn('users.id_rhh', $idsRrhh)
             ->get();
 
-        $rrhh_users_ids = collect();
-        // dd($groupusers);
-        foreach ($groupusers as $key => $user) {
-            $usercrm = User::findOrFail($user->user_id);
-            $rrhh_users_ids->push($usercrm->id_rhh);
-            $user->id_rhh = $usercrm->id_rhh;
-        }
-
-        $merged_data = $this->rrhhService->fecthUsersAndMerge(
-            $rrhh_users_ids->all(),
-            json_decode($groupusers),
-            'id_rhh',
-            ['name']
-        );
-
-        foreach ($users as $key => $user) {
-            $usercrm = User::findOrFail($user->id);
-            $rrhh_users_ids->push($usercrm->id_rhh);
-            $user->id_rhh = $usercrm->id_rhh;
-        }
-
-        $merged_data2 = $this->rrhhService->fecthUsersAndMerge(
-            $rrhh_users_ids->all(),
-            json_decode($users),
-            'id_rhh',
-            ['name']
-        );
-
-        $data = ['available' => $merged_data2, 'members' => $merged_data];
+        $usersMembers = $this->mergeUserCrmWithUserRrhh($usersMembers, $usersRhh, true);
+        $usersAvailable = $this->mergeUserCrmWithUserRrhh($usersAvailable, $usersRhh, false);
+        $data = ['available' => $usersAvailable, 'members' => $usersMembers];
         return $data;
+    }
+
+    private function mergeUserCrmWithUserRrhh($userscrm, $usersRhh, $removerId)
+    {
+        foreach ($userscrm as $usercrm)
+        {
+            foreach($usersRhh as $userRhh)
+            {
+                if($userRhh->id == $usercrm->id_rhh)
+                {
+                    $usercrm->name = $userRhh->name;
+                    unset($usercrm->group_id);
+                    unset($usercrm->campaign_id);
+                    if ($removerId)
+                    {
+                        unset($usercrm->id);
+                    }
+                }
+            }
+        }
+        return $userscrm;
+    }
+
+    private function getIdsRrhhUsers($usersRhh)
+    {
+        $idsRrhh = array();
+        foreach ($usersRhh as $userRhh)
+        {
+            array_push($idsRrhh, $userRhh->id);
+        }
+        return $idsRrhh;
     }
 
     /**
