@@ -18,25 +18,25 @@ class FilterHelper
         //dd("json_contains(structure_answer, '{\"key\":\"$item1key\", \"value\":\"$item1value\"}')");
         $form_answers = FormAnswer::where('form_id', $formId)
             ->whereRaw("json_contains(lower(structure_answer), lower('{\"key\":\"$item1key\", \"value\":\"$item1value\"}'))");
-            
-        
+
+
         if(!empty($item2key)){
             $form_answers = $form_answers
             ->whereRaw("json_contains(lower(structure_answer), lower('{\"key\":\"$item2key\", \"value\":\"$item2value\"}'))");
-                
+
         }
 
         if(!empty($item3key)){
             $form_answers = $form_answers
             ->whereRaw("json_contains(lower(structure_answer), lower('{\"key\":\"$item3key\", \"value\":\"$item3value\"}'))");
-                
-        } 
-            
+
+        }
+
         $form_answers = $form_answers->with('client')->paginate(5);
         return $form_answers;
     }
 
-    // funcion para obtener el id cliente 
+    // funcion para obtener el id cliente
     function searchClient($item1value, $item2value, $item3value)
     {
         $miosHelper = new MiosHelper();
@@ -84,7 +84,7 @@ class FilterHelper
         $parameter  = null;
         $form_answers = null;
         if ($apiFind) {
-            // Se busca los item de busqueda 
+            // Se busca los item de busqueda
             if ($apiFind['parameter'] != null || $apiFind['parameter'] != '') {
                 if ($item1key == $apiFind['parameter']) {
                     $parameter = $item1value;
@@ -99,7 +99,7 @@ class FilterHelper
             $infoApi = $apiHelper->getInfoByApi($apiFind, $parameter, $formId, $item1key, $item1value, $item2key, $item2value, $item3key, $item3value );
 
             $form_answers = $infoApi;
-          
+
             if($form_answers != null) {
                 $answerApi = [];
                 array_push($answerApi, $form_answers);
@@ -108,5 +108,5 @@ class FilterHelper
 
         }
         return $form_answers;
-    } 
+    }
 }

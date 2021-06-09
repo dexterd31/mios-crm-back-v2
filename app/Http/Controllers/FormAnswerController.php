@@ -78,7 +78,6 @@ class FormAnswerController extends Controller
                     }
                     $i++;
                 }
-
                 array_push($clientInfo, $clientData);
                 $clientData = array();
 
@@ -123,7 +122,7 @@ class FormAnswerController extends Controller
                         }
 
                     }
-
+                    // ? es el mismo de la linea 161
                     $form_answer = new FormAnswer([
                         'user_id' => json_decode($request['user_id']),
                         'channel_id' => 1,
@@ -214,14 +213,11 @@ class FormAnswerController extends Controller
                 * Se busca si hay registros en Mios
                 */
                 $form_answers = $filterHelper->filterByGestions($formId, $item1key, $item1value, $item2key, $item2value, $item3key, $item3value);
-
                 // Se valida si ya se ha encontrado inforación, sino se busca por id del cliente
                 $validador = $miosHelper->jsonDecodeResponse(json_encode($form_answers));
-
                 if ($form_answers == null || count($validador['data']) == 0) {
                     // Se buscan las gestiones por base de datos
                     $clientId = $filterHelper->searchClient($item1value, $item2value, $item3value);
-
                     /* if ($clientId) {
                         $form_answers = $filterHelper->searchGestionByClientId($formId, $clientId);
                     } */
