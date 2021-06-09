@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 use Carbon\Carbon;
-
+use Illuminate\Support\Facades\Log;
 
 class FormController extends Controller
 {
@@ -46,57 +46,15 @@ class FormController extends Controller
                 $rolesArray[] = str_replace('crm::', '', $value);
             }
         }
-
         $paginate = $request->query('n', 5);
         $forms = $this->getFormsByIdUser($userId, $paginate);
-
         foreach ($forms as $value) {
-
             if (count(array_intersect($rolesArray, json_decode($value->seeRoles))) > 0) {
                 $value->roles = true;
             } else {
                 $value->roles = false;
             }
-
-            $value->sections_number = $value->section()->count();
-            $value->fields_number = 0;
-
-            $current_fields = [];
-
-            foreach($value->section as $section){
-                $value->fields_number += count(json_decode($section->fields));
-                $current_fields[]= json_decode($section->fields);
-            }
-
-            unset($value->section);
-
-            $last_logs = FormLog::where('form_id', $value->id)->orderBy('created_at', 'desc')->take(2)->get();
-
-            if(!empty($last_logs[0])){
-                $user_info = $this->ciuService->fetchUserByRrhhId($last_logs[0]->user_id);
-                $value->edited_by = $user_info->rrhh->first_name.' '.$user_info->rrhh->last_name;
-            }
-
-            $previous_fields = [];
-            if(!empty($last_logs[1])){
-                foreach(json_decode($last_logs[1]->sections) as $section){
-                    $previous_fields[]= $section->fields;
-                }
-            }
-
-            $current_fields = count($current_fields) ?array_merge(...$current_fields) : $current_fields;
-            $previous_fields = count($previous_fields) ?array_merge(...$previous_fields) : $previous_fields;
-            $modified_fields =[];
-            foreach ($current_fields as $field) {
-                if(!in_array($field, $previous_fields)){
-                    $modified_fields[] = $field;
-                }
-            }
-
-            $value->modified_fields = $modified_fields;
-
         }
-
         return $forms;
     }
 
@@ -304,10 +262,12 @@ class FormController extends Controller
     public function report(Request $request)
     {
       $sections=Section::select('fields')->where("form_id",$request->formId)->get();
+      Log::info(json_encode($sections));
       $formAnswers = FormAnswer::where('form_id',$request->formId)
                           ->where('created_at','>=', $request->date1)
                           ->where('created_at','<=', $request->date2)
                           ->select('id', 'structure_answer', 'created_at', 'updated_at')->get();
+      Log::info(count($formAnswers)." FormId:".$request->formId." Date 1:".$request->date1." Date 2:".$request->date2);
       if(count($formAnswers)==0){
             // 406 Not Acceptable
             // se envia este error ya que no esta mapeado en interceptor angular.
