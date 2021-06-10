@@ -326,6 +326,7 @@ class FormController extends Controller
      * Olme Marin
      * 25-03-2021
      * Método para consultar el listado de los formularios asignados a un usuario por grupo
+     * @deprecated: La función FormList ya realiza la busqueda por usuarios y grupos Reportada 2021-06-10
      */
     public function formsByUser(MiosHelper $miosHelper, $idUser, Request $request)
     {
