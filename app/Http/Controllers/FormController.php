@@ -262,12 +262,10 @@ class FormController extends Controller
     public function report(Request $request)
     {
       $sections=Section::select('fields')->where("form_id",$request->formId)->get();
-      Log::info(json_encode($sections));
       $formAnswers = FormAnswer::where('form_id',$request->formId)
                           ->where('created_at','>=', $request->date1)
                           ->where('created_at','<=', $request->date2)
                           ->select('id', 'structure_answer', 'created_at', 'updated_at')->get();
-      Log::info(count($formAnswers)." FormId:".$request->formId." Date 1:".$request->date1." Date 2:".$request->date2);
       if(count($formAnswers)==0){
             // 406 Not Acceptable
             // se envia este error ya que no esta mapeado en interceptor angular.
@@ -333,10 +331,10 @@ class FormController extends Controller
     {
         $paginate = $request->query('n', 5);
         $forms = $this->getFormsByIdUser($idUser, $paginate);
-            foreach ($forms as $form) {
-                $form->filters = $miosHelper->jsonDecodeResponse($form->filters);
-            }
-            $data = $miosHelper->jsonResponse(true, 200, 'forms', $forms);
+        foreach ($forms as $form) {
+            $form->filters = $miosHelper->jsonDecodeResponse($form->filters);
+        }
+        $data = $miosHelper->jsonResponse(true, 200, 'forms', $forms);
         return response()->json($data, $data['code']);
     }
 
