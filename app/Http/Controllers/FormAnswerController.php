@@ -51,7 +51,7 @@ class FormAnswerController extends Controller
                 $i = 0;
                 $form_answer = null;
 
-                $date_string = date('c');
+                $date_string = Carbon::now('America/Bogota')->format('YmdHis');
 
                 foreach ($json_body as $section) {
                     foreach ($section['fields'] as $field) {

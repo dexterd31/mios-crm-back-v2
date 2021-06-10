@@ -14,7 +14,7 @@ class SetMenuCiuIdInModulesCrmSeeder extends Seeder
     public function run()
     {
         $module = ModuleCrm::where("id", 1)->first();
-        $module->menu_ciu_id = 10;
+        $module->menu_ciu_id = 11;
         $module->save();
         $module = ModuleCrm::where("id", 2)->first();
         $module->menu_ciu_id = 12;
