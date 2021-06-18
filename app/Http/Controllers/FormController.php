@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class FormController extends Controller
 {
@@ -33,7 +34,7 @@ class FormController extends Controller
      * 27-01-2020
      * Método para consultar los formularios existentes en la BD
      */
-    public function FormsList()
+    public function FormsList(Request $request)
     {
         $userId = auth()->user()->rrhh_id;
         $userLocal = User::where('id_rhh','=',$userId)->firstOrFail();
@@ -45,55 +46,15 @@ class FormController extends Controller
                 $rolesArray[] = str_replace('crm::', '', $value);
             }
         }
-
-        $forms = $this->getFormsByIdUser($userLocal->id, true);
+        $paginate = $request->query('n', 5);
+        $forms = $this->getFormsByIdUser($userId, $paginate);
         foreach ($forms as $value) {
-
             if (count(array_intersect($rolesArray, json_decode($value->seeRoles))) > 0) {
                 $value->roles = true;
             } else {
                 $value->roles = false;
             }
-
-            $value->sections_number = $value->section()->count();
-            $value->fields_number = 0;
-
-            $current_fields = [];
-            foreach($value->section as $section){
-                $value->fields_number += count(json_decode($section->fields));
-                $current_fields[]= json_decode($section->fields);
-            }
-            unset($value->section);
-
-
-
-            $last_logs = FormLog::where('form_id', $value->id)->orderBy('created_at', 'desc')->take(2)->get();
-
-            if(!empty($last_logs[0])){
-                $user_info = $this->ciuService->fetchUserByRrhhId($last_logs[0]->user_id);
-                $value->edited_by = $user_info->rrhh->first_name.' '.$user_info->rrhh->last_name;
-            }
-
-            $previous_fields = [];
-            if(!empty($last_logs[1])){
-                foreach(json_decode($last_logs[1]->sections) as $section){
-                    $previous_fields[]= $section->fields;
-                }
-            }
-
-            $current_fields = count($current_fields) ?array_merge(...$current_fields) : $current_fields;
-            $previous_fields = count($previous_fields) ?array_merge(...$previous_fields) : $previous_fields;
-            $modified_fields =[];
-            foreach ($current_fields as $field) {
-                if(!in_array($field, $previous_fields)){
-                    $modified_fields[] = $field;
-                }
-            }
-
-            $value->modified_fields = $modified_fields;
-
         }
-
         return $forms;
     }
 
@@ -108,6 +69,7 @@ class FormController extends Controller
             ->with('section')
             ->select('*')
             ->first();
+
         $formsSections->seeRoles = json_decode($formsSections->seeRoles);
         $formsSections->filters = json_decode($formsSections->filters);
         for ($i = 0; $i < count($formsSections->section); $i++) {
@@ -115,6 +77,7 @@ class FormController extends Controller
             unset($formsSections->section[$i]['updated_at']);
             unset($formsSections->section[$i]['form_id']);
             $formsSections->section[$i]['fields'] = json_decode($formsSections->section[$i]['fields']);
+
         }
 
         return response()->json($formsSections);
@@ -219,15 +182,6 @@ class FormController extends Controller
             $form->filters = json_encode($request->filters);
             $form->seeRoles = json_encode($request->role);
             $form->save();
-
-            $sections =  Section::where('form_id',$id)
-                                  ->where('name_section','<>','Datos básicos del cliente')
-                                  ->get();
-
-            foreach($sections  as $section)
-            {
-              $section->delete();
-            }
 
             foreach($request->sections as $section)
             {
@@ -364,8 +318,7 @@ class FormController extends Controller
             $r++;
           }
           array_push($titleHeaders,'Fecha de creación','Fecha de actualización');
-        }
-
+      }
       return Excel::download(new FormReportExport($rows, $titleHeaders), 'reporte_formulario.xlsx');
     }
 
@@ -374,13 +327,14 @@ class FormController extends Controller
      * 25-03-2021
      * Método para consultar el listado de los formularios asignados a un usuario por grupo
      */
-    public function formsByUser(MiosHelper $miosHelper, $idUser)
+    public function formsByUser(MiosHelper $miosHelper, $idUser, Request $request)
     {
-        $forms = $this->getFormsByIdUser($idUser);
-            foreach ($forms as $form) {
-                $form->filters = $miosHelper->jsonDecodeResponse($form->filters);
-            }
-            $data = $miosHelper->jsonResponse(true, 200, 'forms', $forms);
+        $paginate = $request->query('n', 5);
+        $forms = $this->getFormsByIdUser($idUser, $paginate);
+        foreach ($forms as $form) {
+            $form->filters = $miosHelper->jsonDecodeResponse($form->filters);
+        }
+        $data = $miosHelper->jsonResponse(true, 200, 'forms', $forms);
         return response()->json($data, $data['code']);
     }
 
@@ -458,21 +412,14 @@ class FormController extends Controller
         }
     }
 
-    private function getFormsByIdUser($userId, $paginate = false)
+    private function getFormsByIdUser($userId, $paginate)
     {
         $forms = Form::join('form_types', 'forms.form_type_id', '=', 'form_types.id')
             ->join("groups", "groups.id", "forms.group_id")
             ->join('group_users', 'group_users.group_id', 'groups.id')
             ->select('name_form', 'forms.id', 'name_type', 'forms.state', 'seeRoles', 'forms.updated_at')
-            ->where('group_users.User_id', $userId);
-        if($paginate)
-        {
-            $forms = $forms->paginate(5);
-        }
-        else
-        {
-            $forms = $forms->get();
-        }
+            ->where('group_users.User_id', $userId)
+            ->paginate($paginate)->withQueryString();
         return $forms;
     }
 }

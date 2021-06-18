@@ -8,6 +8,7 @@ use App\Services\CiuService;
 use App\Services\NominaService;
 use Helpers\MiosHelper;
 
+
 class CampaignController extends Controller
 {
     private $ciuService;
@@ -22,12 +23,23 @@ class CampaignController extends Controller
 
     public function index(Request $request, GroupController $groupController)
     {
-        //Litar todas las campañas de los grupos a los que pertenece el usuario.
+        //Litar todas las campañas de los grupos a los que pertenece el usuarioi
         //Si el usuario es administrador o supervisor, puede ver las campanas inactivas
         try {
             $user = $this->ciuService->fetchUser(auth()->user()->id)->data;
             //Se traen las campañas por el id de campaña
             $campaign = $this->nominaService->fetchSpecificCampaigns([$user->rrhh->campaign_id]);
+            /**
+             * @author: Leogiraldoq
+             * Se quitan los elementos inecesarios en para el front,
+             * ? se realiza for para tener en cuenta el momento que se listen mas de una campaña (SuperAdministrador)
+            */
+            for($c=0;$c<count($campaign->data);$c++){
+                unset($campaign->data[$c]->rrhh_id);
+                unset($campaign->data[$c]->code);
+                unset($campaign->data[$c]->created_at);
+                unset($campaign->data[$c]->updated_at);
+            }
             return $this->successResponse($campaign->data);
         } catch (\Throwable $th) {
             return $this->errorResponse('Ocurrio un error al intentar mostrar las campañas.', 500);
