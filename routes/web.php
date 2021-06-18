@@ -30,7 +30,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/formsbyuser/{idUser}', 'FormController@formsByUser');
 
     //Base de datos
-    // la variable parameters esta en base64 y puede contener el caracter '/', lo cual lanza error 404, 
+    // la variable parameters esta en base64 y puede contener el caracter '/', lo cual lanza error 404,
     // por eso se usa el regex para capturar todo el contenido de la url
     $router->get('/form/dowload/{parameters:.*}', 'UploadController@exportExcel');
     $router->post('/form/download/db', 'UploadController@exportDatabase');
@@ -39,6 +39,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
+    $router->post('/formanswer/integration/voice', 'FormAnswerController@saveIntegrationVoice');
+
+
     $router->post('/formanswer/filterform', 'FormAnswerController@filterForm');
     $router->get('/formanswer/historic/{id}', 'FormAnswerController@formAnswerHistoric');
     $router->put('/formanswer/update/{id}', 'FormAnswerController@updateInfo');
