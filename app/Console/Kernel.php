@@ -25,5 +25,10 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         //
+        /**
+         * DataCRMService::getContacts(FORM_ID)
+         * DataCRMService::getContacts(FORM_ID)
+         * DataCRMService::getContacts(FORM_ID)
+         */
     }
 }

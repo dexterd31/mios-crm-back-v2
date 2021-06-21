@@ -13,5 +13,8 @@ return [
     ],
     'pqrs' => [
         'base_uri' => env('PQRS_SERVICES_BASE_URI'),
+    ],
+    'data_crm'=>[
+        'base_uri' => env('DATACRM_SERVICES_BASE_URI'),
     ]
 ];
