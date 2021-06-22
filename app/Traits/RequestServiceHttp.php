@@ -11,28 +11,50 @@ trait RequestServiceHttp
     public function get($endpoint,$params = []){
 
 
-            $response = Http::get($this->baseUri.$endpoint,$params);
+        $curl = curl_init();
 
-            if($response->successful()){
-                return $response->json();
-            }
-            if($response->failed()){
-                throw new Exception("Error Processing Request", 1);
-            }
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => $this->baseUri.$endpoint,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'GET',
+        ));
 
+        $response = curl_exec($curl);
+
+        curl_close($curl);
+        Log::info($response);
+        return json_decode($response);
 
     }
     public function post($endpoint,$params = []){
-        $response = Http::post($this->baseUri.$endpoint, $params);
-        Log::info($response->clientError());
-        Log::info($response->serverError());
 
-        if($response->successful()){
-            return $response->json();
-        }
-        if($response->failed()){
-            throw new Exception("Error Processing Request", 1);
-        }
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => $this->baseUri.$endpoint,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS => $params,
+        CURLOPT_HTTPHEADER => array(
+            'Content-Type: application/x-www-form-urlencoded'
+        ),
+        ));
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
+        Log::info($response);
+        return json_decode($response);
     }
     public function put(){
 

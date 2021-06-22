@@ -27,7 +27,7 @@ class DataCRMService
 
     public function getToken($username){
 
-       $response = $this->get('/webservice.php',['operation'=>'getchallenge','username'=>$username]);
+       $response = $this->get('/webservice.php?operation=getchallenge&username='.$username);
        return $response;
 
     }
@@ -43,31 +43,21 @@ class DataCRMService
 
         $this->baseUri = $apiConnection->url;
             $credentials = json_decode($apiConnection->json_send);
-            //Log::info($credentials);
             $token = $this->getToken($credentials->username);
-            //Log::info($token->result);
-            $tokenValue ='60d23b9ae6e42';
-            Log::info($tokenValue);
-            Log::info($credentials->user_pass);
-            Log::info($tokenValue.$credentials->user_pass);
-            $requestBody = array(
-                'operation'=>'login',
-                'username'=>$credentials->username,
-                'accessKey'=> md5($tokenValue.$credentials->user_pass)
-            );
-            Log::info($requestBody);
+            $tokenValue = $token->result->token;
+
+            $requestBody = 'operation=login&username='.$credentials->username.'&accessKey='.md5($tokenValue.$credentials->user_pass);
 
             $loginResponse = $this->post('/webservice.php', $requestBody);
             //if(!$loginResponse->success)  throw new Exception($loginResponse->error->message, 1);
 
             $data = array(
-                'expireTime'=>$token['result']['expireTime'],
-                'sessionName'=>$loginResponse['result']['sessionName'],
-                'userId'=>$loginResponse['result']['userId']
+                'expireTime'=>$token->result->expireTime,
+                'sessionName'=>$loginResponse->result->sessionName,
+                'userId'=>$loginResponse->result->userId
             );
-            Log::info($loginResponse);
             Cache::forever('data_crm_session-'.$this->formId, $data);
-            return $loginResponse['result']['sessionName'];
+            return $loginResponse->result->sessionName;
 
     }
 
@@ -76,35 +66,31 @@ class DataCRMService
         Log::info($token);
         $now = Carbon::now();
         if($token && !is_null($token['expireTime'])){
-            if($now->timestamp <= $token['expireTime']){
+            if($now->timestamp >= $token['expireTime']){
                return $this->login();
             }else{
-                return $token->sessionName;
+                return $token['sessionName'];
             }
         }else{
            return $this->login();
         }
     }
 
-    public function getCountContacts(){
+    public function getCountAccounts(){
 
         // 'webservice.php?operation=query&sessionName={{sessionName}}&query=select%20*%20from%20Contacts;'
-
-        $requestBody = array(
-            'operation'=>'query',
-            'sessionName'=>$this->getSessionName(),
-            'query'=> 'select count(*) as count from Contacts'
-
-        );
-        $countContacts = $this->request('GET', '/webservice.php', $requestBody);
+        $sql = urlencode("select count(*) from Accounts where createdtime>='2021-01-01 00:00:00';");
+        $requestBody = '/webservice.php?operation=query&sessionName='.$this->getSessionName().'&query='.$sql;
+        $countAccounts = $this->get($requestBody);
         $leadMios = KeyValue::where('form_id',$this->formId)->groupBy('client_id')->count();
-        $diffLead = $countContacts - $leadMios;
+        $diffLead = $countAccounts->result[0]->count - $leadMios;
+        Log::info($countAccounts);
         return $diffLead;
     }
 
     public function getContacts($formId){
             $this->formId = $formId;
-            $diffLead = $this->getCountContacts();
+            $diffLead = $this->getcountAccounts();
             if( $diffLead != 0){
 
                 if($diffLead > 100){
@@ -121,7 +107,7 @@ class DataCRMService
 
                         );
                         $leads =  $this->request('GET', '/webservice.php', $requestBody);
-                        $this->setClients($leads['result']);
+                        // $this->setClients($leads['result']);
                     } while ($cicles <= $ciclesTotal);
 
 
@@ -133,14 +119,9 @@ class DataCRMService
 
                     );
                     $leads =  $this->request('GET', '/webservice.php', $requestBody);
-                    $this->setClients($leads['result']);
+                    // $this->setClients($leads['result']);
                 }
-
-
-
-
             }
-
     }
 
     public function setClients($leads){
