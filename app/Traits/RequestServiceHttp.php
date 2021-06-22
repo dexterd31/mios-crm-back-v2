@@ -25,9 +25,9 @@ trait RequestServiceHttp
         ));
 
         $response = curl_exec($curl);
-
-        curl_close($curl);
         Log::info($response);
+        curl_close($curl);
+
         return json_decode($response);
 
     }
@@ -45,6 +45,8 @@ trait RequestServiceHttp
         CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
         CURLOPT_CUSTOMREQUEST => 'POST',
         CURLOPT_POSTFIELDS => $params,
+
+
         CURLOPT_HTTPHEADER => array(
             'Content-Type: application/x-www-form-urlencoded'
         ),
@@ -53,7 +55,6 @@ trait RequestServiceHttp
         $response = curl_exec($curl);
 
         curl_close($curl);
-        Log::info($response);
         return json_decode($response);
     }
     public function put(){

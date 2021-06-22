@@ -12,6 +12,6 @@ class SandboxController extends Controller
         $this->dataCrmService = $dataCrmService;
     }
     public function getContactsFromDataCRM(){
-        $this->dataCrmService->getContacts(1);
+        $this->dataCrmService->getAccounts(1);
     }
 }
