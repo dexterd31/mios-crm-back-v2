@@ -59,4 +59,17 @@ class UserController extends Controller
             return $this->errorResponse('Error al desactivar el usuario',500);
         }
     }
+
+    /**
+     * Joao Beleno
+     * 22-06-2021
+     * Funcion para obtener los usuarios del grupo
+     */
+    public function getUsersRrhhIdByIdGroup(Request $request)
+    {
+        $groupId = $request->input('groupId');
+        return User::select('users.id_rhh')
+            ->join('group_users', 'group_users.user_id', 'users.id')
+            ->where('group_users.group_id', $groupId)->get();
+    }
 }

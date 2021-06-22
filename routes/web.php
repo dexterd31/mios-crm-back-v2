@@ -67,6 +67,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas de usuarios
     $router->post('/storeUser', 'UserController@storeUser');
     $router->put('/disabledUser/{id}', 'UserController@disabledUser');
+    $router->get('/getUsersRrhhIdByIdGroup', 'UserController@getUsersRrhhIdByIdGroup');
 
     //Rutas de clientes
     $router->get('/getClient/{id}', 'ClientController@getClient');
