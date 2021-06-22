@@ -121,6 +121,13 @@ $router->group(['prefix' => 'api'], function () use ($router) {
         return $form_answers;
     });
 
+
+    /**
+     * Sandbox api
+     */
+
+     $router->get('contactos','SandboxController@getContactsFromDataCRM');
+
 });
 
 

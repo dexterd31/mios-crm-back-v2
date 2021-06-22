@@ -7,28 +7,29 @@ use App\Models\Client;
 use App\Models\Form;
 use App\Models\KeyValue;
 use App\Traits\RequestService;
+use App\Traits\RequestServiceHttp;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+
+use function GuzzleHttp\json_decode;
 
 class DataCRMService
 {
     use RequestService;
     public $baseUri;
     private $formId;
+    use RequestServiceHttp;
 
-    public function __construct()
-    {
-        $this->baseUri = config('services.data_crm.base_uri');
-    }
+
 
     public function getToken($username){
-        $requestBody = array(
-            'operation'=>'getchallenge',
-            'username'=>$username
-        );
-        $token = $this->request('POST', '/webservice.php', $requestBody);
-        return $token;
+
+       $response = $this->get('/webservice.php',['operation'=>'getchallenge','username'=>$username]);
+       return $response;
+
     }
 
     public function login(){
@@ -36,23 +37,35 @@ class DataCRMService
         $apiConnection = ApiConnection::where('form_id',$this->formId)
                                         ->where('api_type',10)
                                         ->where('status',1)
-                                        ->get();
+                                        ->first();
 
-            $credentials = json_decode($apiConnection->json->send,true);
+        if(!$apiConnection) throw new Exception("Configuracion de Api no encontrada", 1);
 
-            $token = $this->getToken($credentials['username']);
+        $this->baseUri = $apiConnection->url;
+            $credentials = json_decode($apiConnection->json_send);
+            //Log::info($credentials);
+            $token = $this->getToken($credentials->username);
+            //Log::info($token->result);
+            $tokenValue ='60d23b9ae6e42';
+            Log::info($tokenValue);
+            Log::info($credentials->user_pass);
+            Log::info($tokenValue.$credentials->user_pass);
             $requestBody = array(
                 'operation'=>'login',
-                'username'=>$credentials['username'],
-                'accessKey'=> md5($token.$credentials['user_pass'])
+                'username'=>$credentials->username,
+                'accessKey'=> md5($tokenValue.$credentials->user_pass)
             );
+            Log::info($requestBody);
 
-            $loginResponse = $this->request('POST', '/webservice.php', $requestBody);
+            $loginResponse = $this->post('/webservice.php', $requestBody);
+            //if(!$loginResponse->success)  throw new Exception($loginResponse->error->message, 1);
+
             $data = array(
                 'expireTime'=>$token['result']['expireTime'],
                 'sessionName'=>$loginResponse['result']['sessionName'],
                 'userId'=>$loginResponse['result']['userId']
             );
+            Log::info($loginResponse);
             Cache::forever('data_crm_session-'.$this->formId, $data);
             return $loginResponse['result']['sessionName'];
 
@@ -60,9 +73,10 @@ class DataCRMService
 
     public function getSessionName(){
         $token = Cache::get('data_crm_session-'.$this->formId);
+        Log::info($token);
         $now = Carbon::now();
-        if($token){
-            if($now->timestamp <= $token->expireTime){
+        if($token && !is_null($token['expireTime'])){
+            if($now->timestamp <= $token['expireTime']){
                return $this->login();
             }else{
                 return $token->sessionName;
