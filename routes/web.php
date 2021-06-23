@@ -39,6 +39,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
+    $router->post('/formanswer/integration/voice', 'FormAnswerController@saveIntegrationVoice');
+
+
     $router->post('/formanswer/filterform', 'FormAnswerController@filterForm');
     $router->get('/formanswer/historic/{id}', 'FormAnswerController@formAnswerHistoric');
     $router->put('/formanswer/update/{id}', 'FormAnswerController@updateInfo');

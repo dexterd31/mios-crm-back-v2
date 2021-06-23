@@ -11,6 +11,7 @@ use App\Models\Tray;
 use App\Models\Attachment;
 use App\Models\FormAnswerLog;
 use App\Models\User;
+use App\Models\FormAnswerMiosPhone;
 use App\Services\CiuService;
 use App\Services\NominaService;
 use Helpers\ApiHelper;
@@ -186,10 +187,25 @@ class FormAnswerController extends Controller
             } else {
                 $message = 'Tú rol no tiene permisos para ejecutar esta acción';
             }
-            return $this->successResponse($message);
+            return $this->successResponse(['message'=>$message,'formAsnwerId'=>$form_answer->id]);
         // } catch (\Throwable $e) {
         //     return $this->errorResponse('Error al guardar la gestion', 500);
         // }
+    }
+
+    /**
+     * @author Carlos Galindez
+     * Metodo que permite guardar la tipificacion del formulario con el lead y UID de la llamada,
+     * Esto pertenece a integracion con voz, (Vicidial)
+     * @param leadId
+     * @param phoneCustomer
+     * @param uid
+     * @param cui
+     * @param form_answer_id
+     */
+    public function saveIntegrationVoice(Request $request){
+        FormAnswerMiosPhone::create($request->all());
+        return $this->successResponse('Datos guardados con exito');
     }
 
     /**
