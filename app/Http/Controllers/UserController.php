@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\GroupUser;
 use Illuminate\Http\Request;
 use App\Models\User;
 
@@ -67,9 +68,14 @@ class UserController extends Controller
      */
     public function getUsersRrhhIdByIdGroup(Request $request)
     {
-        $groupId = $request->input('groupId');
+        $rrhhId = $request->input('rrhhId');
+
+        $groupUser = GroupUser::select('group_users.group_id')
+            ->join("users", 'group_users.user_id', 'users.id')
+            ->where('users.id_rhh', $rrhhId)->first();
+
         return User::select('users.id_rhh')
             ->join('group_users', 'group_users.user_id', 'users.id')
-            ->where('group_users.group_id', $groupId)->get();
+            ->where('group_users.group_id', $groupUser->group_id)->get();
     }
 }
