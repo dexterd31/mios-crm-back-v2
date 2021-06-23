@@ -10,6 +10,7 @@ use App\Models\Section;
 use App\Models\Tray;
 use App\Models\Attachment;
 use App\Models\FormAnswerLog;
+use App\Models\User;
 use App\Services\CiuService;
 use App\Services\NominaService;
 use Helpers\ApiHelper;
@@ -19,6 +20,8 @@ use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+
+
 
 use Carbon\Carbon;
 
@@ -123,8 +126,10 @@ class FormAnswerController extends Controller
 
                     }
                     // ? es el mismo de la linea 161
+                    $userId = auth()->user()->rrhh_id;
+                    $userCrm=User::where('id_rhh','=',$userId)->firstOrFail();
                     $form_answer = new FormAnswer([
-                        'user_id' => json_decode($request['user_id']),
+                        'user_id' => $userCrm->id,
                         'channel_id' => 1,
                         'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
                         'form_id' => json_decode($request['form_id']),
