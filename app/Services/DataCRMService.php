@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\NewDataCRMLead;
 use App\Models\ApiConnection;
 use App\Models\Client;
 use App\Models\Form;
@@ -49,7 +50,6 @@ class DataCRMService
             $requestBody = 'operation=login&username='.$credentials->username.'&accessKey='.md5($tokenValue.$credentials->user_pass);
 
             $loginResponse = $this->post('/webservice.php', $requestBody);
-            //if(!$loginResponse->success)  throw new Exception($loginResponse->error->message, 1);
 
             $data = array(
                 'expireTime'=>$token->result->expireTime,
@@ -116,71 +116,111 @@ class DataCRMService
                     $sql = urlencode("select * from Accounts order by id desc limit ".$diffLead.";");
                     $requestBody = '/webservice.php?operation=query&sessionName='.$this->getSessionName().'&query='.$sql;
                     $leads =  $this->get($requestBody);
-                    Log::info($leads->result);
-                    $this->setClients($leads->result);
+                    //Log::info($leads->result);
+                    $this->setAccounts($leads->result);
                 }
             }
     }
 
-    public function getContact($accountId){
-        Log::info($accountId);
 
-        $sql = urlencode("select * from Contacts where account_id = '11x".explode('x',$accountId)[1]."';");
-        Log::info($sql);
-        $requestBody = '/webservice.php?operation=query&sessionName='.$this->getSessionName().'&query='.$sql;
-        $contact =  $this->get($requestBody);
-        Log::info( $contact->result );
-        if(!$contact->success) throw new Exception("Error Processing Request", 1);
-
-        return $contact->result->contact_id;
-    }
     public function getPotential($contactId){
-        $sql = urlencode("select * from Potentials where contact_id = '13x".explode('x',$contactId)[1]."';");
+        $sql = urlencode("select * from Potentials where related_to = ".$contactId.";");
         $requestBody = '/webservice.php?operation=query&sessionName='.$this->getSessionName().'&query='.$sql;
         $potential =  $this->get($requestBody);
-        Log::info( $potential );
+       // Log::info( $potential );
         if(!$potential->success) throw new Exception("Error Processing Request", 1);
 
         return $potential->result;
     }
 
-    public function setClients($leads){
+    public function setAccounts($leads){
 
         foreach ($leads as $key => $value) {
-            Log::info( $value->account_id );
 
-            $contactId = $this->getContact($value->id);
-            $potential = $this->getPotential($contactId);
-            Log::info(json_encode($potential,true));
+            $potential = $this->getPotential($value->id);
+            $clientClean = $this->transformValues($value,1);
+            $ponteialClean = $this->transformValues($potential[0],2);
 
-            /*$client = Client::where('phone',$lead['phone'])->where('document',$lead['contact_id'])->first();
-            if(!$client){
-                Client::create([
-                    'first_name'=>$lead['firstname'],
-                    'middle_name'=>null,
-                    'first_lastname'=>$lead['lastname'],
-                    'second_lastname'=>null,
-                    'document'=>$lead['contact_id'],
-                    'phone'=>$lead['phone'],
-                    'email'=>$lead['email'],
-                    'document_type_id'=>null
-                ]);
-            }else{
-                Client::whereId($client->id)->update([
-                    'first_name'=>$lead['firstname'],
-                    'middle_name'=>null,
-                    'first_lastname'=>$lead['lastname'],
-                    'second_lastname'=>null,
-                    'document'=>$lead['contact_id'],
-                    'phone'=>$lead['phone'],
-                    'email'=>$lead['email'],
-                    'document_type_id'=>null
-                ]);
-            }*/
+            Log::info($clientClean);
+            Log::info($ponteialClean);
+
+            $dataClient = [
+                'first_name'=>$value->accountname,
+                'middle_name'=>null,
+                'first_lastname'=>$value->accountname,
+                'second_lastname'=>null,
+                'document'=>null,
+                'phone'=>$value->cf_951,
+                'email'=>$value->email1,
+            ];
+            Log::info('Data a la base de datos');
+            Log::info($dataClient);
+            //$client = Client::create($dataClient);
+
+            $clientId = 1; //FALSO POR AHORA NO QUIERO GUARDAR A DATA BASE
+            $keysToSave = ['first_name','first_lastname','phone','email','source_data_crm_account_id'];
+            $keysToSave2 = ['product_type','source_data_crm_potential_id'];
+            foreach ($keysToSave as $key => $row) {
+                $keyValueToSave = [
+                    'form_id' => $this->formId,
+                    'client_id' => $clientId,
+                    'key' => $row,
+                    'value' => $clientClean[$row],
+                    'description' => null,
+                    'field_id' => '1123213123213213213' //TODO: ???????????
+                ];
+                Log::info($keyValueToSave);
+            }
+            foreach ($keysToSave2 as $key => $row) {
+                $keyValueToSave = [
+                    'form_id' => $this->formId,
+                    'client_id' => $clientId,
+                    'key' => $row,
+                    'value' => $ponteialClean[$row],
+                    'description' => null,
+                    'field_id' => '1123213123213213213' //TODO: ???????????
+                ];
+                Log::info($keyValueToSave);
+            }
+
+            /**
+             * Es necesario crear un registro en la base de datos para controlar las notificaciones
+             *
+             * $notification =
+             *
+             *  event( new NewDataCRMLead( $notification->id, $this->formId ,$clientId  ) );
+             */
+
+
+
+
         }
 
     }
 
+    public function transformValues($values,$typeValue){
+        $valueClean = array();
+        if($typeValue == 1){
+            //Account
+            $valueClean = array(
+                'first_name'=> $values->accountname,
+                'middle_name'=> null,
+                'first_lastname'=>$values->accountname,
+                'second_lastname'=> null,
+                'email'=>$values->email1,
+                'phone'=>$values->cf_951,
+                'source_data_crm_account_id'=>$values->id
+            );
+        }else if($typeValue == 2){
+            //Potentials
+            $valueClean = array(
+                'product_type'=>$values->cf_1041,
+                'source_data_crm_potential_id'=>$values->id
+            );
+        }
+
+        return $valueClean;
+    }
 
     public function setKeyValues($leads){
 

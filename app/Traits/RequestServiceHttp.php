@@ -25,10 +25,13 @@ trait RequestServiceHttp
         ));
 
         $response = curl_exec($curl);
-        Log::info($response);
+        //Log::info($response);
         curl_close($curl);
 
-        return json_decode($response);
+        $responseJson = json_decode($response);
+        if(!$responseJson->success) throw new Exception("Error Processing Request", 1);
+
+        return $responseJson;
 
     }
     public function post($endpoint,$params = []){
@@ -55,7 +58,12 @@ trait RequestServiceHttp
         $response = curl_exec($curl);
 
         curl_close($curl);
-        return json_decode($response);
+
+        $responseJson = json_decode($response);
+        if(!$responseJson->success) throw new Exception("Error Processing Request", 1);
+
+        return $responseJson;
+
     }
     public function put(){
 
