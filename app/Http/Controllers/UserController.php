@@ -16,10 +16,21 @@ class UserController extends Controller
     {
         try
         {
-            $user = new User([
-                'id_rhh' => $request->input('id_rhh'),
-                'state' => $request->input('state')
-            ]);
+            $idRhh = $request->input('id_rhh');
+            $state = $request->input('state');
+
+            $user = User::where("id_rhh", $idRhh)->first();
+            if(!$user)
+            {
+                $user = new User([
+                    'id_rhh' => $request->input('id_rhh'),
+                    'state' => $request->input('state')
+                ]);
+            }
+            else
+            {
+                $user->state = $state;
+            }
             $user->save();
             return $this->successResponse('Usuario guardado Correctamente');
     
