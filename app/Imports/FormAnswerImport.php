@@ -34,6 +34,7 @@ class FormAnswerImport implements ToModel, WithBatchInserts
 
     public function model(array $row)
     {
+
         $formAnswerHelper = new FormAnswerHelper();
         if ($this->num == 0) {
             $this->headers = $row;
@@ -42,10 +43,9 @@ class FormAnswerImport implements ToModel, WithBatchInserts
             $this->sections = [];
             // Obtener el id del cliente
             $client = Client::where('document', $row[5])->select('id')->first();
-
-            // Se pasan los labels para obtener los keyvalues del formulario
+            // Se pasan los labels para obtener los keyvalues del formulario?
+            //Se deben pasar los id's  y comparar contra las secciones
             $keyValues = $formAnswerHelper->getKeysValuesForExcel($this->headers, $this->formId);
-
             // Se construye el formato del objeto de FormAnswer
             $temporal         = array(); // Array para hacer una lista de los keys del formulario
             $responseTemporal = []; // Array para llenar los key del formulario con los registros del excel
@@ -54,20 +54,19 @@ class FormAnswerImport implements ToModel, WithBatchInserts
                     array_push($temporal, $excelKey);
                 }
             }
-
             $count = count($row);
             $curso = array();
             for ($i = 0; $i < $count; $i++) {
-
-                if($row[$i] === null){
+                /*if($row[$i] === null){
                     break;
-                } else {
-                    $curso[$temporal[$i]] = $row[$i];
-                }
-
+                } else {*/
+                    if(strlen($row[$i])<256){
+                        $curso[$temporal[$i]] = $row[$i];
+                    }
+                //}
             }
             array_push($responseTemporal, $curso);
-            
+
             // Se organiza el regsitro de excel por secciones del formulario
             $i = 0;
             $j = 0;
