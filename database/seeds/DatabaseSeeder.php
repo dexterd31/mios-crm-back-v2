@@ -13,7 +13,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call('UserSeeder');
         $this->call('GroupsSeeder');
-        $this->call('CampaingSeeder');
+        //$this->call('CampaingSeeder');
         $this->call('ChannelSeeder');
         $this->call('FormtypeSeeder');
         $this->call('FormSeeder');
