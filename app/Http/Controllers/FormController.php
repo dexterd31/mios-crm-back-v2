@@ -40,14 +40,14 @@ class FormController extends Controller
         $userLocal = User::where('id_rhh','=',$userId)->firstOrFail();
         $roles = auth()->user()->roles;
         $rolesArray = [];
-
         foreach ($roles as $value) {
             if (str_contains($value, 'crm::')) {
                 $rolesArray[] = str_replace('crm::', '', $value);
             }
         }
         $paginate = $request->query('n', 5);
-        $forms = $this->getFormsByIdUser($userId, $paginate);
+        $forms = $this->getFormsByIdUser($userLocal->id, $paginate);
+
         foreach ($forms as $value) {
             if (count(array_intersect($rolesArray, json_decode($value->seeRoles))) > 0) {
                 $value->roles = true;
@@ -326,6 +326,7 @@ class FormController extends Controller
      * Olme Marin
      * 25-03-2021
      * Método para consultar el listado de los formularios asignados a un usuario por grupo
+     * @deprecated: La función FormList ya realiza la busqueda por usuarios y grupos Reportada 2021-06-10
      */
     public function formsByUser(MiosHelper $miosHelper, $idUser, Request $request)
     {
@@ -418,7 +419,7 @@ class FormController extends Controller
             ->join("groups", "groups.id", "forms.group_id")
             ->join('group_users', 'group_users.group_id', 'groups.id')
             ->select('name_form', 'forms.id', 'name_type', 'forms.state', 'seeRoles', 'forms.updated_at')
-            ->where('group_users.User_id', $userId)
+            ->where('group_users.user_id', $userId)
             ->paginate($paginate)->withQueryString();
         return $forms;
     }

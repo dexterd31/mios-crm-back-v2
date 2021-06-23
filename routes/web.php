@@ -73,6 +73,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
     //Rutas de clientes
     $router->get('/getClient/{id}', 'ClientController@getClient');
+    $router->post('/client','ClientController@store');
 
     //Rutas de parámetros
     $router->post('/saveParameters/{id}','ParameterController@saveParameters');
