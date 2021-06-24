@@ -23,6 +23,6 @@ class SandboxController extends Controller
     }
 
     public function getFields(){
-        $this->dataCrmService->getFields(2);
+        return $this->dataCrmService->getFields(2);
     }
 }

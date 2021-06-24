@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use DB;
+use PhpOffice\PhpSpreadsheet\Calculation\MathTrig\Trig\Secant;
 
 use function GuzzleHttp\json_decode;
 
@@ -137,27 +138,30 @@ class DataCRMService
     }
 
     public function getFields($formId){
+        $keysToSave = ['firstName','first_lastname','phone','email','source_data_crm_account_id','placa'];
+        return Section::getFields(2,$keysToSave);
 
-        $keysToSave = ['first_name','first_lastname','phone','email','source_data_crm_account_id'];
+       //
+        $sql = Section::where('form_id', $formId);
 
-        $sql = Section::where('form_id', 2);
-
-        foreach ($keysToSave as $key) {
-            $sql->orWhereJsonContains('fields', ['key'=>$key])->where('form_id', 2);
-        }
+        $sql->where(function($query) use($keysToSave) {
+            foreach ($keysToSave as $key) {
+                $query->orWhereJsonContains('fields', ['key'=>$key]);
+            }
+        });
         $sections = $sql->get();
-        $sections1 = collect();
+
         $fields = collect();
 
+        $keysToSaveCollect = collect($keysToSave);
+
         foreach ($sections as $section) {
-            $sections1->push(json_decode($section->fields));
+            foreach (json_decode($section->fields) as $key => $field) {
+                if($keysToSaveCollect->contains($field->key)) $fields->push($field);
+            }
         }
 
-        // $field = collect($fields)->filter(function($x) use ($key){
-        //     return $x->key == $key;
-        // })->first();
-
-        dd($sections1);
+        return $fields->all();
     }
 
     public function setAccounts($leads){

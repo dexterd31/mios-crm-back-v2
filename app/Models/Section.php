@@ -18,17 +18,28 @@ class Section extends Model
         return $this->hasMany('App\Models\Parameter','form_id');
     }
 
-    public static function getFields($formId, $keys){
+    public static function  getFields($formId,$keysToSave){
 
-        $fields = json_decode(Section::where('form_id', $formId)
-        ->whereJsonContains('fields', ['key' =>'placa'])
-        ->get()->fields);
-        $key = 'firstName';
+        // $keysToSave = ['firstName','first_lastname','phone','email','source_data_crm_account_id','placa'];
+         $sql = Section::where('form_id', $formId);
 
+         $sql->where(function($query) use($keysToSave) {
+             foreach ($keysToSave as $key) {
+                 $query->orWhereJsonContains('fields', ['key'=>$key]);
+             }
+         });
+         $sections = $sql->get();
 
-        // $field = collect($fields)->filter(function($x) use ($key){
-        //     return $x->key == $key;
-        // })->first();
-    }
+         $fields = collect();
 
+         $keysToSaveCollect = collect($keysToSave);
+
+         foreach ($sections as $section) {
+             foreach (json_decode($section->fields) as $key => $field) {
+                 if($keysToSaveCollect->contains($field->key)) $fields->push($field);
+             }
+         }
+
+         return $fields->all();
+     }
 }
