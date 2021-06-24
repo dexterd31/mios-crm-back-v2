@@ -155,4 +155,21 @@ class MiosHelper
         }
         return $groupsIds;
     }
+
+    public function getArrayValues($key, $array)
+    {
+        $arrayValues = array();
+        foreach ($array as $value)
+        {
+            if(is_object($array))
+            {
+                array_push($arrayValues, $value->$key);
+            }
+            elseif (is_array($array))
+            {
+                array_push($arrayValues, $value[$key]);
+            }
+        }
+        return $arrayValues;
+    }
 }

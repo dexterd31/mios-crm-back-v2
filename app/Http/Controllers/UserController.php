@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\GroupUser;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Helpers\MiosHelper;
 
 class UserController extends Controller
 {
@@ -69,13 +70,13 @@ class UserController extends Controller
     public function getUsersRrhhIdByIdGroup(Request $request)
     {
         $rrhhId = $request->input('rrhhId');
-
-        $groupUser = GroupUser::select('group_users.group_id')
-            ->join("users", 'group_users.user_id', 'users.id')
-            ->where('users.id_rhh', $rrhhId)->first();
-
+        $groupsUser = GroupUser::join("users", 'group_users.user_id', 'users.id')
+            ->where('users.id_rhh', $rrhhId)->get();
+        $miosHelper = new MiosHelper();
+        $groupsUser = $miosHelper->getArrayValues("group_id", $groupsUser);
         return User::select('users.id_rhh')
             ->join('group_users', 'group_users.user_id', 'users.id')
-            ->where('group_users.group_id', $groupUser->group_id)->get();
+            ->whereIn('group_users.group_id', $groupsUser)
+            ->where('users.id_rhh','!=', $rrhhId)->get();
     }
 }
