@@ -6,6 +6,7 @@ use App\Events\NewDataCRMLead;
 use App\Models\ApiConnection;
 use App\Models\Client;
 use App\Models\Form;
+use App\Models\Section;
 use App\Models\KeyValue;
 use App\Traits\RequestService;
 use App\Traits\RequestServiceHttp;
@@ -14,6 +15,7 @@ use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use DB;
 
 use function GuzzleHttp\json_decode;
 
@@ -131,6 +133,30 @@ class DataCRMService
         if(!$potential->success) throw new Exception("Error Processing Request", 1);
 
         return $potential->result;
+    }
+
+    public function getFields($formId){
+
+        $keysToSave = ['first_name','first_lastname','phone','email','source_data_crm_account_id'];
+
+        $sql = Section::where('form_id', 2);
+
+        foreach ($keysToSave as $key) {
+            $sql->orWhereJsonContains('fields', ['key'=>$key])->where('form_id', 2);
+        }
+        $sections = $sql->get();
+        $sections1 = collect();
+        $fields = collect();
+
+        foreach ($sections as $section) {
+            $sections1->push(json_decode($section->fields));
+        }
+
+        // $field = collect($fields)->filter(function($x) use ($key){
+        //     return $x->key == $key;
+        // })->first();
+
+        dd($sections1);
     }
 
     public function setAccounts($leads){

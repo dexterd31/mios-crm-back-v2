@@ -127,6 +127,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
      */
 
      $router->get('contactos','SandboxController@getContactsFromDataCRM');
+     $router->get('fields','SandboxController@getFields');
 
 });
 
