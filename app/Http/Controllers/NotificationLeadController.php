@@ -20,10 +20,12 @@ class NotificationLeadController extends Controller
      * Establecer notificaciones como leidas
      */
     public function setReaded($notificationId,$rrhhId){
-        $notification = NotificationLeads::whereId($notificationId)->update([
+       NotificationLeads::whereId($notificationId)->update([
             'read_at'=>Carbon::now(),
-            'readed_by'=>$rrhhId
+            'read_by'=>$rrhhId,
+            'readed'=>1
         ]);
+        $notification = NotificationLeads::whereId($notificationId)->first();
         event( new NewDataCRMLead(  $notification->form_id   ) );
         return $notification;
     }
