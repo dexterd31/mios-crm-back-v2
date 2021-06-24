@@ -3,36 +3,33 @@
 namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\SerializesModels;
+use Illuminate\Foundation\Events\Dispatchable;
 
 class NewDataCRMLead implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $notificationId;
     public $formId;
-    public $clientId;
     /**
      * Create a new event instance.
      *
      * @return void
      */
-    public function __construct($notificationId,$formId,$clientId)
+    public function __construct($formId)
     {
-        $this->notificationId = $notificationId; //Para cambiar el estado de la notification cuando le hagan click
         $this->formId = $formId; //Form id para identificar a los agentes del formulario
-        $this->clientId = $clientId; //client id de mios
     }
+
 
     public function broadcastOn()
     {
-        return new Channel('canal');
+        return new Channel('notification-lead');
     }
 
     public function broadcastAs(){
-        return 'evento';
+        return 'update';
     }
 }

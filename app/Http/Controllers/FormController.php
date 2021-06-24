@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\FormReportExport;
+use App\Models\ApiConnection;
 use App\Models\Form;
 use App\Models\FormLog;
 use App\Models\FormAnswer;
@@ -79,6 +80,12 @@ class FormController extends Controller
             $formsSections->section[$i]['fields'] = json_decode($formsSections->section[$i]['fields']);
 
         }
+        /**
+         * Se agrega validacion de api_connections para integracion con SBS (DataCRM)
+         */
+        $formsSections->externalNotifications = false;
+        $apiConnection = ApiConnection::where('form_id',$id)->where('status',1)->first();
+        if($apiConnection) $formsSections->externalNotifications = true;
 
         return response()->json($formsSections);
     }

@@ -8,6 +8,7 @@ use App\Models\Client;
 use App\Models\Form;
 use App\Models\Section;
 use App\Models\KeyValue;
+use App\Models\NotificationLeads;
 use App\Traits\RequestService;
 use App\Traits\RequestServiceHttp;
 use Carbon\Carbon;
@@ -212,15 +213,17 @@ class DataCRMService
             /**
              * Es necesario crear un registro en la base de datos para controlar las notificaciones
              *
-             * $notification =
-             *
-             *  event( new NewDataCRMLead( $notification->id, $this->formId ,$clientId  ) );
              */
+           NotificationLeads::create(['client_id'=>$clientId,'form_id'=>$this->formId]);
 
-
-
+            break;
 
         }
+        /**
+         * Despues de haber creado las notificaciones entonces se envia a front para se ejecuta el get notification
+         */
+        event( new NewDataCRMLead(  $this->formId   ) );
+
 
     }
 

@@ -1,5 +1,6 @@
 <?php
 
+
 require_once __DIR__.'/../vendor/autoload.php';
 
 (new Laravel\Lumen\Bootstrap\LoadEnvironmentVariables(
@@ -72,6 +73,7 @@ $app->singleton('filesystem', function ($app) {
 $app->configure('app');
 $app->configure('services');
 $app->configure('filesystems');
+$app->configure('broadcasting');
 
 /*
 |--------------------------------------------------------------------------
@@ -102,6 +104,10 @@ $app->routeMiddleware([
 | totally optional, so you are not required to uncomment this line.
 |
 */
+//class_alias('Pusher\Pusher', 'Pusher');
+
+$app->alias('Pusher', Pusher\Pusher::class);
+
 
 
 $app->register(App\Providers\AuthServiceProvider::class);
@@ -109,8 +115,7 @@ $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
 $app->register(Flipbox\LumenGenerator\LumenGeneratorServiceProvider::class);
 $app->register(Illuminate\Filesystem\FilesystemServiceProvider::class);
 $app->register(Maatwebsite\Excel\ExcelServiceProvider::class);
-
-// $app->register(App\Providers\EventServiceProvider::class);
+ $app->register(App\Providers\EventServiceProvider::class);
 /*
 |--------------------------------------------------------------------------
 | Load The Application Routes
