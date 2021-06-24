@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class FormAnswerController extends Controller
 {
@@ -243,6 +244,7 @@ class FormAnswerController extends Controller
                     if ($form_answers == null || count($validador['data']) == 0) {
                         // Se busca por el cargue de base de datos = directory
                         $form_answers = $filterHelper->filterByDataBase($formId, $clientId, $item1value, $item2value, $item3value);
+                        Log::info($form_answers);
                     }
                 }
                 // Se valida si ya se ha encontrado inforación, sino se busca si tene api
