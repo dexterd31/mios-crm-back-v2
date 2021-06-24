@@ -121,7 +121,7 @@ class DataCRMService
                     $requestBody = '/webservice.php?operation=query&sessionName='.$this->getSessionName().'&query='.$sql;
                     $leads =  $this->get($requestBody);
                     //Log::info($leads->result);
-                    $this->setAccounts($leads->result);
+                    $this->setAccounts($leads->result, $formId);
                 }
             }
     }
@@ -138,7 +138,7 @@ class DataCRMService
     }
 
     public function getFields($formId){
-        $keysToSave = ['firstName','first_lastname','phone','email','source_data_crm_account_id','placa'];
+        $keysToSave = ['firstName','lastName','phone','email','source_data_crm_account_id','placa'];
         return Section::getFields(2,$keysToSave);
 
        //
@@ -164,7 +164,7 @@ class DataCRMService
         return $fields->all();
     }
 
-    public function setAccounts($leads){
+    public function setAccounts($leads, $formId){
 
         foreach ($leads as $key => $value) {
 
@@ -189,8 +189,10 @@ class DataCRMService
             //$client = Client::create($dataClient);
 
             $clientId = 1; //FALSO POR AHORA NO QUIERO GUARDAR A DATA BASE
-            $keysToSave = ['first_name','first_lastname','phone','email','source_data_crm_account_id'];
-            $keysToSave2 = ['product_type','source_data_crm_potential_id'];
+            $keysToSave = ['firstName','lastName','phone','email','account-id0'];
+            $keysToSaveLocal = Section::getFields($formId, $keysToSave);
+
+            $keysToSave2 = ['product_type','potential-id1'];
             foreach ($keysToSave as $key => $row) {
                 $keyValueToSave = [
                     'form_id' => $this->formId,
@@ -198,8 +200,9 @@ class DataCRMService
                     'key' => $row,
                     'value' => $clientClean[$row],
                     'description' => null,
-                    'field_id' => '1123213123213213213' //TODO: ???????????
+                    'field_id' => $keysToSaveLocal //TODO: ???????????
                 ];
+                //$keyValue = KeyValue::create($keyValueToSave);
                 Log::info($keyValueToSave);
             }
             foreach ($keysToSave2 as $key => $row) {
