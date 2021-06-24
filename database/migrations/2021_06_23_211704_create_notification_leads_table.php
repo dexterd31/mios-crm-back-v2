@@ -22,6 +22,8 @@ class CreateNotificationLeadsTable extends Migration
             $table->integer('read_by')->nullable();
             $table->integer('form_id')->nullable();
             $table->integer('client_id')->nullable();
+            $table->string('phone')->nullable();
+
             $table->timestamps();
         });
     }

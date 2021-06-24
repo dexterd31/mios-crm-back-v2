@@ -84,7 +84,7 @@ class FormController extends Controller
          * Se agrega validacion de api_connections para integracion con SBS (DataCRM)
          */
         $formsSections->externalNotifications = false;
-        $apiConnection = ApiConnection::where('form_id',$id)->where('status',1)->first();
+        $apiConnection = ApiConnection::where('form_id',$id)->where('api_type',10)->where('status',1)->first();
         if($apiConnection) $formsSections->externalNotifications = true;
 
         return response()->json($formsSections);
