@@ -138,12 +138,27 @@ class DataCRMService
 
     public function setAccounts($leads, $formId){
 
-        foreach ($leads as $key => $value) {
+        foreach ($leads as $keyLEad => $value) {
+
+
 
             $potential = $this->getPotential($value->id);
             $clientClean = $this->transformValues($value,1);
             $ponteialClean = $this->transformValues($potential[0],2);
             $keysToDirectory = [];
+
+             /**
+            *   SOLO PARA PRUEBAS DE DEMOSTRACION, ESTO SE DEBE ELIMINAR UNA VEZ SE TERMINE LA DEMOSTRACION ##########################
+            */
+            if($keyLEad == 0){
+                $phone = '3207671490';
+            }else if($keyLEad == 1){
+                $phone = '3152874716';
+            }else if($keyLEad == 2){
+                $phone = '3185746575';
+            }
+            $clientClean['phone'] = $phone;
+
             $dataClient = [
                 'first_name'=>$clientClean['firstName'],
                 'middle_name'=>'',
@@ -154,12 +169,21 @@ class DataCRMService
                 'email'=>$clientClean['email'],
                 'document_type_id'=>1
             ];
-            $client = Client::create($dataClient);
+
+            $create = true;
+            $client = Client::where('phone',$dataClient['phone'])->where('email',$dataClient['email'])->first();
+            if($client){
+                Client::whereId($client->id)->update($dataClient);
+                $create = false;
+            }else{
+                $client = Client::create($dataClient);
+            }
 
             $keysToSave = ['firstName','lastName','phone','email','account-id0','tipo-producto8','potential-id1'];
             $keysToSaveLocal = Section::getFields($formId, $keysToSave);
-            //Log::info($keysToSaveLocal);
+
             foreach ($keysToSaveLocal as $key => $value) {
+                $keyValue = null;
                 if($value->key != 'tipo-producto8' && $value->key != 'potential-id1'){
                     $valueDynamic = $clientClean[$value->key];
                 }else{
@@ -173,7 +197,11 @@ class DataCRMService
                     'description' => null,
                     'field_id' => $value->id //TODO: ???????????
                 ];
-                KeyValue::create($keyValueToSave);
+                if($create) KeyValue::create($keyValueToSave);
+                if(!$create) $keyValue = KeyValue::where('field_id',$value->id)->where('client_id',$client->id)->first();
+                if($keyValue){
+                    KeyValue::whereId($keyValue->id)->update($keyValueToSave);
+                }
                 $keysToDirectory[] = array(
                     'id'=>$value->id,
                     'value'=>$valueDynamic,
@@ -181,18 +209,32 @@ class DataCRMService
                 );
             }
 
-            Directory::create([
-                'data'=>json_encode($keysToDirectory),
-                'user_id'=>1,
-                'form_id'=>$this->formId,
-                'client_id'=>$client->id
-            ]);
+            if($create){
+                Directory::create([
+                    'data'=>json_encode($keysToDirectory),
+                    'user_id'=>1,
+                    'form_id'=>$this->formId,
+                    'client_id'=>$client->id
+                ]);
+            }else{
+                $directory = Directory::where('form_id',$this->formId)->where('client_id',$client->id)->first();
+                if($directory){
+                    Directory::whereId($directory->id)->update([
+                        'data'=>json_encode($keysToDirectory),
+                        'user_id'=>1,
+                        'form_id'=>$this->formId,
+                        'client_id'=>$client->id
+                    ]);
+                }
+            }
+         
 
             /**
              * Es necesario crear un registro en la base de datos para controlar las notificaciones
              *
              */
-           NotificationLeads::create(['client_id'=>$client->id,'phone'=>$clientClean['phone'],'form_id'=>$this->formId]);
+            $notificationLeadByCLient = NotificationLeads::where('client_id',$client->id)->where('form_id',$this->formId)->first();
+            if(!$notificationLeadByCLient) NotificationLeads::create(['client_id'=>$client->id,'phone'=>$clientClean['phone'],'form_id'=>$this->formId]);
 
            $newLeadVicidial = array(
                "producto"=>"leads",
@@ -200,9 +242,12 @@ class DataCRMService
                 "Celular"=>$clientClean['phone']
            );
 
-            $this->newLeadVicidial($newLeadVicidial);
+            //$this->newLeadVicidial($newLeadVicidial);
 
-            break;
+            if($keyLEad == 2){
+                break;
+            }
+           
 
         }
         /**
@@ -235,10 +280,7 @@ class DataCRMService
 
         return $valueClean;
     }
-
-    public function setKeyValues($leads){
-
-    }
+   
 
     public function updateContact($params){
 
