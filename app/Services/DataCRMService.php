@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use DB;
+use stdClass;
 
 use function GuzzleHttp\json_decode;
 
@@ -227,7 +228,7 @@ class DataCRMService
                     ]);
                 }
             }
-         
+
 
             /**
              * Es necesario crear un registro en la base de datos para controlar las notificaciones
@@ -247,7 +248,7 @@ class DataCRMService
             if($keyLEad == 2){
                 break;
             }
-           
+
 
         }
         /**
@@ -280,7 +281,7 @@ class DataCRMService
 
         return $valueClean;
     }
-   
+
 
     public function updateContact($params){
 
@@ -291,6 +292,75 @@ class DataCRMService
 
     public function newLeadVicidial($params){
         Http::post('https://app.outsourcingcos.com/webservice-dinamico/cos/services',$params);
+    }
+
+
+
+    public function filedsPotentialsForms(){
+        $data = $this->get('/webservice.php?operation=describe&sessionName='.$this->getSessionName().'&elementType=Potentials');
+       return $data->result->fields;
+    }
+
+    /**
+     * Metodo que construye array con match del formulario de gestion de DATA CRM y el form answer de la tipificacion de miso
+     */
+    public function matchFields($formAnwersArr){
+        $fieldsExternals = $this->filedsPotentialsForms();
+        $arrToMarch = [];
+        $dataJson = new stdClass;
+        foreach ($formAnwersArr as $keyAnswer => $valueAnwer) {
+           $keyAnswerClean = $this->cleanString($valueAnwer->label);
+            foreach ($fieldsExternals as $key => $value) {
+               $labelClean = $this->cleanString($value->label);
+               if($keyAnswerClean == $labelClean){
+
+                $dataJson->{$value->name} = $valueAnwer->value;
+
+               }
+           }
+        }
+        return $dataJson;
+    }
+
+
+
+    public function updatePotentials($formId,$formAnwersArr,$potentialId){
+        $this->formId = $formId;
+        $fieldToMatch = $this->matchFields($formAnwersArr);
+        $potentialDetails = $this->get('/webservice.php?operation=retrieve&sessionName='.$this->getSessionName().'&id='.$potentialId);
+        $responsePotentials = collect($potentialDetails->result);
+        $fieldToMatchCollect = collect($fieldToMatch);
+        $merged = $responsePotentials->merge($fieldToMatchCollect);
+
+        $requestBody = array(
+            'operation' => 'update',
+            'sessionName' => $this->getSessionName(),
+            'element' =>json_encode($merged->all())
+        );
+
+        Log::info($requestBody);
+
+        $response = $this->post('/webservice.php', $requestBody);
+
+        Log::info($response);
+
+        return;
+
+    }
+
+
+
+    public function cleanString($string){
+        $string = str_replace(' ','-',$string);
+       $unwanted_array = array(    'Š'=>'S', 'š'=>'s', 'Ž'=>'Z', 'ž'=>'z', 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
+       'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U',
+       'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss', 'à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c',
+       'è'=>'e', 'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ð'=>'o', 'ñ'=>'n', 'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o',
+       'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y' );
+        $str = strtr( $string, $unwanted_array );
+        $str = strtolower($str);
+        return $str;
+
     }
 
 
