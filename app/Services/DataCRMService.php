@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Events\NewDataCRMLead;
 use App\Models\ApiConnection;
 use App\Models\Client;
-use App\Models\Form;
+use App\Models\Directory;
 use App\Models\Section;
 use App\Models\KeyValue;
 use App\Models\NotificationLeads;
@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use DB;
-use PhpOffice\PhpSpreadsheet\Calculation\MathTrig\Trig\Secant;
 
 use function GuzzleHttp\json_decode;
 
@@ -137,33 +136,6 @@ class DataCRMService
         return $potential->result;
     }
 
-    public function getFields($formId){
-        $keysToSave = ['firstName','lastName','phone','email','source_data_crm_account_id','placa'];
-        return Section::getFields(2,$keysToSave);
-
-       //
-        $sql = Section::where('form_id', $formId);
-
-        $sql->where(function($query) use($keysToSave) {
-            foreach ($keysToSave as $key) {
-                $query->orWhereJsonContains('fields', ['key'=>$key]);
-            }
-        });
-        $sections = $sql->get();
-
-        $fields = collect();
-
-        $keysToSaveCollect = collect($keysToSave);
-
-        foreach ($sections as $section) {
-            foreach (json_decode($section->fields) as $key => $field) {
-                if($keysToSaveCollect->contains($field->key)) $fields->push($field);
-            }
-        }
-
-        return $fields->all();
-    }
-
     public function setAccounts($leads, $formId){
 
         foreach ($leads as $key => $value) {
@@ -171,57 +143,64 @@ class DataCRMService
             $potential = $this->getPotential($value->id);
             $clientClean = $this->transformValues($value,1);
             $ponteialClean = $this->transformValues($potential[0],2);
-
-            Log::info($clientClean);
-            Log::info($ponteialClean);
-
+            $keysToDirectory = [];
             $dataClient = [
-                'first_name'=>$value->accountname,
-                'middle_name'=>null,
-                'first_lastname'=>$value->accountname,
-                'second_lastname'=>null,
-                'document'=>null,
-                'phone'=>$value->cf_951,
-                'email'=>$value->email1,
+                'first_name'=>$clientClean['firstName'],
+                'middle_name'=>'',
+                'first_lastname'=>$clientClean['lastName'],
+                'second_lastname'=>'',
+                'document'=>'',
+                'phone'=>$clientClean['phone'],
+                'email'=>$clientClean['email'],
+                'document_type_id'=>1
             ];
-            Log::info('Data a la base de datos');
-            Log::info($dataClient);
-            //$client = Client::create($dataClient);
+            $client = Client::create($dataClient);
 
-            $clientId = 1; //FALSO POR AHORA NO QUIERO GUARDAR A DATA BASE
-            $keysToSave = ['firstName','lastName','phone','email','account-id0'];
+            $keysToSave = ['firstName','lastName','phone','email','account-id0','tipo-producto8','potential-id1'];
             $keysToSaveLocal = Section::getFields($formId, $keysToSave);
+            //Log::info($keysToSaveLocal);
+            foreach ($keysToSaveLocal as $key => $value) {
+                if($value->key != 'tipo-producto8' && $value->key != 'potential-id1'){
+                    $valueDynamic = $clientClean[$value->key];
+                }else{
+                    $valueDynamic = $ponteialClean[$value->key];
+                }
+                $keyValueToSave = [
+                    'form_id' => $this->formId,
+                    'client_id' => $client->id,
+                    'key' => $value->key,
+                    'value' => $valueDynamic,
+                    'description' => null,
+                    'field_id' => $value->id //TODO: ???????????
+                ];
+                KeyValue::create($keyValueToSave);
+                $keysToDirectory[] = array(
+                    'id'=>$value->id,
+                    'value'=>$valueDynamic,
+                    'key'=>$value->key
+                );
+            }
 
-            $keysToSave2 = ['product_type','potential-id1'];
-            foreach ($keysToSave as $key => $row) {
-                $keyValueToSave = [
-                    'form_id' => $this->formId,
-                    'client_id' => $clientId,
-                    'key' => $row,
-                    'value' => $clientClean[$row],
-                    'description' => null,
-                    'field_id' => $keysToSaveLocal //TODO: ???????????
-                ];
-                //$keyValue = KeyValue::create($keyValueToSave);
-                Log::info($keyValueToSave);
-            }
-            foreach ($keysToSave2 as $key => $row) {
-                $keyValueToSave = [
-                    'form_id' => $this->formId,
-                    'client_id' => $clientId,
-                    'key' => $row,
-                    'value' => $ponteialClean[$row],
-                    'description' => null,
-                    'field_id' => '1123213123213213213' //TODO: ???????????
-                ];
-                Log::info($keyValueToSave);
-            }
+            Directory::create([
+                'data'=>json_encode($keysToDirectory),
+                'user_id'=>1,
+                'form_id'=>$this->formId,
+                'client_id'=>$client->id
+            ]);
 
             /**
              * Es necesario crear un registro en la base de datos para controlar las notificaciones
              *
              */
-           NotificationLeads::create(['client_id'=>$clientId,'form_id'=>$this->formId]);
+           NotificationLeads::create(['client_id'=>$client->id,'phone'=>$clientClean['phone'],'form_id'=>$this->formId]);
+
+           $newLeadVicidial = array(
+               "producto"=>"leads",
+                "token_key"=>"123456789",
+                "Celular"=>$clientClean['phone']
+           );
+
+            $this->newLeadVicidial($newLeadVicidial);
 
             break;
 
@@ -231,7 +210,6 @@ class DataCRMService
          */
         event( new NewDataCRMLead(  $this->formId   ) );
 
-
     }
 
     public function transformValues($values,$typeValue){
@@ -239,19 +217,19 @@ class DataCRMService
         if($typeValue == 1){
             //Account
             $valueClean = array(
-                'first_name'=> $values->accountname,
+                'firstName'=> $values->accountname,
                 'middle_name'=> null,
-                'first_lastname'=>$values->accountname,
+                'lastName'=>$values->accountname,
                 'second_lastname'=> null,
                 'email'=>$values->email1,
-                'phone'=>$values->cf_951,
-                'source_data_crm_account_id'=>$values->id
+                'phone'=>'3207671490', // $values->cf_951 TODO ################################# CAMBIAR PARA PRUEBAS, SOLO PARA PRUEBAS ####################
+                'account-id0'=>$values->id
             );
         }else if($typeValue == 2){
             //Potentials
             $valueClean = array(
-                'product_type'=>$values->cf_1041,
-                'source_data_crm_potential_id'=>$values->id
+                'tipo-producto8'=>$values->cf_1041,
+                'potential-id1'=>$values->id
             );
         }
 
@@ -267,6 +245,10 @@ class DataCRMService
     }
     public function updateNegocio($params){
 
+    }
+
+    public function newLeadVicidial($params){
+        Http::post('https://app.outsourcingcos.com/webservice-dinamico/cos/services',$params);
     }
 
 
