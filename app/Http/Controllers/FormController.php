@@ -281,18 +281,22 @@ class FormController extends Controller
         foreach($sections as $section){
             foreach(json_decode($section->fields) as $input){
                 if($input->inReport){
+                    /*if(count($input->dependencies)>0){
+                        Log::info($input->id."-".$input->label." , Dependencias:".json_encode($input->dependencies));
+                    }*/
                     array_push($titleHeaders,$input->label);
                     array_push($inputReport,$input);
                 }
             }
         }
+
         foreach($formAnswers as $answer){
             $rows[$r]['id'] = $answer->id;
             //Evaluamos los campos que deben ir en el reporte contra las respuestas
             foreach($inputReport as $input){
                 foreach(json_decode($answer->structure_answer) as $field){
                     if($field->id==$input->id){
-                        $select = $this->findSelect($request->formId, $field->id, $field->value);
+                        $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
                         if($select){
                             $rows[$r][$field->id] = $select;
                         } else {
@@ -300,7 +304,7 @@ class FormController extends Controller
                         }
                         break;
                     }else if($field->key==$input->key){
-                        $select = $this->findSelect($request->formId, $input->id, $field->value);
+                        $select = $this->findAndFormatValues($request->formId, $input->id, $field->value);
                         if($select){
                             $rows[$r][$input->id] = $select;
                         } else {
@@ -394,8 +398,9 @@ class FormController extends Controller
 
     }
 
-    private function findSelect($form_id, $field_id, $value)
+    private function findAndFormatValues($form_id, $field_id, $value)
     {
+
         $fields = json_decode(Section::where('form_id', $form_id)
         ->whereJsonContains('fields', ['id' => $field_id])
         ->first()->fields);
@@ -408,7 +413,9 @@ class FormController extends Controller
                 return $x->id == $value;
             })->first()->name;
             return $field_name;
-        } else {
+        }elseif($field->controlType == 'datepicker'){
+            return Carbon::parse($value)->setTimezone('America/Bogota')->format('Y-m-d');
+        }else {
             return null;
         }
     }
