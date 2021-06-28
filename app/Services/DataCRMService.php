@@ -93,7 +93,7 @@ class DataCRMService
         return $diffLead;
     }
 
-    public static function getAccounts($formId){
+    public  function getAccounts($formId){
             $this->formId = $formId;
             $diffLead = $this->getcountAccounts();
             if( $diffLead != 0){
