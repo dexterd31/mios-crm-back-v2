@@ -90,16 +90,13 @@ class DataCRMService
         $countAccounts = $this->get($requestBody);
         $leadMios = KeyValue::where('form_id',$this->formId)->groupBy('client_id')->get();
         $diffLead = $countAccounts->result[0]->count - count($leadMios);
-        Log::info($countAccounts->result[0]->count);
-        Log::info(count($leadMios));
         return $diffLead;
     }
 
-    public function getAccounts($formId){
+    public static function getAccounts($formId){
             $this->formId = $formId;
             $diffLead = $this->getcountAccounts();
             if( $diffLead != 0){
-                Log::info($diffLead);
                 if($diffLead > 100){
 
                     $cicles = 0;
