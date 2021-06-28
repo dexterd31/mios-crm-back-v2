@@ -88,8 +88,10 @@ class DataCRMService
         $sql = rawurlencode("select count(*) from Accounts where createdtime>='2021-06-18 00:00:00';");
         $requestBody = "/webservice.php?operation=query&sessionName=".$this->getSessionName()."&query=".$sql;
         $countAccounts = $this->get($requestBody);
-        $leadMios = KeyValue::where('form_id',$this->formId)->groupBy('client_id')->count();
-        $diffLead = $countAccounts->result[0]->count - $leadMios;
+        $leadMios = KeyValue::where('form_id',$this->formId)->groupBy('client_id')->get();
+        $diffLead = $countAccounts->result[0]->count - count($leadMios);
+        Log::info($countAccounts->result[0]->count);
+        Log::info(count($leadMios));
         return $diffLead;
     }
 
@@ -97,7 +99,7 @@ class DataCRMService
             $this->formId = $formId;
             $diffLead = $this->getcountAccounts();
             if( $diffLead != 0){
-
+                Log::info($diffLead);
                 if($diffLead > 100){
 
                     $cicles = 0;
@@ -159,6 +161,8 @@ class DataCRMService
                 $phone = '3185746575';
             }
             $clientClean['phone'] = $phone;
+
+            // Quitar las lineas 156 a 163 para produccion
 
             $dataClient = [
                 'first_name'=>$clientClean['firstName'],
