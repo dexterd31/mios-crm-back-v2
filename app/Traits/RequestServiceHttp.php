@@ -56,7 +56,7 @@ trait RequestServiceHttp
         ));
 
         $response = curl_exec($curl);
-
+        Log::info($response);
         curl_close($curl);
 
         $responseJson = json_decode($response);

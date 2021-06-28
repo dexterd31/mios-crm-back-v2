@@ -67,6 +67,7 @@ class FormAnswerController extends Controller
                         $register['key'] = $field['key'];
                         $register['value'] = $field['value'];
                         $register['preloaded'] = $field['preloaded'];
+                        $register['label'] = $field['label'];//Campo necesario para procesos de sincronizacion con DataCRM
 
                         //manejo de adjuntos
                         if($field['controlType'] == 'file'){
