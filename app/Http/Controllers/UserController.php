@@ -67,14 +67,14 @@ class UserController extends Controller
      * 22-06-2021
      * Funcion para obtener los usuarios del grupo
      */
-    public function getUsersRrhhIdByIdGroup(Request $request)
+    public function getUsersFromMyGroups(Request $request)
     {
         $rrhhId = $request->input('rrhhId');
         $groupsUser = GroupUser::join("users", 'group_users.user_id', 'users.id')
             ->where('users.id_rhh', $rrhhId)->get();
         $miosHelper = new MiosHelper();
         $groupsUser = $miosHelper->getArrayValues("group_id", $groupsUser);
-        return User::select('users.id_rhh')
+        return User::select('group_users.group_id', 'users.id_rhh')
             ->join('group_users', 'group_users.user_id', 'users.id')
             ->whereIn('group_users.group_id', $groupsUser)
             ->where('users.id_rhh','!=', $rrhhId)->get();
