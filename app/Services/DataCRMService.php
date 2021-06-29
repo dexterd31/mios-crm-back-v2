@@ -154,8 +154,6 @@ class DataCRMService
                 $phone = '3207671490';
             }else if($keyLEad == 1){
                 $phone = '3152874716';
-            }else if($keyLEad == 2){
-                $phone = '3185746575';
             }
             $clientClean['phone'] = $phone;
 
@@ -244,9 +242,9 @@ class DataCRMService
                 "Celular"=>$clientClean['phone']
            );
 
-            //$this->newLeadVicidial($newLeadVicidial);
+            $this->newLeadVicidial($newLeadVicidial);
 
-            if($keyLEad == 2){
+            if($keyLEad == 1){
                 break;
             }
 
@@ -332,19 +330,13 @@ class DataCRMService
         $responsePotentials = collect($potentialDetails->result);
         $fieldToMatchCollect = collect($fieldToMatch);
         $merged = $responsePotentials->merge($fieldToMatchCollect);
-
         $requestBody = array(
             'operation' => 'update',
             'sessionName' => $this->getSessionName(),
-            'element' =>json_encode($merged->all())
+            'element' => $merged->toJson()
         );
 
-        Log::info($requestBody);
-
-        $response = $this->post('/webservice.php', $requestBody);
-
-        Log::info($response);
-
+        $this->post('/webservice.php', http_build_query($requestBody));
         return;
 
     }

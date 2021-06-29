@@ -36,6 +36,7 @@ trait RequestServiceHttp
     }
     public function post($endpoint,$params = []){
 
+
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
@@ -47,8 +48,7 @@ trait RequestServiceHttp
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
         CURLOPT_CUSTOMREQUEST => 'POST',
-        CURLOPT_POSTFIELDS => $params,
-
+        CURLOPT_POSTFIELDS =>$params,
 
         CURLOPT_HTTPHEADER => array(
             'Content-Type: application/x-www-form-urlencoded'
@@ -56,7 +56,7 @@ trait RequestServiceHttp
         ));
 
         $response = curl_exec($curl);
-        Log::info($response);
+
         curl_close($curl);
 
         $responseJson = json_decode($response);
@@ -68,5 +68,7 @@ trait RequestServiceHttp
     public function put(){
 
     }
+
+
 
 }
