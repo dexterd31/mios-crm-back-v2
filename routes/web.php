@@ -58,6 +58,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //consultar usuarios existentes para asignar al grupo
     $router->get('/searchUser/{id}','GroupController@searchUser');
     $router->get('/groupsbyuser/{idUser}', 'GroupController@listGroupsByUser');
+    $router->get('/getGroupsByRrhhId/{rrhhId}', 'GroupController@getGroupsByRrhhId');
 
     // rutas de campañas
     $router->get('/campaigns', 'CampaignController@index');
@@ -67,8 +68,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas de usuarios
     $router->post('/storeUser', 'UserController@storeUser');
     $router->put('/disabledUser/{id}', 'UserController@disabledUser');
-    $router->get('/getUsersFromMyGroups', 'UserController@getUsersFromMyGroups');
-
+    $router->get('/getUsersFromMyGroups', 'UserController@getUsersFromMyGroups');  
+    
     //Rutas de clientes
     $router->get('/getClient/{id}', 'ClientController@getClient');
 
