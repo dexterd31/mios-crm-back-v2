@@ -18,7 +18,6 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 
 class FormController extends Controller
 {
@@ -115,9 +114,14 @@ class FormController extends Controller
                 for($i=0; $i<count($section['fields']); $i++){
                     $cadena = (string)$i;
                     if($section['fields'][$i]['key'] == 'null'){
-                        $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
-                       $section['fields'][$i]['key'] =  strtolower( str_replace(' ','-',$section['fields'][$i]['label']) );
-                       $section['fields'][$i]['key'] = $section['fields'][$i]['key'].$cadena;
+                        //Reemplaza todos los acentos o tildes de la cadena
+                        $section['fields'][$i]['key'] = $miosHelper->replaceAccents($section['fields'][$i]['label']);
+                        //Reemplaza todos los caracteres extraños
+                        $section['fields'][$i]['key'] = preg_replace('([^A-Za-z0-9 ])', '',$section['fields'][$i]['key']);
+                        //Convertimos a minusculas y Remplazamos espacios por el simbolo -
+                        $section['fields'][$i]['key'] = strtolower( str_replace(array(' ','  '),'-',$section['fields'][$i]['key']) );
+                        //Concatenamos el resultado del label transformado con la variable $cadena
+                        $section['fields'][$i]['key'] = $section['fields'][$i]['key'].$cadena;
                     }
                }
 
