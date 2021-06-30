@@ -10,6 +10,8 @@ use App\Models\Section;
 use App\Models\Tray;
 use App\Models\Attachment;
 use App\Models\FormAnswerLog;
+use App\Models\User;
+use App\Models\FormAnswerMiosPhone;
 use App\Services\CiuService;
 use App\Services\NominaService;
 use Helpers\ApiHelper;
@@ -20,7 +22,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
+
+
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class FormAnswerController extends Controller
 {
@@ -62,6 +67,7 @@ class FormAnswerController extends Controller
                         $register['key'] = $field['key'];
                         $register['value'] = $field['value'];
                         $register['preloaded'] = $field['preloaded'];
+                        $register['label'] = $field['label'];//Campo necesario para procesos de sincronizacion con DataCRM
 
                         //manejo de adjuntos
                         if($field['controlType'] == 'file'){
@@ -123,8 +129,10 @@ class FormAnswerController extends Controller
 
                     }
                     // ? es el mismo de la linea 161
+                    $userId = auth()->user()->rrhh_id;
+                    $userCrm=User::where('id_rhh','=',$userId)->firstOrFail();
                     $form_answer = new FormAnswer([
-                        'user_id' => json_decode($request['user_id']),
+                        'user_id' => $userCrm->id,
                         'channel_id' => 1,
                         'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
                         'form_id' => json_decode($request['form_id']),
@@ -181,10 +189,25 @@ class FormAnswerController extends Controller
             } else {
                 $message = 'Tú rol no tiene permisos para ejecutar esta acción';
             }
-            return $this->successResponse($message);
+            return $this->successResponse(['message'=>$message,'formAsnwerId'=>$form_answer->id]);
         // } catch (\Throwable $e) {
         //     return $this->errorResponse('Error al guardar la gestion', 500);
         // }
+    }
+
+    /**
+     * @author Carlos Galindez
+     * Metodo que permite guardar la tipificacion del formulario con el lead y UID de la llamada,
+     * Esto pertenece a integracion con voz, (Vicidial)
+     * @param leadId
+     * @param phoneCustomer
+     * @param uid
+     * @param cui
+     * @param form_answer_id
+     */
+    public function saveIntegrationVoice(Request $request){
+        FormAnswerMiosPhone::create($request->all());
+        return $this->successResponse('Datos guardados con exito');
     }
 
     /**
@@ -227,6 +250,7 @@ class FormAnswerController extends Controller
                     if ($form_answers == null || count($validador['data']) == 0) {
                         // Se busca por el cargue de base de datos = directory
                         $form_answers = $filterHelper->filterByDataBase($formId, $clientId, $item1value, $item2value, $item3value);
+                        Log::info($form_answers);
                     }
                 }
                 // Se valida si ya se ha encontrado inforación, sino se busca si tene api

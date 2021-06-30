@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\FormReportExport;
+use App\Models\ApiConnection;
 use App\Models\Form;
 use App\Models\FormLog;
 use App\Models\FormAnswer;
@@ -17,7 +18,6 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 
 class FormController extends Controller
 {
@@ -40,14 +40,14 @@ class FormController extends Controller
         $userLocal = User::where('id_rhh','=',$userId)->firstOrFail();
         $roles = auth()->user()->roles;
         $rolesArray = [];
-
         foreach ($roles as $value) {
             if (str_contains($value, 'crm::')) {
                 $rolesArray[] = str_replace('crm::', '', $value);
             }
         }
         $paginate = $request->query('n', 5);
-        $forms = $this->getFormsByIdUser($userId, $paginate);
+        $forms = $this->getFormsByIdUser($userLocal->id, $paginate);
+
         foreach ($forms as $value) {
             if (count(array_intersect($rolesArray, json_decode($value->seeRoles))) > 0) {
                 $value->roles = true;
@@ -79,6 +79,12 @@ class FormController extends Controller
             $formsSections->section[$i]['fields'] = json_decode($formsSections->section[$i]['fields']);
 
         }
+        /**
+         * Se agrega validacion de api_connections para integracion con SBS (DataCRM)
+         */
+        $formsSections->externalNotifications = false;
+        $apiConnection = ApiConnection::where('form_id',$id)->where('api_type',10)->where('status',1)->first();
+        if($apiConnection) $formsSections->externalNotifications = true;
 
         return response()->json($formsSections);
     }
@@ -108,9 +114,14 @@ class FormController extends Controller
                 for($i=0; $i<count($section['fields']); $i++){
                     $cadena = (string)$i;
                     if($section['fields'][$i]['key'] == 'null'){
-                        $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
-                       $section['fields'][$i]['key'] =  strtolower( str_replace(' ','-',$section['fields'][$i]['label']) );
-                       $section['fields'][$i]['key'] = $section['fields'][$i]['key'].$cadena;
+                        //Reemplaza todos los acentos o tildes de la cadena
+                        $section['fields'][$i]['key'] = $miosHelper->replaceAccents($section['fields'][$i]['label']);
+                        //Reemplaza todos los caracteres extraños
+                        $section['fields'][$i]['key'] = preg_replace('([^A-Za-z0-9 ])', '',$section['fields'][$i]['key']);
+                        //Convertimos a minusculas y Remplazamos espacios por el simbolo -
+                        $section['fields'][$i]['key'] = strtolower( str_replace(array(' ','  '),'-',$section['fields'][$i]['key']) );
+                        //Concatenamos el resultado del label transformado con la variable $cadena
+                        $section['fields'][$i]['key'] = $section['fields'][$i]['key'].$cadena;
                     }
                }
 
@@ -281,18 +292,22 @@ class FormController extends Controller
         foreach($sections as $section){
             foreach(json_decode($section->fields) as $input){
                 if($input->inReport){
+                    /*if(count($input->dependencies)>0){
+                        Log::info($input->id."-".$input->label." , Dependencias:".json_encode($input->dependencies));
+                    }*/
                     array_push($titleHeaders,$input->label);
                     array_push($inputReport,$input);
                 }
             }
         }
+
         foreach($formAnswers as $answer){
             $rows[$r]['id'] = $answer->id;
             //Evaluamos los campos que deben ir en el reporte contra las respuestas
             foreach($inputReport as $input){
                 foreach(json_decode($answer->structure_answer) as $field){
                     if($field->id==$input->id){
-                        $select = $this->findSelect($request->formId, $field->id, $field->value);
+                        $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
                         if($select){
                             $rows[$r][$field->id] = $select;
                         } else {
@@ -300,7 +315,7 @@ class FormController extends Controller
                         }
                         break;
                     }else if($field->key==$input->key){
-                        $select = $this->findSelect($request->formId, $input->id, $field->value);
+                        $select = $this->findAndFormatValues($request->formId, $input->id, $field->value);
                         if($select){
                             $rows[$r][$input->id] = $select;
                         } else {
@@ -326,6 +341,7 @@ class FormController extends Controller
      * Olme Marin
      * 25-03-2021
      * Método para consultar el listado de los formularios asignados a un usuario por grupo
+     * @deprecated: La función FormList ya realiza la busqueda por usuarios y grupos Reportada 2021-06-10
      */
     public function formsByUser(MiosHelper $miosHelper, $idUser, Request $request)
     {
@@ -393,8 +409,9 @@ class FormController extends Controller
 
     }
 
-    private function findSelect($form_id, $field_id, $value)
+    private function findAndFormatValues($form_id, $field_id, $value)
     {
+
         $fields = json_decode(Section::where('form_id', $form_id)
         ->whereJsonContains('fields', ['id' => $field_id])
         ->first()->fields);
@@ -407,7 +424,9 @@ class FormController extends Controller
                 return $x->id == $value;
             })->first()->name;
             return $field_name;
-        } else {
+        }elseif($field->controlType == 'datepicker'){
+            return Carbon::parse($value)->setTimezone('America/Bogota')->format('Y-m-d');
+        }else {
             return null;
         }
     }
@@ -418,7 +437,7 @@ class FormController extends Controller
             ->join("groups", "groups.id", "forms.group_id")
             ->join('group_users', 'group_users.group_id', 'groups.id')
             ->select('name_form', 'forms.id', 'name_type', 'forms.state', 'seeRoles', 'forms.updated_at')
-            ->where('group_users.User_id', $userId)
+            ->where('group_users.user_id', $userId)
             ->paginate($paginate)->withQueryString();
         return $forms;
     }
