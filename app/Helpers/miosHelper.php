@@ -171,6 +171,7 @@ class MiosHelper
             }
         }
         return $arrayValues;
+    }
     /**
      * @author: Leonardo Giraldo
      * Función para reemplasar los acentos en una cadena de texto
