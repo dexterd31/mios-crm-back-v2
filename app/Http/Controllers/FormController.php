@@ -19,8 +19,6 @@ use Maatwebsite\Excel\Facades\Excel;
 
 use Carbon\Carbon;
 
-use Illuminate\Support\Facades\Log;
-
 class FormController extends Controller
 {
     private $ciuService;
@@ -311,8 +309,6 @@ class FormController extends Controller
                 }
             }
         }
-        Log::info(json_encode($dependencies));
-        Log::info(json_encode($input));
 
         foreach($formAnswers as $answer){
             $rows[$r]['id'] = $answer->id;
@@ -355,7 +351,6 @@ class FormController extends Controller
             $rows[$r]['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
             $r++;
           }
-          Log::info(json_encode($rows));
           array_push($titleHeaders,'Fecha de creación','Fecha de actualización');
       }
       return Excel::download(new FormReportExport($rows, $titleHeaders), 'reporte_formulario.xlsx');
