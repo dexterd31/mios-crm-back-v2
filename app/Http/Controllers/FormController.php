@@ -286,17 +286,26 @@ class FormController extends Controller
       } else {
         $inputReport=[];
         $titleHeaders=['Id'];
+        $dependencies=[];
         $r=0;
         $rows=[];
         //Verificamos cuales son los campos que deben ir en el reporte o que su elemento inReport sea true
         foreach($sections as $section){
             foreach(json_decode($section->fields) as $input){
                 if($input->inReport){
-                    /*if(count($input->dependencies)>0){
-                        Log::info($input->id."-".$input->label." , Dependencias:".json_encode($input->dependencies));
-                    }*/
-                    array_push($titleHeaders,$input->label);
-                    array_push($inputReport,$input);
+                    if(count($input->dependencies)>0){
+                        if(isset($dependencies[$input->label])){
+                            array_push($dependencies[$input->label],$input->id);
+                        }else{
+                            $dependencies[$input->label]=[$input->id];
+                            array_push($titleHeaders,$input->label);
+                            array_push($inputReport,$input);
+                        }
+                        $input->dependencies[0]->report=$input->label;
+                    }else{
+                        array_push($titleHeaders,$input->label);
+                        array_push($inputReport,$input);
+                    }
                 }
             }
         }
@@ -306,7 +315,17 @@ class FormController extends Controller
             //Evaluamos los campos que deben ir en el reporte contra las respuestas
             foreach($inputReport as $input){
                 foreach(json_decode($answer->structure_answer) as $field){
-                    if($field->id==$input->id){
+                    if(isset($input->dependencies[0]->report)){
+                        if(in_array($field->id,$dependencies[$input->dependencies[0]->report])){
+                            $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
+                            if($select){
+                                $rows[$r]['Dependencias'] = $select;
+                            } else {
+                                $rows[$r]['Dependencias'] = $field->value;
+                            }
+                            break;
+                        }
+                    }else if($field->id==$input->id){
                         $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
                         if($select){
                             $rows[$r][$field->id] = $select;
