@@ -72,7 +72,8 @@ class UserController extends Controller
         $rrhhId = $request->input('rrhhId');
         $groupControllet = new GroupController();
         $groupsUser = $groupControllet->getGroupsByRrhhId($rrhhId);
-        $groupsUser = $this->getArrayValues("group_id", $groupsUser);
+        $miosHelper = new MiosHelper();
+        $groupsUser = $miosHelper->getArrayValues("group_id", $groupsUser);
         return User::select('group_users.group_id', 'users.id_rhh')
             ->join('group_users', 'group_users.user_id', 'users.id')
             ->whereIn('group_users.group_id', $groupsUser)
