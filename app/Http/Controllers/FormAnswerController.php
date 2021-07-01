@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ApiConnection;
 use App\Models\Client;
 use App\Models\FormAnswer;
 use App\Models\Form;
@@ -13,6 +14,7 @@ use App\Models\FormAnswerLog;
 use App\Models\User;
 use App\Models\FormAnswerMiosPhone;
 use App\Services\CiuService;
+use App\Services\DataCRMService;
 use App\Services\NominaService;
 use Helpers\ApiHelper;
 use Helpers\FilterHelper;
@@ -31,12 +33,14 @@ class FormAnswerController extends Controller
 {
     private $ciuService;
     private $nominaService;
+    private $dataCRMServices;
 
-    public function __construct(CiuService $ciuService, NominaService $nominaService)
+    public function __construct(CiuService $ciuService, NominaService $nominaService,DataCRMService $dataCRMServices)
     {
         $this->middleware('auth');
         $this->ciuService = $ciuService;
         $this->nominaService = $nominaService;
+        $this->dataCRMServices = $dataCRMServices;
     }
     /**
      * Nicol Ramirez
@@ -185,6 +189,14 @@ class FormAnswerController extends Controller
                 // Log FormAnswer
                 $this->logFormAnswer($form_answer);
 
+                /**
+                 * Si el fomulario tiene una integracion con DataCRM entonces la tipificacion será actualizada con DataCRM
+                 * @author Carlos Galindez
+                 */
+                $potentialIdObject = KeyValue::where('client_id',$clientFind->id)->where('key','potential-id1')->first(); //Unique ID de Data CRM
+                if(ApiConnection::where('form_id',$form_answer->form_id)->where('api_type',10)->where('status',1)->first() && $potentialIdObject ){
+                    $this->dataCRMServices->updatePotentials($form_answer->form_id,json_decode($form_answer->structure_answer),$potentialIdObject->value);
+                }
 
             } else {
                 $message = 'Tú rol no tiene permisos para ejecutar esta acción';
@@ -250,7 +262,6 @@ class FormAnswerController extends Controller
                     if ($form_answers == null || count($validador['data']) == 0) {
                         // Se busca por el cargue de base de datos = directory
                         $form_answers = $filterHelper->filterByDataBase($formId, $clientId, $item1value, $item2value, $item3value);
-                        Log::info($form_answers);
                     }
                 }
                 // Se valida si ya se ha encontrado inforación, sino se busca si tene api
