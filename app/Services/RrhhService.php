@@ -20,12 +20,15 @@ class RrhhService
 
     /**
      * Metodo que retorna una lista de usuarios
-     * @param userIds
+     * @param idsRrhh (Array) Arreglo con los ids rrhh del usuario solicitado
      * @author Carlos Galindez
      * @created 01/02/21
      */
-    public function fetchUsers($request = [])
+    public function fetchUsers($idsRrhh = [])
     {
+        $request = array(
+            'userIds'=> $idsRrhh
+        );
         return $this->request('GET', '/api/users/candidate?'.http_build_query($request));
     }
 

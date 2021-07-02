@@ -12,6 +12,7 @@ use App\Models\KeyValue;
 use App\Models\Section;
 use App\Models\User;
 use App\Services\CiuService;
+use App\Services\RrhhService;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,11 +23,13 @@ use Carbon\Carbon;
 class FormController extends Controller
 {
     private $ciuService;
+    private $rrhhService;
 
-    public function __construct(CiuService $ciuService)
+    public function __construct(CiuService $ciuService, RrhhService $rrhhService)
     {
         $this->middleware('auth');
         $this->ciuService = $ciuService;
+        $this->rrhhService = $rrhhService;
     }
 
     /**
@@ -270,13 +273,15 @@ class FormController extends Controller
      * @author: Leonardo Giraldo
      * Se cambia la funcion reportes evalua primero los campos que se deben reportar y despues compara con las respuestas
      */
-    public function report(Request $request)
+    public function report(Request $request, MiosHelper $miosHelper)
     {
       $sections=Section::select('fields')->where("form_id",$request->formId)->get();
-      $formAnswers = FormAnswer::where('form_id',$request->formId)
-                          ->where('created_at','>=', $request->date1)
-                          ->where('created_at','<=', $request->date2)
-                          ->select('id', 'structure_answer', 'created_at', 'updated_at')->get();
+      $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','users.id_rhh')
+                          ->join('users', 'users.id', '=', 'form_answers.user_id')
+                          ->where('form_answers.form_id',$request->formId)
+                          ->where('form_answers.created_at','>=', $request->date1)
+                          ->where('form_answers.created_at','<=', $request->date2)
+                          ->get();
       if(count($formAnswers)==0){
             // 406 Not Acceptable
             // se envia este error ya que no esta mapeado en interceptor angular.
@@ -289,6 +294,19 @@ class FormController extends Controller
         $dependencies=[];
         $r=0;
         $rows=[];
+        //Agrupamos los id_rrhh del usuario en un arreglo
+        $userIds=$miosHelper->getArrayValues('id_rhh',$formAnswers);
+        //Traemos los datos de rrhh de los usuarios
+        $usersInfo=$this->rrhhService->fetchUsers($userIds);
+        //Organizamos la información del usuario en un array asociativo con la información necesaria
+        $adviserInfo=[];
+        foreach($usersInfo as $info){
+            if(in_array($info->id,$userIds)){
+                if(!isset($adviserInfo[$info->id])){
+                    $adviserInfo[$info->id]=$info;
+                }
+            }
+        }
         //Verificamos cuales son los campos que deben ir en el reporte o que su elemento inReport sea true
         foreach($sections as $section){
             foreach(json_decode($section->fields) as $input){
@@ -317,11 +335,13 @@ class FormController extends Controller
                 foreach(json_decode($answer->structure_answer) as $field){
                     if(isset($input->dependencies[0]->report)){
                         if(in_array($field->id,$dependencies[$input->dependencies[0]->report])){
-                            $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
-                            if($select){
-                                $rows[$r]['Dependencias'] = $select;
-                            } else {
-                                $rows[$r]['Dependencias'] = $field->value;
+                            if(isset($field->value)){
+                                $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
+                                if($select){
+                                    $rows[$r]['Dependencias'] = $select;
+                                } else {
+                                    $rows[$r]['Dependencias'] = $field->value;
+                                }
                             }
                             break;
                         }
@@ -342,16 +362,16 @@ class FormController extends Controller
                         }
                         break;
                     }
-                }
-                if(!isset($rows[$r][$input->id])){
                     $rows[$r][$input->id]="-";
                 }
             }
+            $rows[$r]['user']=$adviserInfo[$answer->id_rhh]->name;
+            $rows[$r]['docuser']=$adviserInfo[$answer->id_rhh]->id_number;
             $rows[$r]['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
             $rows[$r]['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
             $r++;
           }
-          array_push($titleHeaders,'Fecha de creación','Fecha de actualización');
+          array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización');
       }
       return Excel::download(new FormReportExport($rows, $titleHeaders), 'reporte_formulario.xlsx');
     }
