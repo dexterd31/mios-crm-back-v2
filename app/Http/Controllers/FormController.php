@@ -12,22 +12,24 @@ use App\Models\KeyValue;
 use App\Models\Section;
 use App\Models\User;
 use App\Services\CiuService;
+use App\Services\RrhhService;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 
 class FormController extends Controller
 {
     private $ciuService;
+    private $rrhhService;
 
-    public function __construct(CiuService $ciuService)
+    public function __construct(CiuService $ciuService, RrhhService $rrhhService)
     {
         $this->middleware('auth');
         $this->ciuService = $ciuService;
+        $this->rrhhService = $rrhhService;
     }
 
     /**
@@ -115,9 +117,14 @@ class FormController extends Controller
                 for($i=0; $i<count($section['fields']); $i++){
                     $cadena = (string)$i;
                     if($section['fields'][$i]['key'] == 'null'){
-                        $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
-                       $section['fields'][$i]['key'] =  strtolower( str_replace(' ','-',$section['fields'][$i]['label']) );
-                       $section['fields'][$i]['key'] = $section['fields'][$i]['key'].$cadena;
+                        //Reemplaza todos los acentos o tildes de la cadena
+                        $section['fields'][$i]['key'] = $miosHelper->replaceAccents($section['fields'][$i]['label']);
+                        //Reemplaza todos los caracteres extraños
+                        $section['fields'][$i]['key'] = preg_replace('([^A-Za-z0-9 ])', '',$section['fields'][$i]['key']);
+                        //Convertimos a minusculas y Remplazamos espacios por el simbolo -
+                        $section['fields'][$i]['key'] = strtolower( str_replace(array(' ','  '),'-',$section['fields'][$i]['key']) );
+                        //Concatenamos el resultado del label transformado con la variable $cadena
+                        $section['fields'][$i]['key'] = $section['fields'][$i]['key'].$cadena;
                     }
                }
 
@@ -266,13 +273,15 @@ class FormController extends Controller
      * @author: Leonardo Giraldo
      * Se cambia la funcion reportes evalua primero los campos que se deben reportar y despues compara con las respuestas
      */
-    public function report(Request $request)
+    public function report(Request $request, MiosHelper $miosHelper)
     {
       $sections=Section::select('fields')->where("form_id",$request->formId)->get();
-      $formAnswers = FormAnswer::where('form_id',$request->formId)
-                          ->where('created_at','>=', $request->date1)
-                          ->where('created_at','<=', $request->date2)
-                          ->select('id', 'structure_answer', 'created_at', 'updated_at')->get();
+      $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','users.id_rhh')
+                          ->join('users', 'users.id', '=', 'form_answers.user_id')
+                          ->where('form_answers.form_id',$request->formId)
+                          ->where('form_answers.created_at','>=', $request->date1)
+                          ->where('form_answers.created_at','<=', $request->date2)
+                          ->get();
       if(count($formAnswers)==0){
             // 406 Not Acceptable
             // se envia este error ya que no esta mapeado en interceptor angular.
@@ -282,24 +291,62 @@ class FormController extends Controller
       } else {
         $inputReport=[];
         $titleHeaders=['Id'];
+        $dependencies=[];
         $r=0;
         $rows=[];
+        //Agrupamos los id_rrhh del usuario en un arreglo
+        $userIds=$miosHelper->getArrayValues('id_rhh',$formAnswers);
+        //Traemos los datos de rrhh de los usuarios
+        $usersInfo=$this->rrhhService->fetchUsers($userIds);
+        //Organizamos la información del usuario en un array asociativo con la información necesaria
+        $adviserInfo=[];
+        foreach($usersInfo as $info){
+            if(in_array($info->id,$userIds)){
+                if(!isset($adviserInfo[$info->id])){
+                    $adviserInfo[$info->id]=$info;
+                }
+            }
+        }
         //Verificamos cuales son los campos que deben ir en el reporte o que su elemento inReport sea true
         foreach($sections as $section){
             foreach(json_decode($section->fields) as $input){
                 if($input->inReport){
-                    array_push($titleHeaders,$input->label);
-                    array_push($inputReport,$input);
+                    if(count($input->dependencies)>0){
+                        if(isset($dependencies[$input->label])){
+                            array_push($dependencies[$input->label],$input->id);
+                        }else{
+                            $dependencies[$input->label]=[$input->id];
+                            array_push($titleHeaders,$input->label);
+                            array_push($inputReport,$input);
+                        }
+                        $input->dependencies[0]->report=$input->label;
+                    }else{
+                        array_push($titleHeaders,$input->label);
+                        array_push($inputReport,$input);
+                    }
                 }
             }
         }
+
         foreach($formAnswers as $answer){
             $rows[$r]['id'] = $answer->id;
             //Evaluamos los campos que deben ir en el reporte contra las respuestas
             foreach($inputReport as $input){
                 foreach(json_decode($answer->structure_answer) as $field){
-                    if($field->id==$input->id){
-                        $select = $this->findSelect($request->formId, $field->id, $field->value);
+                    if(isset($input->dependencies[0]->report)){
+                        if(in_array($field->id,$dependencies[$input->dependencies[0]->report])){
+                            if(isset($field->value)){
+                                $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
+                                if($select){
+                                    $rows[$r]['Dependencias'] = $select;
+                                } else {
+                                    $rows[$r]['Dependencias'] = $field->value;
+                                }
+                            }
+                            break;
+                        }
+                    }else if($field->id==$input->id){
+                        $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
                         if($select){
                             $rows[$r][$field->id] = $select;
                         } else {
@@ -307,7 +354,7 @@ class FormController extends Controller
                         }
                         break;
                     }else if($field->key==$input->key){
-                        $select = $this->findSelect($request->formId, $input->id, $field->value);
+                        $select = $this->findAndFormatValues($request->formId, $input->id, $field->value);
                         if($select){
                             $rows[$r][$input->id] = $select;
                         } else {
@@ -315,16 +362,16 @@ class FormController extends Controller
                         }
                         break;
                     }
-                }
-                if(!isset($rows[$r][$input->id])){
                     $rows[$r][$input->id]="-";
                 }
             }
+            $rows[$r]['user']=$adviserInfo[$answer->id_rhh]->name;
+            $rows[$r]['docuser']=$adviserInfo[$answer->id_rhh]->id_number;
             $rows[$r]['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
             $rows[$r]['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
             $r++;
           }
-          array_push($titleHeaders,'Fecha de creación','Fecha de actualización');
+          array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización');
       }
       return Excel::download(new FormReportExport($rows, $titleHeaders), 'reporte_formulario.xlsx');
     }
@@ -401,8 +448,9 @@ class FormController extends Controller
 
     }
 
-    private function findSelect($form_id, $field_id, $value)
+    private function findAndFormatValues($form_id, $field_id, $value)
     {
+
         $fields = json_decode(Section::where('form_id', $form_id)
         ->whereJsonContains('fields', ['id' => $field_id])
         ->first()->fields);
@@ -415,7 +463,9 @@ class FormController extends Controller
                 return $x->id == $value;
             })->first()->name;
             return $field_name;
-        } else {
+        }elseif($field->controlType == 'datepicker'){
+            return Carbon::parse($value)->setTimezone('America/Bogota')->format('Y-m-d');
+        }else {
             return null;
         }
     }
