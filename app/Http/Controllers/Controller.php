@@ -13,4 +13,10 @@ class Controller extends BaseController
     {
         return auth()->user();
     }
+
+    public function saveModel($model)
+    {
+        $model->save();
+        return $model;
+    }
 }
