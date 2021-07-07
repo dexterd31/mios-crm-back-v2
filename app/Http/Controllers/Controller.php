@@ -9,4 +9,8 @@ class Controller extends BaseController
 {
     use ApiResponse;
 
+    protected function authUser()
+    {
+        return auth()->user();
+    }
 }
