@@ -26,6 +26,7 @@ trait RequestService
                     'connect_timeout' => 10
                 ]
             );
+
             return json_decode($response->getBody()->getContents());
         }
         catch (Exception $e){

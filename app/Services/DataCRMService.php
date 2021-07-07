@@ -26,6 +26,7 @@ class DataCRMService
     use RequestService;
     public $baseUri;
     private $formId;
+    private $tokenVicidial;
     use RequestServiceHttp;
 
 
@@ -48,18 +49,20 @@ class DataCRMService
 
         $this->baseUri = $apiConnection->url;
             $credentials = json_decode($apiConnection->json_send);
+            $tokenVicidial = json_decode($apiConnection->parameter);
             $token = $this->getToken($credentials->username);
             $tokenValue = $token->result->token;
 
             $requestBody = 'operation=login&username='.$credentials->username.'&accessKey='.md5($tokenValue.$credentials->user_pass);
 
             $loginResponse = $this->post('/webservice.php', $requestBody);
-
+            $this->tokenVicidial = $tokenVicidial->token;
             $data = array(
                 'expireTime'=>$token->result->expireTime,
                 'sessionName'=>$loginResponse->result->sessionName,
                 'userId'=>$loginResponse->result->userId,
-                'baseUri'=>$apiConnection->url
+                'baseUri'=>$apiConnection->url,
+                'tokenLeadVicidial'=>$tokenVicidial->token,
             );
             Cache::forever('data_crm_session-'.$this->formId, $data);
             return $loginResponse->result->sessionName;
@@ -75,6 +78,7 @@ class DataCRMService
                return $this->login();
             }else{
                $this->baseUri = $token['baseUri'];
+               $this->tokenVicidial = $token['tokenLeadVicidial'];
                return $token['sessionName'];
             }
         }else{
@@ -93,7 +97,7 @@ class DataCRMService
         return $diffLead;
     }
 
-    public static function getAccounts($formId){
+    public  function getAccounts($formId){
             $this->formId = $formId;
             $diffLead = $this->getcountAccounts();
             if( $diffLead != 0){
@@ -154,8 +158,6 @@ class DataCRMService
                 $phone = '3207671490';
             }else if($keyLEad == 1){
                 $phone = '3152874716';
-            }else if($keyLEad == 2){
-                $phone = '3185746575';
             }
             $clientClean['phone'] = $phone;
 
@@ -240,13 +242,13 @@ class DataCRMService
 
            $newLeadVicidial = array(
                "producto"=>"leads",
-                "token_key"=>"123456789",
+                "token_key"=>$this->tokenVicidial,
                 "Celular"=>$clientClean['phone']
            );
 
-            //$this->newLeadVicidial($newLeadVicidial);
+            $this->newLeadVicidial($newLeadVicidial);
 
-            if($keyLEad == 2){
+            if($keyLEad == 1){
                 break;
             }
 
@@ -332,19 +334,13 @@ class DataCRMService
         $responsePotentials = collect($potentialDetails->result);
         $fieldToMatchCollect = collect($fieldToMatch);
         $merged = $responsePotentials->merge($fieldToMatchCollect);
-
         $requestBody = array(
             'operation' => 'update',
             'sessionName' => $this->getSessionName(),
-            'element' =>json_encode($merged->all())
+            'element' => $merged->toJson()
         );
 
-        Log::info($requestBody);
-
-        $response = $this->post('/webservice.php', $requestBody);
-
-        Log::info($response);
-
+        $this->post('/webservice.php', http_build_query($requestBody));
         return;
 
     }
