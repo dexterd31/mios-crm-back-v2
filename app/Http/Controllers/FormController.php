@@ -275,7 +275,6 @@ class FormController extends Controller
      */
     public function report(Request $request, MiosHelper $miosHelper)
     {
-      $sections=Section::select('fields')->where("form_id",$request->formId)->get();
       $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','users.id_rhh')
                           ->join('users', 'users.id', '=', 'form_answers.user_id')
                           ->where('form_answers.form_id',$request->formId)
@@ -286,8 +285,8 @@ class FormController extends Controller
             // 406 Not Acceptable
             // se envia este error ya que no esta mapeado en interceptor angular.
             return $this->errorResponse('No se encontraron datos en el rango de fecha suministrado', 406);
-      } else if(count($formAnswers)>1000){
-            return $this->errorResponse('El rango de fechas supera a los 1000 records', 413);
+      } else if(count($formAnswers)>5000){
+            return $this->errorResponse('El rango de fechas supera a los 10000 records', 413);
       } else {
         $inputReport=[];
         $titleHeaders=['Id'];
@@ -308,6 +307,7 @@ class FormController extends Controller
             }
         }
         //Verificamos cuales son los campos que deben ir en el reporte o que su elemento inReport sea true
+        $sections=Section::select('fields')->where("form_id",$request->formId)->get();
         foreach($sections as $section){
             foreach(json_decode($section->fields) as $input){
                 if($input->inReport){
@@ -348,9 +348,9 @@ class FormController extends Controller
                     }else if($field->id==$input->id){
                         $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
                         if($select){
-                            $rows[$r][$field->id] = $select;
+                            $rows[$r][$input->id] = $select;
                         } else {
-                            $rows[$r][$field->id] = $field->value;
+                            $rows[$r][$input->id] = $field->value;
                         }
                         break;
                     }else if($field->key==$input->key){
@@ -362,8 +362,11 @@ class FormController extends Controller
                         }
                         break;
                     }
+                }
+                if(!isset($rows[$r][$input->id]) && !isset($input->dependencies[0]->report)){
                     $rows[$r][$input->id]="-";
                 }
+
             }
             $rows[$r]['user']=$adviserInfo[$answer->id_rhh]->name;
             $rows[$r]['docuser']=$adviserInfo[$answer->id_rhh]->id_number;
@@ -406,7 +409,6 @@ class FormController extends Controller
         $log->user_id = $user ;
         $log->form_id = $form->id;
         $log->save();
-
     }
 
     public function searchPrechargeFields($id)
