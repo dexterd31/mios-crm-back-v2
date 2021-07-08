@@ -30,4 +30,8 @@ class SandboxController extends Controller
        return $this->dataCrmService->updatePotentials(5,json_decode($test),'13x66513');
 
     }
+
+    public function testDataCRMProduction($formId){
+       return $this->dataCrmService->getDataProductionTest($formId);
+    }
 }

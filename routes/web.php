@@ -129,6 +129,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
      $router->get('contactos','SandboxController@getContactsFromDataCRM');
      $router->get('fields','SandboxController@getFields');
+     $router->get('datacrm/production/test/{formId}','SandboxController@testDataCRMProduction');
 
      //Rutas para el manejo de notificaciones de nuevos lead (Integracion SBS)
      $router->get('lead/notifications/{formId}','NotificationLeadController@getNotifications');
