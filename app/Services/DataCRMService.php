@@ -360,5 +360,37 @@ class DataCRMService
 
     }
 
+    public function getDataProductionTest($formId){
+
+        $this->formId = $formId;
+        $sql = urlencode("select * from Accounts where createdtime>='2021-07-07 00:00:00' order by id desc;");
+        $requestBody = '/webservice.php?operation=query&sessionName='.$this->getSessionName().'&query='.$sql;
+
+
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => $this->baseUri.$requestBody,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'GET',
+        ));
+
+        $response = curl_exec($curl);
+        //Log::info($response);
+        curl_close($curl);
+
+        $responseJson = json_decode($response);
+        if(!$responseJson->success) throw new Exception("Error Processing Request", 1);
+
+        return $response;
+
+
+    }
+
 
 }
