@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Gate;
 use App\Services\CiuService;
 use App\Services\NominaService;
 use Helpers\MiosHelper;
+use Log;
 
 
 class CampaignController extends Controller
@@ -14,19 +15,47 @@ class CampaignController extends Controller
     private $ciuService;
     private $nominaService;
 
-    public function __construct(CiuService $ciuService, NominaService $nominaService)
+    public function __construct()
     {
         $this->middleware('auth');
-        $this->ciuService = $ciuService;
-        $this->nominaService = $nominaService;
     }
 
-    public function index(Request $request, GroupController $groupController)
+    public function setCiuService($ciuService)
+	{
+		$this->ciuService = $ciuService;
+	}
+
+    public function getCiuService()
+	{
+		if($this->ciuService == null)
+		{
+			$this->setCiuService(new CiuService());
+		}
+		return $this->ciuService;
+	}
+
+    public function setNominaService($nominaService)
+	{
+		$this->nominaService = $nominaService;
+	}
+
+    public function getNominaService()
+	{
+		if($this->nominaService == null)
+		{
+			$this->setNominaService(new NominaService());
+		}
+		return $this->nominaService;
+	}
+
+    public function index()
     {
         //Litar todas las campañas de los grupos a los que pertenece el usuarioi
         //Si el usuario es administrador o supervisor, puede ver las campanas inactivas
         try {
-            $user = $this->ciuService->fetchUser(auth()->user()->id)->data;
+            $this->getCiuService();
+            $this->getNominaService();
+            $user = $this->ciuService->fetchUser($this->authUser()->id)->data;
             //Se traen las campañas por el id de campaña
             $campaign = $this->nominaService->fetchSpecificCampaigns([$user->rrhh->campaign_id]);
             /**
@@ -46,9 +75,11 @@ class CampaignController extends Controller
         }
     }
 
+
     public function updateState(Request $request, $id)
     {
         try {
+            $this->getNominaService();
             $this->nominaService->changeCampaignState($id, $request->state);
             return $this->successResponse("Estado de campaña cambiado exitosamente");
         } catch (\Throwable $th) {
@@ -66,6 +97,7 @@ class CampaignController extends Controller
         try {
             // Se obtienes los grupor por usuarios
             $campaignsIds = $groupController->getIdCampaignByUserId($idUser);
+            $this->getNominaService();
             $campaigns = $this->nominaService->fetchSpecificCampaigns($campaignsIds);
             $data = $miosHelper->jsonResponse(true, 200, 'campaigns', $campaigns);
         } catch (\Throwable $th) {
