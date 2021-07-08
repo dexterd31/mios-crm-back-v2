@@ -15,10 +15,25 @@ class GroupController extends Controller
 {
     private $rrhhService;
 
-    public function __construct(RrhhService $rrhhService)
+    public function __construct()
     {
-        $this->rrhhService = $rrhhService;
+        $this->getRrhhService();
     }
+
+    public function getRrhhService()
+	{
+		if($this->rrhhService == null)
+		{
+			$this->setRrhhService(new RrhhService());
+		}
+		return $this->rrhhService;
+	}
+
+	public function setRrhhService($rrhhService)
+	{
+		$this->rrhhService = $rrhhService;
+	}
+
     /**
      * Nicol Ramirez 
      * 26-02-2021
@@ -246,5 +261,11 @@ class GroupController extends Controller
             array_push($groupsIds, $group['campaign_id']);
         }
         return $groupsIds;
+    }
+
+    public function getGroupsByRrhhId($rrhhId)
+    {
+        return GroupUser::join("users", 'group_users.user_id', 'users.id')
+            ->where('users.id_rhh', $rrhhId)->get();
     }
 }
