@@ -60,7 +60,7 @@ class FormAnswerImport implements ToModel, WithBatchInserts
                 /*if($row[$i] === null){
                     break;
                 } else {*/
-                    if(strlen($row[$i])<256){
+                    if(strlen($row[$i])<2001){
                         $curso[$temporal[$i]] = $row[$i];
                     }
                 //}

@@ -4,6 +4,9 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Laravel\Lumen\Console\Kernel as ConsoleKernel;
+use App\Services\DataCRMService;
+use App\Models\ApiConnection;
+use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
 {
@@ -24,6 +27,13 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        //
+
+        $schedule->call(function(DataCRMService $dataService) {
+            $formsDataCRM = ApiConnection::where('api_type',10)->where('status',1)->get();
+            foreach ($formsDataCRM as $key => $value) {
+                $dataService->getAccounts($value->form_id);
+            }
+            Log::info('Ejecutandose minuto a minuto');
+            })->everyMinute();
     }
 }
