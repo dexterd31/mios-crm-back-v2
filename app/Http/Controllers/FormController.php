@@ -293,6 +293,7 @@ class FormController extends Controller
         $dependencies=[];
         $r=0;
         $rows=[];
+        $plantillaRespuestas=[];
         //Agrupamos los id_rrhh del usuario en un arreglo
         $userIds=$miosHelper->getArrayValues('id_rhh',$formAnswers);
         //Traemos los datos de rrhh de los usuarios
@@ -308,6 +309,7 @@ class FormController extends Controller
         }
         //Verificamos cuales son los campos que deben ir en el reporte o que su elemento inReport sea true
         $sections=Section::select('fields')->where("form_id",$request->formId)->get();
+        $plantillaRespuestas['id']="-";
         foreach($sections as $section){
             foreach(json_decode($section->fields) as $input){
                 if($input->inReport){
@@ -318,18 +320,25 @@ class FormController extends Controller
                             $dependencies[$input->label]=[$input->id];
                             array_push($titleHeaders,$input->label);
                             array_push($inputReport,$input);
+                            $plantillaRespuestas[$input->label]="-";
                         }
                         $input->dependencies[0]->report=$input->label;
                     }else{
                         array_push($titleHeaders,$input->label);
                         array_push($inputReport,$input);
+                        $plantillaRespuestas[$input->id]="-";
                     }
                 }
             }
         }
+        $plantillaRespuestas['user']="-";
+        $plantillaRespuestas['docuser']="-";
+        $plantillaRespuestas['created_at'] ="-";
+        $plantillaRespuestas['updated_at'] ="-";
 
         foreach($formAnswers as $answer){
-            $rows[$r]['id'] = $answer->id;
+            $respuestas=$plantillaRespuestas;
+            $respuestas['id'] = $answer->id;
             //Evaluamos los campos que deben ir en el reporte contra las respuestas
             foreach($inputReport as $input){
                 foreach(json_decode($answer->structure_answer) as $field){
@@ -338,9 +347,9 @@ class FormController extends Controller
                             if(isset($field->value)){
                                 $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
                                 if($select){
-                                    $rows[$r]['Dependencias'] = $select;
+                                    $respuestas[$input->dependencies[0]->report] = $select;
                                 } else {
-                                    $rows[$r]['Dependencias'] = $field->value;
+                                    $respuestas[$input->dependencies[0]->report] = $field->value;
                                 }
                             }
                             break;
@@ -348,30 +357,28 @@ class FormController extends Controller
                     }else if($field->id==$input->id){
                         $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
                         if($select){
-                            $rows[$r][$input->id] = $select;
+                            $respuestas[$input->id] = $select;
                         } else {
-                            $rows[$r][$input->id] = $field->value;
+                            $respuestas[$input->id] = $field->value;
                         }
                         break;
                     }else if($field->key==$input->key){
                         $select = $this->findAndFormatValues($request->formId, $input->id, $field->value);
                         if($select){
-                            $rows[$r][$input->id] = $select;
+                            $respuestas[$input->id] = $select;
                         } else {
-                            $rows[$r][$input->id] = $field->value;
+                            $respuestas[$input->id] = $field->value;
                         }
                         break;
                     }
                 }
-                if(!isset($rows[$r][$input->id]) && !isset($input->dependencies[0]->report)){
-                    $rows[$r][$input->id]="-";
-                }
-
             }
-            $rows[$r]['user']=$adviserInfo[$answer->id_rhh]->name;
-            $rows[$r]['docuser']=$adviserInfo[$answer->id_rhh]->id_number;
-            $rows[$r]['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
-            $rows[$r]['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
+
+            $respuestas['user']=$adviserInfo[$answer->id_rhh]->name;
+            $respuestas['docuser']=$adviserInfo[$answer->id_rhh]->id_number;
+            $respuestas['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
+            $respuestas['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
+            $rows[$r]=$respuestas;
             $r++;
           }
           array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización');
