@@ -153,14 +153,16 @@ class DataCRMService
 
              /**
             *   SOLO PARA PRUEBAS DE DEMOSTRACION, ESTO SE DEBE ELIMINAR UNA VEZ SE TERMINE LA DEMOSTRACION ##########################
+            *   solo para ambientes de pruebas
             */
-            if($keyLEad == 0){
-                $phone = '3207671490';
-            }else if($keyLEad == 1){
-                $phone = '3152874716';
+            if(env('APP_ENV') == 'local' ||env('APP_ENV') == 'dev'){
+                if($keyLEad == 0){
+                    $phone = '3207671490';
+                }else if($keyLEad == 1){
+                    $phone = '3152874716';
+                }
+                $clientClean['phone'] = $phone;
             }
-            $clientClean['phone'] = $phone;
-
             // Quitar las lineas 156 a 163 para produccion
 
             $dataClient = [
@@ -248,7 +250,10 @@ class DataCRMService
 
             $this->newLeadVicidial($newLeadVicidial);
 
-            if($keyLEad == 1){
+            /**
+             * Implementado unicamente para pruebas controladas, Solo se estan escribiendo 2 lead
+             */
+            if((env('APP_ENV') == 'local' ||env('APP_ENV') == 'dev') && $keyLEad == 1){
                 break;
             }
 
@@ -271,7 +276,7 @@ class DataCRMService
                 'lastName'=>$values->accountname,
                 'second_lastname'=> null,
                 'email'=>$values->email1,
-                'phone'=>'3207671490', // $values->cf_951 TODO ################################# CAMBIAR PARA PRUEBAS, SOLO PARA PRUEBAS ####################
+                'phone'=>$values->cf_951, // $values->cf_951 TODO ################################# CAMBIAR PARA PRUEBAS, SOLO PARA PRUEBAS ####################
                 'account-id0'=>$values->id
             );
         }else if($typeValue == 2){
@@ -357,6 +362,38 @@ class DataCRMService
         $str = strtr( $string, $unwanted_array );
         $str = strtolower($str);
         return $str;
+
+    }
+
+    public function getDataProductionTest($formId){
+
+        $this->formId = $formId;
+        $sql = urlencode("select * from Accounts where createdtime>='2021-07-07 00:00:00' order by id desc;");
+        $requestBody = '/webservice.php?operation=query&sessionName='.$this->getSessionName().'&query='.$sql;
+
+
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => $this->baseUri.$requestBody,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'GET',
+        ));
+
+        $response = curl_exec($curl);
+        //Log::info($response);
+        curl_close($curl);
+
+        $responseJson = json_decode($response);
+        if(!$responseJson->success) throw new Exception("Error Processing Request", 1);
+
+        return $response;
+
 
     }
 
