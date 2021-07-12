@@ -8,3 +8,4 @@ Homestead.yaml
 storage
 storage/framework/laravel-excel/*
 *.lock
+reports/

@@ -61,6 +61,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //consultar usuarios existentes para asignar al grupo
     $router->get('/searchUser/{id}','GroupController@searchUser');
     $router->get('/groupsbyuser/{idUser}', 'GroupController@listGroupsByUser');
+    $router->get('/getGroupsByRrhhId/{rrhhId}', 'GroupController@getGroupsByRrhhId');
 
     // rutas de campañas
     $router->get('/campaigns', 'CampaignController@index');
@@ -70,6 +71,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas de usuarios
     $router->post('/storeUser', 'UserController@storeUser');
     $router->put('/disabledUser/{id}', 'UserController@disabledUser');
+    $router->get('/getUsersFromMyGroups', 'UserController@getUsersFromMyGroups');
 
     //Rutas de clientes
     $router->get('/getClient/{id}', 'ClientController@getClient');
@@ -130,6 +132,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
      $router->get('contactos','SandboxController@getContactsFromDataCRM');
      $router->get('fields','SandboxController@getFields');
      $router->get('datacrm/production/test/{formId}','SandboxController@testDataCRMProduction');
+
+     $router->get('pusher','SandboxController@testPusher');
 
      //Rutas para el manejo de notificaciones de nuevos lead (Integracion SBS)
      $router->get('lead/notifications/{formId}','NotificationLeadController@getNotifications');

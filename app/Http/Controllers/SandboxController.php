@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NewDataCRMLead;
 use App\Models\ApiConnection;
 use Illuminate\Http\Request;
 use App\Services\DataCRMService;
@@ -33,5 +34,10 @@ class SandboxController extends Controller
 
     public function testDataCRMProduction($formId){
        return $this->dataCrmService->getDataProductionTest($formId);
+    }
+
+    public function testPusher(){
+        sleep(2);
+        event( new NewDataCRMLead( 4 ) );
     }
 }

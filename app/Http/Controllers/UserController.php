@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\GroupUser;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Helpers\MiosHelper;
 
 class UserController extends Controller
 {
@@ -58,5 +60,23 @@ class UserController extends Controller
         }catch(\Throwable $e){
             return $this->errorResponse('Error al desactivar el usuario',500);
         }
+    }
+
+    /**
+     * Joao Beleno
+     * 22-06-2021
+     * Funcion para obtener los usuarios del grupo
+     */
+    public function getUsersFromMyGroups(Request $request)
+    {
+        $rrhhId = $request->input('rrhhId');
+        $groupControllet = new GroupController();
+        $groupsUser = $groupControllet->getGroupsByRrhhId($rrhhId);
+        $miosHelper = new MiosHelper();
+        $groupsUser = $miosHelper->getArrayValues("group_id", $groupsUser);
+        return User::select('group_users.group_id', 'users.id_rhh')
+            ->join('group_users', 'group_users.user_id', 'users.id')
+            ->whereIn('group_users.group_id', $groupsUser)
+            ->where('users.id_rhh','!=', $rrhhId)->get();
     }
 }
