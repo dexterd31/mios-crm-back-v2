@@ -27,6 +27,7 @@ class DataCRMService
     public $baseUri;
     private $formId;
     private $tokenVicidial;
+    private $productVicidial;
     use RequestServiceHttp;
 
 
@@ -39,7 +40,6 @@ class DataCRMService
     }
 
     public function login(){
-
         $apiConnection = ApiConnection::where('form_id',$this->formId)
                                         ->where('api_type',10)
                                         ->where('status',1)
@@ -57,12 +57,14 @@ class DataCRMService
 
             $loginResponse = $this->post('/webservice.php', $requestBody);
             $this->tokenVicidial = $tokenVicidial->token;
+            $this->productVicidial = $tokenVicidial->producto;
             $data = array(
                 'expireTime'=>$token->result->expireTime,
                 'sessionName'=>$loginResponse->result->sessionName,
                 'userId'=>$loginResponse->result->userId,
                 'baseUri'=>$apiConnection->url,
                 'tokenLeadVicidial'=>$tokenVicidial->token,
+                'productVicidial'=>$tokenVicidial->producto
             );
             Cache::forever('data_crm_session-'.$this->formId, $data);
             return $loginResponse->result->sessionName;
@@ -79,6 +81,7 @@ class DataCRMService
             }else{
                $this->baseUri = $token['baseUri'];
                $this->tokenVicidial = $token['tokenLeadVicidial'];
+               $this->productVicidial = $token['productVicidial'];
                return $token['sessionName'];
             }
         }else{
@@ -143,8 +146,6 @@ class DataCRMService
     public function setAccounts($leads, $formId){
 
         foreach ($leads as $keyLEad => $value) {
-
-
 
             $potential = $this->getPotential($value->id);
             $clientClean = $this->transformValues($value,1);
@@ -218,7 +219,7 @@ class DataCRMService
             if($create){
                 Directory::create([
                     'data'=>json_encode($keysToDirectory),
-                    'user_id'=>1,
+                    'user_id'=>env('USER_ID_CREATOR_DIRECTORIES_CRM_LEAD'), //NOTE: ID DE USUARIO QUEMADO EN EL .ENV POR AHORA
                     'form_id'=>$this->formId,
                     'client_id'=>$client->id
                 ]);
@@ -227,7 +228,7 @@ class DataCRMService
                 if($directory){
                     Directory::whereId($directory->id)->update([
                         'data'=>json_encode($keysToDirectory),
-                        'user_id'=>1,
+                        'user_id'=>env('USER_ID_CREATOR_DIRECTORIES_CRM_LEAD'), //NOTE: ID DE USUARIO QUEMADO EN EL .ENV POR AHORA
                         'form_id'=>$this->formId,
                         'client_id'=>$client->id
                     ]);
@@ -243,7 +244,7 @@ class DataCRMService
             if(!$notificationLeadByCLient) NotificationLeads::create(['client_id'=>$client->id,'phone'=>$clientClean['phone'],'form_id'=>$this->formId]);
 
            $newLeadVicidial = array(
-               "producto"=>"leads",
+               "producto"=>$this->productVicidial, // "leads"
                 "token_key"=>$this->tokenVicidial,
                 "Celular"=>$clientClean['phone']
            );
@@ -262,6 +263,7 @@ class DataCRMService
         /**
          * Despues de haber creado las notificaciones entonces se envia a front para se ejecuta el get notification
          */
+        sleep(4);
         event( new NewDataCRMLead(  $this->formId   ) );
 
     }
@@ -299,7 +301,7 @@ class DataCRMService
     }
 
     public function newLeadVicidial($params){
-        Http::post('https://app.outsourcingcos.com/webservice-dinamico/cos/services',$params);
+        Http::post(env('SERVICE_SYNC_VICIDIAL').'/cos/services',$params);
     }
 
 
@@ -344,7 +346,7 @@ class DataCRMService
             'sessionName' => $this->getSessionName(),
             'element' => $merged->toJson()
         );
-
+        if(env('APP_ENV') == 'local' ||env('APP_ENV') == 'dev') Log::info( $requestBody );
         $this->post('/webservice.php', http_build_query($requestBody));
         return;
 
