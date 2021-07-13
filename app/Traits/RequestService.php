@@ -3,7 +3,7 @@
 namespace App\Traits;
 
 use GuzzleHttp\Client;
-use Log;
+use Illuminate\Support\Facades\Log;
 use Exception;
 
 trait RequestService
@@ -12,14 +12,12 @@ trait RequestService
     public function request($method, $requestUrl, $formParams = [], $headers = [])
     {
         try{
-            Log::info($this->baseUri);
             $client = new Client([
             'base_uri' => $this->baseUri
             ]);
             if (isset($this->secret)) {
                 $headers['Authorization'] = 'Bearer '.$this->secret;
             }
-
             $response = $client->request($method, env('LOCAL') ? 'public/'.$requestUrl : $requestUrl,
                 [
                     'form_params' => $formParams,
@@ -28,7 +26,7 @@ trait RequestService
                     'connect_timeout' => 10
                 ]
             );
-            
+
             return json_decode($response->getBody()->getContents());
         }
         catch (Exception $e){
@@ -37,8 +35,8 @@ trait RequestService
         }
     }
 
-    /** 
-     * Metodo para hacer una peticion pero en ves de enviar 
+    /**
+     * Metodo para hacer una peticion pero en ves de enviar
      * los parametros como application/x-www-form-urlencoded
      * los envia como json en el cuerpo de la peticion
     */
