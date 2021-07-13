@@ -140,6 +140,17 @@ $router->group(['prefix' => 'api'], function () use ($router) {
      $router->get('lead/notification/{formId}/{rrhhId}','NotificationLeadController@setReaded');
 
 
+     /**
+      * Integrations
+      */
+      $router->group(['prefix' => 'integrations'], function () use ($router) {
+          $router->post('login','integrations\AccessSyncController@login');
+          $router->post('sync','integrations\ReaderSyncController@syncForms');
+
+      });
+
+
+
 });
 
 
