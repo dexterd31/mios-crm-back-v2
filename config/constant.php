@@ -8,7 +8,7 @@ return [
             ],
             'qa'=>[
                 'crm'=>'http://backend_express.groupcos.com/api/',
-                'ciu'=>'http://backend-mios.groupcos.com/api/'
+                'ciu'=>'http://backend_mios.groupcos.com/api/'
             ],
             'demo'=>[
                 'crm'=>'http://demo-express.groupcos.com/api/',
