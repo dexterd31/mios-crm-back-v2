@@ -80,6 +80,7 @@ class FormAnswerController extends Controller
                             $attachment->source = $request->file($field['id'])->store($date_string);
                             $attachment->save();
                             $register['value'] = $attachment->id;
+                            $register['nameFile']=$attachment->name; //Agregamos el nombre del archivo para que en el momento de ver las respuestas en el formulario se visualice el nombre.
                         }
 
                         if(!empty($register['value'])){
