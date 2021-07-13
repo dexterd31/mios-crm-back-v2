@@ -7,16 +7,16 @@ return [
                 'ciu'=>'http://back-micromios.groupcos.com/api/'
             ],
             'qa'=>[
-                'crm'=>'',
-                'ciu'=>''
+                'crm'=>'http://backend_express.groupcos.com/api/',
+                'ciu'=>'http://backend-mios.groupcos.com/api/'
             ],
             'demo'=>[
-                'crm'=>'',
-                'ciu'=>''
+                'crm'=>'http://demo-express.groupcos.com/api/',
+                'ciu'=>'http://demo-mios.groupcos.com/api/'
             ],
             'production'=>[
-                'crm'=>'',
-                'ciu'=>''
+                'crm'=>'http://backendexpress.groupcos.com/api/',
+                'ciu'=>'http://backendmios.groupcos.com/api/'
             ]
     ]
 ];
