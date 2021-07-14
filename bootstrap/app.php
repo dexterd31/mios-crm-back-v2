@@ -74,6 +74,8 @@ $app->configure('app');
 $app->configure('services');
 $app->configure('filesystems');
 $app->configure('broadcasting');
+$app->configure('constant');
+
 
 /*
 |--------------------------------------------------------------------------
