@@ -6,17 +6,27 @@ use Illuminate\Http\Request;
 use App\Exports\FormExport;
 use App\Imports\ClientImport;
 use App\Imports\FormAnswerImport;
+use App\Imports\ValidateImport;
 use Helpers\MiosHelper;
 use App\Models\Upload;
 use App\Models\Directory;
+use App\Models\Section;
+use App\Models\User;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FormReportExport;
 use App\Services\CiuService;
+use Maatwebsite\Excel\HeadingRowImport;
 
 class UploadController extends Controller
 {
 
     private $ciuService;
+
+    //Constante para limitar la carga de filas 
+    static $LIMIT_ROW_UPLOAD_FILE = 10000; 
+
+    //Constante para limitar la carga de filas 
+    static $LIMIT_CHARACTERS_CELL = 2000; 
 
     public function __construct(CiuService $ciuService)
     {
@@ -59,16 +69,67 @@ class UploadController extends Controller
     public function importExcel(Request $request, MiosHelper $miosHelper)
     {
         $file   = $request->file('excel');
-        $userId = $request->user_id;
+        $userAuth = User::where('id_rhh',auth()->user()->rrhh_id)->first();
+        $userId = $userAuth->id;
         $formId = $request->form_id;
         $flag = $request->flag;
+        $userIdRrhh = auth()->user()->rrhh_id;
         if (isset($file) && isset($userId) && isset($formId)) {
             
             //Eliminar registros de Directory
             if($flag != 'append'){
                 Directory::where('form_id', $formId)->delete();
             }
+
+            /*start -- validacion documento cargado--*/
+            $form_import_validate = Excel::toCollection(new ValidateImport, $file);
+            $countDocumentLoad = count($form_import_validate[0]);
+            $documentLoad = $form_import_validate[0];
+            $errorResponse = [];
+                          
+            // Determina cantidad de columnas a cargar documento 
+            if ($countDocumentLoad > self::$LIMIT_ROW_UPLOAD_FILE) {
+               $errorResponse[] = 'Limite de registros no permitidos.';
+            }
             
+            // Determina si tiene valores el documento
+            if ($countDocumentLoad > 1) {
+                 foreach ($documentLoad as $keyRows => $rows) {
+                    
+                    //entrada solo datos, cabecera
+                    if ($keyRows != 0) {
+                        //Determina si la columna Tipo de documento sea de tipo entero para relacionar
+                        if (is_string($rows[4])) {
+                           $errorResponse[] = 'La fila '.($keyRows + 1).' debe ser id tipo numerico para la columna tipo de documento';
+                        }
+                        //Determina si tiene un id para relacionar
+                        if (is_null($rows[4])) {
+                           $errorResponse[] = 'La fila '.($keyRows + 1).' no cuenta con  id tipo numerico para la columna tipo de documento';
+                        }
+                    }
+                    //Determina que cada fila tenga la cantidad de celdas en base a la cabecera 
+                    $filteredHead = $documentLoad[0]->filter(function ($value, $key) {
+                        return $value != null;
+                    });
+                    $rowsCount = $rows->filter(function ($value, $key) {
+                        return $value != null;
+                    });
+                    if (count($rowsCount) > count($filteredHead)) {
+                       $errorResponse[] = 'La fila ' . ($keyRows + 1) .' supera la cantidad de celdas con información';
+                    }
+                    foreach ($rows as $keyRowsCell => $valueRowsCell) {
+                        //Determina cantidad de caracteres de cada celda
+                        if (strlen($valueRowsCell) > self::$LIMIT_CHARACTERS_CELL) {
+                           $errorResponse[] = 'La fila '.$keyRows.' de la celda '.$keyRowsCell.' cuenta con mas de 2000 caracteres permitidos.';
+                        }
+                    }                  
+                }
+            }
+            if ($errorResponse != []) {
+                return $this->errorResponse($errorResponse, 400);
+            }
+            /*end--validacion documento cargado--*/
+
             //Se guardan los clientes
             //try {
                 Excel::import(new ClientImport, $file);
@@ -76,6 +137,8 @@ class UploadController extends Controller
                 //try {
                     $form_import =new FormAnswerImport($userId, $formId, json_decode($request->ids));
                     Excel::import( $form_import, $file);
+                    //dd('Row count: ' . $form_import->getRowCount());
+
 
                     //Se agrega en la tabla de uploads
                     $upload             = new Upload();
