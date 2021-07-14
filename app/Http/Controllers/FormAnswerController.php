@@ -199,8 +199,13 @@ class FormAnswerController extends Controller
                  * @author Carlos Galindez
                  */
                 $potentialIdObject = KeyValue::where('client_id',$clientFind->id)->where('key','potential-id1')->first(); //Unique ID de Data CRM
-                if(ApiConnection::where('form_id',$form_answer->form_id)->where('api_type',10)->where('status',1)->first() && $potentialIdObject ){
-                    $this->dataCRMServices->updatePotentials($form_answer->form_id,json_decode($form_answer->structure_answer),$potentialIdObject->value);
+                $accountIdObject = KeyValue::where('client_id',$clientFind->id)->where('key','account-id0')->first(); //Unique ID de Data CRM
+
+                if(ApiConnection::where('form_id',$form_answer->form_id)->where('api_type',10)->where('status',1)->first()  ){
+
+                    if($potentialIdObject) $this->dataCRMServices->updatePotentials($form_answer->form_id,json_decode($form_answer->structure_answer),$potentialIdObject->value);
+                    if($accountIdObject) $this->dataCRMServices->updateAccounts($form_answer->form_id,json_decode($form_answer->structure_answer),$accountIdObject->value);
+
                 }
 
             } else {

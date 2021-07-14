@@ -71,8 +71,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas de usuarios
     $router->post('/storeUser', 'UserController@storeUser');
     $router->put('/disabledUser/{id}', 'UserController@disabledUser');
-    $router->get('/getUsersFromMyGroups', 'UserController@getUsersFromMyGroups');  
-    
+    $router->get('/getUsersFromMyGroups', 'UserController@getUsersFromMyGroups');
+
     //Rutas de clientes
     $router->get('/getClient/{id}', 'ClientController@getClient');
     $router->post('/client','ClientController@store');
@@ -133,9 +133,22 @@ $router->group(['prefix' => 'api'], function () use ($router) {
      $router->get('fields','SandboxController@getFields');
      $router->get('datacrm/production/test/{formId}','SandboxController@testDataCRMProduction');
 
+     $router->get('pusher','SandboxController@testPusher');
+
      //Rutas para el manejo de notificaciones de nuevos lead (Integracion SBS)
      $router->get('lead/notifications/{formId}','NotificationLeadController@getNotifications');
      $router->get('lead/notification/{formId}/{rrhhId}','NotificationLeadController@setReaded');
+
+
+     /**
+      * Integrations
+      */
+      $router->group(['prefix' => 'integrations'], function () use ($router) {
+          $router->post('login','integrations\AccessSyncController@login');
+          $router->post('sync','integrations\ReaderSyncController@syncForms');
+
+      });
+
 
 
 });
