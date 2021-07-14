@@ -27,7 +27,6 @@ use Illuminate\Support\Facades\Gate;
 
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 
 class FormAnswerController extends Controller
 {
@@ -120,12 +119,17 @@ class FormAnswerController extends Controller
 
                     foreach ($obj as $row) {
                         if($row['preloaded'] == true){
+                            //Utilizamos el campo description en key values para guardar el nombre de un archivo precargable
+                            $description=null;
+                            if(isset($row['nameFile'])){
+                                $description=$row['nameFile'];
+                            }
                             $sect = new KeyValue([
                                 'form_id' => json_decode($request['form_id']),
                                 'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
                                 'key' => $row['key'],
                                 'value' => $row['value'],
-                                'description' => null,
+                                'description' => $description,
                                 'field_id' => $row['id']
                             ]);
 
@@ -551,7 +555,7 @@ class FormAnswerController extends Controller
             $section->fields =json_decode($section->fields);
             foreach ( $section->fields as $field) {
                 if($field->preloaded == true){
-                    $key_value = KeyValue::where('client_id', $client_id)->where('field_id', $field->id)->select('field_id', 'value', 'key')->latest()->first();
+                    $key_value = KeyValue::where('client_id', $client_id)->where('field_id', $field->id)->select('field_id', 'value', 'key', 'description')->latest()->first();
                     if($key_value){
                         $key_value->id = $key_value->field_id;
                         unset($key_value->field_id);
