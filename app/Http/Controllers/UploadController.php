@@ -26,7 +26,7 @@ class UploadController extends Controller
     static $LIMIT_ROW_UPLOAD_FILE = 10000;
 
     //Constante para limitar la carga de filas
-    static $LIMIT_CHARACTERS_CELL = 20;
+    static $LIMIT_CHARACTERS_CELL = 2000;
 
     public function __construct(CiuService $ciuService)
     {
