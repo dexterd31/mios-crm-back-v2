@@ -20,6 +20,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 use Carbon\Carbon;
 
+
 class FormController extends Controller
 {
     private $ciuService;
@@ -278,8 +279,7 @@ class FormController extends Controller
       $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','users.id_rhh')
                           ->join('users', 'users.id', '=', 'form_answers.user_id')
                           ->where('form_answers.form_id',$request->formId)
-                          ->where('form_answers.created_at','>=', $request->date1)
-                          ->where('form_answers.created_at','<=', $request->date2)
+                          ->whereBetween('form_answers.created_at', [$request->date1, $request->date2])
                           ->get();
       if(count($formAnswers)==0){
             // 406 Not Acceptable
@@ -296,8 +296,9 @@ class FormController extends Controller
         $plantillaRespuestas=[];
         //Agrupamos los id_rrhh del usuario en un arreglo
         $userIds=$miosHelper->getArrayValues('id_rhh',$formAnswers);
+        $useString=implode(',',$userIds);
         //Traemos los datos de rrhh de los usuarios
-        $usersInfo=$this->rrhhService->fetchUsers($userIds);
+        $usersInfo=$this->rrhhService->fetchUsers($useString);
         //Organizamos la información del usuario en un array asociativo con la información necesaria
         $adviserInfo=[];
         foreach($usersInfo as $info){
