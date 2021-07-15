@@ -131,7 +131,7 @@ class FormController extends Controller
               if($section['sectionName'] == 'Datos básicos del cliente')
               {
                 $firstSection = new Section([
-                    'id' => $section['idsection'],
+                      'id' => $section['idsection'],
                       'form_id' => $forms->id,
                       'name_section' => $section['sectionName'],
                       'type_section' => $section['type_section'],
@@ -286,7 +286,7 @@ class FormController extends Controller
             // se envia este error ya que no esta mapeado en interceptor angular.
             return $this->errorResponse('No se encontraron datos en el rango de fecha suministrado', 406);
       } else if(count($formAnswers)>5000){
-            return $this->errorResponse('El rango de fechas supera a los 10000 records', 413);
+            return $this->errorResponse('El rango de fechas supera a los 5000 records', 413);
       } else {
         $inputReport=[];
         $titleHeaders=['Id'];
@@ -405,7 +405,7 @@ class FormController extends Controller
 
     private function logForm($form, $sections)
     {
-        $user = auth()->user()->rrhh_id;
+        $userCrm = User::where('id_rhh',auth()->user()->rrhh_id)->first();
         $log = new FormLog();
         $log->group_id = $form->group_id ;
         $log->campaign_id = $form->campaign_id ;
@@ -413,7 +413,7 @@ class FormController extends Controller
         $log->filters = $form->filters ;
         $log->state = $form->state ;
         $log->sections = json_encode($sections) ;
-        $log->user_id = $user ;
+        $log->user_id = $userCrm->id ;
         $log->form_id = $form->id;
         $log->save();
     }
