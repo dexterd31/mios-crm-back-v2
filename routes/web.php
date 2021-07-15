@@ -76,6 +76,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas de clientes
     $router->get('/getClient/{id}', 'ClientController@getClient');
     $router->post('/client','ClientController@store');
+    $router->post('/update','ClientController@update');
+    $router->post('/list','ClientController@list');
+    $router->post('/searchClient','ClientController@search');
 
     //Rutas de parámetros
     $router->post('/saveParameters/{id}','ParameterController@saveParameters');
@@ -148,8 +151,10 @@ $router->group(['prefix' => 'api'], function () use ($router) {
           $router->post('sync','integrations\ReaderSyncController@syncForms');
 
       });
-
-
+      //tipo de documento
+      $router->get('documentType/list','SandboxController@list');
+      $router->post('documentType/create','SandboxController@create');
+      $router->get('documentType/update/{id}','SandboxController@update');
 
 });
 
