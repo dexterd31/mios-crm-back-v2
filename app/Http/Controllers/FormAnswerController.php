@@ -27,7 +27,6 @@ use Illuminate\Support\Facades\Gate;
 
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 
 class FormAnswerController extends Controller
 {
@@ -59,7 +58,8 @@ class FormAnswerController extends Controller
                 $clientData = array();
                 $i = 0;
                 $form_answer = null;
-
+                $userId = auth()->user()->rrhh_id;
+                $userCrm=User::where('id_rhh','=',$userId)->firstOrFail();
                 $date_string = Carbon::now('America/Bogota')->format('YmdHis');
 
                 foreach ($json_body as $section) {
@@ -80,6 +80,7 @@ class FormAnswerController extends Controller
                             $attachment->source = $request->file($field['id'])->store($date_string);
                             $attachment->save();
                             $register['value'] = $attachment->id;
+                            $register['nameFile']=$attachment->name; //Agregamos el nombre del archivo para que en el momento de ver las respuestas en el formulario se visualice el nombre.
                         }
 
                         if(!empty($register['value'])){
@@ -119,12 +120,17 @@ class FormAnswerController extends Controller
 
                     foreach ($obj as $row) {
                         if($row['preloaded'] == true){
+                            //Utilizamos el campo description en key values para guardar el nombre de un archivo precargable
+                            $description=null;
+                            if(isset($row['nameFile'])){
+                                $description=$row['nameFile'];
+                            }
                             $sect = new KeyValue([
                                 'form_id' => json_decode($request['form_id']),
                                 'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
                                 'key' => $row['key'],
                                 'value' => $row['value'],
-                                'description' => null,
+                                'description' => $description,
                                 'field_id' => $row['id']
                             ]);
 
@@ -133,8 +139,6 @@ class FormAnswerController extends Controller
 
                     }
                     // ? es el mismo de la linea 161
-                    $userId = auth()->user()->rrhh_id;
-                    $userCrm=User::where('id_rhh','=',$userId)->firstOrFail();
                     $form_answer = new FormAnswer([
                         'user_id' => $userCrm->id,
                         'channel_id' => 1,
@@ -172,7 +176,7 @@ class FormAnswerController extends Controller
                     }
 
                     $form_answer = new FormAnswer([
-                        'user_id' => json_decode($request['user_id']),
+                        'user_id' => $userCrm->id,
                         'channel_id' => 1,
                         'client_id' => json_decode($request['client_id']),
                         'form_id' => json_decode($request['form_id']),
@@ -283,9 +287,9 @@ class FormAnswerController extends Controller
                         if (isset($form['structure_answer'])) {
                             $form['structure_answer'] = is_array($form['structure_answer']) ? json_encode($form['structure_answer']) : $form['structure_answer'];
                         }
-                        $userData = $form['user_id'] != 0 ? $this->ciuService->fetchUser($form['user_id'])->data : 0;
+                        $userCrm=User::where('id',$form['user_id'])->first();
                         $form['structure_answer'] = isset($form['data']) ? $miosHelper->jsonDecodeResponse($form['data']) : $miosHelper->jsonDecodeResponse($form['structure_answer']);
-                        $form['userdata'] = $userData;
+                        $form['userdata'] = $this->ciuService->fetchUserByRrhhId($userCrm->id_rhh);
                         unset($form['data']);
 
                         $new_structure_answer = [];
@@ -345,7 +349,8 @@ class FormAnswerController extends Controller
         // try {
             $form_answers = FormAnswer::where('id', $id)->with('channel', 'client')->first();
 
-                $userData     = $this->ciuService->fetchUser($form_answers->user_id)->data;
+                $userCrm=User::where('id',$form_answers->user_id)->first();
+                $userData     = $this->ciuService->fetchUserByRrhhId($userCrm->id_rhh);
                 $form_answers->structure_answer = $miosHelper->jsonDecodeResponse($form_answers->structure_answer);
 
                 $new_structure_answer = [];
@@ -494,14 +499,6 @@ class FormAnswerController extends Controller
                             foreach($field_exit->value as $fieldValue){
                                 if($value->value == $fieldValue->id){
                                     $validate = true;
-                                    // return 1;
-                                // }else{
-                                //     if($validate == true){
-                                //         $validate = true;
-                                //     }else{
-                                //         $validate = false;
-                                //     }
-                                //     // return 0;
                                 }
                             }
                             if($validate == true){
@@ -555,7 +552,8 @@ class FormAnswerController extends Controller
             $section->fields =json_decode($section->fields);
             foreach ( $section->fields as $field) {
                 if($field->preloaded == true){
-                    $key_value = KeyValue::where('client_id', $client_id)->where('field_id', $field->id)->select('field_id', 'value', 'key')->latest()->first();
+                    //Traemos descripcion pues alli se guarda el nombre del archivo
+                    $key_value = KeyValue::where('client_id', $client_id)->where('field_id', $field->id)->select('field_id', 'value', 'key', 'description')->latest()->first();
                     if($key_value){
                         $key_value->id = $key_value->field_id;
                         unset($key_value->field_id);
