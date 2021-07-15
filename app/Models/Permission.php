@@ -16,9 +16,12 @@ class Permission extends Model
         'action_permission_id'
     ];
 
+    protected $with = ['actionPermissions'];
+
+
     public function actionPermissions()
     {
-        return $this->hasMany(ActionPermission::class, 'action_permission_id');
+        return $this->belongsTo(ActionPermission::class, 'action_permission_id');
     }
 
     public function module()

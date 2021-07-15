@@ -9,11 +9,12 @@ class ActionPermission extends Model
     protected $table = 'action_permissions';
     protected $PrimaryKey = 'id';
     protected $fillable = [
-        "action"
+        "action",
+        "name"
     ];
 
-    public function module()
+    public function permissions()
     {
-        return $this->belongsTo(Permission::class, 'action_permission_id');
+        return $this->hasMany(Permission::class);
     }
 }

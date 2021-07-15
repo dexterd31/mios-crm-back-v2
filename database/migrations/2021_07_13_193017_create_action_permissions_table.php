@@ -16,6 +16,7 @@ class CreateActionPermissionsTable extends Migration
         Schema::create('action_permissions', function (Blueprint $table) {
             $table->id();
             $table->string('action')->nullable();
+            $table->string('name')->nullable();
             $table->timestamps();
         });
     }

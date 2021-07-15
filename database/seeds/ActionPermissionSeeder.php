@@ -15,22 +15,26 @@ class ActionPermissionSeeder extends Seeder
         //save, view ,edit, change
 
         $actionSave = new ActionPermission([
-            'action' => 'save'
+            'action' => 'save',
+            'name' => 'Salvar'
         ]);
         $actionSave->save();
 
         $actionView = new ActionPermission([
-            'action' => 'view'
+            'action' => 'view',
+            'name' => 'Ver'
         ]);
         $actionView->save();
 
         $actionEdit = new ActionPermission([
-            'action' => 'edit'
+            'action' => 'edit',
+            'name' => 'Editar'
         ]);
         $actionEdit->save();
 
         $actionChange = new ActionPermission([
-            'action' => 'change'
+            'action' => 'change',
+            'name' => 'Change'
         ]);
         $actionChange->save();
     }
