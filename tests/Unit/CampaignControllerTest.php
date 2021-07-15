@@ -86,4 +86,38 @@ class CampaignControllerTest extends TestCase
             [[], 500]
         ];
     }
+
+    /**
+    * * @dataProvider dataProviderUpdateState
+	* @covers App\Http\Controllers\CampaignController
+	* 
+	**/
+    public function test_updateState($status){
+        $nominaServiceStub = $this->getMockBuilder(NominaService::class)
+        ->onlyMethods(["changeCampaignState"])
+        ->disableOriginalConstructor()
+        ->getMock();
+
+        $campaignController = new CampaignController();
+
+        if ($status == 200) {
+            $campaignController->setNominaService($nominaServiceStub);
+        }
+        
+        $request = new Request();
+        $request->replace([
+            'state' => null]);
+        
+        $id = 1;
+        $result = $campaignController->updateState($request,$id);
+        $this->assertEquals($result->status(),$status);
+    }
+
+    public function dataProviderUpdateState()
+    {
+        return [
+            [ 200],
+            [ 500]
+        ];
+    }
 }
