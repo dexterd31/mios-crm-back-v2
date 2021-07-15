@@ -28,6 +28,12 @@ class DataCRMService
     private $formId;
     private $tokenVicidial;
     private $productVicidial;
+    private $constant = [
+        'accounts'=>1,
+        'potentials'=>2,
+    ];
+
+
     use RequestServiceHttp;
 
 
@@ -92,7 +98,7 @@ class DataCRMService
     public function getCountAccounts(){
 
         // 'webservice.php?operation=query&sessionName={{sessionName}}&query=select%20*%20from%20Contacts;'
-        $sql = rawurlencode("select count(*) from Accounts where createdtime>='2021-06-18 00:00:00';");
+        $sql = rawurlencode("select count(*) from Accounts where createdtime>='2021-07-15 00:00:00';");
         $requestBody = "/webservice.php?operation=query&sessionName=".$this->getSessionName()."&query=".$sql;
         $countAccounts = $this->get($requestBody);
         $leadMios = KeyValue::where('form_id',$this->formId)->groupBy('client_id')->get();
@@ -156,14 +162,14 @@ class DataCRMService
             *   SOLO PARA PRUEBAS DE DEMOSTRACION, ESTO SE DEBE ELIMINAR UNA VEZ SE TERMINE LA DEMOSTRACION ##########################
             *   solo para ambientes de pruebas
             */
-            if(env('APP_ENV') == 'local' ||env('APP_ENV') == 'dev'){
-                if($keyLEad == 0){
-                    $phone = '3207671490';
-                }else if($keyLEad == 1){
-                    $phone = '3152874716';
-                }
-                $clientClean['phone'] = $phone;
-            }
+            // if(env('APP_ENV') == 'local' ||env('APP_ENV') == 'dev'){
+            //     if($keyLEad == 0){
+            //         $phone = '3207671490';
+            //     }else if($keyLEad == 1){
+            //         $phone = '3152874716';
+            //     }
+            //     $clientClean['phone'] = $phone;
+            // }
             // Quitar las lineas 156 a 163 para produccion
 
             $dataClient = [
@@ -185,7 +191,7 @@ class DataCRMService
             }else{
                 $client = Client::create($dataClient);
             }
-
+            //,'potential-id1','fase-de-venta','descripcion','origen-del-negocio'
             $keysToSave = ['firstName','lastName','phone','email','account-id0','tipo-producto8','potential-id1'];
             $keysToSaveLocal = Section::getFields($formId, $keysToSave);
 
@@ -254,7 +260,7 @@ class DataCRMService
             /**
              * Implementado unicamente para pruebas controladas, Solo se estan escribiendo 2 lead
              */
-            if((env('APP_ENV') == 'local' ||env('APP_ENV') == 'dev') && $keyLEad == 1){
+            if((env('APP_ENV') == 'local' ||env('APP_ENV') == 'dev') && $keyLEad == 0){
                 break;
             }
 
@@ -285,7 +291,11 @@ class DataCRMService
             //Potentials
             $valueClean = array(
                 'tipo-producto8'=>$values->cf_1041,
-                'potential-id1'=>$values->id
+                'potential-id1'=>$values->id,
+                'fase-de-venta'=>$values->sales_stage,
+                'descripcion'=>$values->description,
+                'origen-del-negocio'=>$values->potentialsorigin_pick
+
             );
         }
 
@@ -293,29 +303,26 @@ class DataCRMService
     }
 
 
-    public function updateContact($params){
-
-    }
-    public function updateNegocio($params){
-
-    }
-
     public function newLeadVicidial($params){
         Http::post(env('SERVICE_SYNC_VICIDIAL').'/cos/services',$params);
     }
-
-
 
     public function filedsPotentialsForms(){
         $data = $this->get('/webservice.php?operation=describe&sessionName='.$this->getSessionName().'&elementType=Potentials');
        return $data->result->fields;
     }
+    public function filedsAccountsForms(){
+        $data = $this->get('/webservice.php?operation=describe&sessionName='.$this->getSessionName().'&elementType=Accounts');
+        return $data->result->fields;
+    }
 
     /**
      * Metodo que construye array con match del formulario de gestion de DATA CRM y el form answer de la tipificacion de miso
      */
-    public function matchFields($formAnwersArr){
-        $fieldsExternals = $this->filedsPotentialsForms();
+    public function matchFields($formAnwersArr,$typeMatch){
+        if($typeMatch == $this->constant['potentials'])   $fieldsExternals = $this->filedsPotentialsForms();
+        if($typeMatch == $this->constant['accounts'])   $fieldsExternals = $this->filedsAccountsForms();
+
         $arrToMarch = [];
         $dataJson = new stdClass;
         foreach ($formAnwersArr as $keyAnswer => $valueAnwer) {
@@ -323,20 +330,60 @@ class DataCRMService
             foreach ($fieldsExternals as $key => $value) {
                $labelClean = $this->cleanString($value->label);
                if($keyAnswerClean == $labelClean){
-
-                $dataJson->{$value->name} = $valueAnwer->value;
-
+                   if( $value->type->name == 'date'){
+                    $dataJson->{$value->name} = Carbon::parse($valueAnwer->value)->format('Y-m-d');
+                   }else if($value->type->name == 'picklist' && is_int( $valueAnwer->value )){
+                    $dataJson->{$value->name} = $this->matchPickList($valueAnwer->value,$value->type->picklistValues);
+                   }else{
+                    $dataJson->{$value->name} = $valueAnwer->value;
+                   }
+               }
+               if( $keyAnswerClean == 'ciudad' ){
+                    $dataJson->bill_city = $this->findAndFormatValues($this->formId,$valueAnwer->id,$valueAnwer->value);
                }
            }
         }
+        $dataJson->accountname = $this->concatName($formAnwersArr);
         return $dataJson;
+    }
+
+    private function matchPickList($key,$options){
+        return  $options[ $key -1 ]->value;
+    }
+
+    private function concatName($formAnwersArr){
+        $fullName = '';
+        foreach ($formAnwersArr as $keyAnswer => $valueAnwer) {
+            if($valueAnwer->key == 'firstName')  $fullName .= $valueAnwer->value.' ';
+            if($valueAnwer->key == 'middleName')  $fullName .= $valueAnwer->value.' ';
+            if($valueAnwer->key == 'lastName')  $fullName .= $valueAnwer->value.' ';
+            if($valueAnwer->key == 'secondLastName')  $fullName .= $valueAnwer->value;
+        }
+        return $fullName;
+    }
+
+    public function updateAccounts($formId,$formAnwersArr,$accountId){
+        $this->formId = $formId;
+        $fieldToMatch = $this->matchFields($formAnwersArr,$this->constant['accounts']);
+        $accountDetails = $this->get('/webservice.php?operation=retrieve&sessionName='.$this->getSessionName().'&id='.$accountId);
+        $responseAccounts= collect($accountDetails->result);
+        $fieldToMatchCollect = collect($fieldToMatch);
+        $merged = $responseAccounts->merge($fieldToMatchCollect);
+        $requestBody = array(
+            'operation' => 'update',
+            'sessionName' => $this->getSessionName(),
+            'element' => $merged->toJson()
+        );
+        if(env('APP_ENV') == 'local' ||env('APP_ENV') == 'dev') Log::info( $requestBody );
+        $this->post('/webservice.php', http_build_query($requestBody));
+        return;
     }
 
 
 
     public function updatePotentials($formId,$formAnwersArr,$potentialId){
         $this->formId = $formId;
-        $fieldToMatch = $this->matchFields($formAnwersArr);
+        $fieldToMatch = $this->matchFields($formAnwersArr,$this->constant['potentials']);
         $potentialDetails = $this->get('/webservice.php?operation=retrieve&sessionName='.$this->getSessionName().'&id='.$potentialId);
         $responsePotentials = collect($potentialDetails->result);
         $fieldToMatchCollect = collect($fieldToMatch);
@@ -363,7 +410,7 @@ class DataCRMService
        'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y' );
         $str = strtr( $string, $unwanted_array );
         $str = strtolower($str);
-        return $str;
+        return trim($str);
 
     }
 
@@ -397,6 +444,28 @@ class DataCRMService
         return $response;
 
 
+    }
+
+
+    private function findAndFormatValues($form_id, $field_id, $value)
+    {
+        $fields = json_decode(Section::where('form_id', $form_id)
+        ->whereJsonContains('fields', ['id' => $field_id])
+        ->first()->fields);
+        $field = collect($fields)->filter(function($x) use ($field_id){
+            return $x->id == $field_id;
+        })->first();
+
+        if($field->controlType == 'dropdown' || $field->controlType == 'autocomplete' || $field->controlType == 'radiobutton'){
+            $field_name = collect($field->options)->filter(function($x) use ($value){
+                return $x->id == $value;
+            })->first()->name;
+            return $field_name;
+        }elseif($field->controlType == 'datepicker'){
+            return Carbon::parse($value)->setTimezone('America/Bogota')->format('Y-m-d');
+        }else {
+            return null;
+        }
     }
 
 
