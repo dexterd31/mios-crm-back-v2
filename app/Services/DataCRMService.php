@@ -98,7 +98,7 @@ class DataCRMService
     public function getCountAccounts(){
 
         // 'webservice.php?operation=query&sessionName={{sessionName}}&query=select%20*%20from%20Contacts;'
-        $sql = rawurlencode("select count(*) from Accounts where createdtime>='2021-07-15 00:00:00';");
+        $sql = rawurlencode("select count(*) from Accounts where createdtime>='".env('FECHA_INICIO_SBS')."';");
         $requestBody = "/webservice.php?operation=query&sessionName=".$this->getSessionName()."&query=".$sql;
         $countAccounts = $this->get($requestBody);
         $leadMios = KeyValue::where('form_id',$this->formId)->groupBy('client_id')->get();
@@ -162,14 +162,14 @@ class DataCRMService
             *   SOLO PARA PRUEBAS DE DEMOSTRACION, ESTO SE DEBE ELIMINAR UNA VEZ SE TERMINE LA DEMOSTRACION ##########################
             *   solo para ambientes de pruebas
             */
-            // if(env('APP_ENV') == 'local' ||env('APP_ENV') == 'dev'){
-            //     if($keyLEad == 0){
-            //         $phone = '3207671490';
-            //     }else if($keyLEad == 1){
-            //         $phone = '3152874716';
-            //     }
-            //     $clientClean['phone'] = $phone;
-            // }
+            /* if(env('APP_ENV') == 'local' ||env('APP_ENV') == 'dev'){
+                 if($keyLEad == 0){
+                     $phone = '3207671490';
+                 }else if($keyLEad == 1){
+                     $phone = '3152874716';
+                 }
+                 $clientClean['phone'] = $phone;
+             }*/
             // Quitar las lineas 156 a 163 para produccion
 
             $dataClient = [
@@ -192,12 +192,12 @@ class DataCRMService
                 $client = Client::create($dataClient);
             }
             //,'potential-id1','fase-de-venta','descripcion','origen-del-negocio'
-            $keysToSave = ['firstName','lastName','phone','email','account-id0','tipo-producto8','potential-id1'];
+            $keysToSave = ['firstName','lastName','phone','email','account-id0','tipo-producto8','potential-id1','descripciòn-9','campaña-origen11'];
             $keysToSaveLocal = Section::getFields($formId, $keysToSave);
 
             foreach ($keysToSaveLocal as $key => $value) {
                 $keyValue = null;
-                if($value->key != 'tipo-producto8' && $value->key != 'potential-id1'){
+                if($value->key != 'tipo-producto8' && $value->key != 'potential-id1' && $value->key != 'descripciòn-9' && $value->key != 'campaña-origen11'){
                     $valueDynamic = $clientClean[$value->key];
                 }else{
                     $valueDynamic = $ponteialClean[$value->key];
@@ -254,7 +254,6 @@ class DataCRMService
                 "token_key"=>$this->tokenVicidial,
                 "Celular"=>$clientClean['phone']
            );
-
             $this->newLeadVicidial($newLeadVicidial);
 
             /**
@@ -289,16 +288,15 @@ class DataCRMService
             );
         }else if($typeValue == 2){
             //Potentials
+
             $valueClean = array(
                 'tipo-producto8'=>$values->cf_1041,
                 'potential-id1'=>$values->id,
-                'fase-de-venta'=>$values->sales_stage,
-                'descripcion'=>$values->description,
-                'origen-del-negocio'=>$values->potentialsorigin_pick
+                'descripciòn-9'=>$values->description,
+                'campaña-origen11'=>$values->potentialsorigin_pick
 
             );
         }
-
         return $valueClean;
     }
 
@@ -333,10 +331,20 @@ class DataCRMService
                    if( $value->type->name == 'date'){
                     $dataJson->{$value->name} = Carbon::parse($valueAnwer->value)->format('Y-m-d');
                    }else if($value->type->name == 'picklist' && is_int( $valueAnwer->value )){
-                    $dataJson->{$value->name} = $this->matchPickList($valueAnwer->value,$value->type->picklistValues);
+                       if($labelClean == 'gestion-nivel-2' || $labelClean == 'gestion-nivel-3' ||$labelClean == 'gestion-nivel-4'){
+                        $dataJson->{$value->name} =  $this->findAndFormatValues($this->formId,$valueAnwer->id,$valueAnwer->value);
+                       }else{
+                        $dataJson->{$value->name} = $this->matchPickList($valueAnwer->value,$value->type->picklistValues);
+                       }
                    }else{
                     $dataJson->{$value->name} = $valueAnwer->value;
                    }
+               }
+               if( $keyAnswerClean == 'numero-poliza' ){
+                $dataJson->cf_967 = $valueAnwer->value;
+               }
+               if( $keyAnswerClean == 'inspeccion' ){
+                   $dataJson->cf_998 = $valueAnwer->value;
                }
                if( $keyAnswerClean == 'ciudad' ){
                     $dataJson->bill_city = $this->findAndFormatValues($this->formId,$valueAnwer->id,$valueAnwer->value);
