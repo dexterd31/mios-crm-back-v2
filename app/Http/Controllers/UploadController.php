@@ -22,11 +22,11 @@ class UploadController extends Controller
 
     private $ciuService;
 
-    //Constante para limitar la carga de filas 
-    static $LIMIT_ROW_UPLOAD_FILE = 10000; 
+    //Constante para limitar la carga de filas
+    static $LIMIT_ROW_UPLOAD_FILE = 10000;
 
-    //Constante para limitar la carga de filas 
-    static $LIMIT_CHARACTERS_CELL = 2000; 
+    //Constante para limitar la carga de filas
+    static $LIMIT_CHARACTERS_CELL = 2000;
 
     public function __construct(CiuService $ciuService)
     {
@@ -73,9 +73,7 @@ class UploadController extends Controller
         $userId = $userAuth->id;
         $formId = $request->form_id;
         $flag = $request->flag;
-        $userIdRrhh = auth()->user()->rrhh_id;
         if (isset($file) && isset($userId) && isset($formId)) {
-            
             //Eliminar registros de Directory
             if($flag != 'append'){
                 Directory::where('form_id', $formId)->delete();
@@ -86,16 +84,16 @@ class UploadController extends Controller
             $countDocumentLoad = count($form_import_validate[0]);
             $documentLoad = $form_import_validate[0];
             $errorResponse = [];
-                          
-            // Determina cantidad de columnas a cargar documento 
+
+            // Determina cantidad de columnas a cargar documento
             if ($countDocumentLoad > self::$LIMIT_ROW_UPLOAD_FILE) {
                $errorResponse[] = 'Limite de registros no permitidos.';
             }
-            
+
             // Determina si tiene valores el documento
             if ($countDocumentLoad > 1) {
                  foreach ($documentLoad as $keyRows => $rows) {
-                    
+
                     //entrada solo datos, cabecera
                     if ($keyRows != 0) {
                         //Determina si la columna Tipo de documento sea de tipo entero para relacionar
@@ -107,7 +105,7 @@ class UploadController extends Controller
                            $errorResponse[] = 'La fila '.($keyRows + 1).' no cuenta con  id tipo numerico para la columna tipo de documento';
                         }
                     }
-                    //Determina que cada fila tenga la cantidad de celdas en base a la cabecera 
+                    //Determina que cada fila tenga la cantidad de celdas en base a la cabecera
                     $filteredHead = $documentLoad[0]->filter(function ($value, $key) {
                         return $value != null;
                     });
@@ -122,11 +120,12 @@ class UploadController extends Controller
                         if (strlen($valueRowsCell) > self::$LIMIT_CHARACTERS_CELL) {
                            $errorResponse[] = 'La fila '.$keyRows.' de la celda '.$keyRowsCell.' cuenta con mas de 2000 caracteres permitidos.';
                         }
-                    }                  
+                    }
                 }
             }
             if ($errorResponse != []) {
-                return $this->errorResponse($errorResponse, 400);
+                $data = $miosHelper->jsonResponse(true,420, 'message', 'Se han encontrado los siguinetes errores al cargar el archivo: '.implode('<br>',$errorResponse));
+                return response()->json($data, $data['code']);
             }
             /*end--validacion documento cargado--*/
 
@@ -136,7 +135,7 @@ class UploadController extends Controller
                 //Se guarda en directory
                 //try {
                     $form_import =new FormAnswerImport($userId, $formId, json_decode($request->ids));
-                    Excel::import( $form_import, $file);
+                    Excel::import($form_import, $file);
                     //dd('Row count: ' . $form_import->getRowCount());
 
 
@@ -148,7 +147,7 @@ class UploadController extends Controller
                     $upload->count = $form_import->getRowCount();
                     $upload->method = empty($request->flag) ? 'replace': $request->flag;
                     $upload->save();
-                    
+
                     $data = $miosHelper->jsonResponse(true, 200, 'message', 'Se realizó el cargue de forma exitosa');
                     return response()->json($data, $data['code']);
                 /* } catch (\Throwable $th) {
@@ -191,7 +190,7 @@ class UploadController extends Controller
         $i=0;
 
         $data = [];
-        
+
         foreach($formAnswers as $answer){
           foreach(json_decode($answer->data) as $field){
             if(in_array($field->key, $headers)){

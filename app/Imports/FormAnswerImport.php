@@ -57,13 +57,7 @@ class FormAnswerImport implements ToModel, WithBatchInserts
             $count = count($row);
             $curso = array();
             for ($i = 0; $i < $count; $i++) {
-                /*if($row[$i] === null){
-                    break;
-                } else {*/
-                    if(strlen($row[$i])<2001){
-                        $curso[$temporal[$i]] = $row[$i];
-                    }
-                //}
+                $curso[$temporal[$i]] = $row[$i];
             }
             array_push($responseTemporal, $curso);
 
