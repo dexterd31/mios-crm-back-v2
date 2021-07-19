@@ -21,7 +21,7 @@ class PermissionCrmController extends Controller
         try {
             $rolCrm = RolCrm::where('key', trim($rolCiu))->first();
             if (empty($rolCrm)) {
-                $data = $miosHelper->jsonResponse(false, 404, 'message', 'No se han encontrado el rol');
+                $data = $miosHelper->jsonResponse(true, 204, 'message', 'No se han encontrado el rol');
             } else {
                 $idRolCrm         = $rolCrm->id;
                 $permissions      = PermissionCrm::where('rol_id', $idRolCrm)->get()->load('module');

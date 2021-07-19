@@ -20,6 +20,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 use Carbon\Carbon;
 
+
 class FormController extends Controller
 {
     private $ciuService;
@@ -131,7 +132,7 @@ class FormController extends Controller
               if($section['sectionName'] == 'Datos básicos del cliente')
               {
                 $firstSection = new Section([
-                    'id' => $section['idsection'],
+                      'id' => $section['idsection'],
                       'form_id' => $forms->id,
                       'name_section' => $section['sectionName'],
                       'type_section' => $section['type_section'],
@@ -275,29 +276,29 @@ class FormController extends Controller
      */
     public function report(Request $request, MiosHelper $miosHelper)
     {
-      $sections=Section::select('fields')->where("form_id",$request->formId)->get();
       $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','users.id_rhh')
                           ->join('users', 'users.id', '=', 'form_answers.user_id')
                           ->where('form_answers.form_id',$request->formId)
-                          ->where('form_answers.created_at','>=', $request->date1)
-                          ->where('form_answers.created_at','<=', $request->date2)
+                          ->whereBetween('form_answers.created_at', [$request->date1, $request->date2])
                           ->get();
       if(count($formAnswers)==0){
             // 406 Not Acceptable
             // se envia este error ya que no esta mapeado en interceptor angular.
             return $this->errorResponse('No se encontraron datos en el rango de fecha suministrado', 406);
-      } else if(count($formAnswers)>1000){
-            return $this->errorResponse('El rango de fechas supera a los 1000 records', 413);
+      } else if(count($formAnswers)>5000){
+            return $this->errorResponse('El rango de fechas supera a los 5000 records', 413);
       } else {
         $inputReport=[];
         $titleHeaders=['Id'];
         $dependencies=[];
         $r=0;
         $rows=[];
+        $plantillaRespuestas=[];
         //Agrupamos los id_rrhh del usuario en un arreglo
         $userIds=$miosHelper->getArrayValues('id_rhh',$formAnswers);
+        $useString=implode(',',$userIds);
         //Traemos los datos de rrhh de los usuarios
-        $usersInfo=$this->rrhhService->fetchUsers($userIds);
+        $usersInfo=$this->rrhhService->fetchUsers($useString);
         //Organizamos la información del usuario en un array asociativo con la información necesaria
         $adviserInfo=[];
         foreach($usersInfo as $info){
@@ -308,6 +309,8 @@ class FormController extends Controller
             }
         }
         //Verificamos cuales son los campos que deben ir en el reporte o que su elemento inReport sea true
+        $sections=Section::select('fields')->where("form_id",$request->formId)->get();
+        $plantillaRespuestas['id']="-";
         foreach($sections as $section){
             foreach(json_decode($section->fields) as $input){
                 if($input->inReport){
@@ -318,18 +321,25 @@ class FormController extends Controller
                             $dependencies[$input->label]=[$input->id];
                             array_push($titleHeaders,$input->label);
                             array_push($inputReport,$input);
+                            $plantillaRespuestas[$input->label]="-";
                         }
                         $input->dependencies[0]->report=$input->label;
                     }else{
                         array_push($titleHeaders,$input->label);
                         array_push($inputReport,$input);
+                        $plantillaRespuestas[$input->id]="-";
                     }
                 }
             }
         }
+        $plantillaRespuestas['user']="-";
+        $plantillaRespuestas['docuser']="-";
+        $plantillaRespuestas['created_at'] ="-";
+        $plantillaRespuestas['updated_at'] ="-";
 
         foreach($formAnswers as $answer){
-            $rows[$r]['id'] = $answer->id;
+            $respuestas=$plantillaRespuestas;
+            $respuestas['id'] = $answer->id;
             //Evaluamos los campos que deben ir en el reporte contra las respuestas
             foreach($inputReport as $input){
                 foreach(json_decode($answer->structure_answer) as $field){
@@ -338,9 +348,9 @@ class FormController extends Controller
                             if(isset($field->value)){
                                 $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
                                 if($select){
-                                    $rows[$r]['Dependencias'] = $select;
+                                    $respuestas[$input->dependencies[0]->report] = $select;
                                 } else {
-                                    $rows[$r]['Dependencias'] = $field->value;
+                                    $respuestas[$input->dependencies[0]->report] = $field->value;
                                 }
                             }
                             break;
@@ -348,27 +358,28 @@ class FormController extends Controller
                     }else if($field->id==$input->id){
                         $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
                         if($select){
-                            $rows[$r][$field->id] = $select;
+                            $respuestas[$input->id] = $select;
                         } else {
-                            $rows[$r][$field->id] = $field->value;
+                            $respuestas[$input->id] = $field->value;
                         }
                         break;
                     }else if($field->key==$input->key){
                         $select = $this->findAndFormatValues($request->formId, $input->id, $field->value);
                         if($select){
-                            $rows[$r][$input->id] = $select;
+                            $respuestas[$input->id] = $select;
                         } else {
-                            $rows[$r][$input->id] = $field->value;
+                            $respuestas[$input->id] = $field->value;
                         }
                         break;
                     }
-                    $rows[$r][$input->id]="-";
                 }
             }
-            $rows[$r]['user']=$adviserInfo[$answer->id_rhh]->name;
-            $rows[$r]['docuser']=$adviserInfo[$answer->id_rhh]->id_number;
-            $rows[$r]['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
-            $rows[$r]['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
+
+            $respuestas['user']=$adviserInfo[$answer->id_rhh]->name;
+            $respuestas['docuser']=$adviserInfo[$answer->id_rhh]->id_number;
+            $respuestas['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
+            $respuestas['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
+            $rows[$r]=$respuestas;
             $r++;
           }
           array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización');
@@ -395,7 +406,7 @@ class FormController extends Controller
 
     private function logForm($form, $sections)
     {
-        $user = auth()->user()->rrhh_id;
+        $userCrm = User::where('id_rhh',auth()->user()->rrhh_id)->first();
         $log = new FormLog();
         $log->group_id = $form->group_id ;
         $log->campaign_id = $form->campaign_id ;
@@ -403,10 +414,9 @@ class FormController extends Controller
         $log->filters = $form->filters ;
         $log->state = $form->state ;
         $log->sections = json_encode($sections) ;
-        $log->user_id = $user ;
+        $log->user_id = $userCrm->id ;
         $log->form_id = $form->id;
         $log->save();
-
     }
 
     public function searchPrechargeFields($id)

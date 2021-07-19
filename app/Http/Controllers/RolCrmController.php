@@ -49,6 +49,7 @@ class RolCrmController extends Controller
         {
             $permissionCrmController = $this->getPermissionCrmController();
             $permissionCrmController->createPermissionCrm($rol['menu_ids'], $rolCrm->id);
+
         }
     }
 }
