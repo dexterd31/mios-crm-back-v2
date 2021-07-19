@@ -65,7 +65,7 @@ class ClientController extends Controller
             $client->save();
             return $miosHelper->jsonResponse(true,200,'actualizado',$client);
         } catch (\Throwable $th) {
-            return $this->errorResponse($th->getMessage(),500);
+            eturn $miosHelper->jsonResponse(false,424,$th->getMessage());
         }
     }
 
@@ -81,28 +81,39 @@ class ClientController extends Controller
         }else{
             $client = Client::all();
         }
-
         return $miosHelper->jsonResponse(true,200,'search',$client);
     }
 
+
+
+    /**
+     * Jhon Bernal
+     * 14/07/21
+     * Método para un cliente buscar
+     */
     public function search(Request $request, MiosHelper $miosHelper){
         $value = $request->value;
         $type = $request->type;
+        $resultValue = false;
 
         if (!isset($value)) {
-            $data = $this->errorResponse('el campo valor es requerido',500);
+            $data = 'el campo valor es requerido';
+            $resultValue = true;
         }elseif(!isset($type)){
-            $data = $this->errorResponse('el campo tipo es requerido',500);
+            $data = 'el campo tipo es requerido';
+            $resultValue = true;
         }elseif (!isset($value) &&!isset($type)) {
-            $data = $this->errorResponse('el campo tipo y valor es requerido',500);
+            $data = 'el campo tipo y valor es requerido';
+            $resultValue = true;
+        }
+        if ($resultValue) {
+            return $miosHelper->jsonResponse(false,424,$resultValue);
         }
         try {    
             $client = Client::where($type,$value)->first();
-            $data = $miosHelper->jsonResponse(true,200,'search',$client);
-
-            return response()->json($data, $data['code']);
+            return $miosHelper->jsonResponse(true,200,'search',$client);
         } catch (\Throwable $th) {
-            return $this->errorResponse($th->getMessage(),500);
+            return $miosHelper->jsonResponse(false,424,$th->getMessage());
         }
     }
 }
