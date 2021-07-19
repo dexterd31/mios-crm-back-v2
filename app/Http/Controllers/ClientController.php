@@ -65,7 +65,7 @@ class ClientController extends Controller
             $client->save();
             return $miosHelper->jsonResponse(true,200,'actualizado',$client);
         } catch (\Throwable $th) {
-            eturn $miosHelper->jsonResponse(false,424,$th->getMessage());
+            return $miosHelper->jsonResponse(false,424,$th->getMessage());
         }
     }
 
