@@ -152,9 +152,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
       });
       //tipo de documento
-      $router->get('documentType/list','SandboxController@list');
-      $router->post('documentType/create','SandboxController@create');
-      $router->get('documentType/update/{id}','SandboxController@update');
+      $router->get('documentType/list','DocumentTypeController@list');
+      $router->post('documentType/create','DocumentTypeController@create');
+      $router->put('documentType/update/{id}','DocumentTypeController@update');
 
 });
 
