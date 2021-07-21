@@ -76,8 +76,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas de clientes
     $router->get('/getClient/{id}', 'ClientController@getClient');
     $router->post('/client','ClientController@store');
-    $router->post('/update','ClientController@update');
-    $router->post('/list','ClientController@list');
+    $router->post('/updateClient','ClientController@update');
+    $router->post('/listClient','ClientController@list');
     $router->post('/searchClient','ClientController@search');
 
     //Rutas de parámetros
