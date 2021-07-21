@@ -65,7 +65,7 @@ class ClientController extends Controller
             $client->save();
             return $miosHelper->jsonResponse(true,200,'actualizado',$client);
         } catch (\Throwable $th) {
-            return $miosHelper->jsonResponse(false,424,$th->getMessage());
+            return $miosHelper->jsonResponse(false,424,'Error en la actualización',$th->getMessage());
         }
     }
 
@@ -95,25 +95,25 @@ class ClientController extends Controller
         $value = $request->value;
         $type = $request->type;
         $resultValue = false;
-
-        if (!isset($value)) {
+        
+        if ((!isset($value) && !isset($type)) || (empty($value) && empty($type))) {
+            $data = 'el campo tipo y valor es requerido';
+            $resultValue = true;
+        }elseif (!isset($value) || empty($value)) {
             $data = 'el campo valor es requerido';
             $resultValue = true;
-        }elseif(!isset($type)){
+        }elseif(!isset($type) || empty($type)){
             $data = 'el campo tipo es requerido';
-            $resultValue = true;
-        }elseif (!isset($value) &&!isset($type)) {
-            $data = 'el campo tipo y valor es requerido';
             $resultValue = true;
         }
         if ($resultValue) {
-            return $miosHelper->jsonResponse(false,424,$resultValue);
+            return $miosHelper->jsonResponse(false,424,'Error en los campos',$data);
         }
         try {    
             $client = Client::where($type,$value)->first();
             return $miosHelper->jsonResponse(true,200,'search',$client);
         } catch (\Throwable $th) {
-            return $miosHelper->jsonResponse(false,424,$th->getMessage());
+            return $miosHelper->jsonResponse(false,424,'Error en la busqueda',$th->getMessage());
         }
     }
 }
