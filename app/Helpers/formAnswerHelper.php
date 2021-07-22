@@ -12,7 +12,7 @@ class FormAnswerHelper
 
     // Funcion para hacer formatear el structureAnswer
     function structureAnswer($formId, $responseSection, $ids = [])
-    {       
+    {
         $miosHelper         = new MiosHelper();
         $sectionsFind   = Section::where('form_id', $formId)->get();
         $arraySections  = $this->getKeysValues($sectionsFind);
@@ -33,13 +33,13 @@ class FormAnswerHelper
                 }
             }
         }
-        
+
 
         $i = 0;
         $j = 0;
         foreach ($arraySections as $obj) {
             $register   = $obj;
-             
+
             foreach ($register as $key => $value) {
                 if (isset($ids[$j]) && (isset($responseSection[$i][$key]) != null || isset($responseSection[$i][$key]) != '')) {
                     $row['id'] = $ids[$j];
@@ -58,7 +58,7 @@ class FormAnswerHelper
 
     // Funcion para obtener un array con las key values de un formulario
     function getKeysValues($sections)
-    {   
+    {
         $miosHelper         = new MiosHelper();
         $arraySections      = array();
         $arrayTemporal      = [];
@@ -98,9 +98,9 @@ class FormAnswerHelper
         foreach ($arrayTemporal as $obj) {
             $register   = json_decode($obj, true);
             $count      = count($register);
-            
+
             for ($i = 0; $i < $count; $i++) {
-                   if(in_array(trim($register[$i]['label']), $labels)){
+                   if(in_array($register[$i]['label'], $labels)){
                     $arraySections[$register[$i]['key']] = NULL;
                    }
             }

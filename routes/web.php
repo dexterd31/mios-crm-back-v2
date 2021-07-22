@@ -76,6 +76,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas de clientes
     $router->get('/getClient/{id}', 'ClientController@getClient');
     $router->post('/client','ClientController@store');
+    $router->post('/updateClient','ClientController@update');
+    $router->post('/listClient','ClientController@list');
+    $router->post('/searchClient','ClientController@search');
 
     //Rutas de parámetros
     $router->post('/saveParameters/{id}','ParameterController@saveParameters');
@@ -148,8 +151,10 @@ $router->group(['prefix' => 'api'], function () use ($router) {
           $router->post('sync','integrations\ReaderSyncController@syncForms');
 
       });
-
-
+      //tipo de documento
+      $router->get('documentType/list','DocumentTypeController@list');
+      $router->post('documentType/create','DocumentTypeController@create');
+      $router->put('documentType/update/{id}','DocumentTypeController@update');
 
 });
 
