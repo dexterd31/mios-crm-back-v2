@@ -30,18 +30,7 @@ class ClientController extends Controller
                 ]);
                 $client->save();
                 $client->action="created";
-            } else {
-                $client->first_name = $request->first_name;
-                $client->middle_name = $request->middle_name;
-                $client->first_lastname = $request->first_lastname;
-                $client->second_lastname = $request->second_lastname;
-                $client->document_type_id = $request->document_type_id;
-                $client->document = $request->document;
-                $client->phone = $request->phone;
-                $client->email = $request->email;
-                $client->save();
-                $client->action="updated";
-            }
+            } 
             return $miosHelper->jsonResponse(true,200,'client',$client);
         }else{
             return $miosHelper->jsonResponse(false,424,'client','No se encuentra el document_type en la base de datos');
@@ -55,5 +44,76 @@ class ClientController extends Controller
         }
         return true;
 
+    }
+
+    /**
+     * Jhon Bernal
+     * 14/07/21
+     * Método para actualizar clientes
+     */
+    public function update(Request $request, MiosHelper $miosHelper){
+        try {
+            $client = Client::where('document',$request->document)->first();
+            $client->first_name = $request->first_name;
+            $client->middle_name = $request->middle_name;
+            $client->first_lastname = $request->first_lastname;
+            $client->second_lastname = $request->second_lastname;
+            $client->document_type_id = $request->document_type_id;
+            $client->document = $request->document;
+            $client->phone = $request->phone;
+            $client->email = $request->email;
+            $client->save();
+            return $miosHelper->jsonResponse(true,200,'actualizado',$client);
+        } catch (\Throwable $th) {
+            return $miosHelper->jsonResponse(false,424,'Error en la actualización',$th->getMessage());
+        }
+    }
+
+
+    /**
+     * Jhon Bernal
+     * 14/07/21
+     * Método para un cliente consulta o todos
+     */
+    public function list(Request $request, MiosHelper $miosHelper){
+        if (isset($request->document)) {
+            $client = Client::where('document',$request->document)->first();
+        }else{
+            $client = Client::all();
+        }
+        return $miosHelper->jsonResponse(true,200,'search',$client);
+    }
+
+
+
+    /**
+     * Jhon Bernal
+     * 14/07/21
+     * Método para un cliente buscar
+     */
+    public function search(Request $request, MiosHelper $miosHelper){
+        $value = $request->value;
+        $type = $request->type;
+        $resultValue = false;
+        
+        if ((!isset($value) && !isset($type)) || (empty($value) && empty($type))) {
+            $data = 'el campo tipo y valor es requerido';
+            $resultValue = true;
+        }elseif (!isset($value) || empty($value)) {
+            $data = 'el campo valor es requerido';
+            $resultValue = true;
+        }elseif(!isset($type) || empty($type)){
+            $data = 'el campo tipo es requerido';
+            $resultValue = true;
+        }
+        if ($resultValue) {
+            return $miosHelper->jsonResponse(false,424,'Error en los campos',$data);
+        }
+        try {    
+            $client = Client::where($type,$value)->first();
+            return $miosHelper->jsonResponse(true,200,'search',$client);
+        } catch (\Throwable $th) {
+            return $miosHelper->jsonResponse(false,424,'Error en la busqueda',$th->getMessage());
+        }
     }
 }

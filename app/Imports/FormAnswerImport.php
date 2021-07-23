@@ -74,7 +74,7 @@ class FormAnswerImport implements ToModel, WithBatchInserts
                             'form_id' => $this->formId,
                             'client_id' => $client->id,
                             'key' => $excelKey,
-                            'value' => trim($responseTemporal[0][$excelKey]),
+                            'value' => $this->dataFormat($responseTemporal[0][$excelKey],$excelKey),
                             'description' => null,
                             'field_id' => $this->ids[$j]
                         ]);
@@ -110,5 +110,23 @@ class FormAnswerImport implements ToModel, WithBatchInserts
     public function getRowCount()
     {
         return $this->rows_count;
+    }
+
+    /**
+     * @author Jhon Bernal
+     * Metodo que permite tratar un dato especifico
+     * @param $data_value
+     * @param $key_value
+     * @return mixed
+     */
+    public function dataFormat($data_value, $key_value)
+    {
+        $data = trim($data_value);
+
+        if($key_value == 'fecha9'){
+           
+            $data = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($data_value)->format('Y-m-d h:i:s');
+        }
+        return $data;
     }
 }
