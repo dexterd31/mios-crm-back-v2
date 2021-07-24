@@ -28,6 +28,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Reporte del formulario
     $router->post('/report','FormController@report');
     $router->get('/formsbyuser/{idUser}', 'FormController@formsByUser');
+    $router->post('/addSection', 'FormController@addSection');
 
     //Base de datos
     // la variable parameters esta en base64 y puede contener el caracter '/', lo cual lanza error 404,
@@ -110,6 +111,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->put('/tray/{id}','TrayController@update');
     $router->get('/tray/formAnswersByTray/{id}','TrayController@formAnswersByTray');
     $router->get('/tray/changeState/{id}','TrayController@changeState');
+    $router->get('/tray/duplicatedSection/{idFormAnswer}','TrayController@sectionsDuplicated');
 
     //Rutas escalamientos
     $router->post('/escalations', 'EscalationController@validateScalation');
@@ -155,6 +157,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->get('documentType/list','DocumentTypeController@list');
       $router->post('documentType/create','DocumentTypeController@create');
       $router->put('documentType/update/{id}','DocumentTypeController@update');
+
 
 });
 
