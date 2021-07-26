@@ -110,31 +110,30 @@ class DataCRMService
             $this->formId = $formId;
             $diffLead = $this->getcountAccounts();
             if( $diffLead != 0){
-                if($diffLead > 100){
+                // if($diffLead > 100){
 
-                    $cicles = 0;
-                    $ciclesTotal = $diffLead / 100;
-                    do {
-                        $cicles ++;
-                        $requestBody = array(
-                            'operation'=>'query',
-                            'sessionName'=>$this->getSessionName(),
-                            'query'=> 'select c.*,p.potentialname as count from Contacts as c inner join Potentials as p on p.potentialname order by id desc limit '.$diffLead
-
-                        );
-                        $leads =  $this->request('GET', '/webservice.php', $requestBody);
-                        // $this->setClients($leads['result']);
-                    } while ($cicles <= $ciclesTotal);
+                //     $cicles = 0;
+                //     $ciclesTotal = $diffLead / 100;
+                //     do {
+                //         $cicles ++;
+                //         $sql = urlencode("select * from Accounts order by id desc limit 100;");
+                //         $requestBody = '/webservice.php?operation=query&sessionName='.$this->getSessionName().'&query='.$sql;
+                //         $leads =  $this->get($requestBody);
+                //         $this->setAccounts($leads->result, $formId);
 
 
-                }else{
+                //         // $this->setClients($leads['result']);
+                //     } while ($cicles <= $ciclesTotal);
+
+
+                // }else{
 
                     $sql = urlencode("select * from Accounts order by id desc limit ".$diffLead.";");
                     $requestBody = '/webservice.php?operation=query&sessionName='.$this->getSessionName().'&query='.$sql;
                     $leads =  $this->get($requestBody);
                     //Log::info($leads->result);
                     $this->setAccounts($leads->result, $formId);
-                }
+              //  }
             }
     }
 
@@ -150,7 +149,7 @@ class DataCRMService
     }
 
     public function setAccounts($leads, $formId){
-
+        $leadCreado = false;
         foreach ($leads as $keyLEad => $value) {
 
             $potential = $this->getPotential($value->id);
@@ -183,94 +182,70 @@ class DataCRMService
                 'document_type_id'=>1
             ];
 
-            $create = true;
-            $client = Client::where('phone',$dataClient['phone'])->where('email',$dataClient['email'])->first();
-            if($client){
-                Client::whereId($client->id)->update($dataClient);
-                $create = false;
-            }else{
+                /**
+                 * Si el cliente no existe 
+                 * 
+                 */
                 $client = Client::create($dataClient);
-            }
-            //,'potential-id1','fase-de-venta','descripcion','origen-del-negocio'
-            $keysToSave = ['firstName','lastName','phone','email','account-id0','tipo-producto8','potential-id1','descripciòn-9','campaña-origen11'];
-            $keysToSaveLocal = Section::getFields($formId, $keysToSave);
-
-            foreach ($keysToSaveLocal as $key => $value) {
-                $keyValue = null;
-                if($value->key != 'tipo-producto8' && $value->key != 'potential-id1' && $value->key != 'descripciòn-9' && $value->key != 'campaña-origen11'){
-                    $valueDynamic = $clientClean[$value->key];
-                }else{
-                    $valueDynamic = $ponteialClean[$value->key];
+                $keysToSave = ['firstName','lastName','phone','email','account-id0','tipo-producto8','potential-id1','descripciòn-9','campaña-origen11'];
+                $keysToSaveLocal = Section::getFields($formId, $keysToSave);
+             //,'potential-id1','fase-de-venta','descripcion','origen-del-negocio'
+                foreach ($keysToSaveLocal as $key => $value) {
+                    $keyValue = null;
+                    if($value->key != 'tipo-producto8' && $value->key != 'potential-id1' && $value->key != 'descripciòn-9' && $value->key != 'campaña-origen11'){
+                        $valueDynamic = $clientClean[$value->key];
+                    }else{
+                        $valueDynamic = $ponteialClean[$value->key];
+                    }
+                    $keyValueToSave = [
+                        'form_id' => $this->formId,
+                        'client_id' => $client->id,
+                        'key' => $value->key,
+                        'value' => $valueDynamic,
+                        'description' => null,
+                        'field_id' => $value->id //TODO: ???????????
+                    ];
+                     KeyValue::create($keyValueToSave);
+                
+                    $keysToDirectory[] = array(
+                        'id'=>$value->id,
+                        'value'=>$valueDynamic,
+                        'key'=>$value->key
+                    );
                 }
-                $keyValueToSave = [
-                    'form_id' => $this->formId,
-                    'client_id' => $client->id,
-                    'key' => $value->key,
-                    'value' => $valueDynamic,
-                    'description' => null,
-                    'field_id' => $value->id //TODO: ???????????
-                ];
-                if($create) KeyValue::create($keyValueToSave);
-                if(!$create) $keyValue = KeyValue::where('field_id',$value->id)->where('client_id',$client->id)->first();
-                if($keyValue){
-                    KeyValue::whereId($keyValue->id)->update($keyValueToSave);
-                }
-                $keysToDirectory[] = array(
-                    'id'=>$value->id,
-                    'value'=>$valueDynamic,
-                    'key'=>$value->key
-                );
-            }
 
-            if($create){
+                NotificationLeads::create(['client_id'=>$client->id,'phone'=>$clientClean['phone'],'form_id'=>$this->formId]);
                 Directory::create([
                     'data'=>json_encode($keysToDirectory),
                     'user_id'=>env('USER_ID_CREATOR_DIRECTORIES_CRM_LEAD'), //NOTE: ID DE USUARIO QUEMADO EN EL .ENV POR AHORA
                     'form_id'=>$this->formId,
                     'client_id'=>$client->id
                 ]);
-            }else{
-                $directory = Directory::where('form_id',$this->formId)->where('client_id',$client->id)->first();
-                if($directory){
-                    Directory::whereId($directory->id)->update([
-                        'data'=>json_encode($keysToDirectory),
-                        'user_id'=>env('USER_ID_CREATOR_DIRECTORIES_CRM_LEAD'), //NOTE: ID DE USUARIO QUEMADO EN EL .ENV POR AHORA
-                        'form_id'=>$this->formId,
-                        'client_id'=>$client->id
-                    ]);
-                }
-            }
 
-
-            /**
-             * Es necesario crear un registro en la base de datos para controlar las notificaciones
-             *
-             */
-            $notificationLeadByCLient = NotificationLeads::where('client_id',$client->id)->where('form_id',$this->formId)->first();
-            if(!$notificationLeadByCLient) NotificationLeads::create(['client_id'=>$client->id,'phone'=>$clientClean['phone'],'form_id'=>$this->formId]);
-
-           $newLeadVicidial = array(
-               "producto"=>$this->productVicidial, // "leads"
-                "token_key"=>$this->tokenVicidial,
-                "Celular"=>$clientClean['phone']
-           );
-            $this->newLeadVicidial($newLeadVicidial);
+                $newLeadVicidial = array(
+                    "producto"=>$this->productVicidial, // "leads"
+                     "token_key"=>$this->tokenVicidial,
+                     "Celular"=>$clientClean['phone']
+                );
+                $this->newLeadVicidial($newLeadVicidial);
+                $leadCreado = true;
 
             /**
              * Implementado unicamente para pruebas controladas, Solo se estan escribiendo 2 lead
              */
-            if((env('APP_ENV') == 'local' ||env('APP_ENV') == 'dev') && $keyLEad == 0){
-                break;
-            }
+            //if((env('APP_ENV') == 'local' ||env('APP_ENV') == 'dev') && $keyLEad == 0){
+             //   break;
+            //}
 
 
         }
         /**
          * Despues de haber creado las notificaciones entonces se envia a front para se ejecuta el get notification
          */
-        sleep(4);
-        event( new NewDataCRMLead(  $this->formId   ) );
-
+        if($leadCreado){
+            sleep(4);
+            event( new NewDataCRMLead(  $this->formId   ) );
+        }
     }
 
     public function transformValues($values,$typeValue){
