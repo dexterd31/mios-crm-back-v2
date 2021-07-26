@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Client;
 use App\Models\DocumentType;
 use Helpers\MiosHelper;
+use Validator;
+use Illuminate\Support\Arr;
 
 class ClientController extends Controller
 {
@@ -20,7 +22,6 @@ class ClientController extends Controller
      * @param $request
      * @return mixed
      */
-
     public function store(Request $request, MiosHelper $miosHelper){
         if($this->verifyDocumenttype($request->document_type_id)){
             $client = Client::where('document', $request->document)->first();
@@ -75,11 +76,35 @@ class ClientController extends Controller
      * @return mixed
      */
     public function update(Request $request, MiosHelper $miosHelper){
+
+        $success = true;
+        $validator = Validator::make($request->all(),  
+            array(
+                'first_name' => 'required',
+                'middle_name' => 'required',
+                'first_lastname' => 'required',
+                'second_lastname' => 'required',
+                'document_type_id' => 'required',
+                'document' => 'required',
+                'phone' => 'required',
+                'email' => 'required'
+            ),
+            array(
+                'required' => 'El parametro :attribute es requerido.',
+                'unique' => 'El valor :input ya existe  .'
+            )
+        );
+        if ($validator->fails()) {
+            $success = false;
+            $code = 424;
+            $keyMessage = 'message';
+            $data = Arr::collapse($validator->errors()->messages());
+
+        }
+   
         try {
-          
-            $client = Client::where('document',$request->document)->first();
-            if (!$client) {
-               
+            if ($success) {
+                $client = Client::where('document',$request->document)->first();
                 $client->first_name = $request->first_name;
                 $client->middle_name = $request->middle_name;
                 $client->first_lastname = $request->first_lastname;
@@ -94,12 +119,7 @@ class ClientController extends Controller
                 $code = 200;
                 $keyMessage = 'client'; 
                 $data = $client;
-            }else{
-                $success = false;
-                $code = 424;
-                $keyMessage = 'message'; 
-                $data = 'El cliente con el '. $request->document .' no se encuentra en el sistema';
-            }  
+            }
         } catch (\Throwable $th) {
             $success = false;
             $code = 424;
@@ -134,25 +154,22 @@ class ClientController extends Controller
     public function search(Request $request, MiosHelper $miosHelper){
         $value = $request->value;
         $type = $request->type;
-        $resultValue = false;
         $success = true;
-        if (!isset($value) && !isset($type) || empty($value) && empty($type)) {
+        $validator = Validator::make(array('value' => $value,'type' => $type),  
+            array(
+                'value' => 'required',
+                'type' => 'required',
+            ),
+            array(
+                'required' => 'El parametro :attribute es requerido.'
+            )
+        );
+        if ($validator->fails()) {
             $success = false;
             $code = 424;
             $keyMessage = 'message';
-            $data = 'el campo tipo y valor es requerido';
-        }
-        if (!isset($value) && isset($type) || empty($value) && !empty($type)) {
-            $success = false;
-            $code = 424;
-            $keyMessage = 'message';
-            $data = 'el campo valor es requerido';
-        }
-        if(!isset($type) && isset($value) || !empty($value) && empty($type)){
-            $success = false;
-            $code = 424;
-            $keyMessage = 'message';
-            $data = 'el campo tipo es requerido';
+            $data = Arr::collapse($validator->errors()->messages());
+
         }
 
         if ($success) {    
