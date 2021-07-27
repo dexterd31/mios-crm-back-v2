@@ -204,8 +204,9 @@ class FormAnswerController extends Controller
                  * Si el fomulario tiene una integracion con DataCRM entonces la tipificacion será actualizada con DataCRM
                  * @author Carlos Galindez
                  */
-                $potentialIdObject = KeyValue::where('client_id',$clientFind->id)->where('key','potential-id1')->first(); //Unique ID de Data CRM
-                $accountIdObject = KeyValue::where('client_id',$clientFind->id)->where('key','account-id0')->first(); //Unique ID de Data CRM
+                $clientId = $clientFind == null ? $client->id : $clientFind->id;
+                $potentialIdObject = KeyValue::where('client_id',$clientId)->where('key','potential-id1')->first(); //Unique ID de Data CRM
+                $accountIdObject = KeyValue::where('client_id',$clientId)->where('key','account-id0')->first(); //Unique ID de Data CRM
 
                 if(ApiConnection::where('form_id',$form_answer->form_id)->where('api_type',10)->where('status',1)->first()  ){
 
