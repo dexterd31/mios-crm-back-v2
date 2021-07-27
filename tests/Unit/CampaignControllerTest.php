@@ -5,11 +5,9 @@ use Illuminate\Http\Request;
 use App\Services\CiuService;
 use App\Services\NominaService;
 use PHPUnit\Framework\TestCase;
-use Tests\CreatesApplication;
 use App\Models\User;
 class CampaignControllerTest extends TestCase
 {
-    use CreatesApplication;
 
     /**
 	* @dataProvider dataProviderIndex
