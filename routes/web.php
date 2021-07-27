@@ -50,6 +50,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //consultar tipo de documento de los clientes
     $router->get('/searchdocumenttype', 'FormAnswerController@searchDocumentType');
 
+    $router->post('/template/store','TemplateController@store');
+    $router->post('/template/buildTemplate','TemplateController@buildTemplate');
+    $router->get('/template/show/{formId}','TemplateController@show');
 
     //Rutas de grupos
     $router->get('/searchgroup/{id}', 'GroupController@searchGroup');
@@ -111,10 +114,10 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas escalamientos
     $router->post('/escalations', 'EscalationController@validateScalation');
     //Rutas Permisos
-    $router->get('/permission/{rolCiu}', 'PermissionCrmController@list');
+    //$router->get('/permission/{rolCiu}', 'PermissionCrmController@list');
     $router->post('/createRoles', 'RolCrmController@createRolCrm');
     $router->post('/createPermissions', 'PermissionController@create');
-    //$router->get('/permission/{rolCiuId}', 'PermissionController@index');
+    $router->get('/permission/{rolCiuId}', 'PermissionController@index');
     $router->post('/editPermissions', 'PermissionController@edit');
 
 
