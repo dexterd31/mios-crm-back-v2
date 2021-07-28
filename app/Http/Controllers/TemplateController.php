@@ -53,14 +53,14 @@ class TemplateController extends Controller
     {
         foreach($templates as $template)
         {
-            $sectionsNames = array();
+            $inputNames = array();
             $inputs = json_decode($template->input_id, true);
             foreach ($inputs as $input)
             {
-                array_push($sectionsNames, $input['nameInput']);
+                array_push($inputNames, $input['nameInput']);
             }
             unset($template->input_id);
-            $template->sectionsNames = $sectionsNames;
+            $template->inputNames = $inputNames;
         }
         return $templates;
     }
