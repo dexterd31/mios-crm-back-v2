@@ -70,11 +70,12 @@ class TemplateController extends Controller
      * @param  \App\Models\Template  $template
      * @return \Illuminate\Http\Response
      */
-    public function show($formId)
+    public function show(Request $request, $formId)
     {
+        $paginate = $request->query('n', 5);
         $templateModel = $this->getTemplateModel();
         $template = $templateModel->select("id", "template_name", 'input_id', 'created_at')
-            ->where("form_id", $formId)->get();
+            ->where("form_id", $formId)->paginate($paginate)->withQueryString();
         return $this->getiInputNames($template);
     }
 
