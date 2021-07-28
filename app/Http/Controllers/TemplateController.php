@@ -74,6 +74,10 @@ class TemplateController extends Controller
     {
         $paginate = $request->query('n', 5);
         $templateModel = $this->getTemplateModel();
+        if($fetch = $request->input('fetch'))
+        {
+            $templateModel = $templateModel->where("template_name", 'like', '%'.$fetch.'%');
+        }
         $template = $templateModel->select("id", "template_name", 'input_id', 'created_at')
             ->where("form_id", $formId)->paginate($paginate)->withQueryString();
         return $this->getiInputNames($template);
