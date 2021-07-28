@@ -21,7 +21,6 @@ class CreateTemplatesTable extends Migration
             $table->json('input_id');
             $table->json('fields_writable');
             $table->tinyInteger('state')->nullable();
-            $table->mediumText('fields_name');
             $table->string('value_delimiter');
             $table->timestamps();
         });

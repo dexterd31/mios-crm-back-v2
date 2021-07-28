@@ -16,7 +16,6 @@ class Template extends Model
         "template_name",
         "input_id",
         "fields_writable",
-        "fields_name",
         "state",
         "value_delimiter"
     ];
