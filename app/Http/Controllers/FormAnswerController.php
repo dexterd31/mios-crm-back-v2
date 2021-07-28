@@ -221,7 +221,7 @@ class FormAnswerController extends Controller
             return $this->successResponse(['message'=>$message,'formAsnwerId'=>$form_answer->id]);
         }catch (\Throwable $e) {
             Log::error("Error: ".$e->getMessage()."on: ".$e->getFile()."Line: ".$e->getLine());
-            return 
+            return $this->errorResponse('Error al guardar la gestion', 500);
         }
     }
 
