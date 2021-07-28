@@ -220,7 +220,8 @@ class FormAnswerController extends Controller
             }
             return $this->successResponse(['message'=>$message,'formAsnwerId'=>$form_answer->id]);
         }catch (\Throwable $e) {
-            return $e->getMessage();
+            Log::error("Error: ".$e->getMessage()."on: ".$e->getFile()."Line: ".$e->getLine());
+            return 
         }
     }
 
