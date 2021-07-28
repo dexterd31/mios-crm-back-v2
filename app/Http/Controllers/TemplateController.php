@@ -80,7 +80,11 @@ class TemplateController extends Controller
         }
         $template = $templateModel->select("id", "template_name", 'input_id', 'created_at')
             ->where("form_id", $formId)->paginate($paginate)->withQueryString();
-        return $this->getiInputNames($template);
+        if(isset($template->input_id))
+        {
+            $template = $this->getiInputNames($template);
+        }
+        return $template;
     }
 
     /**
