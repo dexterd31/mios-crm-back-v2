@@ -49,14 +49,20 @@ class TemplateController extends Controller
         $template->save(); 
     }
 
-    private function getiIputNames($template)
+    private function getiInputNames($templates)
     {
-        $sectionsNames = array();
-        foreach ($template as $input)
+        foreach($templates as $template)
         {
-            array_push($sectionsNames, $input->nameInput);
+            $sectionsNames = array();
+            $inputs = json_decode($template->input_id, true);
+            foreach ($inputs as $input)
+            {
+                array_push($sectionsNames, $input['nameInput']);
+            }
+            unset($template->input_id);
+            $template->sectionsNames = $sectionsNames;
         }
-        return $sectionsNames;
+        return $templates;
     }
     /**
      * Display the specified resource.
@@ -67,11 +73,9 @@ class TemplateController extends Controller
     public function show($formId)
     {
         $templateModel = $this->getTemplateModel();
-        $template = $templateModel->select("id", "template_name", 'input_id')
+        $template = $templateModel->select("id", "template_name", 'input_id', 'created_at')
             ->where("form_id", $formId)->get();
-        $template->template_name = $this->getiIputNames($template->input_id);
-        return $template;
-        
+        return $this->getiInputNames($template);
     }
 
     /**
