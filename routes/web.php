@@ -78,7 +78,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/getClient/{id}', 'ClientController@getClient');
     $router->post('/client','ClientController@store');
     $router->post('/updateClient','ClientController@update');
-    $router->post('/listClient','ClientController@list');
+    $router->get('/listClient/{document}','ClientController@list');
     $router->post('/searchClient','ClientController@search');
 
     //Rutas de parámetros
@@ -117,8 +117,10 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/escalations', 'EscalationController@validateScalation');
     //Rutas Permisos
     $router->get('/permission/{rolCiu}', 'PermissionCrmController@list');
-
     $router->post('/createRoles', 'RolCrmController@createRolCrm');
+    $router->post('/createPermissions', 'PermissionController@create');
+    //$router->get('/permission/{rolCiuId}', 'PermissionController@index');
+    $router->post('/editPermissions', 'PermissionController@edit');
 
 
     $router->get('/prueba-jsoncontains/{formId}', function($formId){

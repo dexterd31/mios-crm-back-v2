@@ -102,7 +102,8 @@ class FormAnswerController extends Controller
                 $clientData = array();
 
 
-                if (json_decode($request['client_id']) == null) {
+                if (is_null($request->client_id) || $request->client_id=='null') {
+                    Log::info("Entra if is_null");
                     $clientFind = Client::where('document', $clientInfo[0]['document'])->where('document_type_id', $clientInfo[0]['document_type_id'])->first();
 
                     if ($clientFind == null) {
@@ -159,7 +160,7 @@ class FormAnswerController extends Controller
                     $form_answer->save();
                     $message = 'Información guardada correctamente';
                 } else {
-                    $clientFind = Client::where('id', json_decode($request['client_id']))->first();
+                    $clientFind = Client::where('id', $request->client_id)->first();
                     $clientFind->first_name         = isset($clientInfo[0]['firstName']) ? $clientInfo[0]['firstName'] : $clientFind->first_name;
                     $clientFind->middle_name        = isset($clientInfo[0]['middleName']) ? $clientInfo[0]['middleName'] : $clientFind->middle_name;
                     $clientFind->first_lastname     = isset($clientInfo[0]['lastName']) ? $clientInfo[0]['lastName'] : $clientFind->first_lastname;
