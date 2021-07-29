@@ -108,6 +108,7 @@ class FormAnswerController extends Controller
                             'email'             => isset($clientInfo[0]['email']) ? rtrim($clientInfo[0]['email']) : ''
                         ]);
                         $client->save();
+                        $clientFind = $client;
                     } else {
                         $clientFind->first_name         = isset($clientInfo[0]['firstName']) ? $clientInfo[0]['firstName'] : $clientFind->first_name;
                         $clientFind->middle_name        = isset($clientInfo[0]['middleName']) ? $clientInfo[0]['middleName'] : $clientFind->middle_name;
