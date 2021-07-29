@@ -131,8 +131,8 @@ class FormAnswerImport implements ToModel, WithBatchInserts
             foreach ($fields as $row) {
                 if ($row->controlType == 'datepicker') {
                     if ($row->key == $key_value) {
-                        $date = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($data_value);
-                        $data = Carbon::parse($date)->toISOString();
+                        //$data = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($data_value)->format('Y-m-d');
+                        $data = Carbon::parse($data_value)->format('Y-m-d');
                     }
                 }               
             }
