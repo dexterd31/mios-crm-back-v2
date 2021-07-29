@@ -70,7 +70,9 @@ class FormController extends Controller
     public function searchForm($id)
     {
         $formsSections = Form::where('id', $id)
-            ->with('section')
+            ->with(["section" => function($q){
+                $q->where('state', '!=', 1);
+            }])
             ->select('*')
             ->first();
 
@@ -243,6 +245,15 @@ class FormController extends Controller
                         $sections->save();
                     }
 
+                }
+                $sectionState = Section::where('form_id',$id)->where('name_section','!=','Datos básicos del cliente')->get();
+                foreach ($sectionState as $state) {
+                    if ($state['name_section'] == $section['sectionName']) {
+                        $state->state = 0;
+                    }else {
+                        $state->state = 1;
+                    }
+                    $state->save();
                 }
             }
             $data = ['forms' => $form, 'sections' => json_decode($sections->fields), 'code' => 200, 'message' => 'Formulario editado Correctamente'];
