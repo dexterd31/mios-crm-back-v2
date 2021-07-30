@@ -92,8 +92,8 @@ class FormAnswerController extends Controller
                 array_push($clientInfo, $clientData);
                 $clientData = array();
 
-
-                if (json_decode($request['client_id']) == null) {
+                if (is_null($request->client_id) || $request->client_id=='null') {
+                //if (json_decode($request['client_id']) == null) {
                     $clientFind = Client::where('document', $clientInfo[0]['document'])->where('document_type_id', $clientInfo[0]['document_type_id'])->first();
 
                     if ($clientFind == null) {
