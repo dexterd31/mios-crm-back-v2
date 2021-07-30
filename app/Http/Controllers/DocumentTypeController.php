@@ -12,19 +12,22 @@ class DocumentTypeController extends Controller
 {
 
     /**
-     * Jhon Bernal
-     * 14/07/21
+     * @author Jhon Bernal
      * Método para lista de tipo de documento
+     * @param null
+     * @return mixed
      */
     public function list(MiosHelper $miosHelper){
         $documentType=DocumentType::all();
         return $miosHelper->jsonResponse(true,200,'document type',$documentType);
     }
 
+    
     /**
-     * Jhon Bernal
-     * 14/07/21
+     * @author Jhon Bernal
      * Método para crear de tipo de documento
+     * @param $request
+     * @return mixed
      */
     public function create(Request $request,MiosHelper $miosHelper){
         $success = true;
@@ -67,10 +70,12 @@ class DocumentTypeController extends Controller
         return $miosHelper->jsonResponse($success, $code, $keyMessage, $data);
     }
 
-    /**
-     * Jhon Bernal
-     * 14/07/21
+     /**
+     * @author Jhon Bernal
      * Método para actualizar de tipo de documento
+     * @param $request
+     * @param $id
+     * @return mixed
      */
     public function update(Request $request,$id,MiosHelper $miosHelper){
         $type = $request->name_type_document;

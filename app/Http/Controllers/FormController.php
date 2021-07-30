@@ -17,7 +17,7 @@ use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
-
+use Illuminate\Support\Arr;
 use Carbon\Carbon;
 use stdClass;
 
@@ -201,9 +201,10 @@ class FormController extends Controller
             $form->filters = json_encode($request->filters);
             $form->seeRoles = json_encode($request->role);
             $form->save();
-
+            $sectionNames = array();
             foreach($request->sections as $section)
             {
+                $sectionNames[] = $section['sectionName'];
                 for($i=0; $i<count($section['fields']); $i++){
                     $cadena = (string)$i;
                     if($section['fields'][$i]['key'] == 'null'){
@@ -244,17 +245,14 @@ class FormController extends Controller
                         $sections->duplicate = empty($section['duplicar'])? 0 : $section['duplicar'];
                         $sections->save();
                     }
+                }
+            }
 
-                }
-                $sectionState = Section::where('form_id',$id)->where('name_section','!=','Datos básicos del cliente')->get();
-                foreach ($sectionState as $state) {
-                    if ($state['name_section'] == $section['sectionName']) {
-                        $state->state = 0;
-                    }else {
-                        $state->state = 1;
-                    }
-                    $state->save();
-                }
+            //jbernal-inactiva sections que no lleguem del formulario
+            $sectionState = Section::where('form_id',$id)->whereNotIn('name_section', $sectionNames)->get();
+            foreach ($sectionState as $state) {
+                $state->state = 1;
+                $state->save();
             }
             $data = ['forms' => $form, 'sections' => json_decode($sections->fields), 'code' => 200, 'message' => 'Formulario editado Correctamente'];
 
@@ -264,6 +262,11 @@ class FormController extends Controller
         // } catch (\Throwable $e) {
         //     return $this->errorResponse('Error al editar el formulario', 500);
         // }
+    }
+
+
+    public function getStateForms($sectionNames,$id){
+        
     }
 
     /**
