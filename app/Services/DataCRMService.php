@@ -348,7 +348,14 @@ class DataCRMService
 
     public function filedsPotentialsForms(){
         $data = $this->get('/webservice.php?operation=describe&sessionName='.$this->getSessionName().'&elementType=Potentials');
-       return $data->result->fields;
+        $arr = $data->result->fields;
+        /**
+         * Se hace splice del campaignid porque no es necesario hacer match con este field
+         */
+        foreach ($arr as $key => $value) {
+            if($value->name === 'campaignid') array_splice( $arr,$key,1);
+        }
+        return $arr;
     }
     public function filedsAccountsForms(){
         $data = $this->get('/webservice.php?operation=describe&sessionName='.$this->getSessionName().'&elementType=Accounts');
@@ -368,28 +375,28 @@ class DataCRMService
            $keyAnswerClean = $this->cleanString($valueAnwer->label);
             foreach ($fieldsExternals as $key => $value) {
                $labelClean = $this->cleanString($value->label);
-               if($keyAnswerClean == $labelClean){
-                   if( $value->type->name == 'date'){
-                    $dataJson->{$value->name} = Carbon::parse($valueAnwer->value)->format('Y-m-d');
-                   }else if($value->type->name == 'picklist' && is_int( $valueAnwer->value )){
-                       if($labelClean == 'gestion-nivel-2' || $labelClean == 'gestion-nivel-3' ||$labelClean == 'gestion-nivel-4'){
-                        $dataJson->{$value->name} =  $this->findAndFormatValues($this->formId,$valueAnwer->id,$valueAnwer->value);
-                       }else{
-                        $dataJson->{$value->name} = $this->matchPickList($valueAnwer->value,$value->type->picklistValues);
-                       }
-                   }else{
-                    $dataJson->{$value->name} = $valueAnwer->value;
-                   }
-               }
-               if( $keyAnswerClean == 'numero-poliza' ){
-                $dataJson->cf_967 = $valueAnwer->value;
-               }
-               if( $keyAnswerClean == 'inspeccion' ){
-                   $dataJson->cf_998 = $valueAnwer->value;
-               }
-               if( $keyAnswerClean == 'ciudad' ){
-                    $dataJson->bill_city = $this->findAndFormatValues($this->formId,$valueAnwer->id,$valueAnwer->value);
-               }
+                    if($keyAnswerClean == $labelClean){
+                        if( $value->type->name == 'date'){
+                            $dataJson->{$value->name} = Carbon::parse($valueAnwer->value)->format('Y-m-d');
+                        }else if($value->type->name == 'picklist' && is_int( $valueAnwer->value )){
+                            if($labelClean == 'gestion-nivel-2' || $labelClean == 'gestion-nivel-3' ||$labelClean == 'gestion-nivel-4'){
+                                $dataJson->{$value->name} =  $this->findAndFormatValues($this->formId,$valueAnwer->id,$valueAnwer->value);
+                            }else{
+                                $dataJson->{$value->name} = $this->matchPickList($valueAnwer->value,$value->type->picklistValues);
+                            }
+                        }else{
+                            $dataJson->{$value->name} = $valueAnwer->value;
+                        }
+                    }
+                    if( $keyAnswerClean == 'numero-poliza' ){
+                        $dataJson->cf_967 = $valueAnwer->value;
+                    }
+                    if( $keyAnswerClean == 'inspeccion' ){
+                        $dataJson->cf_998 = $valueAnwer->value;
+                    }
+                    if( $keyAnswerClean == 'ciudad' ){
+                            $dataJson->bill_city = $this->findAndFormatValues($this->formId,$valueAnwer->id,$valueAnwer->value);
+                    }
            }
         }
         $dataJson->accountname = $this->concatName($formAnwersArr);
