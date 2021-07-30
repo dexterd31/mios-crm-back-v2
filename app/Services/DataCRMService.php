@@ -348,7 +348,14 @@ class DataCRMService
 
     public function filedsPotentialsForms(){
         $data = $this->get('/webservice.php?operation=describe&sessionName='.$this->getSessionName().'&elementType=Potentials');
-       return $data->result->fields;
+        $arr = $data->result->fields;
+        /**
+         * Se hace splice del campaignid porque no es necesario hacer match con este field
+         */
+        foreach ($arr as $key => $value) {
+            if($value->name === 'campaignid') array_splice( $arr,$key,1);
+        }
+        return $arr;
     }
     public function filedsAccountsForms(){
         $data = $this->get('/webservice.php?operation=describe&sessionName='.$this->getSessionName().'&elementType=Accounts');
@@ -368,7 +375,6 @@ class DataCRMService
            $keyAnswerClean = $this->cleanString($valueAnwer->label);
             foreach ($fieldsExternals as $key => $value) {
                $labelClean = $this->cleanString($value->label);
-                if( $labelClean !== 'campaignid' ){
                     if($keyAnswerClean == $labelClean){
                         if( $value->type->name == 'date'){
                             $dataJson->{$value->name} = Carbon::parse($valueAnwer->value)->format('Y-m-d');
@@ -391,7 +397,6 @@ class DataCRMService
                     if( $keyAnswerClean == 'ciudad' ){
                             $dataJson->bill_city = $this->findAndFormatValues($this->formId,$valueAnwer->id,$valueAnwer->value);
                     }
-                }
            }
         }
         $dataJson->accountname = $this->concatName($formAnwersArr);
