@@ -23,9 +23,7 @@ use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-
-
-
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class FormAnswerController extends Controller
@@ -48,7 +46,7 @@ class FormAnswerController extends Controller
      */
     public function saveinfo(Request $request, MiosHelper $miosHelper, FormAnswerHelper $formAnswerHelper)
     {
-        // try {
+         try {
             // Se valida si tiene permiso para hacer acciones en formAnswer
             if (Gate::allows('form_answer')) {
                 $now=Carbon::now('America/Bogota')->format('Y-m-d H:i:s');
@@ -202,7 +200,10 @@ class FormAnswerController extends Controller
                 $accountIdObject = KeyValue::where('client_id',$clientFind->id)->where('key','account-id0')->first(); //Unique ID de Data CRM
 
                 if(ApiConnection::where('form_id',$form_answer->form_id)->where('api_type',10)->where('status',1)->first()  ){
-
+                    /**
+                     * Codigo Habilitado unicamente para pruebas, mientras DataCRM resuelve el bug
+                     */
+                    Log::info('FormAnswer ID '.$form_answer->id);
                     if($potentialIdObject) $this->dataCRMServices->updatePotentials($form_answer->form_id,json_decode($form_answer->structure_answer),$potentialIdObject->value);
                     if($accountIdObject) $this->dataCRMServices->updateAccounts($form_answer->form_id,json_decode($form_answer->structure_answer),$accountIdObject->value);
 
@@ -212,9 +213,9 @@ class FormAnswerController extends Controller
                 $message = 'Tú rol no tiene permisos para ejecutar esta acción';
             }
             return $this->successResponse(['message'=>$message,'formAsnwerId'=>$form_answer->id]);
-        // } catch (\Throwable $e) {
-        //     return $this->errorResponse('Error al guardar la gestion', 500);
-        // }
+         } catch (\Throwable $e) {
+             return $this->errorResponse('Error :'.$e->getMessage().' File :'.$e->getFile().' Line :'.$e->getLine(), 500);
+         }
     }
 
     /**
