@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Permission;
 
 class ModuleCrm extends Model
 {
@@ -15,6 +16,6 @@ class ModuleCrm extends Model
 
     public function permission()
     {
-        return $this->hasMany('App\Models\PermissionCrm', 'module_id');
+        return $this->hasMany(Permission::class, 'module_id');
     }
 }

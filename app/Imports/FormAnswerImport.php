@@ -8,6 +8,7 @@ use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use App\Models\KeyValue;
 use Helpers\FormAnswerHelper;
+use App\Models\Section;
 
 class FormAnswerImport implements ToModel, WithBatchInserts
 {
@@ -74,7 +75,7 @@ class FormAnswerImport implements ToModel, WithBatchInserts
                             'form_id' => $this->formId,
                             'client_id' => $client->id,
                             'key' => $excelKey,
-                            'value' => trim($responseTemporal[0][$excelKey]),
+                            'value' => $this->dataFormat($responseTemporal[0][$excelKey],$excelKey,$this->formId),
                             'description' => null,
                             'field_id' => $this->ids[$j]
                         ]);
@@ -110,5 +111,30 @@ class FormAnswerImport implements ToModel, WithBatchInserts
     public function getRowCount()
     {
         return $this->rows_count;
+    }
+
+    /**
+     * @author Jhon Bernal
+     * Metodo que permite realizar tratamiento especial un dato especifico
+     * @param $data_value
+     * @param $key_value
+     * @return mixed
+     */
+    public function dataFormat($data_value, $key_value,$formId)
+    {
+        //formatear a tipo fecha
+        $data = trim($data_value);
+        $fields = json_decode(Section::where('form_id',$formId)->whereJsonContains('fields', ['controlType' => 'datepicker'])->first()->fields);
+        if (isset($fields)) {
+            foreach ($fields as $row) {
+                if ($row->controlType == 'datepicker') {
+                    if ($row->key == $key_value) {
+                        $data = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($data_value)->format('Y/m/d');
+                    }
+                }
+               
+            }
+        }
+        return $data;
     }
 }
