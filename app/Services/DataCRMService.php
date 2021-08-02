@@ -162,17 +162,14 @@ class DataCRMService
                         $createTime = $leadNotifications->createdtime;
                     } while ($cicles <= $ciclesTotal);
 
-                //         // $this->setClients($leads['result']);
-                //     } while ($cicles <= $ciclesTotal);
 
-
-                // }else{
+                }else{
 
                     $sql = urlencode("select * from Accounts where createdtime > '".$createTime."' order by createdtime;");
                     $requestBody = '/webservice.php?operation=query&sessionName='.$this->getSessionName().'&query='.$sql;
                     $leads =  $this->get($requestBody);
                     $this->setAccounts($leads->result, $formId);
-              //  }
+                }
             }
     }
 
