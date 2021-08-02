@@ -30,10 +30,9 @@ class TemplateController extends Controller
 	}
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * João Beleño
+     * 02-08-2021
+     * Método para crear el template
      */
     public function store(Request $template)
     {
@@ -49,6 +48,11 @@ class TemplateController extends Controller
         $template->save(); 
     }
 
+    /**
+     * João Beleño
+     * 02-08-2021
+     * Método para listar los nombres de los campos del template
+     */
     private function getiInputNames($templates)
     {
         foreach($templates as $template)
@@ -64,16 +68,17 @@ class TemplateController extends Controller
         }
         return $templates;
     }
+
     /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Template  $template
-     * @return \Illuminate\Http\Response
+     * João Beleño
+     * 02-08-2021
+     * Metodo para listar los templates
      */
     public function show(Request $request, $formId)
     {
         $paginate = $request->query('n', 5);
         $templateModel = $this->getTemplateModel();
+        //filtrando por nombre
         if($fetch = $request->input('fetch'))
         {
             $templateModel = $templateModel->where("template_name", 'like', '%'.$fetch.'%');
@@ -116,7 +121,7 @@ class TemplateController extends Controller
         $plantilla = [];
         $templateModel = $this->getTemplateModel();
         $template = $templateModel->findOrFail($request->template_id);
-        $formAnswer = json_decode($formAnswer, true);
+        $formAnswer = $formAnswer;
         foreach($formAnswer as $section)
         {
             foreach($section['fields'] as $field)
@@ -124,6 +129,16 @@ class TemplateController extends Controller
                 $inputId = json_decode($template->input_id, true);
                 if(array_key_exists($field['id'], $inputId))
                 {
+                    if($field["type"] == "options")
+                    {
+                        foreach ($field["options"] as $option)
+                        {
+                            if($option['id'] == $field["value"])
+                            {
+                                $field["value"] = $option['name'];
+                            }
+                        }
+                    }
                     $fieldTemplate = $inputId[$field['id']];
                     $registerDelimiter = chr($fieldTemplate["registerDelimiter"]);
                     array_push($plantilla, $field);
