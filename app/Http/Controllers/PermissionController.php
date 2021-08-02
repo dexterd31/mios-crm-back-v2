@@ -35,8 +35,13 @@ class PermissionController extends Controller
      */
     public function index($rolCiuId)
     {
+        //Crea intancia del modelo para pruebas unitrarias
+        \Log::info(auth()->user()->rolesId);
+        return auth()->user()->rolesId;
+        return $idRoles = $this->authUser()->rolesId;
         $permissionModel = $this->getPermissionModel();
-        $permissions = $permissionModel->where('role_ciu_id', $rolCiuId)->get();
+        $idRole = end($idRoles);
+        $permissions = $permissionModel->where('role_ciu_id', $idRole)->get();
         $rolePermission = ['RoleId' => $rolCiuId];
         foreach($permissions as $permission)
         {

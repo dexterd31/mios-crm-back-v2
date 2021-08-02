@@ -51,6 +51,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //consultar tipo de documento de los clientes
     $router->get('/searchdocumenttype', 'FormAnswerController@searchDocumentType');
 
+    $router->post('/template/store','TemplateController@store');
+    $router->post('/template/buildTemplate','TemplateController@buildTemplate');
+    $router->get('/template/show/{formId}','TemplateController@show');
 
     //Rutas de grupos
     $router->get('/searchgroup/{id}', 'GroupController@searchGroup');
