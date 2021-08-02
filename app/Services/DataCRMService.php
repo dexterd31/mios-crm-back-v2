@@ -162,15 +162,14 @@ class DataCRMService
                         $createTime = $leadNotifications->createdtime;
                     } while ($cicles <= $ciclesTotal);
 
-                //         // $this->setClients($leads['result']);
-                //     } while ($cicles <= $ciclesTotal);
 
+                }else{
 
                     $sql = urlencode("select * from Accounts where createdtime > '".$createTime."' order by createdtime;");
                     $requestBody = '/webservice.php?operation=query&sessionName='.$this->getSessionName().'&query='.$sql;
                     $leads =  $this->get($requestBody);
                     $this->setAccounts($leads->result, $formId);
-              //  }
+                }
             }
     }
 
@@ -272,13 +271,6 @@ class DataCRMService
                     'client_id'=>$client->id
                 ]);
 
-                $newLeadVicidial = array(
-                    "producto"=>$this->productVicidial, // "leads"
-                     "token_key"=>$this->tokenVicidial,
-                     "Celular"=>$clientClean['phone']
-                );
-                $this->newLeadVicidial($newLeadVicidial);
-                $leadCreado = true;
 
 
             /**
@@ -362,7 +354,6 @@ class DataCRMService
          */
         foreach ($arr as $key => $value) {
             if($value->name === 'campaignid') array_splice( $arr,$key,1);
-            if($value->name === 'origin_creation_account_pick') array_splice( $arr,$key,1);
 
         }
         return $arr;
@@ -376,6 +367,7 @@ class DataCRMService
 
         }
         return $arr;
+
     }
 
     /**
