@@ -354,14 +354,20 @@ class DataCRMService
          */
         foreach ($arr as $key => $value) {
             if($value->name === 'campaignid') array_splice( $arr,$key,1);
-            if($value->name === 'origin_creation_account_pick') array_splice( $arr,$key,1);
 
         }
         return $arr;
     }
     public function filedsAccountsForms(){
         $data = $this->get('/webservice.php?operation=describe&sessionName='.$this->getSessionName().'&elementType=Accounts');
-        return $data->result->fields;
+        $arr = $data->result->fields;
+
+        foreach ($arr as $key => $value) {
+            if($value->name === 'origin_creation_account_pick') array_splice( $arr,$key,1);
+
+        }
+        return $arr;
+
     }
 
     /**
