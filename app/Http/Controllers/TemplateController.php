@@ -103,10 +103,9 @@ class TemplateController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Template  $template
-     * @return \Illuminate\Http\Response
+     * João Beleño
+     * 02-08-2021
+     * Método para borrar el template
      */
     public function delete($templateId)
     {
@@ -114,6 +113,11 @@ class TemplateController extends Controller
         $templateModel->destroy($templateId);
     }
 
+    /**
+     * João Beleño
+     * 02-08-2021
+     * Metodo para crear el template con las respuestas y el csv
+     */
     public function buildTemplate(Request $request)
     {
         $formAnswer = $request->sections;
@@ -121,7 +125,7 @@ class TemplateController extends Controller
         $plantilla = [];
         $templateModel = $this->getTemplateModel();
         $template = $templateModel->findOrFail($request->template_id);
-        $formAnswer = $formAnswer;
+        $formAnswer = json_decode($formAnswer, true);
         foreach($formAnswer as $section)
         {
             foreach($section['fields'] as $field)
@@ -129,6 +133,7 @@ class TemplateController extends Controller
                 $inputId = json_decode($template->input_id, true);
                 if(array_key_exists($field['id'], $inputId))
                 {
+                    //Colocando el valor en los select
                     if($field["type"] == "options")
                     {
                         foreach ($field["options"] as $option)
