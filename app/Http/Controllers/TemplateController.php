@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Template;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Helpers\MiosHelper;
 
 class TemplateController extends Controller
 {
     private $templateModel;
+    private $miosHelper;
 
     public function __construct()
     {
@@ -29,6 +31,20 @@ class TemplateController extends Controller
 		return $this->templateModel;
 	}
 
+    public function setMiosHelper($miosHelper)
+	{
+		$this->miosHelper = $miosHelper;
+	}
+
+    public function getMiosHelper()
+	{
+		if($this->miosHelper == null)
+		{
+			$this->setMiosHelper(new MiosHelper());
+		}
+		return $this->miosHelper;
+	}
+
     /**
      * João Beleño
      * 02-08-2021
@@ -36,16 +52,24 @@ class TemplateController extends Controller
      */
     public function store(Request $template)
     {
-        $template = new Template([
-            "form_id" => $template ->form_id,
-            "user_rrhh_id" => $this->authUser()->rrhh_id,
-            "template_name" => $template->template_name,
-            "input_id" => json_encode($template->input_id),
-            "fields_writable" => json_encode($template->fields_writable),
-            "state" => 1,
-            "value_delimiter" => $template->value_delimiter,
-        ]);
-        $template->save(); 
+        try {
+            $template = new Template([
+                "form_id" => $template ->form_id,
+                "user_rrhh_id" => $this->authUser()->rrhh_id,
+                "template_name" => $template->template_name,
+                "input_id" => json_encode($template->input_id),
+                "fields_writable" => json_encode($template->fields_writable),
+                "state" => 1,
+                "value_delimiter" => $template->value_delimiter,
+            ]);
+            $template->save();
+            $miosHelper = $this->getMiosHelper();
+            return $miosHelper->jsonResponse(true, 200, 'message', 'Plantilla guardada correctamente');
+        } catch (\Throwable $th)
+        {
+            $miosHelper = $this->getMiosHelper();
+            return $miosHelper->jsonResponse(false, 500, 'message', 'Ha ocurrido un error');
+        }
     }
 
     /**
