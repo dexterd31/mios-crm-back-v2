@@ -354,6 +354,8 @@ class DataCRMService
          */
         foreach ($arr as $key => $value) {
             if($value->name === 'campaignid') array_splice( $arr,$key,1);
+            if($value->name === 'origin_creation_account_pick') array_splice( $arr,$key,1);
+
         }
         return $arr;
     }
