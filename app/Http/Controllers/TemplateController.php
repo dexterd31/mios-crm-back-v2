@@ -57,7 +57,7 @@ class TemplateController extends Controller
             $inputs = json_decode($template->input_id, true);
             foreach ($inputs as $input)
             {
-                array_push($inputNames, $input['nameInput']);
+                array_push($inputNames, $input['label']);
             }
             unset($template->input_id);
             $template->inputNames = $inputNames;
@@ -80,10 +80,8 @@ class TemplateController extends Controller
         }
         $template = $templateModel->select("id", "template_name", 'input_id', 'created_at')
             ->where("form_id", $formId)->paginate($paginate)->withQueryString();
-        if(isset($template->input_id))
-        {
-            $template = $this->getiInputNames($template);
-        }
+
+        $template = $this->getiInputNames($template);
         return $template;
     }
 
@@ -115,9 +113,10 @@ class TemplateController extends Controller
     {
         $formAnswer = $request->sections;
         $csv = '';
-        $planilla = [];
+        $plantilla = [];
         $templateModel = $this->getTemplateModel();
         $template = $templateModel->findOrFail($request->template_id);
+        $formAnswer = json_decode($formAnswer, true);
         foreach($formAnswer as $section)
         {
             foreach($section['fields'] as $field)
@@ -126,20 +125,23 @@ class TemplateController extends Controller
                 if(array_key_exists($field['id'], $inputId))
                 {
                     $fieldTemplate = $inputId[$field['id']];
-                    array_push($planilla, $field);
-                    $csv.= $fieldTemplate["registerDelimiter"];
-                    if($fieldTemplate["haveTheFieldName"])
+                    $registerDelimiter = chr($fieldTemplate["registerDelimiter"]);
+                    array_push($plantilla, $field);
+                    $csv.= $registerDelimiter;
+                    if($fieldTemplate["haveTheLabel"])
                     {
                         $csv .= $field["label"].":";
                     }
-                    $csv .= $field["value"].$fieldTemplate["registerDelimiter"].$template->value_delimiter;
+                    $csv .= $field["value"].$registerDelimiter.chr($template->value_delimiter);
                 }
             }
         }
-        $csv = rtrim($csv, $templateModel->value_delimiter);
+        $csv = rtrim($csv, chr($templateModel->value_delimiter));
         $data = [];
         $data['csv'] = $csv;
-        $data['planilla'] = $planilla;
+        $data['plantilla'] = $plantilla;
+        $data['fields_writable'] = $template->fields_writable;
+        $data['value_delimiter'] = $template->value_delimiter;
         return $data;
     }
 }
