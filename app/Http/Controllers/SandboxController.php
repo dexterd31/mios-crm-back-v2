@@ -6,12 +6,16 @@ use App\Events\NewDataCRMLead;
 use App\Models\ApiConnection;
 use Illuminate\Http\Request;
 use App\Services\DataCRMService;
+use App\Traits\RequestServiceHttp;
+use Illuminate\Support\Facades\Log;
 
 use function GuzzleHttp\json_decode;
 
 class SandboxController extends Controller
 {
     private $dataCrmService;
+    use RequestServiceHttp;
+
     public function __construct(DataCRMService $dataCrmService)
     {
         $this->dataCrmService = $dataCrmService;
@@ -40,4 +44,36 @@ class SandboxController extends Controller
         sleep(2);
         event( new NewDataCRMLead( 4 ) );
     }
+    public function updatePotentials(){
+        $this->baseUri = 'https://app.datacrm.la/datacrm/sbsseguros';
+
+        $arr = $this->filedsPotentialsForms();
+
+        foreach ($arr as $key => $value) {
+           if($value->name === 'campaignid') array_splice( $arr,$key,1);
+        }
+
+
+
+        //campaignid
+        Log::info($arr);
+        return;
+
+        $requestBody = array(
+            'operation' => 'update',
+            'sessionName' => '3f35bacb61047b11676ab',
+            'element' => '{"potentialname":"NEG30767","potential_no":"NEG30767","amount":"","related_to":"11x68190","closingdate":"2021-08-29","opportunity_type":"","nextstep":"","leadsource":"","sales_stage":"Prospecto","assigned_user_id":"19x6","probability":"","campaignid":"1x207","createdtime":"2021-07-30T05:00:00.000Z","modifiedtime":"2021-07-30 14:52:40","modifiedby":"19x6","description":"","forecast_amount":"","isconvertedfromlead":"0","contact_id":"","potential_date":"","createdby":"19x6","sector":"","cf_891":"0","cf_893":"0","cf_895":"","cf_897":"","cf_899":"0","cf_901":"Contacto efectivo","cf_903":"En negociaci\\u00f3n - Prospecto de venta","cf_909":"Cliente espera propuesta de otro competidor","cf_911":"","cf_913":"","cf_915":"","cf_917":"0","cf_919":"","cf_921":"","cf_923":"0","cf_925":"","cf_927":"","cf_929":"0","cf_931":"","cf_933":"","cf_935":"","cf_937":"","cf_939":"","cf_941":"","cf_943":"","cf_945":"","cf_947":"","cf_963":"","cf_965":"","cf_967":"","cf_969":"","cf_975":"0","reason_loss":"","cf_996":"18414294","cf_998":"","cf_1002":"0","rdstationid":"","cf_1013":"0","cf_1015":"MINI","cf_1017":"MINI COOPER S","cf_1019":"2013","cf_1021":"MKU086","cf_1023":111,"cf_1025":"","cf_1029":"","cf_1031":"","cf_1035":"0","cf_1041":"Tu Auto","cf_1043":"","cf_1064":"","cf_1068":"","potentialname_pick":"","product_relatedid":"","asignedby_user_id":"","potentialsorigin_pick":"","public_url_rd":"","identificador":"","cf_1167":"","cf_1172":"","cf_1174":"","cf_1176":"","id":"13x68191","bill_city":"Bogota D.C.","accountname":"BRYAN  RICARDO  SUAREZ  ROJAS "}'
+        );
+
+        $this->post('/webservice.php', http_build_query($requestBody));
+
+
+    }
+
+    public function filedsPotentialsForms(){
+        $data = $this->get('/webservice.php?operation=describe&sessionName=3f35bacb61047b11676ab&elementType=Potentials');
+       return $data->result->fields;
+    }
+
+
 }
