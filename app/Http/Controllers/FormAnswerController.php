@@ -23,10 +23,11 @@ use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-
-
-
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+
+
+use Illuminate\Support\Facades\Log;
 
 class FormAnswerController extends Controller
 {
@@ -48,10 +49,11 @@ class FormAnswerController extends Controller
      */
     public function saveinfo(Request $request, MiosHelper $miosHelper, FormAnswerHelper $formAnswerHelper)
     {
-        // try {
+         try {
             // Se valida si tiene permiso para hacer acciones en formAnswer
             if (Gate::allows('form_answer')) {
-                $now=Carbon::now('America/Bogota')->format('Y-m-d H:i:s');
+                $now=Carbon::now()->format('Y-m-d H:i:s');
+                Log::info($now);
                 $json_body = json_decode($request['sections'], true);
                 $obj = array();
                 $clientInfo = [];
@@ -60,10 +62,11 @@ class FormAnswerController extends Controller
                 $form_answer = null;
                 $userId = auth()->user()->rrhh_id;
                 $userCrm=User::where('id_rhh','=',$userId)->firstOrFail();
-                $date_string = Carbon::now('America/Bogota')->format('YmdHis');
+                $date_string = Carbon::now()->format('YmdHis');
 
                 foreach ($json_body as $section) {
                     foreach ($section['fields'] as $field) {
+                        $register=[];
                         if ($i == 0) {
                             $clientData[$field['key']] = $field['value'];
                         }
@@ -83,6 +86,10 @@ class FormAnswerController extends Controller
                             $register['nameFile']=$attachment->name; //Agregamos el nombre del archivo para que en el momento de ver las respuestas en el formulario se visualice el nombre.
                         }
 
+                        if(isset($field['duplicated'])){
+                            $register['duplicated']=$field['duplicated'];
+                        }
+
                         if(!empty($register['value'])){
                             array_push($obj, $register);
                         }
@@ -92,8 +99,8 @@ class FormAnswerController extends Controller
                 array_push($clientInfo, $clientData);
                 $clientData = array();
 
-
-                if (json_decode($request['client_id']) == null) {
+                if (is_null($request->client_id) || $request->client_id=='null') {
+                //if (json_decode($request['client_id']) == null) {
                     $clientFind = Client::where('document', $clientInfo[0]['document'])->where('document_type_id', $clientInfo[0]['document_type_id'])->first();
 
                     if ($clientFind == null) {
@@ -108,6 +115,7 @@ class FormAnswerController extends Controller
                             'email'             => isset($clientInfo[0]['email']) ? rtrim($clientInfo[0]['email']) : ''
                         ]);
                         $client->save();
+                        $clientFind = $client;
                     } else {
                         $clientFind->first_name         = isset($clientInfo[0]['firstName']) ? $clientInfo[0]['firstName'] : $clientFind->first_name;
                         $clientFind->middle_name        = isset($clientInfo[0]['middleName']) ? $clientInfo[0]['middleName'] : $clientFind->middle_name;
@@ -144,14 +152,13 @@ class FormAnswerController extends Controller
                         'channel_id' => 1,
                         'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
                         'form_id' => json_decode($request['form_id']),
-                        'structure_answer' => json_encode($obj),
-                        'created_at' => $now
+                        'structure_answer' => json_encode($obj)
                     ]);
 
                     $form_answer->save();
                     $message = 'Información guardada correctamente';
                 } else {
-                    $clientFind = Client::where('id', json_decode($request['client_id']))->first();
+                    $clientFind = Client::where('id', $request->client_id)->first();
                     $clientFind->first_name         = isset($clientInfo[0]['firstName']) ? $clientInfo[0]['firstName'] : $clientFind->first_name;
                     $clientFind->middle_name        = isset($clientInfo[0]['middleName']) ? $clientInfo[0]['middleName'] : $clientFind->middle_name;
                     $clientFind->first_lastname     = isset($clientInfo[0]['lastName']) ? $clientInfo[0]['lastName'] : $clientFind->first_lastname;
@@ -180,8 +187,7 @@ class FormAnswerController extends Controller
                         'channel_id' => 1,
                         'client_id' => json_decode($request['client_id']),
                         'form_id' => json_decode($request['form_id']),
-                        'structure_answer' => json_encode($obj),
-                        'created_at' => $now
+                        'structure_answer' => json_encode($obj)
                     ]);
 
                     $form_answer->save();
@@ -197,11 +203,15 @@ class FormAnswerController extends Controller
                  * Si el fomulario tiene una integracion con DataCRM entonces la tipificacion será actualizada con DataCRM
                  * @author Carlos Galindez
                  */
-                $potentialIdObject = KeyValue::where('client_id',$clientFind->id)->where('key','potential-id1')->first(); //Unique ID de Data CRM
-                $accountIdObject = KeyValue::where('client_id',$clientFind->id)->where('key','account-id0')->first(); //Unique ID de Data CRM
+                $clientId = $clientFind == null ? $client->id : $clientFind->id;
+                $potentialIdObject = KeyValue::where('client_id',$clientId)->where('key','potential-id1')->first(); //Unique ID de Data CRM
+                $accountIdObject = KeyValue::where('client_id',$clientId)->where('key','account-id0')->first(); //Unique ID de Data CRM
 
                 if(ApiConnection::where('form_id',$form_answer->form_id)->where('api_type',10)->where('status',1)->first()  ){
-
+                    /**
+                     * Codigo Habilitado unicamente para pruebas, mientras DataCRM resuelve el bug
+                     */
+                    Log::info('FormAnswer ID '.$form_answer->id);
                     if($potentialIdObject) $this->dataCRMServices->updatePotentials($form_answer->form_id,json_decode($form_answer->structure_answer),$potentialIdObject->value);
                     if($accountIdObject) $this->dataCRMServices->updateAccounts($form_answer->form_id,json_decode($form_answer->structure_answer),$accountIdObject->value);
 
@@ -211,9 +221,9 @@ class FormAnswerController extends Controller
                 $message = 'Tú rol no tiene permisos para ejecutar esta acción';
             }
             return $this->successResponse(['message'=>$message,'formAsnwerId'=>$form_answer->id]);
-        // } catch (\Throwable $e) {
-        //     return $this->errorResponse('Error al guardar la gestion', 500);
-        // }
+         } catch (\Throwable $e) {
+             return $this->errorResponse('Error :'.$e->getMessage().' File :'.$e->getFile().' Line :'.$e->getLine(), 500);
+         }
     }
 
     /**
@@ -294,12 +304,14 @@ class FormAnswerController extends Controller
 
                         $new_structure_answer = [];
                         foreach ($form['structure_answer'] as $value) {
-                            $select = $this->findSelect($formId, $value['id'], $value['value']);
-                            if($select){
-                                $value['value'] = $select;
-                                $new_structure_answer[] = $value;
-                            } else {
-                                $new_structure_answer[] = $value;
+                            if(!isset($value['duplicated'])){
+                                $select = $this->findSelect($formId, $value['id'], $value['value']);
+                                if($select){
+                                    $value['value'] = $select;
+                                    $new_structure_answer[] = $value;
+                                } else {
+                                    $new_structure_answer[] = $value;
+                                }
                             }
                         }
                         $form['structure_answer'] = $new_structure_answer;
@@ -355,13 +367,19 @@ class FormAnswerController extends Controller
 
                 $new_structure_answer = [];
                 foreach($form_answers->structure_answer as $field){
+                    Log::info(json_encode($field));
+                    Log::info(isset($field['duplicated']));
+                    if(isset($field['duplicated'])){
+                        $select = $this->findSelect($form_answers->form_id, $field['duplicated']['idOriginal'], $field['value']);
+                    }else{
                         $select = $this->findSelect($form_answers->form_id, $field['id'], $field['value']);
-                        if($select){
-                            $field['value'] = $select;
-                            $new_structure_answer[] = $field;
-                        } else {
-                            $new_structure_answer[] = $field;
-                        }
+                    }
+                    if($select){
+                        $field['value'] = $select;
+                        $new_structure_answer[] = $field;
+                    } else {
+                        $new_structure_answer[] = $field;
+                    }
                 }
                 $form_answers->structure_answer = $new_structure_answer;
                 $form_answers->user = $userData;
@@ -393,14 +411,33 @@ class FormAnswerController extends Controller
     public function updateInfo(Request $request, $id){
         $obj = array();
         $i=0;
+        $date_string = Carbon::now()->format('YmdHis');
         foreach ($request->sections as $section) {
             foreach ($section['fields'] as $field) {
+                $register=[];
                 if ($i == 0) {
                     $clientData[$field['key']] = $field['value'];
                 }
                 $register['id'] = $field['id'];
                 $register['key'] = $field['key'];
                 $register['value'] = $field['value'];
+                $register['preloaded'] = $field['preloaded'];
+                $register['label'] = $field['label'];//Campo necesario para procesos de sincronizacion con DataCRM
+
+                //manejo de adjuntos
+                /*if($field['controlType'] == 'file'){
+                    $attachment = new Attachment();
+                    $attachment->name = $request->file($field['id'])->getClientOriginalName();
+                    $attachment->source = $request->file($field['id'])->store($date_string);
+                    $attachment->save();
+                    $register['value'] = $attachment->id;
+                    $register['nameFile']=$attachment->name; //Agregamos el nombre del archivo para que en el momento de ver las respuestas en el formulario se visualice el nombre.
+                }*/
+
+                if(isset($field['duplicated'])){
+                    $register['duplicated']=$field['duplicated'];
+                }
+
                 if(!empty($register['value'])){
                     array_push($obj, $register);
                 }
@@ -572,10 +609,11 @@ class FormAnswerController extends Controller
 
     private function findSelect($form_id, $field_id, $value)
     {
-        $fields = json_decode(Section::where('form_id', $form_id)
+        $fields = Section::where('form_id', $form_id)
         ->whereJsonContains('fields', ['id' => $field_id])
-        ->first()->fields);
-        $field = collect($fields)->filter(function($x) use ($field_id){
+        ->first()->fields;
+
+        $field = collect(json_decode($fields))->filter(function($x) use ($field_id){
             return $x->id == $field_id;
         })->first();
 
@@ -587,5 +625,6 @@ class FormAnswerController extends Controller
         } else {
             return null;
         }
+
     }
 }

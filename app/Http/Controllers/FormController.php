@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 use Carbon\Carbon;
-
+use stdClass;
 
 class FormController extends Controller
 {
@@ -137,7 +137,8 @@ class FormController extends Controller
                       'name_section' => $section['sectionName'],
                       'type_section' => $section['type_section'],
                       'fields' => json_encode($section['fields']),
-                      'collapse' => empty($section['collapse'])? 0 : $section['collapse']
+                      'collapse' => empty($section['collapse'])? 0 : $section['collapse'],
+                      'duplicate' => empty($section['duplicar'])? 0 : $section['duplicar']
                     ]);
                     $firstSection->save();
                 }else{
@@ -148,7 +149,8 @@ class FormController extends Controller
                         'name_section' => $section['sectionName'],
                         'type_section' => $section['type_section'],
                         'fields' => json_encode($fields),
-                        'collapse' => empty($section['collapse'])? 0 : $section['collapse']
+                        'collapse' => empty($section['collapse'])? 0 : $section['collapse'],
+                        'duplicate' => empty($section['duplicar'])? 0 : $section['duplicar']
                     ]);
                     $sections->save();
                 }
@@ -208,14 +210,13 @@ class FormController extends Controller
                        $section['fields'][$i]['key'] = $section['fields'][$i]['key'].$cadena;
                     }
                 }
-
-
                 if($section['sectionName'] == 'Datos básicos de cliente'){
                     $sections = Section::find($section['idsection']);
                     $sections->name_section = $section['sectionName'];
                     $sections->type_section = $section['type_section'];
                     $sections->fields = json_encode($section['fields']);
                     $sections->collapse = empty($section['collapse'])? 0 : $section['collapse'];
+                    $sections->duplicate = empty($section['duplicar'])? 0 : $section['duplicar'];
                     $sections->save();
                 } else {
                     $fields = $section['fields'];
@@ -223,12 +224,13 @@ class FormController extends Controller
 
                     if($sections == null){
                         $sections = new Section([
-                        'id' => $section['idsection'],
-                        'form_id' => $form->id,
-                        'name_section' => $section['sectionName'],
-                        'type_section' => $section['type_section'],
-                        'fields' => json_encode($fields),
-                        'collapse' => empty($section['collapse'])? 0 : $section['collapse']
+                            'id' => $section['idsection'],
+                            'form_id' => $form->id,
+                            'name_section' => $section['sectionName'],
+                            'type_section' => $section['type_section'],
+                            'fields' => json_encode($fields),
+                            'collapse' => empty($section['collapse'])? 0 : $section['collapse'],
+                            'duplicate' => empty($section['duplicar'])? 0 : $section['duplicar']
                         ]);
                         $sections->save();
 
@@ -237,6 +239,7 @@ class FormController extends Controller
                         $sections->type_section = $section['type_section'];
                         $sections->fields = json_encode($fields);
                         $sections->collapse = empty($section['collapse'])? 0 : $section['collapse'];
+                        $sections->duplicate = empty($section['duplicar'])? 0 : $section['duplicar'];
                         $sections->save();
                     }
 
@@ -276,10 +279,12 @@ class FormController extends Controller
      */
     public function report(Request $request, MiosHelper $miosHelper)
     {
+      $date1=Carbon::parse($request->date1)->setTimezone('America/Bogota');
+      $date2=Carbon::parse($request->date2)->setTimezone('America/Bogota');
       $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','users.id_rhh')
                           ->join('users', 'users.id', '=', 'form_answers.user_id')
                           ->where('form_answers.form_id',$request->formId)
-                          ->whereBetween('form_answers.created_at', [$request->date1, $request->date2])
+                          //->whereBetween('form_answers.created_at', [$date1, $date2])
                           ->get();
       if(count($formAnswers)==0){
             // 406 Not Acceptable
@@ -489,5 +494,38 @@ class FormController extends Controller
             ->where('group_users.user_id', $userId)
             ->paginate($paginate)->withQueryString();
         return $forms;
+    }
+
+    /**
+     * @author: Daniel Martinez
+     * Función para duplicar una sección
+     * @param:
+     *
+     */
+    public function addSection(Request $request){
+        $section = json_decode($request->section);
+        $idOriginal=$section->id;
+        $section->name_section = $section->name_section.'_'.$request->cont;
+        $section->duplicate = 0;
+        $section->id = time();
+
+        foreach ($section->fields as $element) {
+            $element->value="";
+            $element->duplicated = new stdClass();
+            $element->duplicated->idOriginal = $element->id;
+            $element->duplicated->Section = new stdClass();
+            $element->duplicated->Section->id= $idOriginal;
+            $element->duplicated->Section->name= $section->name_section;
+            $element->duplicated->type = 'section';
+            $element->id = intval($element->id.$request->cont);
+            $element->key = $element->key.'_'.$request->cont;
+            $element->label = $element->label.'_'.$request->cont;
+            foreach ($element->dependencies as $value) {
+                $value->idField = intval($value->idField.$request->cont);
+                $element->seeDepen = false;
+            }
+        }
+
+        return json_encode($section);
     }
 }

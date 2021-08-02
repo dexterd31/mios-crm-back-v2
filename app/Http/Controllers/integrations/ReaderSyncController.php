@@ -64,6 +64,7 @@ class ReaderSyncController extends Controller
                 'fields'=>json_encode($section->fields ,true),
                 'form_id'=>$myForm->id,
                 'collapse'=>$section->collapse,
+                'duplicate'=>$section->duplicate
             ] );
         }
 
