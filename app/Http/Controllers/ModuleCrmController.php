@@ -9,6 +9,11 @@ class ModuleCrmController extends Controller
 {
     private $moduleCrmModel;
 
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function setModuleCrmModel($moduleCrmModel)
 	{
 		$this->moduleCrmModel = $moduleCrmModel;
