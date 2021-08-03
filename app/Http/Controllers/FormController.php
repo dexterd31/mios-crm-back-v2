@@ -460,22 +460,25 @@ class FormController extends Controller
 
     private function findAndFormatValues($form_id, $field_id, $value)
     {
+        if(gettype($value)=="integer"){
+            $fields = json_decode(Section::where('form_id', $form_id)
+            ->whereJsonContains('fields', ['id' => $field_id])
+            ->first()->fields);
+            $field = collect($fields)->filter(function($x) use ($field_id){
+                return $x->id == $field_id;
+            })->first();
 
-        $fields = json_decode(Section::where('form_id', $form_id)
-        ->whereJsonContains('fields', ['id' => $field_id])
-        ->first()->fields);
-        $field = collect($fields)->filter(function($x) use ($field_id){
-            return $x->id == $field_id;
-        })->first();
-
-        if($field->controlType == 'dropdown' || $field->controlType == 'autocomplete' || $field->controlType == 'radiobutton'){
-            $field_name = collect($field->options)->filter(function($x) use ($value){
-                return $x->id == $value;
-            })->first()->name;
-            return $field_name;
-        }elseif($field->controlType == 'datepicker'){
-            return Carbon::parse($value)->setTimezone('America/Bogota')->format('Y-m-d');
-        }else {
+            if($field->controlType == 'dropdown' || $field->controlType == 'autocomplete' || $field->controlType == 'radiobutton'){
+                $field_name = collect($field->options)->filter(function($x) use ($value){
+                    return $x->id == $value;
+                })->first()->name;
+                return $field_name;
+            }elseif($field->controlType == 'datepicker'){
+                return Carbon::parse($value)->setTimezone('America/Bogota')->format('Y-m-d');
+            }else {
+                return null;
+            }
+        }else{
             return null;
         }
     }
