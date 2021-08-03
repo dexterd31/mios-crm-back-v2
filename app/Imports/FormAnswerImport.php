@@ -9,6 +9,7 @@ use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use App\Models\KeyValue;
 use Helpers\FormAnswerHelper;
 use App\Models\Section;
+use Carbon\Carbon;
 
 class FormAnswerImport implements ToModel, WithBatchInserts
 {
@@ -124,15 +125,16 @@ class FormAnswerImport implements ToModel, WithBatchInserts
     {
         //formatear a tipo fecha
         $data = trim($data_value);
-        $fields = json_decode(Section::where('form_id',$formId)->whereJsonContains('fields', ['controlType' => 'datepicker'])->first()->fields);
+        $fields = Section::where('form_id',$formId)->whereJsonContains('fields', ['controlType' => 'datepicker'])->first();
         if (isset($fields)) {
+            $fields = json_decode($fields->fields);            
             foreach ($fields as $row) {
                 if ($row->controlType == 'datepicker') {
                     if ($row->key == $key_value) {
-                        $data = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($data_value)->format('Y/m/d');
+                        //$data = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($data_value)->format('Y-m-d');
+                        $data = Carbon::parse($data_value)->format('Y-m-d');
                     }
-                }
-               
+                }               
             }
         }
         return $data;
