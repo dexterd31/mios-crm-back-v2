@@ -51,6 +51,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //consultar tipo de documento de los clientes
     $router->get('/searchdocumenttype', 'FormAnswerController@searchDocumentType');
 
+    $router->post('/template/store','TemplateController@store');
+    $router->post('/template/buildTemplate','TemplateController@buildTemplate');
+    $router->get('/template/show/{formId}','TemplateController@show');
 
     //Rutas de grupos
     $router->get('/searchgroup/{id}', 'GroupController@searchGroup');
@@ -141,11 +144,12 @@ $router->group(['prefix' => 'api'], function () use ($router) {
      $router->get('datacrm/production/test/{formId}','SandboxController@testDataCRMProduction');
 
      $router->get('pusher','SandboxController@testPusher');
+     $router->get('lead/update/potentials','SandboxController@updatePotentials');
+
 
      //Rutas para el manejo de notificaciones de nuevos lead (Integracion SBS)
      $router->get('lead/notifications/{formId}','NotificationLeadController@getNotifications');
      $router->get('lead/notification/{formId}/{rrhhId}','NotificationLeadController@setReaded');
-
 
      /**
       * Integrations

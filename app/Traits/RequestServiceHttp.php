@@ -25,11 +25,14 @@ trait RequestServiceHttp
         ));
 
         $response = curl_exec($curl);
-        //Log::info($response);
         curl_close($curl);
 
         $responseJson = json_decode($response);
-        if(!$responseJson->success) throw new Exception("Error Processing Request", 1);
+        if(!$responseJson->success){
+            Log::info('ERROR DATA CRM GET');
+            Log::info($response);
+        }
+        //if(!$responseJson->success) throw new Exception("Error Processing Request", 1);
 
         return $responseJson;
 
@@ -60,7 +63,11 @@ trait RequestServiceHttp
         curl_close($curl);
 
         $responseJson = json_decode($response);
-        if(!$responseJson->success) throw new Exception("Error Processing Request", 1);
+        if(!$responseJson->success){
+            Log::info('ERROR DATA CRM POST');
+            Log::info($response);
+        }
+       // if(!$responseJson->success) throw new Exception("Error Processing Request", 1);
 
         return $responseJson;
 
