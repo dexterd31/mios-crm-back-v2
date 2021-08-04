@@ -145,7 +145,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
      $router->get('lead/notifications/{formId}','NotificationLeadController@getNotifications');
      $router->get('lead/notification/{formId}/{rrhhId}','NotificationLeadController@setReaded');
 
-     $router->get('reportes/{rrhhId}','ReportController@show');
+     $router->get('reportes/{formId}','ReportController@show');
      /**
       * Integrations
       */
