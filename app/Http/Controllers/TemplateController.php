@@ -169,15 +169,15 @@ class TemplateController extends Controller
                         }
                     }
                     $fieldTemplate = $inputId[$field['id']];
-                    $registerDelimiter = $fieldTemplate["registerDelimiter"] ? chr($fieldTemplate["registerDelimiter"]):"";
+                    $registerDelimiter = is_numeric($fieldTemplate["registerDelimiter"]) ? chr($fieldTemplate["registerDelimiter"]) : "";
                     array_push($plantilla, $field);
                     $csv.= $registerDelimiter;
                     if($fieldTemplate["haveTheLabel"])
                     {
                         $csv .= $field["label"].":";
                     }
-                    $valueDelimiter = $template->value_delimiter ? chr($template->value_delimiter): "";
-                    $csv .= $field["value"].$registerDelimiter.chr($valueDelimiter);
+                    $valueDelimiter = is_numeric($template->value_delimiter)  ? chr($template->value_delimiter) : "";
+                    $csv .= $field["value"].$registerDelimiter.$valueDelimiter;
                 }
             }
         }
