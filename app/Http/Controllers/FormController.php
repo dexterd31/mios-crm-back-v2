@@ -17,7 +17,7 @@ use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
-
+use Illuminate\Support\Arr;
 use Carbon\Carbon;
 use stdClass;
 
@@ -70,7 +70,9 @@ class FormController extends Controller
     public function searchForm($id)
     {
         $formsSections = Form::where('id', $id)
-            ->with('section')
+            ->with(["section" => function($q){
+                $q->where('state', '!=', 1);
+            }])
             ->select('*')
             ->first();
 
@@ -199,9 +201,10 @@ class FormController extends Controller
             $form->filters = json_encode($request->filters);
             $form->seeRoles = json_encode($request->role);
             $form->save();
-
+            $sectionNames = array();
             foreach($request->sections as $section)
             {
+                $sectionNames[] = $section['sectionName'];
                 for($i=0; $i<count($section['fields']); $i++){
                     $cadena = (string)$i;
                     if($section['fields'][$i]['key'] == 'null'){
@@ -242,8 +245,14 @@ class FormController extends Controller
                         $sections->duplicate = empty($section['duplicar'])? 0 : $section['duplicar'];
                         $sections->save();
                     }
-
                 }
+            }
+
+            //jbernal-inactiva sections que no lleguem del formulario
+            $sectionState = Section::where('form_id',$id)->whereNotIn('name_section', $sectionNames)->get();
+            foreach ($sectionState as $state) {
+                $state->state = 1;
+                $state->save();
             }
             $data = ['forms' => $form, 'sections' => json_decode($sections->fields), 'code' => 200, 'message' => 'Formulario editado Correctamente'];
 
@@ -253,6 +262,11 @@ class FormController extends Controller
         // } catch (\Throwable $e) {
         //     return $this->errorResponse('Error al editar el formulario', 500);
         // }
+    }
+
+
+    public function getStateForms($sectionNames,$id){
+        
     }
 
     /**
@@ -465,22 +479,25 @@ class FormController extends Controller
 
     private function findAndFormatValues($form_id, $field_id, $value)
     {
+        if(gettype($value)=="integer"){
+            $fields = json_decode(Section::where('form_id', $form_id)
+            ->whereJsonContains('fields', ['id' => $field_id])
+            ->first()->fields);
+            $field = collect($fields)->filter(function($x) use ($field_id){
+                return $x->id == $field_id;
+            })->first();
 
-        $fields = json_decode(Section::where('form_id', $form_id)
-        ->whereJsonContains('fields', ['id' => $field_id])
-        ->first()->fields);
-        $field = collect($fields)->filter(function($x) use ($field_id){
-            return $x->id == $field_id;
-        })->first();
-
-        if($field->controlType == 'dropdown' || $field->controlType == 'autocomplete' || $field->controlType == 'radiobutton'){
-            $field_name = collect($field->options)->filter(function($x) use ($value){
-                return $x->id == $value;
-            })->first()->name;
-            return $field_name;
-        }elseif($field->controlType == 'datepicker'){
-            return Carbon::parse($value)->setTimezone('America/Bogota')->format('Y-m-d');
-        }else {
+            if($field->controlType == 'dropdown' || $field->controlType == 'autocomplete' || $field->controlType == 'radiobutton'){
+                $field_name = collect($field->options)->filter(function($x) use ($value){
+                    return $x->id == $value;
+                })->first()->name;
+                return $field_name;
+            }elseif($field->controlType == 'datepicker'){
+                return Carbon::parse($value)->setTimezone('America/Bogota')->format('Y-m-d');
+            }else {
+                return null;
+            }
+        }else{
             return null;
         }
     }

@@ -125,6 +125,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //$router->get('/permission/{rolCiuId}', 'PermissionController@index');
     $router->post('/editPermissions', 'PermissionController@edit');
 
+    $router->get('/moduleCrm', 'ModuleCrmController@store');
 
     $router->get('/prueba-jsoncontains/{formId}', function($formId){
         $form_answers = FormAnswer::where('form_id', $formId)
@@ -150,6 +151,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
      //Rutas para el manejo de notificaciones de nuevos lead (Integracion SBS)
      $router->get('lead/notifications/{formId}','NotificationLeadController@getNotifications');
      $router->get('lead/notification/{formId}/{rrhhId}','NotificationLeadController@setReaded');
+
+     $router->get('reportes/{formId}','ReportController@show');
 
      /**
       * Integrations
