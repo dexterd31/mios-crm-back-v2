@@ -136,17 +136,20 @@ class FormAnswerImport implements ToModel, WithBatchInserts
                     $arrayTemporal[$excelKey] = trim($responseTemporal[0][$excelKey]);
                     
                     //renderiza e identifica id field para ser asignado a field_id
-                    $fields = Section::where('form_id',$this->formId)->value('fields');
-                    $colectionFields = collect(json_decode($fields));   
-                    $filterFields =  $colectionFields->whereIn('key',$excelKey)->first();
-
+                    $fields = Section::where('form_id',$this->formId)->pluck('fields');
+                    foreach ($fields as $field) {
+                        $fieldArr = collect( json_decode($field))->where('key',$excelKey)->pluck('id');
+                        if (!empty($fieldArr->all())) {
+                            $fielId = $fieldArr->all();   
+                        }                                   
+                    }
                     $key_value = new KeyValue([
                         'form_id' => $this->formId,
                         'client_id' => $client->id,
                         'key' => $excelKey,
                         'value' => $this->dataFormat($responseTemporal[0][$excelKey],$excelKey,$this->formId),
                         'description' => null,
-                        'field_id' => $filterFields->id
+                        'field_id' =>  $fielId[0]
                     ]);
                     $key_value->save();
                 }
