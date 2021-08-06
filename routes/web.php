@@ -28,6 +28,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Reporte del formulario
     $router->post('/report','FormController@report');
     $router->get('/formsbyuser/{idUser}', 'FormController@formsByUser');
+    $router->post('/addSection', 'FormController@addSection');
 
     //Base de datos
     // la variable parameters esta en base64 y puede contener el caracter '/', lo cual lanza error 404,
@@ -50,6 +51,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //consultar tipo de documento de los clientes
     $router->get('/searchdocumenttype', 'FormAnswerController@searchDocumentType');
 
+    $router->post('/template/store','TemplateController@store');
+    $router->post('/template/buildTemplate','TemplateController@buildTemplate');
+    $router->get('/template/show/{formId}','TemplateController@show');
 
     //Rutas de grupos
     $router->get('/searchgroup/{id}', 'GroupController@searchGroup');
@@ -76,6 +80,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas de clientes
     $router->get('/getClient/{id}', 'ClientController@getClient');
     $router->post('/client','ClientController@store');
+    $router->post('/updateClient','ClientController@update');
+    $router->get('/listClient/{document}','ClientController@list');
+    $router->post('/searchClient','ClientController@search');
 
     //Rutas de parámetros
     $router->post('/saveParameters/{id}','ParameterController@saveParameters');
@@ -107,14 +114,18 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->put('/tray/{id}','TrayController@update');
     $router->get('/tray/formAnswersByTray/{id}','TrayController@formAnswersByTray');
     $router->get('/tray/changeState/{id}','TrayController@changeState');
+    $router->get('/tray/duplicatedSection/{idFormAnswer}','TrayController@sectionsDuplicated');
 
     //Rutas escalamientos
     $router->post('/escalations', 'EscalationController@validateScalation');
     //Rutas Permisos
     $router->get('/permission/{rolCiu}', 'PermissionCrmController@list');
-
     $router->post('/createRoles', 'RolCrmController@createRolCrm');
+    $router->post('/createPermissions', 'PermissionController@create');
+    //$router->get('/permission/{rolCiuId}', 'PermissionController@index');
+    $router->post('/editPermissions', 'PermissionController@edit');
 
+    $router->get('/moduleCrm', 'ModuleCrmController@store');
 
     $router->get('/prueba-jsoncontains/{formId}', function($formId){
         $form_answers = FormAnswer::where('form_id', $formId)
@@ -141,6 +152,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
      $router->get('lead/notifications/{formId}','NotificationLeadController@getNotifications');
      $router->get('lead/notification/{formId}/{rrhhId}','NotificationLeadController@setReaded');
 
+     $router->get('reportes/{formId}','ReportController@show');
+
      /**
       * Integrations
       */
@@ -149,7 +162,10 @@ $router->group(['prefix' => 'api'], function () use ($router) {
           $router->post('sync','integrations\ReaderSyncController@syncForms');
 
       });
-
+      //tipo de documento
+      $router->get('documentType/list','DocumentTypeController@list');
+      $router->post('documentType/create','DocumentTypeController@create');
+      $router->put('documentType/update/{id}','DocumentTypeController@update');
 
 
 });

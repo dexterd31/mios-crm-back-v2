@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Template;
+use App\Models\Report;
 
 class Form extends Model
 {
@@ -50,5 +52,15 @@ class Form extends Model
 
     public function apiQuestion(){
         return $this->hasMany('App\Models\ApiQuestion','api_id');
+    }
+
+    public function template()
+    {
+        return $this->hasMany(Template::class);
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(Report::class, 'report_id');
     }
 }
