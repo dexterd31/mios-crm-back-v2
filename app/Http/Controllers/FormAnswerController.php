@@ -26,9 +26,6 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
-
-use Illuminate\Support\Facades\Log;
-
 class FormAnswerController extends Controller
 {
     private $ciuService;
