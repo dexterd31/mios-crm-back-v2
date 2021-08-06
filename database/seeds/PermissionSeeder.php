@@ -13,6 +13,8 @@ class PermissionSeeder extends Seeder
      *
      * @return void
      */
+
+    //pasa los roles de permissionsCrm para na tabala permissions
     public function run()
     {
         $actionPermission = ActionPermission::all()->keyBy('action');;

@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Permission;
 use Illuminate\Http\Request;
+use stdClass;
 
 class PermissionController extends Controller
 {
     private $permissionModel;
+    private $moduleCrmModel;
 
     public function __construct()
     {
@@ -28,6 +30,20 @@ class PermissionController extends Controller
 		return $this->permissionModel;
 	}
 
+    public function setModuleCrmModel($moduleCrmModel)
+	{
+		$this->moduleCrmModel = $moduleCrmModel;
+	}
+
+    public function getModuleCrmModel()
+	{
+		if($this->moduleCrmModel == null)
+		{
+			$this->setModuleCrmModel(new ModuleCrm());
+		}
+		return $this->moduleCrmModel;
+	}
+
     /**
      * Display a listing of the resource.
      *
@@ -35,8 +51,11 @@ class PermissionController extends Controller
      */
     public function index($rolCiuId)
     {
+        $idRoles = $this->authUser()->rolesId;
         $permissionModel = $this->getPermissionModel();
-        $permissions = $permissionModel->where('role_ciu_id', $rolCiuId)->get();
+        $idRole = end($idRoles);
+        $permissions = $permissionModel->where('role_ciu_id', $idRole)->get();
+        return $permissions->module;
         $rolePermission = ['RoleId' => $rolCiuId];
         foreach($permissions as $permission)
         {
@@ -49,6 +68,23 @@ class PermissionController extends Controller
         return $rolePermission;
     }
 
+    private function createPemitDefault()
+    {
+        $permissionDefault = [];
+        $moduleCrmModel = $this->getModuleCrmModel();
+        $modulesCrm = $moduleCrmModel->all();
+        foreach ($modulesCrm as $moduleCrm)
+        {
+            $permissionDefault[$moduleCrm->id] = new stdClass();
+            $permissionDefault[$moduleCrm->id - 1]->save = 0;
+            $permissionDefault[$moduleCrm->id - 1]->view = 0;
+            $permissionDefault[$moduleCrm->id - 1]->edit = 0;
+            $permissionDefault[$moduleCrm->id - 1]->change = 0;
+            $permissionDefault[$moduleCrm->id - 1]->status = 0;
+            $permissionDefault[$moduleCrm->id - 1]->all = 0;
+        }
+        return $permissionDefault;
+    }
     /**
      * Show the form for creating a new resource.
      *
@@ -85,5 +121,4 @@ class PermissionController extends Controller
         $permissionModel->where('role_ciu_id', $request->idRole)->delete();
         $this->create($request);
     }
-
 }

@@ -28,5 +28,6 @@ class DatabaseSeeder extends Seeder
         $this->call('ApiConnections');
         $this->call('SetMenuCiuIdInModulesCrmSeeder');
         $this->call('ActionPermissionSeeder');
+        $this->call('ReportSeeder');
     }
 }
