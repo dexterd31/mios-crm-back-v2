@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
+
 class FormAnswerController extends Controller
 {
     private $ciuService;
@@ -50,7 +51,6 @@ class FormAnswerController extends Controller
             // Se valida si tiene permiso para hacer acciones en formAnswer
             if (Gate::allows('form_answer')) {
                 $now=Carbon::now()->format('Y-m-d H:i:s');
-                Log::info($now);
                 $json_body = json_decode($request['sections'], true);
                 $obj = array();
                 $clientInfo = [];
