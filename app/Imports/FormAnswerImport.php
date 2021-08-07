@@ -48,13 +48,13 @@ class FormAnswerImport implements ToModel, WithBatchInserts
             $client = Client::where('document', $row[5])->select('id')->first();
             // Se pasan los labels para obtener los keyvalues del formulario?
             //Se deben pasar los id's  y comparar contra las secciones
-            $keyValues = $formAnswerHelper->getKeysValuesForExcel($this->headers, $this->formId);
+            $keyValues = $formAnswerHelper->getKeysValuesForExcel($this->headers, $this->formId, $this->ids);
           
-            $this->buildDocumentExcel($keyValues,$row,$client);
+            // Todo el proceso de independiso en el metodo buildDocumentExcel
+            $this->buildDocumentExcel($keyValues,$row,$client); 
 
             // Se normaliza el objeto de FormAnswer
-            $formAnswer = $formAnswerHelper->structureAnswer($this->formId, $this->sections, $this->ids);
-
+            $formAnswer = $formAnswerHelper->structureAnswer($this->formId, $this->sections, $this->ids); 
             $this->rows_count++;
 
             // Se crea el objecto para guardar la respuesta
@@ -120,21 +120,23 @@ class FormAnswerImport implements ToModel, WithBatchInserts
                 array_push($temporal, $excelKey);
             }
         }
-        $count = count($row);
+
+        $count = count($temporal);
         $curso = array();
         for ($i = 0; $i < $count; $i++) {
             $curso[$temporal[$i]] = $row[$i];
         }
+      
         array_push($responseTemporal, $curso);
         // Se organiza el regsitro de excel por secciones del formulario
         $i = 0;
         $j = 0;
+        
         $arrayTemporal = array();
         foreach ($keyValues as $key) {
             foreach($key as $excelKey => $value){
                 if(isset($responseTemporal[0][$excelKey])){
                     $arrayTemporal[$excelKey] = trim($responseTemporal[0][$excelKey]);
-                    
                     //renderiza e identifica id field para ser asignado a field_id
                     $fields = Section::where('form_id',$this->formId)->pluck('fields');
                     foreach ($fields as $field) {
@@ -155,6 +157,7 @@ class FormAnswerImport implements ToModel, WithBatchInserts
                 }
                 $j++;
             }
+           
             array_push($this->sections, $arrayTemporal);
             $arrayTemporal= array();
             $i++;
