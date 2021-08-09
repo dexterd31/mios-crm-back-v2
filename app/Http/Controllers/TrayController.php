@@ -7,6 +7,7 @@ use App\Models\Tray;
 use App\Models\Section;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use stdClass;
 
 class TrayController extends Controller
 {
@@ -123,55 +124,45 @@ class TrayController extends Controller
     }
 
     public function formAnswersByTray(Request $request, $id) {
-
-        $tray = Tray::where('id',$id)
-            ->firstOrFail();
-
+        $tray = Tray::where('id',$id)->firstOrFail();
         $fieldsTable = json_decode($tray->fields_table);
-
         $formsAnswers = $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
-
-        //$formsAnswers = $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
-
         foreach($formsAnswers as $form)
         {
             $tableValues = [];
             foreach($fieldsTable as $field)
             {
                 $structureAnswer = json_decode($form->structure_answer);
-
                 $new_structure_answer = [];
-
                 foreach($structureAnswer as $field2){
-                    $select = $this->findSelect($form->form_id, $field2->id, $field2->value);
-                    if($select){
-                        $field2->value = $select;
-                        $new_structure_answer[] = $field2;
-                    } else {
-                        $new_structure_answer[] = $field2;
+                    if(!isset($field2->duplicated)){
+                        $select = $this->findSelect($form->form_id, $field2->id, $field2->value);
+                        if($select){
+                            $field2->value = $select;
+                            $new_structure_answer[] = $field2;
+                        } else {
+                            $new_structure_answer[] = $field2;
+                        }
                     }
                 }
-                $foundStructure = collect($new_structure_answer)->filter(function ($item, $key) use ($field) {
-                    return $item->id == $field->id;
-                })->values();
-
-
-                if(!empty($foundStructure))
-                {
-                    $tableValues[] = $foundStructure;
-                }
+                    $foundStructure = collect($new_structure_answer)->filter(function ($item, $key) use ($field) {
+                        return $item->id == $field->id;
+                    })->values();
+                    if(!empty($foundStructure))
+                    {
+                        $tableValues[] = $foundStructure;
+                    }
             }
-
-            $form->table_values = $tableValues;
+                $form->table_values = $tableValues;
         }
         return $formsAnswers;
+
     }
 
     public function changeState($id){
         $tray = Tray::find($id);
         $tray->state = !$tray->state;
         $tray->save();
-
         return $this->successResponse($tray);
     }
 
@@ -197,14 +188,6 @@ class TrayController extends Controller
                             foreach($field->value as $fieldValue){
                                 if($value->value == $fieldValue->id){
                                     $validate = true;
-                                    // return 1;
-                                // }else{
-                                //     if($validate == true){
-                                //         $validate = true;
-                                //     }else{
-                                //         $validate = false;
-                                //     }
-                                //     // return 0;
                                 }
                             }
                             if($validate == true){
@@ -212,7 +195,6 @@ class TrayController extends Controller
                             }else{
                                 return 0;
                             }
-                            // return = $validate ? 1 : 0;
                         }
                     }else{
                         // si es otro tipo validar que el valor no este vacio o nulo.
@@ -240,7 +222,7 @@ class TrayController extends Controller
 
     private function findSelect($form_id, $field_id, $value)
     {
-        $fields = json_decode(Section::where('form_id', $form_id)
+        $fields = json_decode(Section::select('fields')->where('form_id', $form_id)
         ->whereJsonContains('fields', ['id' => $field_id])
         ->first()->fields);
         $field = collect($fields)->filter(function($x) use ($field_id){
@@ -255,6 +237,58 @@ class TrayController extends Controller
         } else {
             return null;
         }
+    }
+
+
+    public function sectionsDuplicated($idFormAnswer){
+        $answer=json_decode(FormAnswer::where('id',$idFormAnswer)->first()->structure_answer);
+        $seccionesDuplicar=[];
+        $indicesDuplicar=[];
+        foreach($answer as $fieldAnswer){
+            if(isset($fieldAnswer->duplicated->Section)){
+                $idSeccion=$fieldAnswer->duplicated->Section->id;
+                $nameSeccion=$fieldAnswer->duplicated->Section->name;
+                $hashSeccion=base64_encode($idSeccion.$nameSeccion);
+                if(in_array($hashSeccion,$indicesDuplicar)){
+                    $indice=array_search($hashSeccion,$indicesDuplicar);
+                }else{
+                    array_push($indicesDuplicar,$hashSeccion);
+                    $indice=array_search($hashSeccion,$indicesDuplicar);
+                }
+                if(isset($seccionesDuplicar[$indice])){
+                    $seccionesDuplicar[$indice]=$this->changeFieldSection($fieldAnswer,$seccionesDuplicar[$indice]);
+                }else{
+                    $seccionesDuplicar[$indice]=$this->createdDuplicatedSections($idSeccion,$nameSeccion);
+                    $seccionesDuplicar[$indice]=$this->changeFieldSection($fieldAnswer,$seccionesDuplicar[$indice]);
+                }
+            }
+        }
+        return response()->json($seccionesDuplicar, '200');
+    }
+
+
+    private function createdDuplicatedSections($idSection,$nameDuplicatedSection){
+        $formsSections=Section::select('name_section','type_section','fields','collapse')->where('id',$idSection)->first();
+        $duplicatedSection=new stdClass();
+        $duplicatedSection->id=time();
+        $duplicatedSection->name_section=$nameDuplicatedSection;
+        $duplicatedSection->collapse=$formsSections->collapse;
+        $duplicatedSection->duplicate=0;
+        $duplicatedSection->see=true;
+        $duplicatedSection->fields=json_decode($formsSections->fields);
+        return $duplicatedSection;
+    }
+
+    private function changeFieldSection($duplicatefield,$duplicatedSection){
+        foreach($duplicatedSection->fields as $originalField){
+            if($originalField->id==$duplicatefield->duplicated->idOriginal){
+                $originalField->id=$duplicatefield->id;
+                $originalField->key=$duplicatefield->key;
+                $originalField->label=$duplicatefield->label;
+                $originalField->duplicated=$duplicatefield->duplicated;
+            }
+        }
+        return $duplicatedSection;
     }
 
 }

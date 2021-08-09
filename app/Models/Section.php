@@ -8,7 +8,7 @@ class Section extends Model
 {
     protected $table = 'sections';
     protected $PrimaryKey = 'id';
-    protected $fillable = ['form_id', 'name_section', 'type_section','fields', 'collapse'];
+    protected $fillable = ['form_id', 'name_section', 'type_section','fields', 'collapse','duplicate','state'];
 
     public function Form(){
         return $this->belongsTo('App\Models\Form', 'id');
