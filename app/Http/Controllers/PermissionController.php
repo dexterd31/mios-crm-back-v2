@@ -119,4 +119,10 @@ class PermissionController extends Controller
         $permissionModel->where('role_ciu_id', $request->idRole)->delete();
         $this->create($request);
     }
+
+    public function getPermissionsByIdRole(Request $idRole)
+    {
+        $permissionModel = $this->getPermissionModel();
+        return $permissionModel->where('role_ciu_id', $idRole)->get();
+    }
 }
