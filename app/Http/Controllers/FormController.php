@@ -20,6 +20,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Arr;
 use Carbon\Carbon;
 use stdClass;
+use App\Models\Directory;
 
 class FormController extends Controller
 {
@@ -298,13 +299,20 @@ class FormController extends Controller
       $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','users.id_rhh')
                           ->join('users', 'users.id', '=', 'form_answers.user_id')
                           ->where('form_answers.form_id',$request->formId)
-                          ->whereBetween('form_answers.created_at', [$date1, $date2])
+                          //->whereBetween('form_answers.created_at', [$date1, $date2])
                           ->get();
-      if(count($formAnswers)==0){
+
+       //se extrae el restante de informacion que esta en directory por carga desde excel
+      $directoryData = Directory::select('directories.id', 'directories.data', 'directories.created_at', 'directories.updated_at','users.id_rhh')
+                    ->join('users', 'users.id', '=', 'directories.user_id')
+                    ->where('directories.form_id',$request->formId)
+                    ->get();
+
+      if(count($formAnswers)==0 && count($directoryData) == 0){
             // 406 Not Acceptable
             // se envia este error ya que no esta mapeado en interceptor angular.
             return $this->errorResponse('No se encontraron datos en el rango de fecha suministrado', 406);
-      } else if(count($formAnswers)>5000){
+      } else if(count($formAnswers)>5000 && count($directoryData) > 5000){
             return $this->errorResponse('El rango de fechas supera a los 5000 records', 413);
       } else {
         $inputReport=[];
@@ -315,8 +323,7 @@ class FormController extends Controller
         $plantillaRespuestas=[];
         //Agrupamos los id_rrhh del usuario en un arreglo
         $userIds=$miosHelper->getArrayValues('id_rhh',$formAnswers);
-        //Se dejan los id unicos quitamos todos los repetidos
-        $useString=implode(',',array_values(array_unique($userIds)));
+        $useString=implode(',',$userIds);
         //Traemos los datos de rrhh de los usuarios
         $usersInfo=$this->rrhhService->fetchUsers($useString);
         //Organizamos la información del usuario en un array asociativo con la información necesaria
@@ -402,10 +409,74 @@ class FormController extends Controller
             $rows[$r]=$respuestas;
             $r++;
           }
-          array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización');
+
+        /**Parte de aca, es el recorrido para directories */
+
+         //Agrupamos los id_rrhh del usuario en un arreglo
+         $userIdsDir=$miosHelper->getArrayValues('id_rhh',$directoryData);
+         $useStringDir=implode(',',$userIdsDir);
+         //Traemos los datos de rrhh de los usuarios
+         $usersInfoDirectory=$this->rrhhService->fetchUsers($useStringDir);
+         //Organizamos la información del usuario en un array asociativo con la información necesaria
+         $adviserInfoDir=[];
+         foreach($usersInfoDirectory as $info){
+             if(in_array($info->id,$userIds)){
+                 if(!isset($adviserInfoDir[$info->id])){
+                     $adviserInfoDir[$info->id]=$info;
+                 }
+             }
+         }
+       
+        foreach ($directoryData as $key => $directory) {
+            $respuestas=$plantillaRespuestas;
+            $respuestas['id'] = $directory->id;
+              //Evaluamos los campos que deben ir en el reporte contra las respuestas
+              foreach($inputReport as $input){
+                foreach(json_decode($directory->data) as $data){
+                    
+                    if(isset($input->dependencies[0]->report)){
+                        if(in_array($data->id,$dependencies[$input->dependencies[0]->report])){
+                            if(isset($data->value)){
+                                $select = $this->findAndFormatValues($request->formId, $data->id,(is_numeric($data->value))?(int)$data->value:$data->value);
+                                if($select){
+                                    $respuestas[$input->dependencies[0]->report] = $select;
+                                } else {
+                                    $respuestas[$input->dependencies[0]->report] = $data->value;
+                                }
+                            }
+                            break;
+                        }
+                    }else if($data->id==$input->id){
+                        $select = $this->findAndFormatValues($request->formId, $data->id, (is_numeric($data->value))?(int)$data->value:$data->value);
+                        if($select){
+                            $respuestas[$input->id] = $select;
+                        } else {
+                            $respuestas[$input->id] = $data->value;
+                        }
+                        break;
+                    }else if($data->key==$input->key){
+                        $select = $this->findAndFormatValues($request->formId, $input->id, (is_numeric($data->value))?(int)$data->value:$data->value);
+                        if($select){
+                            $respuestas[$input->id] = $select;
+                        } else {
+                            $respuestas[$input->id] = $data->value;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            $respuestas['user']=$adviserInfoDir[$answer->id_rhh]->name;
+            $respuestas['docuser']=$adviserInfoDir[$answer->id_rhh]->id_number;
+            $respuestas['created_at'] = Carbon::parse($directory->created_at->format('c'))->setTimezone('America/Bogota');
+            $respuestas['updated_at'] = Carbon::parse($directory->updated_at->format('c'))->setTimezone('America/Bogota');
+            $rows[$r]=$respuestas;
+            $r++;
+        }
+        array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización');
       }
       return Excel::download(new FormReportExport($rows, $titleHeaders), 'reporte_formulario.xlsx');
-    }
+    }   
 
     /**
      * Olme Marin
