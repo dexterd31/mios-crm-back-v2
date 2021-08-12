@@ -93,12 +93,13 @@ class PermissionController extends Controller
     public function create(Request $request)
     {
         $permissions = array();
-        foreach ($request->permissions as $permission)
+        foreach ($request->permissions as $permissionData)
         {
+            $permissionData = json_decode($permissionData);
             $permission = [
                 'role_ciu_id' => $request->idRole,
-                'module_id' => $permission['module'],
-                'action_permission_id' => $permission['action']
+                'module_id' => $permissionData->module,
+                'action_permission_id' => $permissionData->action
             ];
             array_push($permissions, $permission);
         }
