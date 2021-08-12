@@ -50,7 +50,7 @@ class ModuleCrmController extends Controller
         $actionPermissionModel = $this->getActionPermissionModel();
         return [
             "modules" => $moduleCrmModel->select("id", "label")->get(),
-            "action_permission" => $actionPermissionModel->all()
+            "action_permission" => $actionPermissionModel->select("id", "name", "action")->get()
         ];
     }
 }
