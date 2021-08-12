@@ -120,7 +120,7 @@ class PermissionController extends Controller
         $this->create($request);
     }
 
-    public function getPermissionsByIdRole(Request $idRole)
+    public function getPermissionsByIdRole($idRole)
     {
         $permissionModel = $this->getPermissionModel();
         return $permissionModel->where('role_ciu_id', $idRole)->get();
