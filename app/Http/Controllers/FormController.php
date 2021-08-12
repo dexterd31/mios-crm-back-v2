@@ -266,7 +266,7 @@ class FormController extends Controller
 
 
     public function getStateForms($sectionNames,$id){
-        
+
     }
 
     /**
@@ -298,7 +298,7 @@ class FormController extends Controller
       $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','users.id_rhh')
                           ->join('users', 'users.id', '=', 'form_answers.user_id')
                           ->where('form_answers.form_id',$request->formId)
-                          //->whereBetween('form_answers.created_at', [$date1, $date2])
+                          ->whereBetween('form_answers.created_at', [$date1, $date2])
                           ->get();
       if(count($formAnswers)==0){
             // 406 Not Acceptable
@@ -315,7 +315,8 @@ class FormController extends Controller
         $plantillaRespuestas=[];
         //Agrupamos los id_rrhh del usuario en un arreglo
         $userIds=$miosHelper->getArrayValues('id_rhh',$formAnswers);
-        $useString=implode(',',$userIds);
+        //Se dejan los id unicos quitamos todos los repetidos
+        $useString=implode(',',array_values(array_unique($userIds)));
         //Traemos los datos de rrhh de los usuarios
         $usersInfo=$this->rrhhService->fetchUsers($useString);
         //Organizamos la información del usuario en un array asociativo con la información necesaria
@@ -507,7 +508,7 @@ class FormController extends Controller
         $forms = Form::join('form_types', 'forms.form_type_id', '=', 'form_types.id')
             ->join("groups", "groups.id", "forms.group_id")
             ->join('group_users', 'group_users.group_id', 'groups.id')
-            ->select('name_form', 'forms.id', 'name_type', 'forms.state', 'seeRoles', 'forms.updated_at')
+            ->select('name_form', 'forms.id', 'name_type', 'forms.state', 'seeRoles', 'forms.campaign_id', 'forms.updated_at')
             ->where('group_users.user_id', $userId)
             ->paginate($paginate)->withQueryString();
         return $forms;
