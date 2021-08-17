@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Permission;
 use Illuminate\Http\Request;
 use stdClass;
+use App\Models\ModuleCrm;
 
 class PermissionController extends Controller
 {
@@ -51,37 +52,35 @@ class PermissionController extends Controller
      */
     public function index($rolCiuId)
     {
-        $idRoles = $this->authUser()->rolesId;
+        $idRolesCrm = $this->authUser()->rolesId[0]->crm;
         $permissionModel = $this->getPermissionModel();
-        $idRole = end($idRoles);
+        $idRole = end($idRolesCrm);
         $permissions = $permissionModel->where('role_ciu_id', $idRole)->get();
-        return $permissions->module;
+        $pemit = $this->gatPemitDefault();
         $rolePermission = ['RoleId' => $rolCiuId];
         foreach($permissions as $permission)
         {
-            if(!array_key_exists($permission->module_id, $rolePermission))
-            {
-                $rolePermission[$permission->module_id] = [];
-            }
-            array_push($rolePermission[$permission->module_id], $permission->actionPermissions->action);
+            $action = $permission->actionPermissions->action;
+            $pemit[$permission->module_id - 1]->$action = 1;
         }
+        $rolePermission["pemit"] = $pemit;
         return $rolePermission;
     }
 
-    private function createPemitDefault()
+    private function gatPemitDefault()
     {
         $permissionDefault = [];
         $moduleCrmModel = $this->getModuleCrmModel();
         $modulesCrm = $moduleCrmModel->all();
         foreach ($modulesCrm as $moduleCrm)
         {
-            $permissionDefault[$moduleCrm->id] = new stdClass();
-            $permissionDefault[$moduleCrm->id - 1]->save = 0;
-            $permissionDefault[$moduleCrm->id - 1]->view = 0;
-            $permissionDefault[$moduleCrm->id - 1]->edit = 0;
-            $permissionDefault[$moduleCrm->id - 1]->change = 0;
-            $permissionDefault[$moduleCrm->id - 1]->status = 0;
-            $permissionDefault[$moduleCrm->id - 1]->all = 0;
+            $permissionDefault[$moduleCrm->id - 1] = (object)[
+                'save' => 0,
+                'view' => 0,
+                'edit' => 0,
+                'change' => 0,
+                'all' => 0,
+            ];
         }
         return $permissionDefault;
     }
@@ -93,13 +92,13 @@ class PermissionController extends Controller
     public function create(Request $request)
     {
         $permissions = array();
-        foreach ($request->roles as $role)
+        foreach ($request->permissions as $permission)
         {
-            foreach ($role['actions_permission_id'] as $action_permission_id)
+            foreach ($permission['actions_permission_id'] as $action_permission_id)
             {
                 $permission = [
                     'role_ciu_id' => $request->idRole,
-                    'module_id' => $role['module_id'],
+                    'module_id' => $permission['module_id'],
                     'action_permission_id' => $action_permission_id
                 ];
                 array_push($permissions, $permission);
