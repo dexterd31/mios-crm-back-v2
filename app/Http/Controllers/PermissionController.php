@@ -120,10 +120,30 @@ class PermissionController extends Controller
         $this->create($request);
     }
 
-    public function getPermissionsByIdRole($idRole)
+    public function getPermissionsByIdRole()
     {
+        $idRole = $this->authUser()->rolesId[0]->crm[0];
         $permissionModel = $this->getPermissionModel();
-        return $permissionModel->select("module_id","action_permission_id")
-            ->where('role_ciu_id', $idRole)->get();
+        $permissionsData = $permissionModel->where('role_ciu_id', $idRole)->with("module")->get();
+        $permissions = [];
+        foreach ($permissionsData as $permissionData)
+        {
+            
+            $action = (Object)[
+                "action" => $permissionData->actionPermissions->action,
+                "actionId" => $permissionData->actionPermissions->id
+            ];
+
+            if(!array_key_exists($permissionData->module_id, $permissions))
+            {
+                $permissions[$permissionData->module_id] = (Object)[
+                    "idModulo" => $permissionData->module_id,
+                    "nameModulo" => $permissionData->module->name,
+                    "action" => []
+                ];  
+            }
+            array_push($permissions[$permissionData->module_id]->action, $action);
+        }
+        return $permissions;
     }
 }
