@@ -122,9 +122,9 @@ class PermissionController extends Controller
 
     public function getPermissionsByIdRole()
     {
-        $idRole = $this->authUser()->rolesId[0]->crm[0];
+        $idRoles = $this->authUser()->rolesId[0]->crm;
         $permissionModel = $this->getPermissionModel();
-        $permissionsData = $permissionModel->where('role_ciu_id', $idRole)->with("module")->get();
+        $permissionsData = $permissionModel->whereIn('role_ciu_id', $idRoles)->with("module")->get();
         $permissions = [];
         foreach ($permissionsData as $permissionData)
         {
@@ -143,6 +143,7 @@ class PermissionController extends Controller
                 ];  
             }
             array_push($permissions[$permissionData->module_id]->action, $action);
+            $permissions[$permissionData->module_id]->action = array_unique($permissions[$permissionData->module_id]->action);
         }
         return $permissions;
     }
