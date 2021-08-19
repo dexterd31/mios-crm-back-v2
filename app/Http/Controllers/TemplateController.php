@@ -192,7 +192,7 @@ class TemplateController extends Controller
             }
         }
         $data = [];
-        $data['csv'] = implode($valueDelimiter,$csv);
+        $data['csv'] = implode($valueDelimiter,$csv).$valueDelimiter;
         $data['plantilla'] = $plantilla;
         $data['fields_writable'] = $template->fields_writable;
         $data['value_delimiter'] = $template->value_delimiter;
