@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ModuleCrm;
+use App\Models\ActionPermission;
 
 class ModuleCrmController extends Controller
 {
     private $moduleCrmModel;
+    private $actionPermissionModel;
 
     public function __construct()
     {
@@ -28,9 +30,27 @@ class ModuleCrmController extends Controller
 		return $this->moduleCrmModel;
 	}
 
-    public function store(Request $request)
+    public function setActionPermissionModel($actionPermissionModel)
+	{
+		$this->actionPermissionModel = $actionPermissionModel;
+	}
+
+    public function getActionPermissionModel()
+	{
+		if($this->actionPermissionModel == null)
+		{
+			$this->setActionPermissionModel(new ActionPermission());
+		}
+		return $this->actionPermissionModel;
+	}
+
+    public function store()
     {
         $moduleCrmModel = $this->getModuleCrmModel();
-        return $moduleCrmModel->select("id", "label")->get();
+        $actionPermissionModel = $this->getActionPermissionModel();
+        return [
+            "modules" => $moduleCrmModel->select("id", "label")->get(),
+            "action_permission" => $actionPermissionModel->select("id", "name", "action")->get()
+        ];
     }
 }
