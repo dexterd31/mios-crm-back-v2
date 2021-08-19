@@ -119,12 +119,12 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas escalamientos
     $router->post('/escalations', 'EscalationController@validateScalation');
     //Rutas Permisos
-   // $router->get('/permission/{rolCiu}', 'PermissionCrmController@list');
+    $router->get('/permission/{rolCiu}', 'PermissionCrmController@list');
     $router->post('/createRoles', 'RolCrmController@createRolCrm');
     $router->post('/createPermissions', 'PermissionController@create');
     $router->post('/editPermissions', 'PermissionController@edit');
     $router->get('/moduleCrm', 'ModuleCrmController@store');
-    $router->get('/permission/{rolCiuId}', 'PermissionController@index');
+    //$router->get('/permission/{rolCiuId}', 'PermissionController@index');
     $router->get('/getPermissionsByIdRole/{idRole}', 'PermissionController@getPermissionsByIdRole');
 
     $router->get('/prueba-jsoncontains/{formId}', function($formId){
