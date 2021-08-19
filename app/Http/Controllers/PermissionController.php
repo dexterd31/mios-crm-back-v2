@@ -142,8 +142,10 @@ class PermissionController extends Controller
                     "action" => []
                 ];  
             }
-            array_push($permissions[$permissionData->module_id]->action, $action);
-            $permissions[$permissionData->module_id]->action = array_unique($permissions[$permissionData->module_id]->action);
+            if(!in_array($action,$permissions[$permissionData->module_id]->action))
+            {
+                array_push($permissions[$permissionData->module_id]->action, $action);
+            }
         }
         return $permissions;
     }
