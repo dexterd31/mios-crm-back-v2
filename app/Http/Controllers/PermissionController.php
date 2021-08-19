@@ -128,23 +128,16 @@ class PermissionController extends Controller
         $permissions = [];
         foreach ($permissionsData as $permissionData)
         {
-            
-            $action = (Object)[
-                "action" => $permissionData->actionPermissions->action,
-                "actionId" => $permissionData->actionPermissions->id
-            ];
+            $action = $permissionData->actionPermissions->action;
+            $moduleName = $permissionData->module->name;
 
-            if(!array_key_exists($permissionData->module_id, $permissions))
+            if(!array_key_exists($moduleName, $permissions))
             {
-                $permissions[$permissionData->module_id] = (Object)[
-                    "idModulo" => $permissionData->module_id,
-                    "nameModulo" => $permissionData->module->name,
-                    "action" => []
-                ];  
+                $permissions[$moduleName] = [];
             }
-            if(!in_array($action,$permissions[$permissionData->module_id]->action))
+            if(!in_array($action,$permissions[$moduleName]))
             {
-                array_push($permissions[$permissionData->module_id]->action, $action);
+                array_push($permissions[$moduleName], $action);
             }
         }
         return $permissions;
