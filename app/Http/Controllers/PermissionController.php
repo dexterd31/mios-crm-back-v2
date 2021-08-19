@@ -57,14 +57,15 @@ class PermissionController extends Controller
         $idRole = end($idRolesCrm);
         $permissions = $permissionModel->where('role_ciu_id', $idRole)->get();
         $pemit = $this->gatPemitDefault();
-        $rolePermission = ['RoleId' => $rolCiuId];
         foreach($permissions as $permission)
         {
             $action = $permission->actionPermissions->action;
             $pemit[$permission->module_id - 1]->$action = 1;
         }
-        $rolePermission["pemit"] = $pemit;
-        return $rolePermission;
+        $rolePermission["rol_name"] = "Daniel viadinho";
+        $rolePermission["rol_id"] = $idRole;
+        $rolePermission["modules"] = $pemit;
+        return ["permissions" => $rolePermission];
     }
 
     private function gatPemitDefault()
@@ -92,17 +93,15 @@ class PermissionController extends Controller
     public function create(Request $request)
     {
         $permissions = array();
-        foreach ($request->permissions as $permission)
+        foreach ($request->permissions as $permissionData)
         {
-            foreach ($permission['actions_permission_id'] as $action_permission_id)
-            {
-                $permission = [
-                    'role_ciu_id' => $request->idRole,
-                    'module_id' => $permission['module_id'],
-                    'action_permission_id' => $action_permission_id
-                ];
-                array_push($permissions, $permission);
-            }
+            $permissionData = json_decode($permissionData);
+            $permission = [
+                'role_ciu_id' => $request->idRole,
+                'module_id' => $permissionData->module,
+                'action_permission_id' => $permissionData->action
+            ];
+            array_push($permissions, $permission);
         }
         $permissionModel = $this->getPermissionModel();
         $permissionModel->insert($permissions);  
@@ -119,5 +118,12 @@ class PermissionController extends Controller
         $permissionModel = $this->getPermissionModel();
         $permissionModel->where('role_ciu_id', $request->idRole)->delete();
         $this->create($request);
+    }
+
+    public function getPermissionsByIdRole($idRole)
+    {
+        $permissionModel = $this->getPermissionModel();
+        return $permissionModel->select("module_id","action_permission_id")
+            ->where('role_ciu_id', $idRole)->get();
     }
 }
