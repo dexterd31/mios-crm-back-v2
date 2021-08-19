@@ -157,7 +157,9 @@ class TemplateController extends Controller
                 $inputsId = json_decode($template->input_id, true);
                 foreach ($inputsId as $inputId)
                 {
-                    if(array_key_exists($inputId["id"], $field['id']))
+                    if((is_array($inputId["id"]) &&
+                            in_array($field['id'], $inputId["id"])) ||
+                        $inputId["id"] == $field['id'])
                     {
                         if($field["type"] == "options")
                         {
