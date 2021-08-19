@@ -154,30 +154,32 @@ class TemplateController extends Controller
         {
             foreach($section['fields'] as $field)
             {
-                $inputId = json_decode($template->input_id, true);
-                if(array_key_exists($field['id'], $inputId))
+                $inputsId = json_decode($template->input_id, true);
+                foreach ($inputsId as $inputId)
                 {
-                    //Colocando el valor en los select
-                    if($field["type"] == "options")
+                    if(array_key_exists($inputId["id"], $field['id']))
                     {
-                        foreach ($field["options"] as $option)
+                        if($field["type"] == "options")
                         {
-                            if($option['id'] == $field["value"])
+                            foreach ($field["options"] as $option)
                             {
-                                $field["value"] = $option['name'];
+                                if($option['id'] == $field["value"])
+                                {
+                                    $field["value"] = $option['name'];
+                                }
                             }
                         }
+                        $fieldTemplate = $inputId;
+                        $registerDelimiter = is_numeric($fieldTemplate["registerDelimiter"]) ? chr($fieldTemplate["registerDelimiter"]) : "";
+                        array_push($plantilla, $field);
+                        $csv.= $registerDelimiter;
+                        if($fieldTemplate["haveTheLabel"])
+                        {
+                            $csv .= $field["label"].":";
+                        }
+                        $valueDelimiter = is_numeric($template->value_delimiter)  ? chr($template->value_delimiter) : "";
+                        $csv .= $field["value"].$registerDelimiter.$valueDelimiter;
                     }
-                    $fieldTemplate = $inputId[$field['id']];
-                    $registerDelimiter = is_numeric($fieldTemplate["registerDelimiter"]) ? chr($fieldTemplate["registerDelimiter"]) : "";
-                    array_push($plantilla, $field);
-                    $csv.= $registerDelimiter;
-                    if($fieldTemplate["haveTheLabel"])
-                    {
-                        $csv .= $field["label"].":";
-                    }
-                    $valueDelimiter = is_numeric($template->value_delimiter)  ? chr($template->value_delimiter) : "";
-                    $csv .= $field["value"].$registerDelimiter.$valueDelimiter;
                 }
             }
         }
