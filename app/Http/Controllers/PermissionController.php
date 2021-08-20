@@ -62,7 +62,7 @@ class PermissionController extends Controller
             $action = $permission->actionPermissions->action;
             $pemit[$permission->module_id - 1]->$action = 1;
         }
-        $rolePermission["rol_name"] = "";
+        $rolePermission["rol_name"] = "Daniel viadinho";
         $rolePermission["rol_id"] = $idRole;
         $rolePermission["modules"] = $pemit;
         return ["permissions" => $rolePermission];
@@ -120,10 +120,26 @@ class PermissionController extends Controller
         $this->create($request);
     }
 
-    public function getPermissionsByIdRole($idRole)
+    public function getPermissionsByIdRole()
     {
+        $idRoles = $this->authUser()->rolesId[0]->crm;
         $permissionModel = $this->getPermissionModel();
-        return $permissionModel->select("module_id","action_permission_id")
-            ->where('role_ciu_id', $idRole)->get();
+        $permissionsData = $permissionModel->whereIn('role_ciu_id', $idRoles)->with("module")->get();
+        $permissions = [];
+        foreach ($permissionsData as $permissionData)
+        {
+            $action = $permissionData->actionPermissions->action;
+            $moduleName = $permissionData->module->name;
+
+            if(!array_key_exists($moduleName, $permissions))
+            {
+                $permissions[$moduleName] = [];
+            }
+            if(!in_array($action,$permissions[$moduleName]))
+            {
+                array_push($permissions[$moduleName], $action);
+            }
+        }
+        return $permissions;
     }
 }
