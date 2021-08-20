@@ -25,7 +25,7 @@ class FormAnswerHelper
             array_push($arrayTemporal, $section["fields"]);
         }
         // Se obtines los ids de las secciones
-        if (empty($ids)){
+        if (!empty($ids)){
             foreach ($arrayTemporal as $temp => $t) {
                 $register   = $miosHelper->jsonDecodeResponse($t);
                 foreach ($register as $reg => $r) {
@@ -42,7 +42,13 @@ class FormAnswerHelper
 
             foreach ($register as $key => $value) {
                 if (isset($ids[$j]) && (isset($responseSection[$i][$key]) != null || isset($responseSection[$i][$key]) != '')) {
-                    $row['id'] = $ids[$j];
+                    foreach ($sectionsFind->pluck('fields') as $field) {
+                        $fieldArr = collect( json_decode($field))->where('key',$key)->pluck('id');
+                       if (!empty($fieldArr->all())) {
+                           $fielId = $fieldArr->all();   
+                       }                                   
+                   }
+                    $row['id'] = $fielId[0];
                     $row['key'] = $key;
                     $row['value'] = trim($responseSection[$i][$key]);
                     array_push($result, $row);
@@ -83,7 +89,7 @@ class FormAnswerHelper
     }
 
     // Funcion que recibe los label de un excel y retorna los keyvalues de un formulario
-    function getKeysValuesForExcel($labels, $formId) {
+    function getKeysValuesForExcel($labels, $formId,$ids) {
         $miosHelper     = new MiosHelper();
         $sectionsFind   = Section::where('form_id', $formId)->get();
         $arraySections  = array();
@@ -101,7 +107,9 @@ class FormAnswerHelper
 
             for ($i = 0; $i < $count; $i++) {
                    if(in_array($register[$i]['label'], $labels)){
-                    $arraySections[$register[$i]['key']] = NULL;
+                       if (in_array($register[$i]['id'], $ids)) {
+                            $arraySections[$register[$i]['key']] = NULL;
+                       }                        
                    }
             }
             array_push($arrayKeyValues, $arraySections);
