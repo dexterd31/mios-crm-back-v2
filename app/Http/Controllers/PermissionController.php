@@ -62,7 +62,7 @@ class PermissionController extends Controller
             $action = $permission->actionPermissions->action;
             $pemit[$permission->module_id - 1]->$action = 1;
         }
-        $rolePermission["rol_name"] = "";
+        $rolePermission["rol_name"] = "Daniel viadinho";
         $rolePermission["rol_id"] = $idRole;
         $rolePermission["modules"] = $pemit;
         return ["permissions" => $rolePermission];
