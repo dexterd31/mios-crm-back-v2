@@ -266,7 +266,7 @@ class DataCRMService
             }
                 Directory::create([
                     'data'=>json_encode($keysToDirectory),
-                    'user_id'=>env('USER_ID_CREATOR_DIRECTORIES_CRM_LEAD'), //NOTE: ID DE USUARIO QUEMADO EN EL .ENV POR AHORA
+                    'rrhh_id'=>env('USER_ID_CREATOR_DIRECTORIES_CRM_LEAD'), //NOTE: ID DE USUARIO QUEMADO EN EL .ENV POR AHORA
                     'form_id'=>$this->formId,
                     'client_id'=>$client->id
                 ]);

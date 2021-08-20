@@ -96,7 +96,7 @@ class FormAnswerImport implements ToModel, WithBatchInserts
 
             // Se crea el objecto para guardar la respuesta
             return new Directory([
-                'user_id' => $this->userId,
+                'rrhh_id' => auth()->user()->rrhh_id,
                 'client_id' => $client->id,
                 'form_id' => $this->formId,
                 'data' => json_encode($formAnswer)

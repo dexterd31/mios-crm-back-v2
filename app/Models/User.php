@@ -21,9 +21,4 @@ class User extends Model
     public function upload(){
         return $this->belongsTo('App\Models\Upload','user_id');
     }
-
-    public function directory(){
-        return $this->belongsTo('App\Models\FormAnswer','user_id');
-    }
-
 }

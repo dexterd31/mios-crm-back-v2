@@ -426,7 +426,6 @@ class FormController extends Controller
 
     private function logForm($form, $sections)
     {
-        $userCrm = User::where('id_rhh',auth()->user()->rrhh_id)->first();
         $log = new FormLog();
         $log->group_id = $form->group_id ;
         $log->campaign_id = $form->campaign_id ;
@@ -434,7 +433,7 @@ class FormController extends Controller
         $log->filters = $form->filters ;
         $log->state = $form->state ;
         $log->sections = json_encode($sections) ;
-        $log->user_id = $userCrm->id ;
+        $log->rrhh_id = auth()->user()->rrhh_id;
         $log->form_id = $form->id;
         $log->save();
     }

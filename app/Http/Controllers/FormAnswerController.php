@@ -145,7 +145,7 @@ class FormAnswerController extends Controller
                     }
                     // ? es el mismo de la linea 161
                     $form_answer = new FormAnswer([
-                        'user_id' => $userCrm->id,
+                        'rrhh_id' => auth()->user()->rrhh_id,
                         'channel_id' => 1,
                         'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
                         'form_id' => json_decode($request['form_id']),
@@ -180,7 +180,7 @@ class FormAnswerController extends Controller
                     }
 
                     $form_answer = new FormAnswer([
-                        'user_id' => $userCrm->id,
+                        'rrhh_id' => auth()->user()->rrhh_id,
                         'channel_id' => 1,
                         'client_id' => json_decode($request['client_id']),
                         'form_id' => json_decode($request['form_id']),
