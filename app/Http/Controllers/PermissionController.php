@@ -120,6 +120,18 @@ class PermissionController extends Controller
         $this->create($request);
     }
 
+
+    // "permissions": {
+    //     "crm": {
+    //       "typify_form_record": [
+    //         "save",
+    //         "view",
+    //         "edit",
+    //         "change"
+    //       ],
+    //     }
+    //   },
+
     public function getPermissionsByIdRole()
     {
         $idRoles = $this->authUser()->rolesId[0]->crm;
@@ -129,15 +141,16 @@ class PermissionController extends Controller
         foreach ($permissionsData as $permissionData)
         {
             $action = $permissionData->actionPermissions->action;
+            $actionId = $permissionData->actionPermissions->id;
             $moduleName = $permissionData->module->name;
 
             if(!array_key_exists($moduleName, $permissions))
             {
-                $permissions[$moduleName] = [];
+                $permissions[$moduleName] = (Object)[];
             }
-            if(!in_array($action,$permissions[$moduleName]))
+            if(!isset($permissions[$moduleName]->$action))
             {
-                array_push($permissions[$moduleName], $action);
+                $permissions[$moduleName]->$action = $actionId;
             }
         }
         return $permissions;
