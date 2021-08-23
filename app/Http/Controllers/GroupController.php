@@ -41,11 +41,10 @@ class GroupController extends Controller
      */
     public function groupslist(Request $request)
     {
-        $userId = auth()->user()->rrhh_id;
-        $userLocal = User::where('id_rhh','=',$userId)->firstOrFail();
+        $rrhh_id = auth()->user()->rrhh_id;
         $groups =  Group::select('groups.id', 'groups.name_group', 'groups.description', 'groups.state')
             ->join('group_users', 'group_users.group_id', 'groups.id')
-            ->where('group_users.User_id', $userLocal->id);
+            ->where('group_users.rrhh_id', $rrhh_id);
 
         if(!is_null($request->campaign_id) && $request->campaign_id != "null")
         {
@@ -72,10 +71,10 @@ class GroupController extends Controller
             ]);
             $groups->save();
 
-            foreach ($request->users as $userId) {
+            foreach ($request->users as $user) {
                 $groupsusers = new GroupUser([
                     'group_id' => $groups->id,
-                    'user_id' => $userId['userId']
+                    'rrhh_id' => $user['rrhh_id']
                 ]);
                 $groupsusers->save();
             }
@@ -94,7 +93,7 @@ class GroupController extends Controller
 
     public function updateGroup(Request $request, $id)
     {
-        try {
+            return $request;
             $groups = Group::find($id);
             $groups->name_group = $request->name_group;
             $groups->description = $request->description;
@@ -105,18 +104,16 @@ class GroupController extends Controller
             foreach ($groupsusers as $groupuser) {
                 $groupuser->delete();
             }
-            foreach ($request->users as $userId) {
+            foreach ($request->users as $user) {
                 $groupsus = new GroupUser([
                     'group_id' => $groups->id,
-                    'user_id' => $userId['userId']
+                    'rrhh_id' => $user['rrhh_id']
                 ]);
                 $groupsus->save();
             }
 
             return $this->successResponse('Grupo editado Correctamente');
-        } catch (\Throwable $e) {
-            return $this->errorResponse('Error al editar el grupo', 500);
-        }
+
     }
 
     /**
@@ -144,61 +141,41 @@ class GroupController extends Controller
      */
     public function searchGroup($id)
     {
+        //trae el id de la campanha del grupo
         $idCampaign = Group::select('groups.campaign_id')->where('groups.id', $id)->firstOrFail($id)->campaign_id;
+
+        //trae los usuarios de la camapaña
         $usersRhh = $this->rrhhService->fetchUsersByCampaign($idCampaign);
-        $idsRrhh = $this->getIdsRrhhUsers($usersRhh);
 
-        $queryUsersMembers = GroupUser::join('groups', 'group_users.group_id', '=', 'groups.id')
-            ->join('users', 'group_users.user_id', '=', 'users.id')
-            ->where('groups.id', $id)
-            ->select('name_group', 'groups.description', 'group_users.user_id',
-                'users.id_rhh', 'group_users.id', 'group_users.group_id', 'groups.campaign_id');
-        $usersMembers = $queryUsersMembers->get();
+        //trae los usuarios del grupo
+        $usersMembersGroup = GroupUser::where('group_id', $id)->select('rrhh_id')->get();
+        $miosHelper = new MiosHelper();
+        $idsRrhhMembersGroup = $miosHelper->getArrayValues('rrhh_id', $usersMembersGroup);
 
-        $usersAvailable = User::select('users.id', 'users.id_rhh')
-            ->leftJoinSub($queryUsersMembers, 'group_users', function ($join)
-            {
-                $join->on('users.id', 'group_users.user_id');
-            })
-            ->where('group_users.id', null)
-            ->whereIn('users.id_rhh', $idsRrhh)
-            ->get();
-
-        $usersMembers = $this->mergeUserCrmWithUserRrhh($usersMembers, $usersRhh, true);
-        $usersAvailable = $this->mergeUserCrmWithUserRrhh($usersAvailable, $usersRhh, false);
-        $data = ['available' => $usersAvailable, 'members' => $usersMembers];
-        return $data;
+        return $this->getUserRrhhGroupMembers($idsRrhhMembersGroup, $usersRhh);
     }
 
-    private function mergeUserCrmWithUserRrhh($userscrm, $usersRhh, $removerId)
+    private function getUserRrhhGroupMembers($idsRrhhMembersGroup, $usersRhh)
     {
-        foreach ($userscrm as $usercrm)
-        {
-            foreach($usersRhh as $userRhh)
-            {
-                if($userRhh->id == $usercrm->id_rhh)
-                {
-                    $usercrm->name = $userRhh->name;
-                    unset($usercrm->group_id);
-                    unset($usercrm->campaign_id);
-                    if ($removerId)
-                    {
-                        unset($usercrm->id);
-                    }
-                }
-            }
-        }
-        return $userscrm;
-    }
-
-    private function getIdsRrhhUsers($usersRhh)
-    {
-        $idsRrhh = array();
+        $available = [];
+        $members = [];
         foreach ($usersRhh as $userRhh)
         {
-            array_push($idsRrhh, $userRhh->id);
+            $user = [
+                "id_rhh" => $userRhh->id,
+                "name" => $userRhh->name
+            ];
+
+            if(in_array($userRhh->id, $idsRrhhMembersGroup))
+            {
+                array_push($members, $user);
+            }
+            else
+            {
+                array_push($available, $user);
+            }
         }
-        return $idsRrhh;
+        return ['available' => $available, 'members' => $members];;
     }
 
     /**
@@ -210,17 +187,7 @@ class GroupController extends Controller
     public function searchUser($id)
     {
         $users = $this->rrhhService->fetchUsersByCampaign($id);
-        $users = collect($users);
-        $users = $users->filter(function ($value, $key) {
-            return User::where('id_rhh', $value->id)->first() != null;
-        });
-        foreach ($users as $user) {
-            $crmUser = User::where('id_rhh', $user->id)->first();
-            if ($crmUser != null) {
-                $user->id = $crmUser->id;
-            }
-        }
-        return array_values($users->all());
+        return array_values($users);
     }
 
     /**
@@ -228,11 +195,12 @@ class GroupController extends Controller
      * 25-03-2021
      * Método para consultar el listado de los grupos en la BD
      */
-    public function listGroupsByUser(MiosHelper $miosHelper, $idUser)
+    public function listGroupsByUser(MiosHelper $miosHelper, $rrhhId)
     {
         // Se obtiene los grupos por el usuario usuario 
         try {
-            $where = ['groups.state' => 1, 'group_users.user_id' => $idUser];
+            $rrhhId = auth()->user()->rrhh_id;
+            $where = ['groups.state' => 1, 'group_users.rrhh_id' => $rrhhId];
             $groups = DB::table('groups')->join('group_users', 'groups.id', '=', 'group_users.group_id')
                 ->where($where)
                 ->select('groups.id', 'groups.campaign_id', 'groups.name_group', 'groups.description', 'groups.state', 'groups.created_at', 'groups.updated_at')
@@ -250,12 +218,12 @@ class GroupController extends Controller
      * 12-05-2021
      * Funcion para obtener las campaign que pertenecen a los grupos del usuario por id de usuario
      */
-    public function getIdCampaignByUserId($userId)
+    public function getIdCampaignByRrhhId($rrhhId)
     {
         $groups = Group::select('campaign_id')
             ->distinct()
             ->join('group_users', 'group_users.group_id', 'groups.id')
-            ->where('group_users.User_id', $userId)->get();
+            ->where('group_users.rrhh_id', $rrhhId)->get();
         $groupsIds = [];
         foreach ($groups as $group) {
             array_push($groupsIds, $group['campaign_id']);
@@ -265,7 +233,6 @@ class GroupController extends Controller
 
     public function getGroupsByRrhhId($rrhhId)
     {
-        return GroupUser::join("users", 'group_users.user_id', 'users.id')
-            ->where('users.id_rhh', $rrhhId)->get();
+        return GroupUser::where('rrhh_id', $rrhhId)->get();
     }
 }

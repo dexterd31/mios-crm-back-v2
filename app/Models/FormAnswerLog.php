@@ -10,7 +10,7 @@ class FormAnswerLog extends Model
 {
     protected $table = 'form_answer_logs';
     protected $PrimaryKey = 'id';
-    protected $fillable = ['form_answer_id','structure_answer', 'user_id'];
+    protected $fillable = ['form_answer_id','structure_answer', 'rrhh_id'];
 
     public function form(){
        return $this->belongsTo('App\Models\FormAnswer','id');

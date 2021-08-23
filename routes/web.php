@@ -64,7 +64,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->put('/updategroup/{id}','GroupController@updateGroup');
     //consultar usuarios existentes para asignar al grupo
     $router->get('/searchUser/{id}','GroupController@searchUser');
-    $router->get('/groupsbyuser/{idUser}', 'GroupController@listGroupsByUser');
+    $router->get('/groupsbyuser/{rrhhId}', 'GroupController@listGroupsByUser');
     $router->get('/getGroupsByRrhhId/{rrhhId}', 'GroupController@getGroupsByRrhhId');
 
     // rutas de campañas

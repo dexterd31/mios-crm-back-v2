@@ -41,7 +41,7 @@ class UploadController extends Controller
     {
         $menu= Upload::with('form:id,name_form')->where('form_id', $form_id)->orderBy('created_at', 'desc')->paginate($request->query('n', 5))->withQueryString();
         foreach ($menu as $value) {
-            $user_info = $this->ciuService->fetchUserByRrhhId($value->user_id);
+            $user_info = $this->ciuService->fetchUserByRrhhId($value->rrhh_id);
             $value->created_by = $user_info->rrhh->first_name.' '.$user_info->rrhh->last_name;
         }
         return $this->successResponse($menu);
@@ -69,11 +69,11 @@ class UploadController extends Controller
     public function importExcel(Request $request, MiosHelper $miosHelper)
     {
         $file   = $request->file('excel');
-        $userAuth = User::where('id_rhh',auth()->user()->rrhh_id)->first();
-        $userId = $userAuth->id;
+        $userAuth = auth()->user();
+        $rrhhId = $userAuth->rrhh_id;
         $formId = $request->form_id;
         $flag = $request->flag;
-        if (isset($file) && isset($userId) && isset($formId)) {
+        if (isset($file) && isset($rrhhId) && isset($formId)) {
             //Eliminar registros de Directory
             if($flag != 'append'){
                 Directory::where('form_id', $formId)->delete();
@@ -134,7 +134,7 @@ class UploadController extends Controller
                 Excel::import(new ClientImport, $file);
                 //Se guarda en directory
                 //try {
-                    $form_import =new FormAnswerImport($userId, $formId, json_decode($request->ids));
+                    $form_import =new FormAnswerImport($rrhhId, $formId, json_decode($request->ids));
                     Excel::import($form_import, $file);
                     //dd('Row count: ' . $form_import->getRowCount());
 
@@ -142,7 +142,7 @@ class UploadController extends Controller
                     //Se agrega en la tabla de uploads
                     $upload             = new Upload();
                     $upload->name       = $file->getClientOriginalName();
-                    $upload->user_id    = $userId;
+                    $upload->rrhh_id    = $rrhhId;
                     $upload->form_id    = $formId;
                     $upload->count = $form_import->getRowCount();
                     $upload->method = empty($request->flag) ? 'replace': $request->flag;
