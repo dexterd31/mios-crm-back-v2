@@ -64,7 +64,7 @@ class GroupController extends Controller
     {
         try {
             $groups = new Group([
-                'campaign_id' => $request->input('campaign_id'),
+                'campaign_id' => auth()->user()->rrhh->campaign_id,
                 'name_group' => $request->input('name_group'),
                 'description' => $request->input('description'),
                 'state' => $request->input('state')
@@ -74,7 +74,7 @@ class GroupController extends Controller
             foreach ($request->users as $user) {
                 $groupsusers = new GroupUser([
                     'group_id' => $groups->id,
-                    'rrhh_id' => $user['rrhh_id']
+                    'rrhh_id' => $user['idRrhh']
                 ]);
                 $groupsusers->save();
             }
@@ -93,7 +93,6 @@ class GroupController extends Controller
 
     public function updateGroup(Request $request, $id)
     {
-            return $request;
             $groups = Group::find($id);
             $groups->name_group = $request->name_group;
             $groups->description = $request->description;
@@ -107,7 +106,7 @@ class GroupController extends Controller
             foreach ($request->users as $user) {
                 $groupsus = new GroupUser([
                     'group_id' => $groups->id,
-                    'rrhh_id' => $user['rrhh_id']
+                    'rrhh_id' => $user['idRrhh']
                 ]);
                 $groupsus->save();
             }
@@ -186,8 +185,18 @@ class GroupController extends Controller
 
     public function searchUser($id)
     {
-        $users = $this->rrhhService->fetchUsersByCampaign($id);
-        return array_values($users);
+        $idCampaign = auth()->user()->rrhh->campaign_id;
+        $usersRrhh = $this->rrhhService->fetchUsersByCampaign($idCampaign);
+        $users = [];
+        foreach ($usersRrhh as $userRrhh)
+        {
+            $user = [
+                "id_rhh" => $userRrhh->id,
+                "name" => $userRrhh->name
+            ];
+            array_push($users, $user);
+        }
+        return $users;
     }
 
     /**
