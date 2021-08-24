@@ -13,10 +13,16 @@ class DropUserIdInFormAnswerLogsTable extends Migration
      */
     public function up()
     {
-        Schema::table('form_answer_logs', function (Blueprint $table) {
-            $table->dropForeign(['user_id']);
-            $table->dropColumn('user_id');
-        });
+        if(Schema::hasColumn('form_logs', 'user_id'))
+        {
+            Schema::table('form_answer_logs', function (Blueprint $table) {
+                if($this->foreignKeysExists('form_answer_logs', "form_answer_logs_user_id_foreign"))
+                {
+                    $table->dropForeign(['user_id']);
+                }
+                $table->dropColumn('user_id');
+            });
+        }
     }
 
     /**
@@ -30,5 +36,15 @@ class DropUserIdInFormAnswerLogsTable extends Migration
             $table->unsignedBigInteger('user_id');
             $table->foreignId('user_id')->constrained('users'); 
         });
+    }
+
+    public function foreignKeysExists($table, $foreignKey)
+    {
+        $conn = Schema::getConnection()->getDoctrineSchemaManager();
+        $foreignKeys = array_map(function($key) {
+            return $key->getName();
+        }, $conn->listTableForeignKeys($table));
+
+        return in_array($foreignKey, $foreignKeys);
     }
 }

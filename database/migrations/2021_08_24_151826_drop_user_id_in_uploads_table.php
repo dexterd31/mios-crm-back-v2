@@ -13,10 +13,16 @@ class DropUserIdInUploadsTable extends Migration
      */
     public function up()
     {
-        Schema::table('uploads', function (Blueprint $table) {
-            $table->dropForeign(['user_id']);
-            $table->dropColumn('user_id');
-        });
+        if(Schema::hasColumn('uploads', 'user_id'))
+        {
+            Schema::table('uploads', function (Blueprint $table) {
+                if($this->foreignKeysExists('uploads', "uploads_user_id_foreign"))
+                {
+                    $table->dropForeign(['user_id']);
+                }
+                $table->dropColumn('user_id');
+            });
+        }
     }
 
     /**
@@ -30,5 +36,15 @@ class DropUserIdInUploadsTable extends Migration
             $table->unsignedBigInteger('user_id');
             $table->foreignId('user_id')->constrained('users');
         });
+    }
+
+    public function foreignKeysExists($table, $foreignKey)
+    {
+        $conn = Schema::getConnection()->getDoctrineSchemaManager();
+        $foreignKeys = array_map(function($key) {
+            return $key->getName();
+        }, $conn->listTableForeignKeys($table));
+
+        return in_array($foreignKey, $foreignKeys);
     }
 }

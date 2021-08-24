@@ -13,10 +13,16 @@ class DropUserIdInDirectoriesTable extends Migration
      */
     public function up()
     {
-        Schema::table('directories', function (Blueprint $table) {
-            $table->dropForeign(['user_id']);
-            $table->dropColumn('user_id');
-        });
+        if(Schema::hasColumn('directories', 'user_id'))
+        {
+            Schema::table('directories', function (Blueprint $table) {
+                if($this->foreignKeysExists('directories', "directories_user_id_foreign"))
+                {
+                    $table->dropForeign(['user_id']);
+                }
+                $table->dropColumn('user_id');
+            });
+        }
     }
 
     /**
@@ -30,5 +36,15 @@ class DropUserIdInDirectoriesTable extends Migration
             $table->unsignedBigInteger('user_id');
             $table->foreignId('user_id')->constrained('users'); 
         });
+    }
+
+    public function foreignKeysExists($table, $foreignKey)
+    {
+        $conn = Schema::getConnection()->getDoctrineSchemaManager();
+        $foreignKeys = array_map(function($key) {
+            return $key->getName();
+        }, $conn->listTableForeignKeys($table));
+
+        return in_array($foreignKey, $foreignKeys);
     }
 }

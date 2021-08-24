@@ -122,14 +122,7 @@ class PermissionController extends Controller
 
 
     // "permissions": {
-    //     "crm": {
-    //       "typify_form_record": [
-    //         "save",
-    //         "view",
-    //         "edit",
-    //         "change"
-    //       ],
-    //     }
+    //     "crm": {"typify_form_record": ["save","view","edit","change"]}
     //   },
 
     public function getPermissionsByIdRole()
