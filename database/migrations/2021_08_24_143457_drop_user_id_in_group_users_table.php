@@ -13,10 +13,16 @@ class DropUserIdInGroupUsersTable extends Migration
      */
     public function up()
     {
-        Schema::table('group_users', function (Blueprint $table) {
-            $table->dropForeign(['user_id']);
-            $table->dropColumn('user_id');
-        });
+        if(Schema::hasColumn('group_users', 'user_id'))
+        {
+            Schema::table('group_users', function (Blueprint $table) {
+                if($this->foreignKeysExists('group_users', "group_users_user_id_foreign"))
+                {
+                    $table->dropForeign(['user_id']);
+                }
+                $table->dropColumn('user_id');
+            });
+        }
     }
 
     /**
@@ -30,5 +36,15 @@ class DropUserIdInGroupUsersTable extends Migration
             $table->unsignedBigInteger('user_id');
             $table->foreignId('user_id')->constrained('users'); 
         });
+    }
+
+    public function foreignKeysExists($table, $foreignKey)
+    {
+        $conn = Schema::getConnection()->getDoctrineSchemaManager();
+        $foreignKeys = array_map(function($key) {
+            return $key->getName();
+        }, $conn->listTableForeignKeys($table));
+
+        return in_array($foreignKey, $foreignKeys);
     }
 }

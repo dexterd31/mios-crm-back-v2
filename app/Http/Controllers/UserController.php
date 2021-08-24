@@ -74,7 +74,7 @@ class UserController extends Controller
         $groupsUser = $groupControllet->getGroupsByRrhhId($rrhhId);
         $miosHelper = new MiosHelper();
         $groupsUser = $miosHelper->getArrayValues("group_id", $groupsUser);
-        return GroupUser::select('group_id', 'id_rhh')
+        return GroupUser::select('group_id', 'rrhh_id as id_rhh')
             ->whereIn('group_id', $groupsUser)
             ->where('rrhh_id','!=', $rrhhId)->get();
     }
