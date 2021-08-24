@@ -67,11 +67,14 @@ class GroupController extends Controller
                 'campaign_id' => auth()->user()->rrhh->campaign_id,
                 'name_group' => $request->input('name_group'),
                 'description' => $request->input('description'),
-                'state' => $request->input('state')
+                'state' => $request->input('state'),
+                'rrhh_id_creator' => auth()->user()->rrhh_id,
             ]);
             $groups->save();
 
-            foreach ($request->users as $user) {
+            $users = $request->users;
+            array_push($users, ['idRrhh' => auth()->user()->rrhh_id]);
+            foreach ($users as $user) {
                 $groupsusers = new GroupUser([
                     'group_id' => $groups->id,
                     'rrhh_id' => $user['idRrhh']
@@ -101,7 +104,10 @@ class GroupController extends Controller
 
             $groupsusers = GroupUser::where('group_id', $groups->id)->get();
             foreach ($groupsusers as $groupuser) {
-                $groupuser->delete();
+                if($groupuser->rrhh_id != $groups->rrhh_id_creator)
+                {
+                    $groupuser->delete();
+                }
             }
             foreach ($request->users as $user) {
                 $groupsus = new GroupUser([
@@ -141,20 +147,20 @@ class GroupController extends Controller
     public function searchGroup($id)
     {
         //trae el id de la campanha del grupo
-        $idCampaign = Group::select('groups.campaign_id')->where('groups.id', $id)->firstOrFail($id)->campaign_id;
+        $group = Group::find($id);
 
         //trae los usuarios de la camapaña
-        $usersRhh = $this->rrhhService->fetchUsersByCampaign($idCampaign);
+        $usersRhh = $this->rrhhService->fetchUsersByCampaign($group->campaign_id);
 
         //trae los usuarios del grupo
         $usersMembersGroup = GroupUser::where('group_id', $id)->select('rrhh_id')->get();
         $miosHelper = new MiosHelper();
         $idsRrhhMembersGroup = $miosHelper->getArrayValues('rrhh_id', $usersMembersGroup);
 
-        return $this->getUserRrhhGroupMembers($idsRrhhMembersGroup, $usersRhh);
+        return $this->getUserRrhhGroupMembers($idsRrhhMembersGroup, $usersRhh, $group->rrhh_id_creator);
     }
 
-    private function getUserRrhhGroupMembers($idsRrhhMembersGroup, $usersRhh)
+    private function getUserRrhhGroupMembers($idsRrhhMembersGroup, $usersRhh, $creator)
     {
         $available = [];
         $members = [];
@@ -164,14 +170,16 @@ class GroupController extends Controller
                 "id_rhh" => $userRhh->id,
                 "name" => $userRhh->name
             ];
-
-            if(in_array($userRhh->id, $idsRrhhMembersGroup))
+            if($userRhh->id != $creator)
             {
-                array_push($members, $user);
-            }
-            else
-            {
-                array_push($available, $user);
+                if(in_array($userRhh->id, $idsRrhhMembersGroup))
+                {
+                    array_push($members, $user);
+                }
+                else
+                {
+                    array_push($available, $user);
+                }
             }
         }
         return ['available' => $available, 'members' => $members];;
@@ -190,11 +198,14 @@ class GroupController extends Controller
         $users = [];
         foreach ($usersRrhh as $userRrhh)
         {
-            $user = [
-                "id_rhh" => $userRrhh->id,
-                "name" => $userRrhh->name
-            ];
-            array_push($users, $user);
+            if($userRrhh->id != auth()->user()->rrhh_id)
+            {
+                $user = [
+                    "id_rhh" => $userRrhh->id,
+                    "name" => $userRrhh->name
+                ];
+                array_push($users, $user);
+            }
         }
         return $users;
     }
