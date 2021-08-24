@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Exports\FormExport;
 use App\Imports\ClientImport;
 use App\Imports\FormAnswerImport;
-use App\Imports\ValidateImport;
+use App\Imports\UploadImport;
 use Helpers\MiosHelper;
 use App\Models\Upload;
 use App\Models\Directory;
@@ -15,7 +15,7 @@ use App\Models\User;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FormReportExport;
 use App\Services\CiuService;
-use Maatwebsite\Excel\HeadingRowImport;
+use Throwable;
 
 class UploadController extends Controller
 {
@@ -60,6 +60,53 @@ class UploadController extends Controller
         $formExport->headerMiosExcel(explode(",", $headers));
         return Excel::download(new FormExport, 'plantilla.xlsx');
     }
+
+    /**
+    * @desc Extrae la primera fila del archivo para ser mostrada al usaurio y realice el match de los datos cargados con los campos del formulario
+    * @param file $excel - Archivo que va a ser cargado
+    * @return array - Arreglo con el nombre de cada una de las columnas.
+    * @author Leonardo Giraldo Quintero
+    */
+    public function extractColumnsNames(Request $request, MiosHelper $miosHelper){
+        try {
+            $file = $request->file('excel');
+            if(isset($file)){
+                $form_import_validate = Excel::toArray(new UploadImport, $file);
+                if(count($form_import_validate[0])>1 && count($form_import_validate[0][0])>0 && $form_import_validate[0][0]<>NULL){
+                    $data = $miosHelper->jsonResponse(true,200,"data",$form_import_validate[0][0]);
+                }else{
+                    $data = $miosHelper->jsonResponse(false,406,"message","El archivo cargado no tiene datos para cargar, recuerde que en la primera fila se debe utilizar para identificar los datos asignados a cada columna.");
+                }
+            }else{
+                $data = $miosHelper->jsonResponse(false,406,"message","No se encuentra ningun archivo");
+            }
+            return response()->json($data, $data['code']);
+        } catch (Throwable $e) {
+            $data = $miosHelper->jsonResponse(false,400,"message",$e->getMessage());
+            return response()->json($data, $data['code']);
+        }
+    }
+
+    /**
+     * @desc Función para cargar los clientes por medio de un excel
+     * @param file $excel Archivo que tiene los clientes que se cargara
+     */
+    public function excelClients(Request $request , MiosHelper $miosHelper){
+        //Primero Validamos que todos los parametros necesarios para el correcto funcionamiento esten
+        $this->validate($request,[
+            'excel' => 'required',
+            'user_id' => 'required',
+            'form_id' => 'required',
+            'assigns' => ['required','json'],
+            'action' => 'required'
+        ]);
+        $file = $request->file('excel');
+        $form_import_validate = Excel::import(new ClientImport(json_decode($request->assigns),$request->form_id), $file);
+        \Log::info($form_import_validate);
+    }
+
+
+
 
     /**
      * Olme Marin
