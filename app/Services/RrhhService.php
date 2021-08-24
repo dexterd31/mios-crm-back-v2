@@ -43,6 +43,26 @@ class RrhhService
     }
 
     /**
+     * Metodo que permite unir los nombre del solicitante que vienen como array a otro array
+     * @param users es un array con la informacion de usuarios
+     * @param arrJoin es el array con que se quiere hacer merge con users;
+     * @author Carlos Galindez
+     * @created 01/02/21
+     * @deprecated: La funcion no es usada, Reportada en 2021-08-24 por Joao Beleno
+     */
+    public function mergeUsers($users,$arrJoin,$arg,$entry){
+
+        $users = collect($users);
+        $users->each(function($e) use($arrJoin){
+           $index = $arrJoin->search(function ($item) use($e) {
+                return $item->applicant_user_id == $e->id;
+            });
+            $arrJoin[$index]['applicant'] = $e->name;
+        });
+        return $arrJoin;
+    }
+
+    /**
      * Metodo que permite solicitar y unir informacion de los usuarios solicitados
      * @param userIds [1,2,3,4]
      * @param arrMerge arreglo con data a unir
