@@ -35,7 +35,7 @@ class AddRrhhIdInDirectoriesTable extends Migration
     public function down()
     {
         Schema::table('directories', function (Blueprint $table) {
-            //
+            $table->dropColumn('rrhh_id');
         });
     }
 }

@@ -27,7 +27,8 @@ class DropUserIdInGroupUsersTable extends Migration
     public function down()
     {
         Schema::table('group_users', function (Blueprint $table) {
-            //
+            $table->unsignedBigInteger('user_id');
+            $table->foreignId('user_id')->constrained('users'); 
         });
     }
 }

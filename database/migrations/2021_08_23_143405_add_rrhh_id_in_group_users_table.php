@@ -34,7 +34,7 @@ class AddRrhhIdInGroupUsersTable extends Migration
     public function down()
     {
         Schema::table('group_users', function (Blueprint $table) {
-            //
+            $table->dropColumn('rrhh_id');
         });
     }
 }

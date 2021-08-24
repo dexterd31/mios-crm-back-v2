@@ -34,7 +34,7 @@ class AddRrhhIdInFormLogsTable extends Migration
     public function down()
     {
         Schema::table('form_logs', function (Blueprint $table) {
-            //
+            $table->dropColumn('rrhh_id');
         });
     }
 }
