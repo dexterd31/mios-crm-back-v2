@@ -204,7 +204,7 @@ class GroupController extends Controller
      * 25-03-2021
      * Método para consultar el listado de los grupos en la BD
      */
-    public function listGroupsByUser(MiosHelper $miosHelper, $rrhhId)
+    public function listGroupsByUser(MiosHelper $miosHelper, $idUser)
     {
         // Se obtiene los grupos por el usuario usuario 
         try {
