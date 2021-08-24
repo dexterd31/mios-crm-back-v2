@@ -64,7 +64,7 @@ class PermissionController extends Controller
             array_push($permissions, $permission);
         }
         $permissionModel = $this->getPermissionModel();
-        $permissionModel->insert($permissions);  
+        $permissionModel->insert($permissions);
     }
 
     /**
