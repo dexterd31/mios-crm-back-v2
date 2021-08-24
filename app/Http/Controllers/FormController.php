@@ -41,8 +41,7 @@ class FormController extends Controller
      */
     public function FormsList(Request $request)
     {
-        $userId = auth()->user()->rrhh_id;
-        $userLocal = User::where('id_rhh','=',$userId)->firstOrFail();
+        $rrhhid = auth()->user()->rrhh_id;
         $roles = auth()->user()->roles;
         $rolesArray = [];
         foreach ($roles as $value) {
@@ -51,7 +50,7 @@ class FormController extends Controller
             }
         }
         $paginate = $request->query('n', 5);
-        $forms = $this->getFormsByIdUser($userLocal->id, $paginate);
+        $forms = $this->getFormsByIdUser($rrhhid, $paginate);
 
         foreach ($forms as $value) {
             if (count(array_intersect($rolesArray, json_decode($value->seeRoles))) > 0) {
@@ -296,8 +295,7 @@ class FormController extends Controller
     {
       $date1=Carbon::parse($request->date1)->setTimezone('America/Bogota');
       $date2=Carbon::parse($request->date2)->setTimezone('America/Bogota');
-      $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','users.id_rhh')
-                          ->join('users', 'users.id', '=', 'form_answers.user_id')
+      $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','form_answers.id_rhh')
                           ->where('form_answers.form_id',$request->formId)
                           //->whereBetween('form_answers.created_at', [$date1, $date2])
                           ->get();
@@ -322,14 +320,15 @@ class FormController extends Controller
         $rows=[];
         $plantillaRespuestas=[];
         //Agrupamos los id_rrhh del usuario en un arreglo
-        $userIds=$miosHelper->getArrayValues('id_rhh',$formAnswers);
-        $useString=implode(',',$userIds);
+        $userRrhhIids=$miosHelper->getArrayValues('id_rhh',$formAnswers);
+        //Se dejan los id unicos quitamos todos los repetidos
+        $useString=implode(',',array_values(array_unique($userRrhhIids)));
         //Traemos los datos de rrhh de los usuarios
         $usersInfo=$this->rrhhService->fetchUsers($useString);
         //Organizamos la información del usuario en un array asociativo con la información necesaria
         $adviserInfo=[];
         foreach($usersInfo as $info){
-            if(in_array($info->id,$userIds)){
+            if(in_array($info->id,$userRrhhIids)){
                 if(!isset($adviserInfo[$info->id])){
                     $adviserInfo[$info->id]=$info;
                 }
@@ -426,14 +425,14 @@ class FormController extends Controller
                  }
              }
          }
-       
+
         foreach ($directoryData as $key => $directory) {
             $respuestas=$plantillaRespuestas;
             $respuestas['id'] = $directory->id;
               //Evaluamos los campos que deben ir en el reporte contra las respuestas
               foreach($inputReport as $input){
                 foreach(json_decode($directory->data) as $data){
-                    
+
                     if(isset($input->dependencies[0]->report)){
                         if(in_array($data->id,$dependencies[$input->dependencies[0]->report])){
                             if(isset($data->value)){
@@ -476,7 +475,7 @@ class FormController extends Controller
         array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización');
       }
       return Excel::download(new FormReportExport($rows, $titleHeaders), 'reporte_formulario.xlsx');
-    }   
+    }
 
     /**
      * Olme Marin
@@ -484,10 +483,10 @@ class FormController extends Controller
      * Método para consultar el listado de los formularios asignados a un usuario por grupo
      * @deprecated: La función FormList ya realiza la busqueda por usuarios y grupos Reportada 2021-06-10
      */
-    public function formsByUser(MiosHelper $miosHelper, $idUser, Request $request)
+    public function formsByUser(MiosHelper $miosHelper, $rrhhId, Request $request)
     {
         $paginate = $request->query('n', 5);
-        $forms = $this->getFormsByIdUser($idUser, $paginate);
+        $forms = $this->getFormsByIdUser($rrhhId, $paginate);
         foreach ($forms as $form) {
             $form->filters = $miosHelper->jsonDecodeResponse($form->filters);
         }
@@ -497,7 +496,6 @@ class FormController extends Controller
 
     private function logForm($form, $sections)
     {
-        $userCrm = User::where('id_rhh',auth()->user()->rrhh_id)->first();
         $log = new FormLog();
         $log->group_id = $form->group_id ;
         $log->campaign_id = $form->campaign_id ;
@@ -505,7 +503,7 @@ class FormController extends Controller
         $log->filters = $form->filters ;
         $log->state = $form->state ;
         $log->sections = json_encode($sections) ;
-        $log->user_id = $userCrm->id ;
+        $log->rrhh_id = auth()->user()->rrhh_id;
         $log->form_id = $form->id;
         $log->save();
     }
@@ -574,13 +572,13 @@ class FormController extends Controller
         }
     }
 
-    private function getFormsByIdUser($userId, $paginate)
+    private function getFormsByIdUser($rrhhId, $paginate)
     {
         $forms = Form::join('form_types', 'forms.form_type_id', '=', 'form_types.id')
             ->join("groups", "groups.id", "forms.group_id")
             ->join('group_users', 'group_users.group_id', 'groups.id')
             ->select('name_form', 'forms.id', 'name_type', 'forms.state', 'seeRoles', 'forms.campaign_id', 'forms.updated_at')
-            ->where('group_users.user_id', $userId)
+            ->where('group_users.rrhh_id', $rrhhId)
             ->paginate($paginate)->withQueryString();
         return $forms;
     }

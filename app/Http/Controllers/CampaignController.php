@@ -96,7 +96,7 @@ class CampaignController extends Controller
     {
         try {
             // Se obtienes los grupor por usuarios
-            $campaignsIds = $groupController->getIdCampaignByUserId($idUser);
+            $campaignsIds = $groupController->getIdCampaignByRrhhId($this->authUser()->rrhh_id);
             $this->getNominaService();
             $campaigns = $this->nominaService->fetchSpecificCampaigns($campaignsIds);
             $data = $miosHelper->jsonResponse(true, 200, 'campaigns', $campaigns);

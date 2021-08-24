@@ -32,7 +32,7 @@ class ValidateImport implements ToModel, WithBatchInserts
     public function saveDirectory(){
         if ($this->getRowCount() < 0) {
             $directory =  new Directory();
-            $directory->user_id = 1;
+            $directory->rrhh_id = 1;
             $directory->client_id = 1;
             $directory->form_id = 1;
             $directory->data = json_encode([]);    
