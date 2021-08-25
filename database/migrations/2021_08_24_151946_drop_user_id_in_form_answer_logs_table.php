@@ -13,7 +13,7 @@ class DropUserIdInFormAnswerLogsTable extends Migration
      */
     public function up()
     {
-        if(Schema::hasColumn('form_logs', 'user_id'))
+        if(Schema::hasColumn('form_answer_logs', 'user_id'))
         {
             Schema::table('form_answer_logs', function (Blueprint $table) {
                 if($this->foreignKeysExists('form_answer_logs', "form_answer_logs_user_id_foreign"))
