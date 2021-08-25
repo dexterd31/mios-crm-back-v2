@@ -48,6 +48,7 @@ class RrhhService
      * @param arrJoin es el array con que se quiere hacer merge con users;
      * @author Carlos Galindez
      * @created 01/02/21
+     * @deprecated: La funcion no es usada, Reportada en 2021-08-24 por Joao Beleno
      */
     public function mergeUsers($users,$arrJoin,$arg,$entry){
 

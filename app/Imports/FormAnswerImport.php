@@ -19,7 +19,7 @@ class FormAnswerImport implements ToModel, WithBatchInserts
      *
      * @return \Illuminate\Database\Eloquent\Model|null
      */
-    public $userId;
+    public $rrhhId;
     public $formId;
     public $headers;
     public $ids;
@@ -27,9 +27,9 @@ class FormAnswerImport implements ToModel, WithBatchInserts
     public $sections = [];
     private $rows_count = 0;
 
-    public function __construct($userId, $formId, $ids)
+    public function __construct($rrhhId, $formId, $ids)
     {
-        $this->userId = $userId;
+        $this->rrhhId = $rrhhId;
         $this->formId = $formId;
         $this->ids = $ids;
     }
@@ -59,7 +59,7 @@ class FormAnswerImport implements ToModel, WithBatchInserts
 
             // Se crea el objecto para guardar la respuesta
             return new Directory([
-                'user_id' => $this->userId,
+                'rrhh_id' => auth()->user()->rrhh_id,
                 'client_id' => $client->id,
                 'form_id' => $this->formId,
                 'data' => json_encode($formAnswer)

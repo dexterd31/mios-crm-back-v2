@@ -56,8 +56,6 @@ class FormAnswerController extends Controller
                 $clientData = array();
                 $i = 0;
                 $form_answer = null;
-                $userId = auth()->user()->rrhh_id;
-                $userCrm=User::where('id_rhh','=',$userId)->firstOrFail();
                 $date_string = Carbon::now()->format('YmdHis');
 
                 foreach ($json_body as $section) {
@@ -144,7 +142,7 @@ class FormAnswerController extends Controller
                     }
                     // ? es el mismo de la linea 161
                     $form_answer = new FormAnswer([
-                        'user_id' => $userCrm->id,
+                        'rrhh_id' => auth()->user()->rrhh_id,
                         'channel_id' => 1,
                         'client_id' => $clientFind == null ? $client->id : $clientFind['id'],
                         'form_id' => json_decode($request['form_id']),
@@ -179,7 +177,7 @@ class FormAnswerController extends Controller
                     }
 
                     $form_answer = new FormAnswer([
-                        'user_id' => $userCrm->id,
+                        'rrhh_id' => auth()->user()->rrhh_id,
                         'channel_id' => 1,
                         'client_id' => json_decode($request['client_id']),
                         'form_id' => json_decode($request['form_id']),
@@ -293,9 +291,8 @@ class FormAnswerController extends Controller
                         if (isset($form['structure_answer'])) {
                             $form['structure_answer'] = is_array($form['structure_answer']) ? json_encode($form['structure_answer']) : $form['structure_answer'];
                         }
-                        $userCrm=User::where('id',$form['user_id'])->first();
                         $form['structure_answer'] = isset($form['data']) ? $miosHelper->jsonDecodeResponse($form['data']) : $miosHelper->jsonDecodeResponse($form['structure_answer']);
-                        $form['userdata'] = $this->ciuService->fetchUserByRrhhId($userCrm->id_rhh);
+                        $form['userdata'] = $this->ciuService->fetchUserByRrhhId($form['rrhh_id']);
                         unset($form['data']);
 
                         $new_structure_answer = [];
@@ -357,8 +354,8 @@ class FormAnswerController extends Controller
         // try {
             $form_answers = FormAnswer::where('id', $id)->with('channel', 'client')->first();
 
-                $userCrm=User::where('id',$form_answers->user_id)->first();
-                $userData     = $this->ciuService->fetchUserByRrhhId($userCrm->id_rhh);
+            $rrhhId = $form_answers->rrhh_id;
+                $userData     = $this->ciuService->fetchUserByRrhhId($rrhhId);
                 $form_answers->structure_answer = $miosHelper->jsonDecodeResponse($form_answers->structure_answer);
 
                 $new_structure_answer = [];
@@ -567,7 +564,7 @@ class FormAnswerController extends Controller
         $log = new FormAnswerLog();
         $log->form_answer_id = $form_answer->id;
         $log->structure_answer = $form_answer->structure_answer;
-        $log->user_id = $form_answer->user_id;
+        $log->rrhh_id = $form_answer->rrhh_id;
         $log->save();
     }
 

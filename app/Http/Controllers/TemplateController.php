@@ -146,7 +146,7 @@ class TemplateController extends Controller
     {
         $formAnswer = $request->sections;
         $csv = [];
-        $plantilla = [];
+        $plantilla = array();
         $templateModel = $this->getTemplateModel();
         $template = $templateModel->findOrFail($request->template_id);
         $formAnswer = json_decode($formAnswer, true);
@@ -180,6 +180,7 @@ class TemplateController extends Controller
                             $csvValue.= $field["label"].":";
                         }
                         $csvValue.= $field["value"].$registerDelimiter;
+                        \Log::info($key);
                         if(!isset($plantilla[$key]['value'])){
                             $plantilla[$key]= $field;
                             $csv[$key]=$csvValue;
@@ -191,6 +192,7 @@ class TemplateController extends Controller
                 }
             }
         }
+        \Log::info(gettype($plantilla));
         $data = [];
         $data['csv'] = implode($valueDelimiter,$csv).$valueDelimiter;
         $data['plantilla'] = $plantilla;

@@ -38,6 +38,10 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/form/upload', 'UploadController@importExcel');
     $router->post('form/dbHistory/{form_id}', 'UploadController@index');
 
+    $router->post('/form/upload/extractColumnsNames', 'UploadController@extractColumnsNames');
+    $router->post('/form/upload/excelClients', 'UploadController@excelClients');
+
+
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
     $router->post('/formanswer/integration/voice', 'FormAnswerController@saveIntegrationVoice');
@@ -124,8 +128,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/createPermissions', 'PermissionController@create');
     $router->post('/editPermissions', 'PermissionController@edit');
     $router->get('/moduleCrm', 'ModuleCrmController@store');
-    //$router->get('/permission/{rolCiuId}', 'PermissionController@index');
-    $router->get('/getPermissionsByIdRole/{idRole}', 'PermissionController@getPermissionsByIdRole');
+    $router->get('/getPermissionsByIdRole', 'PermissionController@getPermissionsByIdRole');
 
     $router->get('/prueba-jsoncontains/{formId}', function($formId){
         $form_answers = FormAnswer::where('form_id', $formId)
