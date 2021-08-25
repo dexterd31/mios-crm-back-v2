@@ -32,10 +32,10 @@ class DropUserIdInFormAnswerLogsTable extends Migration
      */
     public function down()
     {
-        Schema::table('form_answer_logs', function (Blueprint $table) {
+        /*Schema::table('form_answer_logs', function (Blueprint $table) {
             $table->unsignedBigInteger('user_id');
-            $table->foreignId('user_id')->constrained('users'); 
-        });
+            $table->foreignId('user_id')->constrained('users');
+        });*/
     }
 
     public function foreignKeysExists($table, $foreignKey)
