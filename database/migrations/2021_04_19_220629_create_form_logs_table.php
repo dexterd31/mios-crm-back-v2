@@ -20,7 +20,7 @@ class CreateFormLogsTable extends Migration
             $table->json('sections')->nullable();
             $table->tinyInteger('state')->nullable();
             $table->foreignId('group_id')->constrained('groups');
-            $table->foreignId('campaign_id')->constrained('campaings');
+            $table->unsignedBigInteger('campaign_id');
             $table->foreignId('form_id')->constrained('forms');
             $table->foreignId('user_id')->constrained('users');
             $table->timestamps();
