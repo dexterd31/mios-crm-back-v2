@@ -13,7 +13,6 @@ class DatabaseSeeder extends Seeder
     {
         $this->call('UserSeeder');
         $this->call('GroupsSeeder');
-        //$this->call('CampaingSeeder');
         $this->call('ChannelSeeder');
         $this->call('FormtypeSeeder');
         $this->call('FormSeeder');
@@ -29,5 +28,6 @@ class DatabaseSeeder extends Seeder
         $this->call('SetMenuCiuIdInModulesCrmSeeder');
         $this->call('ActionPermissionSeeder');
         $this->call('ReportSeeder');
+        $this->call('ModulesCrmLabelSeeder');
     }
 }

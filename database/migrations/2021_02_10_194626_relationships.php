@@ -17,13 +17,10 @@ class Relationships extends Migration
         Schema::table('forms', function ($table)
             {
                 $table->foreignId('group_id')->constrained('groups'); 
-                $table->foreignId('campaign_id')->constrained('campaings');
+                $table->unsignedBigInteger('campaign_id');
                 $table->foreignId('form_type_id')->constrained('form_types');
             });
-        Schema::table('campaings', function ($table)
-            {
-                $table->foreignId('group_id')->constrained('groups'); 
-            });
+
 
         Schema::table('form_answers', function ($table)
             {

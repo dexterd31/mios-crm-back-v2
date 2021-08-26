@@ -14,7 +14,7 @@ class FormAnswerSeeder extends Seeder
     {
         $form_answer = array(
             [
-                'user_id' => 1,
+                'rrhh_id' => 1,
                 'client_id'=> 1,
                 'form_id' => 2,
                 'channel_id' => 1,
@@ -74,7 +74,7 @@ class FormAnswerSeeder extends Seeder
             {
         
                 $Form = new FormAnswer();
-                $Form->user_id = $formanswer['user_id'];
+                $Form->rrhh_id = $formanswer['rrhh_id'];
                 $Form->client_id = $formanswer['client_id'];
                 $Form->form_id = $formanswer['form_id'];
                 $Form->channel_id = $formanswer['channel_id'];
