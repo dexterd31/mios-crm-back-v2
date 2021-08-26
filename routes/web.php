@@ -125,7 +125,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/editPermissions', 'PermissionController@edit');
     $router->get('/moduleCrm', 'ModuleCrmController@store');
     $router->get('/permission', 'PermissionController@index');
-    $router->get('/getPermissionsByIdRole', 'PermissionController@getPermissionsByIdRole');
+    $router->get('/getPermissionsByIdRole/{idRole}', 'PermissionController@getPermissionsByIdRole');
+    $router->get('/getPermissions', 'PermissionController@getPermissions');
 
     $router->get('/prueba-jsoncontains/{formId}', function($formId){
         $form_answers = FormAnswer::where('form_id', $formId)

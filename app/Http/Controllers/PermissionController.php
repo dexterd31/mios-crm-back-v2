@@ -125,7 +125,7 @@ class PermissionController extends Controller
     //     "crm": {"typify_form_record": ["save","view","edit","change"]}
     //   },
 
-    public function getPermissionsByIdRole()
+    public function getPermissions()
     {
         $idRoles = $this->authUser()->rolesId[0]->crm;
         $permissionModel = $this->getPermissionModel();
@@ -147,5 +147,12 @@ class PermissionController extends Controller
             }
         }
         return $permissions;
+    }
+
+    public function getPermissionsByIdRole($idRole)
+    {
+        $permissionModel = $this->getPermissionModel();
+        return $permissionModel->select("module_id","action_permission_id")
+            ->where('role_ciu_id', $idRole)->get();
     }
 }
