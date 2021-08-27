@@ -77,6 +77,7 @@ class FormController extends Controller
             $formsSections->section[$i]['fields'] = json_decode($formsSections->section[$i]['fields']);
 
         }
+        $formsSections->client_unique = json_decode($formsSections->fields_client_unique_identificator);
         /**
          * Se agrega validacion de api_connections para integracion con SBS (DataCRM)
          */
@@ -103,7 +104,8 @@ class FormController extends Controller
                 'name_form' => $request->input('name_form'),
                 'filters' => json_encode($request->filters),
                 'state' => $request->state,
-                'seeRoles' => json_encode($request->role)
+                'seeRoles' => json_encode($request->role),
+                'fields_client_unique_identificator' => json_encode($request->client_unique)
             ]);
             $forms->save();
 

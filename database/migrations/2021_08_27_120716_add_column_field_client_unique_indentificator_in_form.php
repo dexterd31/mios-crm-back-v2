@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddRelationshipsWithClientNews extends Migration
+class AddColumnFieldClientUniqueIndentificatorInForm extends Migration
 {
     /**
      * Run the migrations.
@@ -13,16 +13,9 @@ class AddRelationshipsWithClientNews extends Migration
      */
     public function up()
     {
-        Schema::table('directories', function ($table)
-        {
-            $table->foreignId('client_new_id')->constrained('client_news'); 
+        Schema::table('forms', function (Blueprint $table) {
+           $table->json('fields_client_unique_identificator')->default("[]");
         });
-
-        Schema::table('key_values', function ($table)
-        {
-            $table->foreignId('client_new_id')->constrained('client_news'); 
-        });
-      
     }
 
     /**
@@ -32,6 +25,8 @@ class AddRelationshipsWithClientNews extends Migration
      */
     public function down()
     {
-        //
+        Schema::table('forms', function (Blueprint $table) {
+            $table->dropColumn('fields_client_unique_identificator');
+        });
     }
 }
