@@ -15,12 +15,12 @@ class AddRelationshipsWithClientNews extends Migration
     {
         Schema::table('directories', function ($table)
         {
-            $table->foreignId('client_new_id')->constrained('client_news'); 
+            $table->unsignedBigInteger('client_new_id'); 
         });
 
         Schema::table('key_values', function ($table)
         {
-            $table->foreignId('client_new_id')->constrained('client_news'); 
+            $table->unsignedBigInteger('client_new_id'); 
         });
       
     }

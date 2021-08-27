@@ -72,21 +72,18 @@ class ClientNewController extends Controller
             $clientNew = $this->index($request->unique_indentificator, $request->form_id);
             if(isset($clientNew->id))
             {
-                $data = $this->update($request);
+               $data = $this->update($request, $clientNew);
             }
     
-            $this->save($request);
+            $data = $this->save($request);
         }
-
-        
-
     }
 
     private function save($clientNewData)
     {
         $this->getClientNew();
         $this->clientNew->insert([$clientNewData]);
-    }    
+    }
 
     /**
      * Store a newly created resource in storage.
@@ -128,10 +125,12 @@ class ClientNewController extends Controller
      * @param  \App\Models\ClientNew  $clientNew
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, ClientNew $clientNew)
+    private function update(Request $request, ClientNew $clientNew)
     {
-        //
+        $clientNew->information_data = $request->information_data;
+        $clientNew->save();
     }
+
 
     /**
      * Remove the specified resource from storage.
