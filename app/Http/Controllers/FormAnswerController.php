@@ -40,23 +40,23 @@ class FormAnswerController extends Controller
         $this->dataCRMServices = $dataCRMServices;
     }
 
-    private function save($clientId, $formId, $structureAnswer)
+    private function save($formsAnswer)
     {
-        $form_answer = new FormAnswer([
-            'rrhh_id' => auth()->user()->rrhh_id,
-            'channel_id' => 1,
-            'client_id' => $clientId,
-            'form_id' => $formId,
-            'structure_answer' => json_encode($structureAnswer)
-        ]);
+        FormAnswer::insert($formsAnswer);
     }
 
     private function create($clientId, $formId, $structureAnswer)
     {
-        foreach ($formAnswerData as $answerData)
-        {
-            $this->save($clientId, $formId, $answerData);
-        }
+        $formsAnswer = [
+            'rrhh_id' => auth()->user()->rrhh_id,
+            'channel_id' => 1,
+            'form_id' => $formId,
+            'structure_answer' => json_encode($structureAnswer),
+            'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
+            'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
+        ];
+
+        $this->save($formsAnswer);
     }
 
     public function saveinfo(Request $request)
@@ -76,48 +76,45 @@ class FormAnswerController extends Controller
                 $register['value'] = $field['value'];
                 $register['preloaded'] = $field['preloaded'];
                 $register['label'] = $field['label'];
+                $register['isClientInfo'] = $field['isClientInfo'];
+                if(isset($field['duplicated']))
+                {
+                    $register['duplicated']=$field['duplicated'];
+                }
 
                 if(isset($field['isClientInfo']) && $field['isClientInfo'])
                 {
-                    array_push($clientNewInfo, $field);
+                    array_push($clientNewInfo, $register);
                     //tener en cuenta guardar label en archivos
                 }
-            }
-            if(isset($field['duplicated']))
-            {
-                $register['duplicated']=$field['duplicated'];
-            }
-            if(!empty($register['value']))
-            {
-                if(isset($field['preloaded']) && $field['preloaded'])
+                if(!empty($register['value']))
                 {
-                    array_push($dataPreloaded, $register);
+                    if(isset($register['preloaded']) && $register['preloaded'])
+                    {
+                        array_push($dataPreloaded, $register);
+                    }
+                    array_push($formAnswerData, $register);
                 }
-                array_push($formAnswerData, $register);
-            }
-            if($request->client_unique->id == $field['id'])
-            {
-                $clientUnique = $register;
+                if(json_decode($request->client_unique)[0]->id == $field['id'])
+                {
+                    $clientUnique = $register;
+                }
             }
         }
 
         $clientNewController = new ClientNewController();
         $clientNew = new Request();
-        $clientNew->form_id = $request->form_id;
-        $clientNew->information_data = $clientNewInfo;
-        $clientNew->unique_indentificator = $clientUnique;
+        $clientNew->replace([
+            "client_new_id" => $request->client_new_id,
+            "form_id" => $request->form_id,
+            "information_data" => json_encode($clientNewInfo),
+            "unique_indentificator" => json_encode($clientUnique),
+        ]);
         $clientNew = $clientNewController->create($clientNew);
         $this->create($clientNew->id, $request->form_id, $formAnswerData);
-
-        $keyValue = [];
-        $keyValue['form_id'] = json_decode($request->form_id);
-        $keyValue['client_new_id'] = $clientNew->id;
-        $keyValue['field_id'] = $dataPreloaded["id"];
-        $keyValue['key'] = $dataPreloaded["key"];
-        $keyValue['value'] = $dataPreloaded["value"];
-        $keyValue['description'] = null;
         $keyValueController = new KeyValueController();
-        $keyValueController->save($keyValue);
+        $keyValueController->createKeysValue($dataPreloaded, $request->form_id, $clientNew->id);
+
     }
     /**
      * Nicol Ramirez

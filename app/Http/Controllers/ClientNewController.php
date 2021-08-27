@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\ClientNew;
 use Illuminate\Http\Request;
 use Helper\MiosHelper;
+use Illuminate\Support\Facades\Validator;
+use Log;
 
 class ClientNewController extends Controller
 {
@@ -19,7 +21,7 @@ class ClientNewController extends Controller
 	{
 		if($this->clientNewModel == null)
 		{
-			$this->setClientNewModel(new ClientNewModel());
+			$this->setClientNewModel(new ClientNew());
 		}
 		return $this->clientNewModel;
 	}
@@ -29,7 +31,7 @@ class ClientNewController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request, MiosHelper $miosHelper)
+    public function index(Request $request)
     {
         $validator = Validator::make($request->all(),[
             'form_id' => 'required|integer',
@@ -40,13 +42,20 @@ class ClientNewController extends Controller
             return $validator->errors()->all();
         }
 
-        $this->getClientNew();
-        $clients = $this->clientNew->where($$request->formId, "form_id");
-        if($request->uniqueIndentificator)
+        $this->getClientNewModel();
+        if($request->client_new_id)
         {
-            $clients = $clients->where($request->uniqueIndentificator, "unique_indentificator");
+            return [$this->clientNewModel->find($request->client_new_id)];
         }
-        return $clients->get();
+        $clients = $this->clientNewModel->where("form_id", $request->form_id);
+        if($request->unique_indentificator)
+        {
+            $unique_indentificator = json_decode($request->unique_indentificator);
+            $clients = $clients->whereJsonContains("unique_indentificator",
+                ["id" => $unique_indentificator->id, "value" => $unique_indentificator->value]);
+        }
+        $clients->first();
+        return $clients;
     }
 
     // Descripción: Función que recibe un objeto y realiza las validaciones y arreglos a
@@ -55,7 +64,7 @@ class ClientNewController extends Controller
     // Array Datos de uno o varios clientes en un objeto 
     // Retorna: Objeto con un parámetro estado el cual será true or false dependiendo del resultado 
     // del proceso, y un parámetro data con el objeto de  creación del cliente ósea los datos almacenados en la tabla clients_new. 
-    public function create(Request $request, MiosHelper $miosHelper)
+    public function create(Request $request)
     {
         $validator = Validator::make($request->all(),[
             'form_id' => 'required|integer',
@@ -69,20 +78,29 @@ class ClientNewController extends Controller
         }
         else
         {
-            $clientNew = $this->index($request->unique_indentificator, $request->form_id);
-            if(isset($clientNew->id))
+            $clientNew = $this->index($request);
+            Log::info(json_encode($clientNew));
+            if($clientNew && isset($clientNew->id))
             {
-               $data = $this->update($request, $clientNew);
+                $data = $this->update($request, $clientNew);
+            }else
+            {
+                $data = $this->save($request);
             }
-    
-            $data = $this->save($request);
         }
+
+        return $data;
     }
 
     private function save($clientNewData)
     {
-        $this->getClientNew();
-        $this->clientNew->insert([$clientNewData]);
+        $clientNew = new ClientNew([
+            "form_id" => $clientNewData->form_id,
+            "information_data" => $clientNewData->information_data,
+            "unique_indentificator" => $clientNewData->unique_indentificator,
+        ]);
+        $clientNew->save();
+        return $clientNew;
     }
 
     /**
@@ -129,6 +147,7 @@ class ClientNewController extends Controller
     {
         $clientNew->information_data = $request->information_data;
         $clientNew->save();
+        return $clientNew;
     }
 
 
