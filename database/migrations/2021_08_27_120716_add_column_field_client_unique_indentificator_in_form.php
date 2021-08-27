@@ -14,7 +14,7 @@ class AddColumnFieldClientUniqueIndentificatorInForm extends Migration
     public function up()
     {
         Schema::table('forms', function (Blueprint $table) {
-           $table->json('fields_client_unique_identificator')->default("[]");
+           $table->json('fields_client_unique_identificator')->nullable();
         });
     }
 
