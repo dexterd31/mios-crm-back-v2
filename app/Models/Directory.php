@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\ClientNew;
 
 class Directory extends Model
 {
@@ -16,5 +17,10 @@ class Directory extends Model
 
     public function client(){
         return $this->belongsTo('App\Models\Client', 'client_id');
+    }
+
+    public function clientNew()
+    {
+        return $this->belongsTo(ClientNew::class, 'client_new_id');
     }
 }

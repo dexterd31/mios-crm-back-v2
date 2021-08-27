@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\ClientNew;
 
 class KeyValue extends Model
 {
@@ -16,5 +17,10 @@ class KeyValue extends Model
     
     public function form(){
         return $this->belongsTo('App\Models\Form','id');
+    }
+
+    public function clientNew()
+    {
+        return $this->belongsTo(ClientNew::class, 'client_new_id');
     }
 }
