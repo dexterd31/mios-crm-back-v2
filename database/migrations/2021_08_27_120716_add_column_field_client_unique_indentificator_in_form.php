@@ -13,16 +13,9 @@ class AddColumnFieldClientUniqueIndentificatorInForm extends Migration
      */
     public function up()
     {
-        Schema::table('directories', function ($table)
-        {
-            $table->unsignedBigInteger('client_new_id'); 
+        Schema::table('forms', function (Blueprint $table) {
+           $table->json('fields_client_unique_identificator')->nullable();
         });
-
-        Schema::table('key_values', function ($table)
-        {
-            $table->unsignedBigInteger('client_new_id'); 
-        });
-      
     }
 
     /**
