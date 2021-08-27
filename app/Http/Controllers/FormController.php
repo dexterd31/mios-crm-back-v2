@@ -8,30 +8,22 @@ use App\Models\Form;
 use App\Models\FormLog;
 use App\Models\FormAnswer;
 use App\Models\FormType;
-use App\Models\KeyValue;
 use App\Models\Section;
 use App\Models\User;
-use App\Services\CiuService;
 use App\Services\RrhhService;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Arr;
 use Carbon\Carbon;
 use stdClass;
 use App\Models\Directory;
 
 class FormController extends Controller
 {
-    private $ciuService;
-    private $rrhhService;
 
-    public function __construct(CiuService $ciuService, RrhhService $rrhhService)
+    public function __construct()
     {
         $this->middleware('auth');
-        $this->ciuService = $ciuService;
-        $this->rrhhService = $rrhhService;
     }
 
     /**
@@ -85,6 +77,7 @@ class FormController extends Controller
             $formsSections->section[$i]['fields'] = json_decode($formsSections->section[$i]['fields']);
 
         }
+        $formsSections->client_unique = json_decode($formsSections->fields_client_unique_identificator);
         /**
          * Se agrega validacion de api_connections para integracion con SBS (DataCRM)
          */
@@ -111,7 +104,8 @@ class FormController extends Controller
                 'name_form' => $request->input('name_form'),
                 'filters' => json_encode($request->filters),
                 'state' => $request->state,
-                'seeRoles' => json_encode($request->role)
+                'seeRoles' => json_encode($request->role),
+                'fields_client_unique_identificator' => json_encode($request->client_unique)
             ]);
             $forms->save();
 
@@ -295,7 +289,9 @@ class FormController extends Controller
     {
       $date1=Carbon::parse($request->date1)->setTimezone('America/Bogota');
       $date2=Carbon::parse($request->date2)->setTimezone('America/Bogota');
-      $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','form_answers.id_rhh')
+      $rrhhService= new RrhhService();
+      $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','users.id_rhh')
+                          ->join('users', 'users.id', '=', 'form_answers.user_id')
                           ->where('form_answers.form_id',$request->formId)
                           //->whereBetween('form_answers.created_at', [$date1, $date2])
                           ->get();
@@ -324,7 +320,7 @@ class FormController extends Controller
         //Se dejan los id unicos quitamos todos los repetidos
         $useString=implode(',',array_values(array_unique($userRrhhIids)));
         //Traemos los datos de rrhh de los usuarios
-        $usersInfo=$this->rrhhService->fetchUsers($useString);
+        $usersInfo=$rrhhService->fetchUsers($useString);
         //Organizamos la información del usuario en un array asociativo con la información necesaria
         $adviserInfo=[];
         foreach($usersInfo as $info){
@@ -415,7 +411,7 @@ class FormController extends Controller
          $userIdsDir=$miosHelper->getArrayValues('id_rhh',$directoryData);
          $useStringDir=implode(',',$userIdsDir);
          //Traemos los datos de rrhh de los usuarios
-         $usersInfoDirectory=$this->rrhhService->fetchUsers($useStringDir);
+         $usersInfoDirectory=$rrhhService->fetchUsers($useStringDir);
          //Organizamos la información del usuario en un array asociativo con la información necesaria
          $adviserInfoDir=[];
          foreach($usersInfoDirectory as $info){
@@ -425,14 +421,14 @@ class FormController extends Controller
                  }
              }
          }
-       
+
         foreach ($directoryData as $key => $directory) {
             $respuestas=$plantillaRespuestas;
             $respuestas['id'] = $directory->id;
               //Evaluamos los campos que deben ir en el reporte contra las respuestas
               foreach($inputReport as $input){
                 foreach(json_decode($directory->data) as $data){
-                    
+
                     if(isset($input->dependencies[0]->report)){
                         if(in_array($data->id,$dependencies[$input->dependencies[0]->report])){
                             if(isset($data->value)){
@@ -475,7 +471,7 @@ class FormController extends Controller
         array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización');
       }
       return Excel::download(new FormReportExport($rows, $titleHeaders), 'reporte_formulario.xlsx');
-    }   
+    }
 
     /**
      * Olme Marin
@@ -615,4 +611,23 @@ class FormController extends Controller
 
         return json_encode($section);
     }
+
+    /**
+     * @desc Función para devolver las secciones de un formulario
+     * @param Integer $formId id del formulario que se necesitan traer las secciones
+     * @return Array Arreglo de objetos en donde se encuntran todas las secciones del formulario
+     * @author Léonardo Giraldo Quintero
+     *  */
+    public function getSections($formId){
+        if(isset($formId)){
+            return Section::where('form_id','=',$formId)->get();
+        }else{
+            return "Error al definir la variable formId";
+        }
+
+    }
+
+
+
 }
+

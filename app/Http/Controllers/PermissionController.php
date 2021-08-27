@@ -46,46 +46,6 @@ class PermissionController extends Controller
 	}
 
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        $idRolesCrm = $this->authUser()->rolesId[0]->crm;
-        $permissionModel = $this->getPermissionModel();
-        $idRole = end($idRolesCrm);
-        $permissions = $permissionModel->where('role_ciu_id', $idRole)->get();
-        $pemit = $this->gatPemitDefault();
-        foreach($permissions as $permission)
-        {
-            $action = $permission->actionPermissions->action;
-            $pemit[$permission->module_id - 1]->$action = 1;
-        }
-        $rolePermission["rol_name"] = "";
-        $rolePermission["rol_id"] = $idRole;
-        $rolePermission["modules"] = $pemit;
-        return ["permissions" => $rolePermission];
-    }
-
-    private function gatPemitDefault()
-    {
-        $permissionDefault = [];
-        $moduleCrmModel = $this->getModuleCrmModel();
-        $modulesCrm = $moduleCrmModel->all();
-        foreach ($modulesCrm as $moduleCrm)
-        {
-            $permissionDefault[$moduleCrm->id - 1] = (object)[
-                'save' => 0,
-                'view' => 0,
-                'edit' => 0,
-                'change' => 0,
-                'all' => 0,
-            ];
-        }
-        return $permissionDefault;
-    }
-    /**
      * Show the form for creating a new resource.
      *
      * @return \Illuminate\Http\Response
@@ -104,7 +64,7 @@ class PermissionController extends Controller
             array_push($permissions, $permission);
         }
         $permissionModel = $this->getPermissionModel();
-        $permissionModel->insert($permissions);  
+        $permissionModel->insert($permissions);
     }
 
     /**

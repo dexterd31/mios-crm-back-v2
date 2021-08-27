@@ -38,6 +38,10 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/form/upload', 'UploadController@importExcel');
     $router->post('form/dbHistory/{form_id}', 'UploadController@index');
 
+    $router->post('/form/upload/extractColumnsNames', 'UploadController@extractColumnsNames');
+    $router->post('/form/upload/excelClients', 'UploadController@excelClients');
+
+
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
     $router->post('/formanswer/integration/voice', 'FormAnswerController@saveIntegrationVoice');
