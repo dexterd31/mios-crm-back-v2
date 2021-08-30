@@ -51,8 +51,10 @@ class ClientNewController extends Controller
         if($request->unique_indentificator)
         {
             $unique_indentificator = json_decode($request->unique_indentificator);
-            $clients = $clients->whereJsonContains("unique_indentificator",
-                ["id" => $unique_indentificator->id, "value" => $unique_indentificator->value]);
+            $clients = $clients->where("unique_indentificator->id",
+                    $unique_indentificator->id)
+                ->where("unique_indentificator->value",
+                    $unique_indentificator->value);
         }
         $clients->first();
         return $clients;

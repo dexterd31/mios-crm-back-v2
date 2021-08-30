@@ -40,23 +40,18 @@ class FormAnswerController extends Controller
         $this->dataCRMServices = $dataCRMServices;
     }
 
-    private function save($formsAnswer)
+    private function create($clientNewId, $formId, $structureAnswer)
     {
-        FormAnswer::insert($formsAnswer);
-    }
-
-    private function create($clientId, $formId, $structureAnswer)
-    {
-        $formsAnswer = [
+        $formsAnswer = new FormAnswer([
             'rrhh_id' => auth()->user()->rrhh_id,
             'channel_id' => 1,
             'form_id' => $formId,
             'structure_answer' => json_encode($structureAnswer),
             'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
             'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
-        ];
+        ]);
 
-        $this->save($formsAnswer);
+        return $this->saveModel($formsAnswer);
     }
 
     public function saveinfo(Request $request)
@@ -102,6 +97,7 @@ class FormAnswerController extends Controller
             }
         }
 
+        //creando nuevo cliente
         $clientNewController = new ClientNewController();
         $clientNew = new Request();
         $clientNew->replace([
@@ -111,11 +107,41 @@ class FormAnswerController extends Controller
             "unique_indentificator" => json_encode($clientUnique),
         ]);
         $clientNew = $clientNewController->create($clientNew);
-        $this->create($clientNew->id, $request->form_id, $formAnswerData);
+
+        //creando nuevo cliente formAnswer
+        $form_answer = $this->create($clientNew->id, $request->form_id, $formAnswerData);
         $keyValueController = new KeyValueController();
         $keyValueController->createKeysValue($dataPreloaded, $request->form_id, $clientNew->id);
 
+        // Manejar bandejas
+        $this->matchTrayFields($form_answer->form_id, $form_answer);
+        // Log FormAnswer
+        $this->logFormAnswer($form_answer);
+        $this->updateDataCrm($clientNew->id, $form_answer);
+
     }
+
+    /**
+     * Si el fomulario tiene una integracion con DataCRM entonces la tipificacion será actualizada con DataCRM
+     * @author Carlos Galindez
+     */
+    private function updateDataCrm($clientNewId, $form_answer)
+    {
+        $potentialIdObject = KeyValue::where('client_id',$clientNewId)->where('key','potential-id1')->first(); //Unique ID de Data CRM
+        $accountIdObject = KeyValue::where('client_id',$clientNewId)->where('key','account-id0')->first(); //Unique ID de Data CRM
+
+        if(ApiConnection::where('form_id',$form_answer->form_id)->where('api_type',10)->where('status',1)->first()  ){
+            /**
+             * Codigo Habilitado unicamente para pruebas, mientras DataCRM resuelve el bug
+             */
+            Log::info('FormAnswer ID '.$form_answer->id);
+            if($potentialIdObject) $this->dataCRMServices->updatePotentials($form_answer->form_id,json_decode($form_answer->structure_answer),$potentialIdObject->value);
+            if($accountIdObject) $this->dataCRMServices->updateAccounts($form_answer->form_id,json_decode($form_answer->structure_answer),$accountIdObject->value);
+        }
+    }
+
+
+
     /**
      * Nicol Ramirez
      * 11-02-2020
