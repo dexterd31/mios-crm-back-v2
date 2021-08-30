@@ -87,23 +87,28 @@ class PermissionController extends Controller
 
     public function getPermissions()
     {
-        $idRoles = $this->authUser()->rolesId[0]->crm;
-        $permissionModel = $this->getPermissionModel();
-        $permissionsData = $permissionModel->whereIn('role_ciu_id', $idRoles)->with("module")->get();
         $permissions = [];
-        foreach ($permissionsData as $permissionData)
+        $rolesId = $this->authUser()->rolesId;
+        if(!$rolesId && !isset($rolesId->crm))
         {
-            $action = $permissionData->actionPermissions->action;
-            $actionId = $permissionData->actionPermissions->id;
-            $moduleName = $permissionData->module->name;
+            $idRoles = $rolesId->crm;
+            $permissionModel = $this->getPermissionModel();
+            $permissionsData = $permissionModel->whereIn('role_ciu_id', $idRoles)->with("module")->get();
+            $permissions = [];
+            foreach ($permissionsData as $permissionData)
+            {
+                $action = $permissionData->actionPermissions->action;
+                $actionId = $permissionData->actionPermissions->id;
+                $moduleName = $permissionData->module->name;
 
-            if(!array_key_exists($moduleName, $permissions))
-            {
-                $permissions[$moduleName] = (Object)[];
-            }
-            if(!isset($permissions[$moduleName]->$action))
-            {
-                $permissions[$moduleName]->$action = $actionId;
+                if(!array_key_exists($moduleName, $permissions))
+                {
+                    $permissions[$moduleName] = (Object)[];
+                }
+                if(!isset($permissions[$moduleName]->$action))
+                {
+                    $permissions[$moduleName]->$action = $actionId;
+                }
             }
         }
         return $permissions;
