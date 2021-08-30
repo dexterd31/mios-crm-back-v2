@@ -35,9 +35,14 @@ class ClientNewController extends Controller
     {
         $validator = Validator::make($request->all(),[
             'form_id' => 'required|integer',
+            "unique_indentificator" => 'required|json',
         ]);
 
-        if($validator->fails())
+        $validatorId = Validator::make($request->all(),[
+            'client_new_id' => 'required|integer'
+        ]);
+
+        if($validator->fails() && $validatorId->fails())
         {
             return $validator->errors()->all();
         }
@@ -45,19 +50,11 @@ class ClientNewController extends Controller
         $this->getClientNewModel();
         if($request->client_new_id)
         {
-            return [$this->clientNewModel->find($request->client_new_id)];
+            return $this->clientNewModel->find($request->client_new_id);
         }
-        $clients = $this->clientNewModel->where("form_id", $request->form_id);
-        if($request->unique_indentificator)
-        {
-            $unique_indentificator = json_decode($request->unique_indentificator);
-            $clients = $clients->where("unique_indentificator->id",
-                    $unique_indentificator->id)
-                ->where("unique_indentificator->value",
-                    $unique_indentificator->value);
-        }
-        $clients->first();
-        return $clients;
+        $unique_indentificator = json_decode($request->unique_indentificator);
+        return $this->clientNewModel->where("form_id", $request->form_id)->where("unique_indentificator->id", $unique_indentificator->id)
+            ->where("unique_indentificator->value", $unique_indentificator->value)->first();
     }
 
     // Descripción: Función que recibe un objeto y realiza las validaciones y arreglos a
