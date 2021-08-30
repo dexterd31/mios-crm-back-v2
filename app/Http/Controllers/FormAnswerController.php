@@ -118,7 +118,7 @@ class FormAnswerController extends Controller
         // Log FormAnswer
         $this->logFormAnswer($form_answer);
         $this->updateDataCrm($clientNew->id, $form_answer);
-
+        return $this->successResponse(['message'=>"Información guardada correctamente",'formAsnwerId'=>$form_answer->id]);
     }
 
     /**
@@ -127,8 +127,8 @@ class FormAnswerController extends Controller
      */
     private function updateDataCrm($clientNewId, $form_answer)
     {
-        $potentialIdObject = KeyValue::where('client_id',$clientNewId)->where('key','potential-id1')->first(); //Unique ID de Data CRM
-        $accountIdObject = KeyValue::where('client_id',$clientNewId)->where('key','account-id0')->first(); //Unique ID de Data CRM
+        $potentialIdObject = KeyValue::where('client_new_id',$clientNewId)->where('key','potential-id1')->first(); //Unique ID de Data CRM
+        $accountIdObject = KeyValue::where('client_new_id',$clientNewId)->where('key','account-id0')->first(); //Unique ID de Data CRM
 
         if(ApiConnection::where('form_id',$form_answer->form_id)->where('api_type',10)->where('status',1)->first()  ){
             /**
