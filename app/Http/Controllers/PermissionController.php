@@ -89,7 +89,7 @@ class PermissionController extends Controller
     {
         $permissions = [];
         $rolesId = $this->authUser()->rolesId;
-        if(!$rolesId && !isset($rolesId->crm))
+        if($rolesId && isset($rolesId->crm))
         {
             $idRoles = $rolesId->crm;
             $permissionModel = $this->getPermissionModel();
