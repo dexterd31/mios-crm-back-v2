@@ -38,6 +38,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/form/upload', 'UploadController@importExcel');
     $router->post('form/dbHistory/{form_id}', 'UploadController@index');
 
+    //Nuevas rutas para importar Base de Clientes
     $router->post('/form/upload/extractColumnsNames', 'UploadController@extractColumnsNames');
     $router->post('/form/upload/excelClients', 'UploadController@excelClients');
 

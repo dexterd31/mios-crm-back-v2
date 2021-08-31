@@ -102,7 +102,7 @@ class UploadController extends Controller
         ]);
         $file = $request->file('excel');
         $form_import_validate = Excel::import(new ClientImport(json_decode($request->assigns),$request->form_id), $file);
-        \Log::info($form_import_validate);
+
     }
 
 
