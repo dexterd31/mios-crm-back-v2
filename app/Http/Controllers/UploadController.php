@@ -75,7 +75,7 @@ class UploadController extends Controller
                 $form_import_validate = Excel::toArray(new UploadImport, $file);
                 if(count($form_import_validate[0])>1 && count($form_import_validate[0][0])>0 && $form_import_validate[0][0]<>NULL){
                     $FormController = new FormController();
-                    $prechargables = json_decode($FormController->searchPrechargeFields($request->form_id))-;
+                    $prechargables = json_decode($FormController->searchPrechargeFields($request->form_id));
                     $answer['columnsFile'] = $form_import_validate[0][0];
                     $answer['prechargables']=[];
 
