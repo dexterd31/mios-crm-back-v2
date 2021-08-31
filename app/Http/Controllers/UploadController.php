@@ -69,17 +69,17 @@ class UploadController extends Controller
     */
     public function extractColumnsNames(Request $request, MiosHelper $miosHelper){
         try {
+            \Log::info($request->form_id);
             $file = $request->file('excel');
             $answer = [];
             if(isset($file)){
                 $form_import_validate = Excel::toArray(new UploadImport, $file);
                 if(count($form_import_validate[0])>1 && count($form_import_validate[0][0])>0 && $form_import_validate[0][0]<>NULL){
                     $FormController = new FormController();
-                    $prechargables = json_decode($FormController->searchPrechargeFields($request->form_id));
+                    $prechargables = $FormController->searchPrechargeFields($request->form_id)->getData();
                     $answer['columnsFile'] = $form_import_validate[0][0];
                     $answer['prechargables']=[];
-
-                    foreach($prechargables->original->section as $section){
+                    foreach($prechargables->section as $section){
                         foreach($section->fields as $field){
                             if($field){
                                 $prechargedField=new \stdClass();
