@@ -124,6 +124,8 @@ class FormController extends Controller
                         $section['fields'][$i]['key'] = $section['fields'][$i]['key'].$cadena;
                         if($section['fields'][$i]['id'] == $unique_client[0]['id']){
                             $unique_client[0]['key']=$section['fields'][$i]['key'];
+                            $unique_client[0]['client_unique']=true;
+                            $section['fields'][$i]['client_unique']=true;
                         }
                         foreach($filters_form as $filter){
                             if($section['fields'][$i]['id'] == $filter['id']){
