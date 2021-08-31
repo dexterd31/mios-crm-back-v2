@@ -69,11 +69,29 @@ class UploadController extends Controller
     */
     public function extractColumnsNames(Request $request, MiosHelper $miosHelper){
         try {
+            \Log::info($request->form_id);
             $file = $request->file('excel');
+            $answer = [];
             if(isset($file)){
                 $form_import_validate = Excel::toArray(new UploadImport, $file);
                 if(count($form_import_validate[0])>1 && count($form_import_validate[0][0])>0 && $form_import_validate[0][0]<>NULL){
-                    $data = $miosHelper->jsonResponse(true,200,"data",$form_import_validate[0][0]);
+                    $FormController = new FormController();
+                    $prechargables = $FormController->searchPrechargeFields($request->form_id)->getData();
+                    $answer['columnsFile'] = $form_import_validate[0][0];
+                    $answer['prechargables']=[];
+                    foreach($prechargables->section as $section){
+                        foreach($section->fields as $field){
+                            if($field){
+                                $prechargedField=new \stdClass();
+                                $prechargedField->id=$field->id;
+                                $prechargedField->label=$field->label;
+                                array_push($answer['prechargables'],$prechargedField);
+                            }
+
+                        }
+                    }
+
+                    $data = $miosHelper->jsonResponse(true,200,"data",$answer);
                 }else{
                     $data = $miosHelper->jsonResponse(false,406,"message","El archivo cargado no tiene datos para cargar, recuerde que en la primera fila se debe utilizar para identificar los datos asignados a cada columna.");
                 }
@@ -102,7 +120,7 @@ class UploadController extends Controller
         ]);
         $file = $request->file('excel');
         $form_import_validate = Excel::import(new ClientImport(json_decode($request->assigns),$request->form_id), $file);
-        \Log::info($form_import_validate);
+
     }
 
 

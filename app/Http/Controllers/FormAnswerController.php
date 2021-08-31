@@ -62,7 +62,6 @@ class FormAnswerController extends Controller
         $clientNewInfo = [];
         $dataPreloaded = [];
         $formAnswerData = [];
-
         foreach($sections as $section)
         {
             foreach($section['fields'] as $field)
