@@ -75,8 +75,22 @@ class UploadController extends Controller
                 $form_import_validate = Excel::toArray(new UploadImport, $file);
                 if(count($form_import_validate[0])>1 && count($form_import_validate[0][0])>0 && $form_import_validate[0][0]<>NULL){
                     $FormController = new FormController();
-                    $answer['prechargables'] = $FormController->searchPrechargeFields($request->form_id);
+                    $prechargables = json_decode($FormController->searchPrechargeFields($request->form_id))-;
                     $answer['columnsFile'] = $form_import_validate[0][0];
+                    $answer['prechargables']=[];
+
+                    foreach($prechargables->original->section as $section){
+                        foreach($section->fields as $field){
+                            if($field){
+                                $prechargedField=new \stdClass();
+                                $prechargedField->id=$field->id;
+                                $prechargedField->label=$field->label;
+                                array_push($answer['prechargables'],$prechargedField);
+                            }
+
+                        }
+                    }
+
                     $data = $miosHelper->jsonResponse(true,200,"data",$answer);
                 }else{
                     $data = $miosHelper->jsonResponse(false,406,"message","El archivo cargado no tiene datos para cargar, recuerde que en la primera fila se debe utilizar para identificar los datos asignados a cada columna.");
