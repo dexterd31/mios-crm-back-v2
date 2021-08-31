@@ -98,6 +98,7 @@ class FormController extends Controller
         // {
             $unique_client=$request->client_unique;
             $filters_form=$request->filters;
+            $filters_form_new=[];
             $forms = new Form([
                 'group_id' =>  $request->input('group_id'),
                 'campaign_id' => $request->input('campaign_id'),
@@ -108,9 +109,6 @@ class FormController extends Controller
                 'seeRoles' => json_encode($request->role),
             ]);
             $forms->save();
-            \Log::info(json_encode($request->client_unique));
-            \Log::info($request['client_unique'][0]);
-            \Log::info($request['client_unique'][0]['id']);
            foreach($request['sections'] as $section)
            {
                 for($i=0; $i<count($section['fields']); $i++){
@@ -127,10 +125,9 @@ class FormController extends Controller
                         if($section['fields'][$i]['id'] == $unique_client[0]['id']){
                             $unique_client[0]['key']=$section['fields'][$i]['key'];
                         }
-                        foreach($filters_form as $index=>$filter){
-                            if($section['fields'][$i]['id'] == $filter->id){
-                                $filters_form[$index]=$section['fields'][$i];
-                                \Log::info($filters_form);
+                        foreach($filters_form as $filter){
+                            if($section['fields'][$i]['id'] == $filter['id']){
+                                array_push($filters_form_new,$section['fields'][$i]);
                             }
                         }
 
@@ -163,7 +160,7 @@ class FormController extends Controller
                     $sections->save();
                 }
             }
-            $forms->filters = json_encode($filters_form);
+            $forms->filters = json_encode($filters_form_new);
             $forms->fields_client_unique_identificator = json_encode($unique_client);
             $forms->update();
             if(!isset($sections)){
