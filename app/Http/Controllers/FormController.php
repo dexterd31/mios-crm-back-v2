@@ -75,7 +75,6 @@ class FormController extends Controller
             unset($formsSections->section[$i]['updated_at']);
             unset($formsSections->section[$i]['form_id']);
             $formsSections->section[$i]['fields'] = json_decode($formsSections->section[$i]['fields']);
-
         }
         $formsSections->client_unique = json_decode($formsSections->fields_client_unique_identificator);
         /**
@@ -97,6 +96,8 @@ class FormController extends Controller
     {
         //  try
         // {
+            $unique_client=$request->client_unique;
+            $filters_form=$request->filters;
             $forms = new Form([
                 'group_id' =>  $request->input('group_id'),
                 'campaign_id' => $request->input('campaign_id'),
@@ -105,10 +106,11 @@ class FormController extends Controller
                 'filters' => json_encode($request->filters),
                 'state' => $request->state,
                 'seeRoles' => json_encode($request->role),
-                'fields_client_unique_identificator' => json_encode($request->client_unique)
             ]);
             $forms->save();
-
+            \Log::info(json_encode($request->client_unique));
+            \Log::info($request['client_unique'][0]);
+            \Log::info($request['client_unique'][0]['id']);
            foreach($request['sections'] as $section)
            {
                 for($i=0; $i<count($section['fields']); $i++){
@@ -122,12 +124,22 @@ class FormController extends Controller
                         $section['fields'][$i]['key'] = strtolower( str_replace(array(' ','  '),'-',$section['fields'][$i]['key']) );
                         //Concatenamos el resultado del label transformado con la variable $cadena
                         $section['fields'][$i]['key'] = $section['fields'][$i]['key'].$cadena;
-                    }
-               }
+                        if($section['fields'][$i]['id'] == $unique_client[0]['id']){
+                            $unique_client[0]['key']=$section['fields'][$i]['key'];
+                        }
+                        foreach($filters_form as $index=>$filter){
+                            if($section['fields'][$i]['id'] == $filter->id){
+                                $filters_form[$index]=$section['fields'][$i];
+                                \Log::info($filters_form);
+                            }
+                        }
 
-              if($section['sectionName'] == 'Datos básicos del cliente')
-              {
-                $firstSection = new Section([
+                    }
+                }
+
+                if($section['sectionName'] == 'Datos básicos del cliente')
+                {
+                    $firstSection = new Section([
                       'id' => $section['idsection'],
                       'form_id' => $forms->id,
                       'name_section' => $section['sectionName'],
@@ -151,6 +163,9 @@ class FormController extends Controller
                     $sections->save();
                 }
             }
+            $forms->filters = json_encode($filters_form);
+            $forms->fields_client_unique_identificator = json_encode($unique_client);
+            $forms->update();
             if(!isset($sections)){
                 $data = ['forms' => $forms , 'firstSection'=> json_decode($firstSection->fields), 'code' => 200,'message'=>'Formulario Guardado Correctamente'];
             }else{

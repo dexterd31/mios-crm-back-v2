@@ -23,19 +23,21 @@ class ClientNewController extends Controller
 		{
 			$this->setClientNewModel(new ClientNew());
 		}
-		return $this->clientNewModel;
+		$this->clientNewModel;
 	}
 
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
+     * @desc Funcion que lista un cliente ya sea por su id (client_id) o por su identificador unico (unique_indentificator)
+     * @param form_id Integer Required: Id del formulario donde desea consultar el cliente
+     * @param unique_indentificator Objeto Requerido si no se envia client_new_id: Objeto con el id del field unique y el valor
+     * @param client_new_id Integer Requerido si no se envia unique_indentificator: Id del cliente que desea consultar
+     * @return \Illuminate\Http\Response Objeto con los datos almacenados del cleinte
      */
     public function index(Request $request)
     {
         $validator = Validator::make($request->all(),[
             'form_id' => 'required|integer',
-            "unique_indentificator" => 'required|json',
+            'unique_indentificator' => 'required|json',
         ]);
 
         $validatorId = Validator::make($request->all(),[
@@ -58,11 +60,11 @@ class ClientNewController extends Controller
     }
 
     // Descripción: Función que recibe un objeto y realiza las validaciones y arreglos a
-    // la data para pasar a la función saveClient para que sean almacenados en la tabla clients_new 
+    // la data para pasar a la función saveClient para que sean almacenados en la tabla clients_new
     // Parámetros:
-    // Array Datos de uno o varios clientes en un objeto 
-    // Retorna: Objeto con un parámetro estado el cual será true or false dependiendo del resultado 
-    // del proceso, y un parámetro data con el objeto de  creación del cliente ósea los datos almacenados en la tabla clients_new. 
+    // Array Datos de uno o varios clientes en un objeto
+    // Retorna: Objeto con un parámetro estado el cual será true or false dependiendo del resultado
+    // del proceso, y un parámetro data con el objeto de  creación del cliente ósea los datos almacenados en la tabla clients_new.
     public function create(Request $request)
     {
         $validator = Validator::make($request->all(),[
@@ -77,11 +79,10 @@ class ClientNewController extends Controller
         }
         else
         {
-            $clientNew = $this->index($request);
-            Log::info(json_encode($clientNew));
-            if($clientNew && isset($clientNew->id))
+            $clientsNew = $this->index($request);
+            if($clientsNew && isset($clientsNew->id))
             {
-                $data = $this->update($request, $clientNew);
+                $data = $this->update($request, $clientsNew);
             }else
             {
                 $data = $this->save($request);
@@ -110,7 +111,7 @@ class ClientNewController extends Controller
      */
     public function store(Request $request)
     {
-        
+
     }
 
     /**
