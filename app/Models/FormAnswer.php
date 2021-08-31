@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Attachment;
 use App\Models\Tray;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\ClientNew;
 
 class FormAnswer extends Model
 {
@@ -18,6 +19,10 @@ class FormAnswer extends Model
 
     public function client(){
         return $this->belongsTo('App\Models\Client', 'client_id');
+    }
+
+    public function ClientNew(){
+        return $this->belongsTo(ClientNew::class, 'client_new_id');
     }
 
     public function channel(){

@@ -10,6 +10,7 @@ use App\Models\KeyValue;
 use App\Models\Section;
 use App\Models\Tray;
 use App\Models\Attachment;
+use App\Models\ClientNew;
 use App\Models\FormAnswerLog;
 use App\Models\User;
 use App\Models\FormAnswerMiosPhone;
@@ -47,6 +48,7 @@ class FormAnswerController extends Controller
             'channel_id' => 1,
             'form_id' => $formId,
             'structure_answer' => json_encode($structureAnswer),
+            'client_new_id' => $clientNewId,
             'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
             'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
         ]);
@@ -72,6 +74,7 @@ class FormAnswerController extends Controller
                 $register['preloaded'] = $field['preloaded'];
                 $register['label'] = $field['label'];
                 $register['isClientInfo'] = $field['isClientInfo'];
+                $register['client_unique'] = false;
                 if(isset($field['duplicated']))
                 {
                     $register['duplicated']=$field['duplicated'];
@@ -92,6 +95,7 @@ class FormAnswerController extends Controller
                 }
                 if(json_decode($request->client_unique)[0]->id == $field['id'])
                 {
+                    $register['client_unique'] = true;
                     $clientUnique = $register;
                 }
             }
@@ -347,12 +351,97 @@ class FormAnswerController extends Controller
         return $this->successResponse('Datos guardados con exito');
     }
 
+    public function filterForm(Request $request)
+    {
+        $requestJson = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
+        $dataFilters = $this->getDataFilters($requestJson['filter']);
+
+        $clientNewController = new ClientNewController();
+        $clientNew = new Request();
+        $clientNew->replace([
+            'form_id' => $requestJson['isClientInfo'],
+            "information_data" => $dataFilters["client_unique"],
+            "unique_indentificator" => $dataFilters["client_unique"],
+        ]);
+        $clientNew = $clientNewController->index($request);
+
+        if($clientNew)
+        {
+            $clientNewId = $clientNew->id;
+        }
+        $formAnswers = $this->filterFormAnswer($request->form_id, $requestJson['filter'], $clientNewId);
+        $formAnswers = $this->setNewStructureAnswer($formAnswers, $request->form_id);
+        $miosHelper = new MiosHelper();
+        $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
+        return response()->json($data, $data['code']);
+    }
+
+    private function getDataFilters($filters)
+    {
+        $dataFilters = [];
+        $filds = ["isClientInfo", "preloaded", "client_unique"];
+        foreach ($filters as $filter)
+        {
+            foreach ($filds as $fild)
+            {
+                if($filter[$fild])
+                {
+                    if(!$dataFilters[$fild])
+                    {
+                        $dataFilters[$fild] = [];   
+                    }
+                    array_push($dataFilters[$fild], $filter);
+                }
+            }
+        }
+        return $dataFilters;
+    }
+
+    private function setNewStructureAnswer($formAnswers, $formId)
+    {
+        foreach ($formAnswers as $formAnswer)
+        {
+            $formAnswer['userdata'] = $this->ciuService->fetchUserByRrhhId($formAnswer['rrhh_id']);
+            foreach ($formAnswer['structure_answer'] as $value) {
+                if(!isset($value['duplicated']))
+                {
+                    $select = $this->findSelect($formId, $value['id'], $value['value']);
+                    if($select)
+                    {
+                        $value['value'] = $select;
+                        $new_structure_answer[] = $value;
+                    }else
+                    {
+                        $new_structure_answer[] = $value;
+                    }
+                }
+            }
+            $formAnswer['structure_answer'] = $new_structure_answer;
+        }
+        return $formAnswers;
+    }
+
+    private function filterFormAnswer($formId, $filters, $clientNewId)
+    {
+        $formAnswersQuery = FormAnswer::where('form_id', $formId);
+        foreach ($filters as $filter) {
+            $key = $filter["key"];
+            $value = $filter["value"];
+            $formAnswersQuery = $formAnswersQuery->whereRaw("json_contains(lower(structure_answer), lower('{\"key\":\"$key\", \"value\":\"$value\"}'))");
+        }
+        if($clientNewId)
+        {
+            $formAnswersQuery = $formAnswersQuery->where("client_new_id", $clientNewId);
+        }
+        return $formAnswersQuery->with('ClientNew')->paginate(5);
+    }
+
     /**
      * Olme Marin
      * 26-02-2020
      * Método para filtrar las varias opciones en el formulario
      */
-    public function filterForm(Request $request, MiosHelper $miosHelper, FilterHelper $filterHelper, ApiHelper $apiHelper)
+    public function foo2(Request $request, MiosHelper $miosHelper, FilterHelper $filterHelper, ApiHelper $apiHelper)
     {
         // try {
             if (Gate::allows('form_answer')) {

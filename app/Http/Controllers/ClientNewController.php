@@ -26,6 +26,40 @@ class ClientNewController extends Controller
 		return $this->clientNewModel;
 	}
 
+    public function search(Request $request)
+    {
+        $validator = Validator::make($request->all(),[
+            'form_id' => 'required|integer',
+            "information_data" => 'array',
+            "unique_indentificator" => 'json',
+        ]);
+
+        if($validator->fails())
+        {
+            return $validator->errors()->all();
+        }
+
+        $this->getClientNewModel();
+        $clientNewQuery = $this->clientNewModel->where("form_id", $request->form_id);
+
+        if($request->unique_indentificator)
+        {
+            $unique_indentificator = json_decode($request->unique_indentificator);
+            $clientNewQuery = $clientNewQuery->where("unique_indentificator->key", $unique_indentificator->key)
+                ->where("unique_indentificator->value", $unique_indentificator->value);
+        }
+
+        foreach ($request->information_data as $informationData)
+        {
+            $informationData = json_decode($request->informationData);
+            $clientNewQuery = $clientNewQuery->where("unique_indentificator->key", $informationData->key)
+                ->where("unique_indentificator->value", $informationData->value);
+        }
+
+        return $this->clientNewModel->get();
+    }
+
+
     /**
      * Display a listing of the resource.
      *

@@ -4,7 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Directorie;
- 
+use App\Models\FormAnswer;
+use App\Models\KeyValue;
+
 
 class ClientNew extends Model
 {
@@ -29,5 +31,9 @@ class ClientNew extends Model
     public function keyValues()
     {
         return $this->hasMany(KeyValue::class);
+    }
+
+    public function formanswer(){
+        return $this->hasMany(FormAnswer::class, 'client_id');
     }
 }
