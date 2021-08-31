@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Directorie;
+use App\Models\Directory;
 use App\Models\FormAnswer;
 use App\Models\KeyValue;
 
@@ -23,9 +23,9 @@ class ClientNew extends Model
         return $this->belongsTo(Form::class, 'form_id');
     }
 
-    public function directorie()
+    public function directory()
     {
-        return $this->hasOne(Directorie::class);
+        return $this->hasOne(Directory::class);
     }
 
     public function keyValues()
@@ -33,7 +33,8 @@ class ClientNew extends Model
         return $this->hasMany(KeyValue::class);
     }
 
-    public function formanswer(){
+    public function formanswer()
+    {
         return $this->hasMany(FormAnswer::class, 'client_id');
     }
 }

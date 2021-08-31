@@ -353,6 +353,8 @@ class FormAnswerController extends Controller
 
     public function filterForm(Request $request)
     {
+        $miosHelper = new MiosHelper();
+        $filterHelper = new FilterHelper();
         $requestJson = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
         $dataFilters = $this->getDataFilters($requestJson['filter']);
 
@@ -364,14 +366,19 @@ class FormAnswerController extends Controller
             "unique_indentificator" => $dataFilters["client_unique"],
         ]);
         $clientNew = $clientNewController->index($request);
+        $clientNewId = $clientNew ? $clientNew->id : null;
 
-        if($clientNew)
-        {
-            $clientNewId = $clientNew->id;
-        }
         $formAnswers = $this->filterFormAnswer($request->form_id, $requestJson['filter'], $clientNewId);
+        if(!$formAnswers)
+        {
+            $formAnswers = $filterHelper->filterByDataBase($request->form_id, $clientNewId, $requestJson['filter']);
+        }
+        if(!$formAnswers)
+        {
+            $formAnswers = $filterHelper->filterbyApi($request->form_id, $requestJson['filter']);
+        }
+
         $formAnswers = $this->setNewStructureAnswer($formAnswers, $request->form_id);
-        $miosHelper = new MiosHelper();
         $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
         return response()->json($data, $data['code']);
     }
@@ -553,7 +560,7 @@ class FormAnswerController extends Controller
     public function formAnswerHistoric($id, MiosHelper $miosHelper)
     {
         // try {
-            $form_answers = FormAnswer::where('id', $id)->with('channel', 'client')->first();
+            $form_answers = FormAnswer::where('id', $id)->with('channel', 'clientNew')->first();
 
             $rrhhId = $form_answers->rrhh_id;
                 $userData     = $this->ciuService->fetchUserByRrhhId($rrhhId);
@@ -561,8 +568,6 @@ class FormAnswerController extends Controller
 
                 $new_structure_answer = [];
                 foreach($form_answers->structure_answer as $field){
-                    Log::info(json_encode($field));
-                    Log::info(isset($field['duplicated']));
                     if(isset($field['duplicated'])){
                         $select = $this->findSelect($form_answers->form_id, $field['duplicated']['idOriginal'], $field['value']);
                     }else{
@@ -784,12 +789,11 @@ class FormAnswerController extends Controller
             foreach ( $section->fields as $field) {
                 if($field->preloaded == true){
                     //Traemos descripcion pues alli se guarda el nombre del archivo
-                    $key_value = KeyValue::where('client_id', $client_id)->where('field_id', $field->id)->select('field_id', 'value', 'key', 'description')->latest()->first();
+                    $key_value = KeyValue::where('client_new_id', $client_id)->where('field_id', $field->id)->select('field_id', 'value', 'key', 'description')->latest()->first();
                     if($key_value){
                         $key_value->id = $key_value->field_id;
                         unset($key_value->field_id);
                         $structure_data[] = $key_value;
-
                     }
                 }
             }
