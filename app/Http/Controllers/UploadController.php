@@ -63,13 +63,13 @@ class UploadController extends Controller
 
     /**
     * @desc Extrae la primera fila del archivo para ser mostrada al usaurio y realice el match de los datos cargados con los campos del formulario
-    * @param file $excel - Archivo que va a ser cargado
-    * @return array - Arreglo con el nombre de cada una de las columnas.
+    * @param file ->excel - Archivo que va a ser cargado
+    * @return array ->columnsFile Arreglo con el nombre de las columnas encontradas en el archivo
+    * @return array ->prechargables Arreglo de objetos en el que se pasan el id y el label del field precargable [{"id": 11221212,"label": "Primer Nombre"},{"id": 7838473847,"label": "Primer Apellido"}].
     * @author Leonardo Giraldo Quintero
     */
     public function extractColumnsNames(Request $request, MiosHelper $miosHelper){
         try {
-            \Log::info($request->form_id);
             $file = $request->file('excel');
             $answer = [];
             if(isset($file)){
@@ -90,7 +90,6 @@ class UploadController extends Controller
 
                         }
                     }
-
                     $data = $miosHelper->jsonResponse(true,200,"data",$answer);
                 }else{
                     $data = $miosHelper->jsonResponse(false,406,"message","El archivo cargado no tiene datos para cargar, recuerde que en la primera fila se debe utilizar para identificar los datos asignados a cada columna.");
@@ -100,26 +99,46 @@ class UploadController extends Controller
             }
             return response()->json($data, $data['code']);
         } catch (Throwable $e) {
-            $data = $miosHelper->jsonResponse(false,400,"message",$e->getMessage());
+            $data = $miosHelper->jsonResponse(false,500,"message",$e->getMessage());
             return response()->json($data, $data['code']);
         }
     }
 
     /**
      * @desc Función para cargar los clientes por medio de un excel
-     * @param file $excel Archivo que tiene los clientes que se cargara
+     * @param file ->excel Archivo que tiene los clientes que se cargara
+     * @param integer ->form_id Id del formulario
+     * @param array ->assigns Arreglo de Objetos con la assignación de idField a cada una de las columnas del campo [{"columnName":"Nombre","id":123456789890},{"columnName":"Apellido","id":12345678908787}]
+     * @param string ->action Cadena de texto con dos posibles opciones update o none
+     *
      */
     public function excelClients(Request $request , MiosHelper $miosHelper){
         //Primero Validamos que todos los parametros necesarios para el correcto funcionamiento esten
         $this->validate($request,[
             'excel' => 'required',
-            'user_id' => 'required',
             'form_id' => 'required',
             'assigns' => ['required','json'],
             'action' => 'required'
         ]);
+        $userRrhhId=auth()->user()->rrhh_id;
         $file = $request->file('excel');
-        $form_import_validate = Excel::import(new ClientImport(json_decode($request->assigns),$request->form_id), $file);
+        \Log::info($file);
+        $FormController= new FormController();
+        $completeForm=$FormController->searchForm(1)->getData();
+        try {
+            $form_import_validate = Excel::import(new ClientImport(json_decode($request->assigns),$request->form_id,$completeForm->section,json_decode($completeForm->fields_client_unique_identificator)[0]), $file);
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+             $failures = $e->failures();
+
+             foreach ($failures as $failure) {
+                 $failure->row(); // row that went wrong
+                 $failure->attribute(); // either heading key (if using heading row concern) or column index
+                 $failure->errors(); // Actual error messages from Laravel validator
+                 $failure->values(); // The values of the row that has failed.
+             }
+             \Log::info(json_encode($failures));
+
+        }
 
     }
 
