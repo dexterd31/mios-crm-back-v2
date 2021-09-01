@@ -73,7 +73,7 @@ class FilterHelper
                 $formAnswersQuery = $formAnswersQuery->where('data', 'like', '%' . $filter["value"] . '%');
             }
         }
-        return $formAnswersQuery->with('clientNew')->paginate(5);
+        return $formAnswersQuery->paginate(5);
     }
 
     // Funcion para buscar por api

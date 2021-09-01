@@ -440,15 +440,19 @@ class FormAnswerController extends Controller
     {
         $formAnswersQuery = FormAnswer::where('form_id', $formId);
         foreach ($filters as $filter) {
-            $key = $filter["key"];
-            $value = $filter["value"];
-            $formAnswersQuery = $formAnswersQuery->whereRaw("json_contains(lower(structure_answer), lower('{\"key\":\"$key\", \"value\":\"$value\"}'))");
+            Log::info($filter["id"]);
+            // $formAnswersQuery = $formAnswersQuery->where('structure_answer->id', $filter["id"])
+            //     ->where('structure_answer->value', $filter["value"]);
+            $formAnswersQuery = $formAnswersQuery->whereJsonContains('structure_answer', ['id' => $filter["id"]])
+                ->whereJsonContains('structure_answer', ['value' => $filter["value"]]);
         }
         if($clientNewId)
         {
             $formAnswersQuery = $formAnswersQuery->where("client_new_id", $clientNewId);
         }
-        return $formAnswersQuery->with('ClientNew')->paginate(5);
+        Log::info($formAnswersQuery->toSql());
+        Log::info($formAnswersQuery->get());
+        return $formAnswersQuery->paginate(5);
     }
 
     /**
