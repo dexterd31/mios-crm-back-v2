@@ -43,14 +43,13 @@ class FormAnswerController extends Controller
 
     private function create($clientNewId, $formId, $structureAnswer)
     {
+        Log::info("........".$clientNewId);
         $formsAnswer = new FormAnswer([
             'rrhh_id' => auth()->user()->rrhh_id,
             'channel_id' => 1,
             'form_id' => $formId,
             'structure_answer' => json_encode($structureAnswer),
-            'client_new_id' => $clientNewId,
-            'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
-            'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
+            'client_new_id' => $clientNewId
         ]);
 
         return $this->saveModel($formsAnswer);
@@ -376,7 +375,7 @@ class FormAnswerController extends Controller
             $formAnswers = $filterHelper->filterbyApi($request->form_id, $requestJson['filter']);
         }
 
-        if($formAnswers)
+        if(isset($formAnswers->id))
         {
             if(!$clientNewId)
             {
