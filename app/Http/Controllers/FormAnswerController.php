@@ -77,9 +77,17 @@ class FormAnswerController extends Controller
                 {
                     $register['duplicated']=$field['duplicated'];
                 }
-
+                if(json_decode($request->client_unique)[0]->id == $field['id'])
+                {
+                    $register['client_unique'] = true;
+                    $clientUnique = $register;
+                }
                 if(isset($field['isClientInfo']) && $field['isClientInfo'])
                 {
+                    $clientInfo = array();
+                    $clientInfo['id'] = $field['id'];
+                    $clientInfo['key'] = $field['key'];
+                    $clientInfo['value'] = $field['value'];
                     array_push($clientNewInfo, $register);
                     //tener en cuenta guardar label en archivos
                 }
