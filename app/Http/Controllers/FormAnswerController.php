@@ -358,15 +358,14 @@ class FormAnswerController extends Controller
         $dataFilters = $this->getDataFilters($requestJson['filter']);
 
         $clientNewController = new ClientNewController();
-        $clientNew = new Request();
-        $clientNew->replace([
-            'form_id' => $requestJson['isClientInfo'],
+        $clientNeData = new Request();
+        $clientNeData->replace([
+            'form_id' => $request->form_id,
             "information_data" => $dataFilters["client_unique"],
-            "unique_indentificator" => $dataFilters["client_unique"],
+            "unique_indentificator" => json_encode($dataFilters["client_unique"]),
         ]);
-        $clientNew = $clientNewController->index($request);
+        $clientNew = $clientNewController->index($clientNeData);
         $clientNewId = $clientNew ? $clientNew->id : null;
-
         $formAnswers = $this->filterFormAnswer($request->form_id, $requestJson['filter'], $clientNewId);
         if(!$formAnswers)
         {
@@ -377,7 +376,16 @@ class FormAnswerController extends Controller
             $formAnswers = $filterHelper->filterbyApi($request->form_id, $requestJson['filter']);
         }
 
-        $formAnswers = $this->setNewStructureAnswer($formAnswers, $request->form_id);
+        if($formAnswers)
+        {
+            if(!$clientNewId)
+            {
+                $clientNewId = $formAnswers[0]->client_new_id;
+            }
+            $data['preloaded'] = $this->preloaded($request->form_id, $clientNewId);
+            $formAnswers = $this->setNewStructureAnswer($formAnswers, $request->form_id);
+        }
+        
         $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
         return response()->json($data, $data['code']);
     }
@@ -392,11 +400,11 @@ class FormAnswerController extends Controller
             {
                 if($filter[$fild])
                 {
-                    if(!$dataFilters[$fild])
+                    if(!isset($dataFilters[$fild]))
                     {
                         $dataFilters[$fild] = [];   
                     }
-                    array_push($dataFilters[$fild], $filter);
+                    $dataFilters[$fild] = $filter;
                 }
             }
         }
@@ -408,17 +416,18 @@ class FormAnswerController extends Controller
         foreach ($formAnswers as $formAnswer)
         {
             $formAnswer['userdata'] = $this->ciuService->fetchUserByRrhhId($formAnswer['rrhh_id']);
-            foreach ($formAnswer['structure_answer'] as $value) {
-                if(!isset($value['duplicated']))
+            $structureAnswer = json_decode($formAnswer['structure_answer']);
+            foreach ($structureAnswer as $answer) {
+                if(!isset($answer->duplicated))
                 {
-                    $select = $this->findSelect($formId, $value['id'], $value['value']);
+                    $select = $this->findSelect($formId, $answer->id, $answer->value);
                     if($select)
                     {
-                        $value['value'] = $select;
-                        $new_structure_answer[] = $value;
+                        $answer->value = $select;
+                        $new_structure_answer[] = $answer;
                     }else
                     {
-                        $new_structure_answer[] = $value;
+                        $new_structure_answer[] = $answer;
                     }
                 }
             }
@@ -788,7 +797,7 @@ class FormAnswerController extends Controller
             foreach ( $section->fields as $field) {
                 if($field->preloaded == true){
                     //Traemos descripcion pues alli se guarda el nombre del archivo
-                    $key_value = KeyValue::where('client_new_id', $client_id)->where('field_id', $field->id)->select('field_id', 'value', 'key', 'description')->latest()->first();
+                    $key_value = KeyValue::where('client_new_id', 1)->where('field_id', $field->id)->select('field_id', 'value', 'key', 'description')->latest()->first();
                     if($key_value){
                         $key_value->id = $key_value->field_id;
                         unset($key_value->field_id);

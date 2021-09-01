@@ -80,7 +80,7 @@ class ClientNewController extends Controller
 
         if($validator->fails() && $validatorId->fails())
         {
-            return $validator->errors()->all();
+            return array_merge($validator->errors()->all(), $validatorId->errors()->all());
         }
 
         $this->getClientNewModel();
