@@ -10,6 +10,7 @@ use App\Models\KeyValue;
 use App\Models\Section;
 use App\Models\Tray;
 use App\Models\Attachment;
+use App\Models\ClientNew;
 use App\Models\FormAnswerLog;
 use App\Models\User;
 use App\Models\FormAnswerMiosPhone;
@@ -47,6 +48,7 @@ class FormAnswerController extends Controller
             'channel_id' => 1,
             'form_id' => $formId,
             'structure_answer' => json_encode($structureAnswer),
+            'client_new_id' => $clientNewId,
             'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
             'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
         ]);
@@ -71,6 +73,7 @@ class FormAnswerController extends Controller
                 $register['preloaded'] = $field['preloaded'];
                 $register['label'] = $field['label'];
                 $register['isClientInfo'] = $field['isClientInfo'];
+                $register['client_unique'] = false;
                 if(isset($field['duplicated']))
                 {
                     $register['duplicated']=$field['duplicated'];
@@ -91,6 +94,7 @@ class FormAnswerController extends Controller
                 }
                 if(json_decode($request->client_unique)[0]->id == $field['id'])
                 {
+                    $register['client_unique'] = true;
                     $clientUnique = $register;
                 }
             }
@@ -346,12 +350,113 @@ class FormAnswerController extends Controller
         return $this->successResponse('Datos guardados con exito');
     }
 
+    public function filterForm(Request $request)
+    {
+        $miosHelper = new MiosHelper();
+        $filterHelper = new FilterHelper();
+        $requestJson = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
+        $dataFilters = $this->getDataFilters($requestJson['filter']);
+
+        $clientNewController = new ClientNewController();
+        $clientNeData = new Request();
+        $clientNeData->replace([
+            'form_id' => $request->form_id,
+            "information_data" => $dataFilters["client_unique"],
+            "unique_indentificator" => json_encode($dataFilters["client_unique"]),
+        ]);
+        $clientNew = $clientNewController->index($clientNeData);
+        $clientNewId = $clientNew ? $clientNew->id : null;
+        $formAnswers = $this->filterFormAnswer($request->form_id, $requestJson['filter'], $clientNewId);
+        if(!$formAnswers)
+        {
+            $formAnswers = $filterHelper->filterByDataBase($request->form_id, $clientNewId, $requestJson['filter']);
+        }
+        if(!$formAnswers)
+        {
+            $formAnswers = $filterHelper->filterbyApi($request->form_id, $requestJson['filter']);
+        }
+
+        if($formAnswers)
+        {
+            if(!$clientNewId)
+            {
+                $clientNewId = $formAnswers[0]->client_new_id;
+            }
+            $data['preloaded'] = $this->preloaded($request->form_id, $clientNewId);
+            $formAnswers = $this->setNewStructureAnswer($formAnswers, $request->form_id);
+        }
+        
+        $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
+        return response()->json($data, $data['code']);
+    }
+
+    private function getDataFilters($filters)
+    {
+        $dataFilters = [];
+        $filds = ["isClientInfo", "preloaded", "client_unique"];
+        foreach ($filters as $filter)
+        {
+            foreach ($filds as $fild)
+            {
+                if($filter[$fild])
+                {
+                    if(!isset($dataFilters[$fild]))
+                    {
+                        $dataFilters[$fild] = [];   
+                    }
+                    $dataFilters[$fild] = $filter;
+                }
+            }
+        }
+        return $dataFilters;
+    }
+
+    private function setNewStructureAnswer($formAnswers, $formId)
+    {
+        foreach ($formAnswers as $formAnswer)
+        {
+            $formAnswer['userdata'] = $this->ciuService->fetchUserByRrhhId($formAnswer['rrhh_id']);
+            $structureAnswer = json_decode($formAnswer['structure_answer']);
+            foreach ($structureAnswer as $answer) {
+                if(!isset($answer->duplicated))
+                {
+                    $select = $this->findSelect($formId, $answer->id, $answer->value);
+                    if($select)
+                    {
+                        $answer->value = $select;
+                        $new_structure_answer[] = $answer;
+                    }else
+                    {
+                        $new_structure_answer[] = $answer;
+                    }
+                }
+            }
+            $formAnswer['structure_answer'] = $new_structure_answer;
+        }
+        return $formAnswers;
+    }
+
+    private function filterFormAnswer($formId, $filters, $clientNewId)
+    {
+        $formAnswersQuery = FormAnswer::where('form_id', $formId);
+        foreach ($filters as $filter) {
+            $key = $filter["key"];
+            $value = $filter["value"];
+            $formAnswersQuery = $formAnswersQuery->whereRaw("json_contains(lower(structure_answer), lower('{\"key\":\"$key\", \"value\":\"$value\"}'))");
+        }
+        if($clientNewId)
+        {
+            $formAnswersQuery = $formAnswersQuery->where("client_new_id", $clientNewId);
+        }
+        return $formAnswersQuery->with('ClientNew')->paginate(5);
+    }
+
     /**
      * Olme Marin
      * 26-02-2020
      * Método para filtrar las varias opciones en el formulario
      */
-    public function filterForm(Request $request, MiosHelper $miosHelper, FilterHelper $filterHelper, ApiHelper $apiHelper)
+    public function foo2(Request $request, MiosHelper $miosHelper, FilterHelper $filterHelper, ApiHelper $apiHelper)
     {
         // try {
             if (Gate::allows('form_answer')) {
@@ -463,7 +568,7 @@ class FormAnswerController extends Controller
     public function formAnswerHistoric($id, MiosHelper $miosHelper)
     {
         // try {
-            $form_answers = FormAnswer::where('id', $id)->with('channel', 'client')->first();
+            $form_answers = FormAnswer::where('id', $id)->with('channel', 'clientNew')->first();
 
             $rrhhId = $form_answers->rrhh_id;
                 $userData     = $this->ciuService->fetchUserByRrhhId($rrhhId);
@@ -471,8 +576,6 @@ class FormAnswerController extends Controller
 
                 $new_structure_answer = [];
                 foreach($form_answers->structure_answer as $field){
-                    Log::info(json_encode($field));
-                    Log::info(isset($field['duplicated']));
                     if(isset($field['duplicated'])){
                         $select = $this->findSelect($form_answers->form_id, $field['duplicated']['idOriginal'], $field['value']);
                     }else{
@@ -694,12 +797,11 @@ class FormAnswerController extends Controller
             foreach ( $section->fields as $field) {
                 if($field->preloaded == true){
                     //Traemos descripcion pues alli se guarda el nombre del archivo
-                    $key_value = KeyValue::where('client_id', $client_id)->where('field_id', $field->id)->select('field_id', 'value', 'key', 'description')->latest()->first();
+                    $key_value = KeyValue::where('client_new_id', 1)->where('field_id', $field->id)->select('field_id', 'value', 'key', 'description')->latest()->first();
                     if($key_value){
                         $key_value->id = $key_value->field_id;
                         unset($key_value->field_id);
                         $structure_data[] = $key_value;
-
                     }
                 }
             }
