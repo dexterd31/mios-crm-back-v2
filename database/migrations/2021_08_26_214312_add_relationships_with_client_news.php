@@ -27,7 +27,11 @@ class AddRelationshipsWithClientNews extends Migration
         {
             $table->unsignedBigInteger('client_new_id'); 
         });
-      
+
+        Schema::table('forms', function ($table)
+        {
+            $table->unsignedBigInteger('client_new_id'); 
+        });
     }
 
     /**
