@@ -24,7 +24,6 @@ use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class FormAnswerController extends Controller
@@ -43,7 +42,6 @@ class FormAnswerController extends Controller
 
     private function create($clientNewId, $formId, $structureAnswer)
     {
-        Log::info("........".$clientNewId);
         $formsAnswer = new FormAnswer([
             'rrhh_id' => auth()->user()->rrhh_id,
             'channel_id' => 1,
@@ -61,6 +59,7 @@ class FormAnswerController extends Controller
         $clientNewInfo = [];
         $dataPreloaded = [];
         $formAnswerData = [];
+        $date_string = Carbon::now()->format('YmdHis');
         foreach($sections as $section)
         {
             foreach($section['fields'] as $field)
@@ -73,8 +72,16 @@ class FormAnswerController extends Controller
                 $register['label'] = $field['label'];
                 $register['isClientInfo'] = $field['isClientInfo'];
                 $register['client_unique'] = false;
-                if(isset($field['duplicated']))
-                {
+                if($field['controlType'] == 'file'){
+                    $attachment = new Attachment();
+                    $attachment->name = $request->file($field['id'])->getClientOriginalName();
+                    $attachment->source = $request->file($field['id'])->store($date_string);
+                    $attachment->save();
+                    $register['value'] = $attachment->id;
+                    $register['nameFile']=$attachment->name; //Agregamos el nombre del archivo para que en el momento de ver las respuestas en el formulario se visualice el nombre.
+                }
+
+                if(isset($field['duplicated'])){
                     $register['duplicated']=$field['duplicated'];
                 }
                 if(json_decode($request->client_unique)[0]->id == $field['id'])
@@ -91,6 +98,7 @@ class FormAnswerController extends Controller
                     array_push($clientNewInfo, $register);
                     //tener en cuenta guardar label en archivos
                 }
+
                 if(!empty($register['value']))
                 {
                     if(isset($register['preloaded']) && $register['preloaded'])
@@ -359,19 +367,20 @@ class FormAnswerController extends Controller
 
     public function filterForm(Request $request)
     {
+        \Log::info(json_encode($request->all()));
         $miosHelper = new MiosHelper();
         $filterHelper = new FilterHelper();
         $requestJson = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
         $dataFilters = $this->getDataFilters($requestJson['filter']);
-
+        \Log::info(json_encode($dataFilters));
         $clientNewController = new ClientNewController();
-        $clientNeData = new Request();
-        $clientNeData->replace([
+        $clientNewData = new Request();
+        $clientNewData->replace([
             'form_id' => $request->form_id,
             "information_data" => $dataFilters["client_unique"],
             "unique_indentificator" => json_encode($dataFilters["client_unique"]),
         ]);
-        $clientNew = $clientNewController->index($clientNeData);
+        $clientNew = $clientNewController->index($clientNewData);
         $clientNewId = $clientNew ? $clientNew->id : null;
         $formAnswers = $this->filterFormAnswer($request->form_id, $requestJson['filter'], $clientNewId);
         if(!$formAnswers)
@@ -392,7 +401,7 @@ class FormAnswerController extends Controller
             $data['preloaded'] = $this->preloaded($request->form_id, $clientNewId);
             $formAnswers = $this->setNewStructureAnswer($formAnswers, $request->form_id);
         }
-        
+
         $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
         return response()->json($data, $data['code']);
     }
@@ -405,11 +414,11 @@ class FormAnswerController extends Controller
         {
             foreach ($filds as $fild)
             {
-                if($filter[$fild])
+                if(isset($filter[$fild]))
                 {
                     if(!isset($dataFilters[$fild]))
                     {
-                        $dataFilters[$fild] = [];   
+                        $dataFilters[$fild] = [];
                     }
                     $dataFilters[$fild] = $filter;
                 }
@@ -445,6 +454,7 @@ class FormAnswerController extends Controller
 
     private function filterFormAnswer($formId, $filters, $clientNewId)
     {
+        \Log::info(json_encode($filters));
         $formAnswersQuery = FormAnswer::where('form_id', $formId);
         foreach ($filters as $filter) {
 
