@@ -13,16 +13,9 @@ class AddRelationshipsWithClientNewsInFormAnswersAndForms extends Migration
      */
     public function up()
     {
-        Schema::table('form_answers_and_forms', function (Blueprint $table) {
-            // Schema::table('form_answers', function ($table)
-            // {
-            //     $table->unsignedBigInteger('client_new_id'); 
-            // });
-    
-            Schema::table('forms', function ($table)
-            {
-                $table->unsignedBigInteger('client_new_id'); 
-            });
+        Schema::table('form_answers', function ($table)
+        {
+            $table->unsignedBigInteger('client_new_id'); 
         });
     }
 
