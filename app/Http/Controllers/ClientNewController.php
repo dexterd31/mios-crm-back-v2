@@ -23,7 +23,7 @@ class ClientNewController extends Controller
 		{
 			$this->setClientNewModel(new ClientNew());
 		}
-		$this->clientNewModel;
+		return $this->clientNewModel;
 	}
 
     public function search(Request $request)
@@ -48,7 +48,7 @@ class ClientNewController extends Controller
             $clientNewQuery = $clientNewQuery->where("unique_indentificator->key", $unique_indentificator->key)
                 ->where("unique_indentificator->value", $unique_indentificator->value);
         }
-
+;
         foreach ($request->information_data as $informationData)
         {
             $informationData = json_decode($request->informationData);
@@ -71,7 +71,8 @@ class ClientNewController extends Controller
     {
         $validator = Validator::make($request->all(),[
             'form_id' => 'required|integer',
-            'unique_indentificator' => 'required|json',
+            'unique_indentificator' => 'json',
+            'information_data' => 'array',
         ]);
 
         $validatorId = Validator::make($request->all(),[
@@ -83,14 +84,36 @@ class ClientNewController extends Controller
             return array_merge($validator->errors()->all(), $validatorId->errors()->all());
         }
 
-        $this->getClientNewModel();
+        $clientNewQuery = $this->getClientNewModel();
+        $clientNewQuery = $clientNewQuery->where("form_id", $request->form_id);
         if($request->client_new_id)
         {
             return $this->clientNewModel->find($request->client_new_id);
         }
-        $unique_indentificator = json_decode($request->unique_indentificator);
-        return $this->clientNewModel->where("form_id", $request->form_id)->where("unique_indentificator->id", $unique_indentificator->id)
-            ->where("unique_indentificator->value", $unique_indentificator->value)->first();
+
+        $informations_data = $request->information_data;
+        if($informations_data)
+        {
+            foreach($informations_data as $informationData)
+            {
+                $informationDataJson = json_encode([
+                    "id"=> $informationData["id"],
+                    "key"=> $informationData["key"],
+                    "value"=> $informationData["value"],
+                ]);
+                $clientNewQuery = $clientNewQuery
+                ->whereRaw("json_contains(lower(information_data), lower('$informationDataJson'))");
+            }
+        }
+
+        if($request->unique_indentificator)
+        {
+            $unique_indentificator = json_decode($request->unique_indentificator);
+            $clientNewQuery = $clientNewQuery->where("unique_indentificator->id", $unique_indentificator->id)
+                ->where("unique_indentificator->value", $unique_indentificator->value);
+        }
+        \Log::info($clientNewQuery->first());
+        return $clientNewQuery->first();
     }
 
     // Descripción: Función que recibe un objeto y realiza las validaciones y arreglos a
@@ -113,7 +136,12 @@ class ClientNewController extends Controller
         }
         else
         {
-            $clientsNew = $this->index($request);
+            $clientNewRequest = new Request();
+            $clientNewRequest->replace([
+                "form_id" => $request->form_id,
+                "unique_indentificator" => $request->unique_indentificator,
+            ]);
+            $clientsNew = $this->index($clientNewRequest);
             if($clientsNew && isset($clientsNew->id))
             {
                 $data = $this->update($request, $clientsNew);

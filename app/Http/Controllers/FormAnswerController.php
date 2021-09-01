@@ -43,7 +43,6 @@ class FormAnswerController extends Controller
 
     private function create($clientNewId, $formId, $structureAnswer)
     {
-        Log::info("........".$clientNewId);
         $formsAnswer = new FormAnswer([
             'rrhh_id' => auth()->user()->rrhh_id,
             'channel_id' => 1,
@@ -98,11 +97,6 @@ class FormAnswerController extends Controller
                         array_push($dataPreloaded, $register);
                     }
                     array_push($formAnswerData, $register);
-                }
-                if(json_decode($request->client_unique)[0]->id == $field['id'])
-                {
-                    $register['client_unique'] = true;
-                    $clientUnique = $register;
                 }
             }
         }
@@ -363,37 +357,45 @@ class FormAnswerController extends Controller
         $filterHelper = new FilterHelper();
         $requestJson = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
         $dataFilters = $this->getDataFilters($requestJson['filter']);
+        $data = [];
 
         $clientNewController = new ClientNewController();
         $clientNeData = new Request();
         $clientNeData->replace([
             'form_id' => $request->form_id,
-            "information_data" => $dataFilters["client_unique"],
-            "unique_indentificator" => json_encode($dataFilters["client_unique"]),
+            "information_data" => $dataFilters["isClientInfo"],
+            "unique_indentificator" => json_encode($dataFilters["client_unique"][0]),
         ]);
         $clientNew = $clientNewController->index($clientNeData);
         $clientNewId = $clientNew ? $clientNew->id : null;
         $formAnswers = $this->filterFormAnswer($request->form_id, $requestJson['filter'], $clientNewId);
-        if(!$formAnswers)
+        $formAnswersData = $formAnswers->getCollection();
+        if(count($formAnswersData) == 0)
         {
             $formAnswers = $filterHelper->filterByDataBase($request->form_id, $clientNewId, $requestJson['filter']);
+            $formAnswersData = $formAnswers->getCollection();
         }
-        if(!$formAnswers)
+        if(count($formAnswersData) == 0)
         {
-            $formAnswers = $filterHelper->filterbyApi($request->form_id, $requestJson['filter']);
+            $formAnswersApi = $filterHelper->filterbyApi($request->form_id, $requestJson['filter']);
+            if(isset($formAnswersApi))
+            {
+                $formAnswers = $formAnswersApi;
+                $formAnswersData = $formAnswers->getCollection();
+            }
         }
 
-        if(isset($formAnswers->id))
+        if(count($formAnswersData) > 0)
         {
             if(!$clientNewId)
             {
-                $clientNewId = $formAnswers[0]->client_new_id;
+                Log::info($formAnswersData);
+                $clientNewId = $formAnswersData[0]->client_new_id;
             }
-            $data['preloaded'] = $this->preloaded($request->form_id, $clientNewId);
-            $formAnswers = $this->setNewStructureAnswer($formAnswers, $request->form_id);
+            $formAnswersData = $this->setNewStructureAnswer($formAnswersData, $request->form_id);
         }
-        
         $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
+        if($clientNewId)$data["preloaded"] = $this->preloaded($request->form_id, $clientNewId);
         return response()->json($data, $data['code']);
     }
 
@@ -411,7 +413,7 @@ class FormAnswerController extends Controller
                     {
                         $dataFilters[$fild] = [];   
                     }
-                    $dataFilters[$fild] = $filter;
+                    array_push($dataFilters[$fild], $filter);
                 }
             }
         }
@@ -447,9 +449,17 @@ class FormAnswerController extends Controller
     {
         $formAnswersQuery = FormAnswer::where('form_id', $formId);
         foreach ($filters as $filter) {
+            $filterData = json_encode([
+                'id' => $filter['id'],
+                'key' => $filter['key'],
+                'value' => $filter['value'],
+                'preloaded' => $filter['preloaded'],
+                'label' => $filter['label'],
+                'isClientInfo' => $filter['isClientInfo'],
+                'client_unique' => $filter['client_unique'],
+            ]);
 
-            $formAnswersQuery = $formAnswersQuery->where('structure_answer->id', $filter["id"])
-                ->where('structure_answer->value', $filter["value"]);
+            $formAnswersQuery = $formAnswersQuery->whereRaw("json_contains(lower(structure_answer), lower('$filterData'))");
         }
         if($clientNewId)
         {
@@ -804,7 +814,7 @@ class FormAnswerController extends Controller
             foreach ( $section->fields as $field) {
                 if($field->preloaded == true){
                     //Traemos descripcion pues alli se guarda el nombre del archivo
-                    $key_value = KeyValue::where('client_new_id', 1)->where('field_id', $field->id)->select('field_id', 'value', 'key', 'description')->latest()->first();
+                    $key_value = KeyValue::where('client_new_id', $client_id)->where('field_id', $field->id)->select('field_id', 'value', 'key', 'description')->latest()->first();
                     if($key_value){
                         $key_value->id = $key_value->field_id;
                         unset($key_value->field_id);

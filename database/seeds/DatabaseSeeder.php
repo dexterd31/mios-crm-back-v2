@@ -30,5 +30,6 @@ class DatabaseSeeder extends Seeder
         $this->call('ReportSeeder');
         $this->call('ModulesCrmLabelSeeder');
         $this->call('PermissionSeeder');
+        $this->call('ActionPermissionViewDisabledSeeder');
     }
 }
