@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use App\Models\form;
 class Group extends Model
 {
     protected $table = 'groups';
@@ -14,8 +14,8 @@ class Group extends Model
         return $this->belongsTo('App\Models\Campaing', 'group_id');
     }
     
-    public function form(){
-        return $this->hasOne('App\Models\Form','group_id');
+    public function forms(){
+        return $this->hasMany(Form::class);
     }
     
     public function groupuser(){

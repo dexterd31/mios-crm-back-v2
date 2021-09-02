@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Template;
 use App\Models\Report;
+use App\Models\Group;
 
 class Form extends Model
 {
@@ -21,7 +22,7 @@ class Form extends Model
     }
 
     public function group(){
-        return $this->hasOne('App\Models\Group','group_id','id');
+        return $this->hasOne(Group::class,'group_id');
     }
 
     public function stateform(){

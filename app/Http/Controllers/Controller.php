@@ -19,4 +19,11 @@ class Controller extends BaseController
         $model->save();
         return $model;
     }
+
+    public function userCanExecuteAction($action, $element)
+    {
+        $user = auth()->user();
+        return isset($user->permissions) && isset($user->permissions->crm) && 
+            isset($user->permissions->crm->$element) && isset($user->permissions->crm->$element->$action);
+    }
 }

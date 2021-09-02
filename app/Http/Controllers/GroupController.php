@@ -130,6 +130,12 @@ class GroupController extends Controller
     {
         try {
             $group = Group::find($id);
+            $formsActive = $group->forms()->where('state', 1)->get();
+            
+            if(count($formsActive) > 0 && $request->state === 0)
+            {
+                return $this->errorResponse('El grupo no puede ser excluido por que existen formularios activos.', 500);
+            }
             $group->state = $request->state;
             $group->save();
 
@@ -220,7 +226,11 @@ class GroupController extends Controller
         // Se obtiene los grupos por el usuario usuario 
         try {
             $rrhhId = auth()->user()->rrhh_id;
-            $where = ['groups.state' => 1, 'group_users.rrhh_id' => $rrhhId];
+            $where = ['group_users.rrhh_id' => $rrhhId];
+            if(!$this->userCanExecuteAction("ViewDisabled", "groups"))
+            {
+                $where['groups.state'] = 1;
+            }
             $groups = DB::table('groups')->join('group_users', 'groups.id', '=', 'group_users.group_id')
                 ->where($where)
                 ->select('groups.id', 'groups.campaign_id', 'groups.name_group', 'groups.description', 'groups.state', 'groups.created_at', 'groups.updated_at')
