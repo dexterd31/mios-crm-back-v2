@@ -48,7 +48,6 @@ class ClientNewController extends Controller
             $clientNewQuery = $clientNewQuery->where("unique_indentificator->key", $unique_indentificator->key)
                 ->where("unique_indentificator->value", $unique_indentificator->value);
         }
-;
         foreach ($request->information_data as $informationData)
         {
             $informationData = json_decode($request->informationData);
@@ -112,7 +111,6 @@ class ClientNewController extends Controller
             $clientNewQuery = $clientNewQuery->where("unique_indentificator->id", $unique_indentificator->id)
                 ->where("unique_indentificator->value", $unique_indentificator->value);
         }
-        \Log::info($clientNewQuery->first());
         return $clientNewQuery->first();
     }
 
