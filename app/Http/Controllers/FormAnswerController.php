@@ -457,7 +457,6 @@ class FormAnswerController extends Controller
 
     private function filterFormAnswer($formId, $filters, $clientNewId)
     {
-        \Log::info(json_encode($filters));
         $formAnswersQuery = FormAnswer::where('form_id', $formId);
         foreach ($filters as $filter) {
             $filterData = json_encode([
@@ -467,9 +466,8 @@ class FormAnswerController extends Controller
                 'preloaded' => $filter['preloaded'],
                 'label' => $filter['label'],
                 'isClientInfo' => $filter['isClientInfo'],
-                'client_unique' => $filter['client_unique'],
+                'client_unique' => isset($filter['client_unique'])? $filter['client_unique'] : false
             ]);
-
             $formAnswersQuery = $formAnswersQuery->whereRaw("json_contains(lower(structure_answer), lower('$filterData'))");
         }
         if($clientNewId)
