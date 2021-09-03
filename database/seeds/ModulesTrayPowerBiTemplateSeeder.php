@@ -27,7 +27,17 @@ class ModulesTrayPowerBiTemplateSeeder extends Seeder
             [
                 'name' => 'report',
                 'status' => 1,
-                "label" => "Reportes",
+                "label" => "Excel, Power Bi",
+            ],
+            [
+                'name' => 'dataBase',
+                'status' => 1,
+                "label" => "Base de datos",
+            ],
+            [
+                'name' => 'vicidial',
+                'status' => 1,
+                "label" => "Vicidial dashboard",
             ]
         ]);
     }
