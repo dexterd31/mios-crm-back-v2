@@ -11,6 +11,11 @@ use PhpParser\Node\Stmt\Foreach_;
 class FilterHelper
 {
 
+    /**
+     * Joao Beleno
+     * 02-09-2021
+     * @deprecated: Funcio fue subtituida por FormAnswerController::filterFormAnswer()
+     */
     // Funcion para filtar por gestiones de mios
     function filterByGestions($formId, $item1key, $item1value, $item2key, $item2value, $item3key, $item3value)
     {
@@ -33,10 +38,15 @@ class FilterHelper
 
         }
 
-        $form_answers = $form_answers->with('client')->paginate(5);
+        $form_answers = $form_answers->paginate(5);
         return $form_answers;
     }
 
+    /**
+     * Joao Beleno
+     * 02-09-2021
+     * @deprecated: Tabla clientes fue borrada y susbtituida por ClientNew
+     */
     // funcion para obtener el id cliente
     function searchClient($item1value, $item2value, $item3value)
     {
@@ -48,6 +58,11 @@ class FilterHelper
         return $clientId;
     }
 
+    /**
+     * Joao Beleno
+     * 02-09-2021
+     * @deprecated: Tabla clientes fue borrada y susbtituida por ClientNew, no es mas utilizada
+     */
     // Funcion para buscar gestion por id del cliente
     function searchGestionByClientId($formId, $clientId)
     {

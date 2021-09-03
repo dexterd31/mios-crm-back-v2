@@ -80,7 +80,8 @@ class ClientNewController extends Controller
 
         if($validator->fails() && $validatorId->fails())
         {
-            return array_merge($validator->errors()->all(), $validatorId->errors()->all());
+            $error["error"] = array_merge($validator->errors()->all(), $validatorId->errors()->all());
+            return $error["error"];
         }
 
         $clientNewQuery = $this->getClientNewModel();
@@ -97,11 +98,9 @@ class ClientNewController extends Controller
             {
                 $informationDataJson = json_encode([
                     "id"=> $informationData["id"],
-                    "key"=> $informationData["key"],
-                    "value"=> $informationData["value"],
+                    "value"=> $informationData["value"]
                 ]);
-                $clientNewQuery = $clientNewQuery
-                ->whereRaw("json_contains(lower(information_data), lower('$informationDataJson'))");
+                $clientNewQuery = $clientNewQuery->whereRaw("json_contains(lower(information_data), lower('$informationDataJson'))");
             }
         }
 
