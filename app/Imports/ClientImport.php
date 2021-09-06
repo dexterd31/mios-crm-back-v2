@@ -2,32 +2,34 @@
 
 namespace App\Imports;
 
-use App\Models\Client;
-use App\Models\KeyValue;
+use App\Models\ClientNew;
+use App\Http\Controllers\ClientNewController;
+use Illuminate\Http\Request;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithValidation;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
-use App\Http\Controllers\FormController;
+use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 
-
-class ClientImport implements ToModel, WithBatchInserts, WithValidation
+class ClientImport implements ToModel, WithBatchInserts, WithValidation, WithHeadingRow
 {
     //variable que almacena las validaciones para cada uno de los clientes cargados en el archivo
+    private $formId;
     private $rules;
+    private $asigns;
+    private $sections;
+    private $uniqueClientIdentificator;
 
-    public function __construct(array $idFIeldsColumns, int $formId)
+    public function __construct(array $idFIeldsColumns, int $formId, array $sections, object $uniqueClientIdentificator)
     {
-        $this->rules=$this->searchValidationsElementsInField($idFIeldsColumns,$formId);
+        $this->formId=$formId;
+        $this->sections = $sections;
+        $this->uniqueClientIdentificator= $uniqueClientIdentificator;
+        $this->asigns = $this->bringTypeOfField($idFIeldsColumns);
+        $this->rules = $this->searchValidationsElementsInField($idFIeldsColumns);
+        HeadingRowFormatter::default('none');
     }
-
-
-    /*public function prepareForValidation($data, $index)
-    {
-        $data['email'] = $data['email'] ?? 0;
-
-        return $data;
-    }*/
 
     /**
      * @desc
@@ -38,6 +40,7 @@ class ClientImport implements ToModel, WithBatchInserts, WithValidation
         return $this->rules;
     }
 
+
     /**
      * @param array $row
      *
@@ -45,31 +48,29 @@ class ClientImport implements ToModel, WithBatchInserts, WithValidation
      */
     public function model(array $row)
     {
-        /*if (is_numeric($row[4]) || $row[4] == null) {
-            $client = Client::where('document', $row[5])->first();
-            if ($client == null) {
-                return new Client([
-                    'first_name' => $row[0],
-                    'middle_name' => $row[1],
-                    'first_lastname' => $row[2],
-                    'second_lastname' => $row[3],
-                    'document_type_id' => !empty($row[4]) ? $row[4] : 1,
-                    'document' => $row[5],
-                    'phone' => $row[6],
-                    'email' => $row[7],
-                ]);
-            } else {
-                $client->first_name = $row[0];
-                $client->middle_name = $row[1];
-                $client->first_lastname = $row[2];
-                $client->second_lastname = $row[3];
-                $client->document_type_id = $row[4];
-                $client->document = $row[5];
-                $client->phone = $row[6];
-                $client->email = $row[7];
-                $client->save();
+        $informationClient=[];
+        $uniqueIdentificator=new \stdClass();
+        foreach($this->asigns as $index=>$field){
+            $client=$field;
+            $client->value=$row[$client->columnName];
+            if(isset($client->isClientInfo)){
+                array_push($informationClient,$client);
             }
-        }*/
+            if(isset($client->isClientUnique)){
+                $uniqueIdentificator=$client;
+            }
+        }
+        $clientController=new ClientNewController();
+        $newRequest = new Request();
+        $newRequest->replace([
+            "form_id" => $this->formId,
+            "information_data" => json_encode($informationClient),
+            "unique_indentificator" => json_encode($uniqueIdentificator),
+        ]);
+        $client=$clientController->create($newRequest);
+        \Log::info($client);
+        return $client;
+
     }
 
     public function batchSize(): int
@@ -84,28 +85,23 @@ class ClientImport implements ToModel, WithBatchInserts, WithValidation
      * @return array Arreglo de objetos, se devuelve el mismo objeto solo que le agregamos LOS ELEMENTOS type, required, minLength y maxLength
      * @author Leonardo Giraldo Quintero
      */
-    private function searchValidationsElementsInField($searchIdFileds,$formId){
-        $FormController= new FormController();
-        $sections=$FormController->getSections($formId);
+    private function searchValidationsElementsInField($searchIdFields){
         $validation=[];
-        if(count($sections)>0){
-            foreach($sections as $section){
-                foreach(json_decode($section->fields) as $field){
-                    foreach($searchIdFileds as $search){
-                        if($search->idField==$field->id){
+        if(count($this->sections)>0){
+            foreach($this->sections as $section){
+                foreach($section->fields as $field){
+                    foreach($searchIdFields as $search){
+                        if($search->id==$field->id){
                             $rules= isset($field->required) ? 'required' : '';
                             $rules.= '|'.$this->kindOfValidationType($field->type);
                             $rules.= isset($field->minLength) ? '|min:'.$field->minLength : '';
                             $rules.= isset($field->maxLength) ? '|max:'.$field->maxLength : '';
-                            $validation[$search->column]=$rules;
+                            //unset($search->columnName);
                         }
                     }
                 }
             }
-            \Log::info($validation);
             return $validation;
-        }else{
-            return "No se encuentran secciones para el form id ".$formId;
         }
     }
 
@@ -128,5 +124,28 @@ class ClientImport implements ToModel, WithBatchInserts, WithValidation
 
         }
         return $answer;
+    }
+
+    private function bringTypeOfField($searchIdFileds){
+        $completeFileds=[];
+        if(count($this->sections)>0){
+            foreach($this->sections as $section){
+                foreach($section->fields as $field){
+                    foreach($searchIdFileds as $search){
+                        if($search->id==$field->id){
+                            $search->key=$field->key;
+                            $search->preloaded=$field->preloaded;
+                            $search->label=$field->label;
+                            $search->isClientInfo=$field->isClientInfo;
+                            if($this->uniqueClientIdentificator->id == $search->id){
+                                $search->isClientUnique=$field->isClientInfo;
+                            }
+                            $completeFileds[$search->columnName]=$search;
+                        }
+                    }
+                }
+            }
+            return $completeFileds;
+        }
     }
 }

@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddDuplicateInSectionsTable extends Migration
+class AddColumnFieldClientUniqueIndentificatorInForm extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class AddDuplicateInSectionsTable extends Migration
      */
     public function up()
     {
-        Schema::table('sections', function (Blueprint $table) {
-            $table->boolean('duplicate')->default(0);
+        Schema::table('forms', function (Blueprint $table) {
+           $table->json('fields_client_unique_identificator')->nullable();
         });
     }
 
@@ -25,8 +25,8 @@ class AddDuplicateInSectionsTable extends Migration
      */
     public function down()
     {
-        Schema::table('sections', function (Blueprint $table) {
-            $table->dropColumn('duplicate');
+        Schema::table('forms', function (Blueprint $table) {
+            $table->dropColumn('fields_client_unique_identificator');
         });
     }
 }

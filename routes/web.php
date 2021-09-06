@@ -38,6 +38,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/form/upload', 'UploadController@importExcel');
     $router->post('form/dbHistory/{form_id}', 'UploadController@index');
 
+    //Nuevas rutas para importar Base de Clientes
     $router->post('/form/upload/extractColumnsNames', 'UploadController@extractColumnsNames');
     $router->post('/form/upload/excelClients', 'UploadController@excelClients');
 
@@ -82,11 +83,11 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/getUsersFromMyGroups', 'UserController@getUsersFromMyGroups');
 
     //Rutas de clientes
-    $router->get('/getClient/{id}', 'ClientController@getClient');
-    $router->post('/client','ClientController@store');
-    $router->post('/updateClient','ClientController@update');
-    $router->get('/listClient/{document}','ClientController@list');
-    $router->post('/searchClient','ClientController@search');
+    // $router->get('/getClient/{id}', 'ClientController@getClient');
+    // $router->post('/client','ClientController@store');
+    // $router->post('/updateClient','ClientController@update');
+    // $router->get('/listClient/{document}','ClientController@list');
+    // $router->post('/searchClient','ClientController@search');
 
     //Rutas de parámetros
     $router->post('/saveParameters/{id}','ParameterController@saveParameters');
@@ -128,7 +129,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/createPermissions', 'PermissionController@create');
     $router->post('/editPermissions', 'PermissionController@edit');
     $router->get('/moduleCrm', 'ModuleCrmController@store');
-    $router->get('/getPermissionsByIdRole', 'PermissionController@getPermissionsByIdRole');
+    $router->get('/permission', 'PermissionController@index');
+    $router->get('/getPermissionsByIdRole/{idRole}', 'PermissionController@getPermissionsByIdRole');
+    $router->get('/getPermissions', 'PermissionController@getPermissions');
 
     $router->get('/prueba-jsoncontains/{formId}', function($formId){
         $form_answers = FormAnswer::where('form_id', $formId)
