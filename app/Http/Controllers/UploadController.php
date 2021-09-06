@@ -10,12 +10,13 @@ use App\Imports\UploadImport;
 use Helpers\MiosHelper;
 use App\Models\Upload;
 use App\Models\Directory;
-use App\Models\Section;
-use App\Models\User;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FormReportExport;
 use App\Services\CiuService;
 use Throwable;
+use App\Imports\ClientNewImport;
+use App\Http\Controllers\FormAnswerController;
+use Illuminate\Support\Facades\Validator;
 
 class UploadController extends Controller
 {
@@ -117,142 +118,153 @@ class UploadController extends Controller
         $this->validate($request,[
             'excel' => 'required',
             'form_id' => 'required',
-            'assigns' => ['required','json'],
+            'assigns' => 'required',
             'action' => 'required'
         ]);
         $userRrhhId=auth()->user()->rrhh_id;
         $file = $request->file('excel');
-        \Log::info($file);
-        $FormController= new FormController();
-        $completeForm=$FormController->searchForm(1)->getData();
-        try {
-            $form_import_validate = Excel::import(new ClientImport(json_decode($request->assigns),$request->form_id,$completeForm->section,json_decode($completeForm->fields_client_unique_identificator)[0]), $file);
-        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
-             $failures = $e->failures();
-
-             foreach ($failures as $failure) {
-                 $failure->row(); // row that went wrong
-                 $failure->attribute(); // either heading key (if using heading row concern) or column index
-                 $failure->errors(); // Actual error messages from Laravel validator
-                 $failure->values(); // The values of the row that has failed.
-             }
-             \Log::info(json_encode($failures));
-
-        }
-
-    }
-
-
-
-
-    /**
-     * Olme Marin
-     * 10-03-2021
-     * Método para importar info desde la plantilla de excel
-     */
-    public function importExcel(Request $request, MiosHelper $miosHelper)
-    {
-        $file   = $request->file('excel');
-        $userAuth = auth()->user();
-        $rrhhId = $userAuth->rrhh_id;
-        $formId = $request->form_id;
-        $flag = $request->flag;
-        if (isset($file) && isset($rrhhId) && isset($formId)) {
-            //Eliminar registros de Directory
-            if($flag != 'append'){
-                Directory::where('form_id', $formId)->delete();
-            }
-
-            /*start -- validacion documento cargado--*/
-            $form_import_validate = Excel::toCollection(new ValidateImport, $file);
-            $countDocumentLoad = count($form_import_validate[0]);
-            $documentLoad = $form_import_validate[0];
-            $errorResponse = [];
-
-            // Determina cantidad de columnas a cargar documento
-            if ($countDocumentLoad > self::$LIMIT_ROW_UPLOAD_FILE) {
-               $errorResponse[] = 'Limite de registros no permitidos.';
-            }
-
-            // Determina si tiene valores el documento
-            if ($countDocumentLoad > 1) {
-                 foreach ($documentLoad as $keyRows => $rows) {
-
-                    //entrada solo datos, cabecera
-                    if ($keyRows != 0) {
-                        //Determina si la columna Tipo de documento sea de tipo entero para relacionar
-                        if (is_string($rows[4])) {
-                           $errorResponse[] = 'La fila '.($keyRows + 1).' debe ser id tipo numerico para la columna tipo de documento';
-                        }
-                        //Determina si tiene un id para relacionar
-                        if (is_null($rows[4])) {
-                           $errorResponse[] = 'La fila '.($keyRows + 1).' no cuenta con  id tipo numerico para la columna tipo de documento';
-                        }
-                    }
-                    //Determina que cada fila tenga la cantidad de celdas en base a la cabecera
-                    $filteredHead = $documentLoad[0]->filter(function ($value, $key) {
-                        return $value != null;
-                    });
-                    $rowsCount = $rows->filter(function ($value, $key) {
-                        return $value != null;
-                    });
-                    if (count($rowsCount) > count($filteredHead)) {
-                       $errorResponse[] = 'La fila ' . ($keyRows + 1) .' supera la cantidad de celdas con información';
-                    }
-                    foreach ($rows as $keyRowsCell => $valueRowsCell) {
-                        //Determina cantidad de caracteres de cada celda
-                        if (strlen($valueRowsCell) > self::$LIMIT_CHARACTERS_CELL) {
-                           $errorResponse[] = 'La fila '.$keyRows.' de la celda '.$keyRowsCell.' cuenta con mas de 2000 caracteres permitidos.';
-                        }
+        $fileData = json_decode(Excel::toCollection(new ClientNewImport(), $file)[0]);
+        if(count($fileData)>1){
+            $formController = new FormController();
+            $fieldsLoad=$formController->getSpecificFieldForSection(json_decode($request->assigns),$request->form_id);
+            foreach(json_decode($request->assigns) as $assign){
+                foreach($fieldsLoad as $key=>$field){
+                    if($field->id == $assign->id){
+                        $fieldsLoad[$assign->columnName]=$field;
+                        unset($fieldsLoad[$key]);
                     }
                 }
             }
-            if ($errorResponse != []) {
-                $data = $miosHelper->jsonResponse(true,420, 'message', 'Se han encontrado los siguinetes errores al cargar el archivo: '.implode('<br>',$errorResponse));
-                return response()->json($data, $data['code']);
+            \Log::info($fieldsLoad);
+            if(count($fieldsLoad)>0){
+                $directories = [];
+                $dataLoad=[];
+                $dataNotLoad=[];
+                $errorAnswers = [];
+                foreach($fileData as $c=>$client){
+                    $answerFields = [];
+                    foreach($client as $d=>$data){
+                        $dataValidate=$this->validateClientDataUpload($fieldsLoad[$d],$data);
+                        \Log::info(gettype($dataValidate));
+                        \Log::info($dataValidate);
+                        if(!$dataValidate['success']){
+                            array_push($errorAnswers,$dataValidate['message']);
+                        }else{
+                            if(in_array('preload',$dataValidate['in'])){
+                                $key = array_search('preload', $dataValidate['in']);
+                                $preloadData=[];
+                                $preloadData['id']=$dataValidate['field']->id;
+                                $preloadData['key']=$dataValidate['field']->key;
+                                $preloadData['value']=$dataValidate['field']->value;
+                                array_push($answerFields[$dataValidate['in'][$key]],$preloadData);
+                            }
+                            array_push($answerFields[$dataValidate['in']],$dataValidate['field']);
+                            array_push($directories[$c],$dataValidate['field']);
+                        }
+                    }
+                    if(count($errorAnswers)==0){
+                        $clientController=new ClientNewController();
+                        $newRequest = new Request();
+                        $newRequest->replace([
+                            "form_id" => $request->formId,
+                            "information_data" => json_encode($answerFields['informationClient']),
+                            "unique_indentificator" => json_encode($answerFields['uniqueIdentificator']),
+                        ]);
+                        $client=$clientController->create($newRequest);
+                        if(isset($client->id)){
+                            if($answerFields['preloadInputs']){
+                                $keyValuesController= new KeyValueController();
+                                $keyValues=$keyValuesController->createKeysValue($answerFields['preloadInputs'],$request->formId,$client->id);
+                                if(!isset($keyValues->id)){
+                                    array_push($errorAnswers,"No se han podido insertar keyValues para el cliente ".$client->id);
+                                }
+                            }
+                            array_push($dataLoad,$directories[$c]);
+                        }else{
+                            array_push($errorAnswers,"No se han podido insertar el cliente ".$answerFields['uniqueIdentificator']['value']);
+                        }
+                    }else{
+                        array_push($dataNotLoad,$errorAnswers);
+                    }
+                }
+                $resume=["Total Registros: ".count($fileData) , "Cargados: ".count($dataLoad), "No Cargados: ".count($dataNotLoad)];
+                $data = $miosHelper->jsonResponse(true,200,"data",$resume);
+            }else{
+                $data = $miosHelper->jsonResponse(false,400,"message","No se encuentra los campos en el formulario");
             }
-            /*end--validacion documento cargado--*/
-
-            //Se guardan los clientes
-            //try {
-                Excel::import(new ClientImport, $file);
-                //Se guarda en directory
-                //try {
-                    $form_import =new FormAnswerImport($rrhhId, $formId, json_decode($request->ids));
-                    Excel::import($form_import, $file);
-                    //dd('Row count: ' . $form_import->getRowCount());
-
-
-                    //Se agrega en la tabla de uploads
-                    $upload             = new Upload();
-                    $upload->name       = $file->getClientOriginalName();
-                    $upload->rrhh_id    = $rrhhId;
-                    $upload->form_id    = $formId;
-                    $upload->count = $form_import->getRowCount();
-                    $upload->method = empty($request->flag) ? 'replace': $request->flag;
-                    $upload->save();
-
-                    $data = $miosHelper->jsonResponse(true, 200, 'message', 'Se realizó el cargue de forma exitosa');
-                    return response()->json($data, $data['code']);
-                /* } catch (\Throwable $th) {
-                    $data = $miosHelper->jsonResponse(false, 400, 'message', 'Ha ocurrido un error al importar el archivo');
-                    return response()->json($data, $data['code']);
-                } */
-            /* } catch (\Throwable $th) {
-                $data = $miosHelper->jsonResponse(false, 400, 'message', 'Ha ocurrido un error al importar el archivo');
-                return response()->json($data, $data['code']);
-            } */
-        } else {
-            $data = $miosHelper->jsonResponse(false, 400, 'message', 'Faltan campos por ser diligenciados');
-            return response()->json($data, $data['code']);
+        }else{
+            $data = $miosHelper->jsonResponse(false,400,"message","El archivo que intenta cargar no tiene datos.");
         }
+        return response()->json($data,$data['code']);
+    }
+
+    public function validateClientDataUpload($field,$data){
+        $answer=[];
+        $answer['success']=false;
+        $answer['message']=[];
+        /*$rules= isset($field->required) ? 'required' : '';
+        $rules.= '|'.$this->kindOfValidationType($field->type);
+        $rules.= isset($field->minLength) ? '|min:'.$field->minLength : '';
+        $rules.= isset($field->maxLength) ? '|max:'.$field->maxLength : '';
+        \Log::info($rules);
+        $validator = Validator::make(['validation' => $data], [
+            $field->label => $rules
+        ]);
+        if ($validator->fails()){
+            foreach ($validator->errors()->all() as $message) {
+                array_push($answer->message,$message." in ".$field->label);
+            }
+        }else{*/
+            $field->value=$data;
+            $answer['in']=[];
+            if(isset($field->isClientInfo)){
+                array_push($answer['in'],'informationClient');
+            }
+            if(isset($field->isClientUnique)){
+                array_push($answer['in'],'uniqueIdentificator');
+            }
+            if(isset($field->preload)){
+                array_push($answer['in'],'preload');
+            }
+            $answer['success']=true;
+            $answer['field']=$field;
+        //}
+        return $answer;
+    }
+
+    private function kindOfValidationType($type){
+        $answer='';
+        switch($type){
+            case "email":
+                $answer="email";
+            break;
+            case "number":
+                $answer="numeric";
+            break;
+            case "date":
+                $answer="date";
+            break;
+            default:
+                $answer="string";
+            break;
+
+        }
+        return $answer;
+    }
+
+    /**
+     * @desc Función para la generación del documento de gestion de clientes
+     * @param Integer id de la gestión a consultar
+     * @return File Archivo de excel con los datos de gestion
+     */
+    public function downloadManagement(Request $request){
+
     }
 
     public function exportDatabase(Request $request)
     {
       $headers    = $request->reportFields;
       $headers2 = [];
-
       $ids = [];
       $formAnswers_count = Directory::where('form_id',$request->formId)
                           ->where('created_at','>=', $request->date1)
