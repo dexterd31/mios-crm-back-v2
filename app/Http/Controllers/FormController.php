@@ -75,8 +75,8 @@ class FormController extends Controller
             unset($formsSections->section[$i]['updated_at']);
             unset($formsSections->section[$i]['form_id']);
             $formsSections->section[$i]['fields'] = json_decode($formsSections->section[$i]['fields']);
-
         }
+        $formsSections->client_unique = json_decode($formsSections->fields_client_unique_identificator);
         /**
          * Se agrega validacion de api_connections para integracion con SBS (DataCRM)
          */
@@ -96,6 +96,9 @@ class FormController extends Controller
     {
         //  try
         // {
+            $unique_client=$request->client_unique;
+            $filters_form=$request->filters;
+            $filters_form_new=[];
             $forms = new Form([
                 'group_id' =>  $request->input('group_id'),
                 'campaign_id' => $request->input('campaign_id'),
@@ -103,10 +106,9 @@ class FormController extends Controller
                 'name_form' => $request->input('name_form'),
                 'filters' => json_encode($request->filters),
                 'state' => $request->state,
-                'seeRoles' => json_encode($request->role)
+                'seeRoles' => json_encode($request->role),
             ]);
             $forms->save();
-
            foreach($request['sections'] as $section)
            {
                 for($i=0; $i<count($section['fields']); $i++){
@@ -120,44 +122,37 @@ class FormController extends Controller
                         $section['fields'][$i]['key'] = strtolower( str_replace(array(' ','  '),'-',$section['fields'][$i]['key']) );
                         //Concatenamos el resultado del label transformado con la variable $cadena
                         $section['fields'][$i]['key'] = $section['fields'][$i]['key'].$cadena;
+                        foreach($unique_client as $key=>$uniqueField){
+                            if($section['fields'][$i]['id'] == $uniqueField['id']){
+                                $unique_client[$key]['key']=$section['fields'][$i]['key'];
+                                $unique_client[$key]['client_unique']=true;
+                                $section['fields'][$i]['client_unique']=true;
+                            }
+                        }
+                        foreach($filters_form as $filter){
+                            if($section['fields'][$i]['id'] == $filter['id']){
+                                array_push($filters_form_new,$section['fields'][$i]);
+                            }
+                        }
                     }
-               }
-
-              if($section['sectionName'] == 'Datos básicos del cliente')
-              {
-                $firstSection = new Section([
-                      'id' => $section['idsection'],
-                      'form_id' => $forms->id,
-                      'name_section' => $section['sectionName'],
-                      'type_section' => $section['type_section'],
-                      'fields' => json_encode($section['fields']),
-                      'collapse' => empty($section['collapse'])? 0 : $section['collapse'],
-                      'duplicate' => empty($section['duplicar'])? 0 : $section['duplicar']
-                    ]);
-                    $firstSection->save();
-                }else{
-                    $fields = $section['fields'];
-                    $sections = new Section([
-                        'id' => $section['idsection'],
-                        'form_id' => $forms->id,
-                        'name_section' => $section['sectionName'],
-                        'type_section' => $section['type_section'],
-                        'fields' => json_encode($fields),
-                        'collapse' => empty($section['collapse'])? 0 : $section['collapse'],
-                        'duplicate' => empty($section['duplicar'])? 0 : $section['duplicar']
-                    ]);
-                    $sections->save();
                 }
+                $sections = new Section([
+                    'id' => $section['idsection'],
+                    'form_id' => $forms->id,
+                    'name_section' => $section['sectionName'],
+                    'type_section' => $section['type_section'],
+                    'fields' => json_encode($section['fields']),
+                    'collapse' => empty($section['collapse'])? 0 : $section['collapse'],
+                    'duplicate' => empty($section['duplicar'])? 0 : $section['duplicar']
+                ]);
+                $sections->save();
             }
-            if(!isset($sections)){
-                $data = ['forms' => $forms , 'firstSection'=> json_decode($firstSection->fields), 'code' => 200,'message'=>'Formulario Guardado Correctamente'];
-            }else{
-                $data = ['forms' => $forms , 'firstSection'=> json_decode($firstSection->fields),'sections' => json_decode($sections->fields), 'code' => 200,'message'=>'Formulario Guardado Correctamente'];
-            }
-
+            $forms->filters = json_encode($filters_form_new);
+            $forms->fields_client_unique_identificator = json_encode($unique_client);
+            $forms->update();
+            $data = ['code' => 200,'message'=>'Formulario Guardado Correctamente'];
             $this->logForm($forms, $request['sections']);
-
-           return response()->json($data, $data['code']);
+            return response()->json($data, $data['code']);
 
         //   }catch(\Throwable $e){
         //     return $this->errorResponse('Error al guardar el formulario',500);
@@ -288,15 +283,13 @@ class FormController extends Controller
       $date1=Carbon::parse($request->date1)->setTimezone('America/Bogota');
       $date2=Carbon::parse($request->date2)->setTimezone('America/Bogota');
       $rrhhService= new RrhhService();
-      $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','users.id_rhh')
-                          ->join('users', 'users.id', '=', 'form_answers.user_id')
+      $formAnswers = FormAnswer::select('id', 'structure_answer', 'created_at', 'updated_at','rrhh_id')
                           ->where('form_answers.form_id',$request->formId)
-                          //->whereBetween('form_answers.created_at', [$date1, $date2])
+                          ->whereBetween('form_answers.created_at', [$date1, $date2])
                           ->get();
 
        //se extrae el restante de informacion que esta en directory por carga desde excel
-      $directoryData = Directory::select('directories.id', 'directories.data', 'directories.created_at', 'directories.updated_at','users.id_rhh')
-                    ->join('users', 'users.id', '=', 'directories.user_id')
+      $directoryData = Directory::select('id', 'data', 'created_at', 'updated_at','rrhh_id')
                     ->where('directories.form_id',$request->formId)
                     ->get();
 
@@ -314,7 +307,7 @@ class FormController extends Controller
         $rows=[];
         $plantillaRespuestas=[];
         //Agrupamos los id_rrhh del usuario en un arreglo
-        $userRrhhIids=$miosHelper->getArrayValues('id_rhh',$formAnswers);
+        $userRrhhIids=$miosHelper->getArrayValues('rrhh_id',$formAnswers);
         //Se dejan los id unicos quitamos todos los repetidos
         $useString=implode(',',array_values(array_unique($userRrhhIids)));
         //Traemos los datos de rrhh de los usuarios
@@ -334,7 +327,7 @@ class FormController extends Controller
         foreach($sections as $section){
             foreach(json_decode($section->fields) as $input){
                 if($input->inReport){
-                    if(count($input->dependencies)>0){
+                    /*if(count($input->dependencies)>0){
                         if(isset($dependencies[$input->label])){
                             array_push($dependencies[$input->label],$input->id);
                         }else{
@@ -344,11 +337,11 @@ class FormController extends Controller
                             $plantillaRespuestas[$input->label]="-";
                         }
                         $input->dependencies[0]->report=$input->label;
-                    }else{
+                    }else{*/
                         array_push($titleHeaders,$input->label);
                         array_push($inputReport,$input);
                         $plantillaRespuestas[$input->id]="-";
-                    }
+                    //}
                 }
             }
         }
@@ -363,7 +356,7 @@ class FormController extends Controller
             //Evaluamos los campos que deben ir en el reporte contra las respuestas
             foreach($inputReport as $input){
                 foreach(json_decode($answer->structure_answer) as $field){
-                    if(isset($input->dependencies[0]->report)){
+                    /*if(isset($input->dependencies[0]->report)){
                         if(in_array($field->id,$dependencies[$input->dependencies[0]->report])){
                             if(isset($field->value)){
                                 $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
@@ -375,7 +368,7 @@ class FormController extends Controller
                             }
                             break;
                         }
-                    }else if($field->id==$input->id){
+                    }else*/ if($field->id==$input->id){
                         $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
                         if($select){
                             $respuestas[$input->id] = $select;
@@ -395,77 +388,79 @@ class FormController extends Controller
                 }
             }
 
-            $respuestas['user']=$adviserInfo[$answer->id_rhh]->name;
-            $respuestas['docuser']=$adviserInfo[$answer->id_rhh]->id_number;
+            $respuestas['user']=$adviserInfo[$answer->rrhh_id]->name;
+            $respuestas['docuser']=$adviserInfo[$answer->rrhh_id]->id_number;
             $respuestas['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
             $respuestas['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
             $rows[$r]=$respuestas;
             $r++;
           }
 
-        /**Parte de aca, es el recorrido para directories */
-
-         //Agrupamos los id_rrhh del usuario en un arreglo
-         $userIdsDir=$miosHelper->getArrayValues('id_rhh',$directoryData);
-         $useStringDir=implode(',',$userIdsDir);
-         //Traemos los datos de rrhh de los usuarios
-         $usersInfoDirectory=$rrhhService->fetchUsers($useStringDir);
-         //Organizamos la información del usuario en un array asociativo con la información necesaria
-         $adviserInfoDir=[];
-         foreach($usersInfoDirectory as $info){
-             if(in_array($info->id,$userIds)){
-                 if(!isset($adviserInfoDir[$info->id])){
-                     $adviserInfoDir[$info->id]=$info;
-                 }
-             }
-         }
-
-        foreach ($directoryData as $key => $directory) {
-            $respuestas=$plantillaRespuestas;
-            $respuestas['id'] = $directory->id;
-              //Evaluamos los campos que deben ir en el reporte contra las respuestas
-              foreach($inputReport as $input){
-                foreach(json_decode($directory->data) as $data){
-
-                    if(isset($input->dependencies[0]->report)){
-                        if(in_array($data->id,$dependencies[$input->dependencies[0]->report])){
-                            if(isset($data->value)){
-                                $select = $this->findAndFormatValues($request->formId, $data->id,(is_numeric($data->value))?(int)$data->value:$data->value);
-                                if($select){
-                                    $respuestas[$input->dependencies[0]->report] = $select;
-                                } else {
-                                    $respuestas[$input->dependencies[0]->report] = $data->value;
-                                }
-                            }
-                            break;
-                        }
-                    }else if($data->id==$input->id){
-                        $select = $this->findAndFormatValues($request->formId, $data->id, (is_numeric($data->value))?(int)$data->value:$data->value);
-                        if($select){
-                            $respuestas[$input->id] = $select;
-                        } else {
-                            $respuestas[$input->id] = $data->value;
-                        }
-                        break;
-                    }else if($data->key==$input->key){
-                        $select = $this->findAndFormatValues($request->formId, $input->id, (is_numeric($data->value))?(int)$data->value:$data->value);
-                        if($select){
-                            $respuestas[$input->id] = $select;
-                        } else {
-                            $respuestas[$input->id] = $data->value;
-                        }
-                        break;
+        /**
+         * !Parte de aca, es el recorrido para directories
+         * !si es necesario traer de los directories?
+         * */
+         if(count($directoryData)>0){
+            $userIdsDir=$miosHelper->getArrayValues('rrhh_id',$directoryData);
+            $useStringDir=implode(',',$userIdsDir);
+            $usersInfoDirectory=$rrhhService->fetchUsers($useStringDir);
+            $adviserInfoDir=[];
+            foreach($usersInfoDirectory as $info){
+                if(in_array($info->id,$userIdsDir)){
+                    if(!isset($adviserInfoDir[$info->id])){
+                        $adviserInfoDir[$info->id]=$info;
                     }
                 }
             }
 
-            $respuestas['user']=$adviserInfoDir[$answer->id_rhh]->name;
-            $respuestas['docuser']=$adviserInfoDir[$answer->id_rhh]->id_number;
-            $respuestas['created_at'] = Carbon::parse($directory->created_at->format('c'))->setTimezone('America/Bogota');
-            $respuestas['updated_at'] = Carbon::parse($directory->updated_at->format('c'))->setTimezone('America/Bogota');
-            $rows[$r]=$respuestas;
-            $r++;
-        }
+            foreach ($directoryData as $key => $directory) {
+                $respuestas=$plantillaRespuestas;
+                $respuestas['id'] = $directory->id;
+                //Evaluamos los campos que deben ir en el reporte contra las respuestas
+                foreach($inputReport as $input){
+                    foreach(json_decode($directory->data) as $data){
+
+                        if(isset($input->dependencies[0]->report)){
+                            if(in_array($data->id,$dependencies[$input->dependencies[0]->report])){
+                                if(isset($data->value)){
+                                    $select = $this->findAndFormatValues($request->formId, $data->id,(is_numeric($data->value))?(int)$data->value:$data->value);
+                                    if($select){
+                                        $respuestas[$input->dependencies[0]->report] = $select;
+                                    } else {
+                                        $respuestas[$input->dependencies[0]->report] = $data->value;
+                                    }
+                                }
+                                break;
+                            }
+                        }else if($data->id==$input->id){
+                            $select = $this->findAndFormatValues($request->formId, $data->id, (is_numeric($data->value))?(int)$data->value:$data->value);
+                            if($select){
+                                $respuestas[$input->id] = $select;
+                            } else {
+                                $respuestas[$input->id] = $data->value;
+                            }
+                            break;
+                        }else if($data->key==$input->key){
+                            $select = $this->findAndFormatValues($request->formId, $input->id, (is_numeric($data->value))?(int)$data->value:$data->value);
+                            if($select){
+                                $respuestas[$input->id] = $select;
+                            } else {
+                                $respuestas[$input->id] = $data->value;
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                $respuestas['user']=$adviserInfoDir[$answer->rrhh_id]->name;
+                $respuestas['docuser']=$adviserInfoDir[$answer->rrhh_id]->id_number;
+                $respuestas['created_at'] = Carbon::parse($directory->created_at->format('c'))->setTimezone('America/Bogota');
+                $respuestas['updated_at'] = Carbon::parse($directory->updated_at->format('c'))->setTimezone('America/Bogota');
+                $rows[$r]=$respuestas;
+                $r++;
+            }
+         }
+
         array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización');
       }
       return Excel::download(new FormReportExport($rows, $titleHeaders), 'reporte_formulario.xlsx');
@@ -510,6 +505,7 @@ class FormController extends Controller
             ->first();
         $formsSections->seeRoles = json_decode($formsSections->seeRoles);
         $formsSections->filters = json_decode($formsSections->filters);
+        \Log::info(json_encode($formsSections->section));
         for ($i = 0; $i < count($formsSections->section); $i++) {
             unset($formsSections->section[$i]['created_at']);
             unset($formsSections->section[$i]['updated_at']);
@@ -614,7 +610,7 @@ class FormController extends Controller
      * @desc Función para devolver las secciones de un formulario
      * @param Integer $formId id del formulario que se necesitan traer las secciones
      * @return Array Arreglo de objetos en donde se encuntran todas las secciones del formulario
-     * @author Léonardo Giraldo Quintero
+     * @author Leonardo Giraldo Quintero
      *  */
     public function getSections($formId){
         if(isset($formId)){
@@ -625,7 +621,28 @@ class FormController extends Controller
 
     }
 
-
-
+    /**
+     * @desc Busca los fields por su id en las secciones
+     * @param array $search Arreglo de objetos, cada objeto debe contener los elementos id: numero del field al que pertenece
+     * @param integer $formId Numero entero con el id del formulario al que se le debe realizar la busqueda de fields
+     * @return array arreglo con los field solicitados con toda su estructura
+     * @author Leonardo Giraldo Quintero
+     */
+    public function getSpecificFieldForSection($searchIdFileds , $formId){
+        $completeFileds=[];
+        $sections = $this->getSections($formId);
+        if(count($sections)>0){
+            foreach($sections as $section){
+                foreach(json_decode($section->fields) as $field){
+                    foreach($searchIdFileds as $search){
+                        if($search->id==$field->id){
+                            $completeFileds[$field->id]=$field;
+                        }
+                    }
+                }
+            }
+            return $completeFileds;
+        }
+    }
 }
 

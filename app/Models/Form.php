@@ -5,12 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Template;
 use App\Models\Report;
+use App\Models\Group;
 
 class Form extends Model
 {
     protected $table = 'forms';
     protected $PrimaryKey = 'id';
-    protected $fillable = ['group_id', 'campaign_id', 'form_type_id', 'name_form','filters','state', 'seeRoles'];
+    protected $fillable = ['group_id', 'campaign_id', 'form_type_id', 'name_form','filters','state', 'seeRoles', 'fields_client_unique_identificator'];
 
     public function formtype(){
         return $this->belongsTo('App\Models\FormType', 'form_type_id');
@@ -21,7 +22,7 @@ class Form extends Model
     }
 
     public function group(){
-        return $this->hasOne('App\Models\Group','group_id','id');
+        return $this->hasOne(Group::class,'group_id');
     }
 
     public function stateform(){
@@ -31,7 +32,7 @@ class Form extends Model
     public function campaign(){
         return $this->hasOne('App\Models\Campaing', 'campaign_id','id');
     }
-    
+
     public function formAnswer(){
         return $this->belongsTo('App\Models\FormAnswer','form_id');
     }
@@ -45,7 +46,7 @@ class Form extends Model
     public function directory(){
         return $this->hasMany('App\Models\Upload','form_id');
     }
-    
+
     public function apiConnection(){
         return $this->hasMany('App\Models\ApiConnection','form_id');
     }

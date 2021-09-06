@@ -32,10 +32,7 @@ class DropUserIdInFormAnswersTable extends Migration
      */
     public function down()
     {
-
         Schema::table('form_answers', function (Blueprint $table) {
-            $table->unsignedBigInteger('user_id');
-            $table->foreignId('user_id')->constrained('users'); 
         });
     }
 

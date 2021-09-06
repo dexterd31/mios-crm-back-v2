@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddDuplicateInSectionsTable extends Migration
+class AddRelationshipsWithClientNewsInFormAnswersAndForms extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,9 @@ class AddDuplicateInSectionsTable extends Migration
      */
     public function up()
     {
-        Schema::table('sections', function (Blueprint $table) {
-            $table->boolean('duplicate')->default(0);
+        Schema::table('form_answers', function ($table)
+        {
+            $table->unsignedBigInteger('client_new_id'); 
         });
     }
 
@@ -25,8 +26,8 @@ class AddDuplicateInSectionsTable extends Migration
      */
     public function down()
     {
-        Schema::table('sections', function (Blueprint $table) {
-            $table->dropColumn('duplicate');
+        Schema::table('form_answers_and_forms', function (Blueprint $table) {
+            //
         });
     }
 }

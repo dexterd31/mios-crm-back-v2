@@ -10,7 +10,7 @@ use Helpers\MiosHelper;
 class ApiHelper
 {
     // Funcion para cargar la información desde una api registrada
-    function getInfoByApi($registerApi, $parameter, $formId, $item1key, $item1value, $item2key, $item2value, $item3key, $item3value)
+    function getInfoByApi($registerApi, $parameter, $formId, $filters)
     {
         try {
             $miosHelper                 = new MiosHelper();
@@ -38,16 +38,20 @@ class ApiHelper
             }
 
             if ($login) {
+
+                $variables = [];
+                foreach ($filters as $filter)
+                {
+                    $variables[$filter["key"]] = $filter["value"];
+                }
                 // Se llena las variables de busqueda
                 if ($api_type == 1) {
                     // Api rest
-                    $variables = [$item1key => $item1value, $item2key => $item2value, $item3key => $item3value];
                     $json_send = $miosHelper->jsonDecodeResponse($json_send);
                     $json_send = $variables;
                     $json_send = json_encode($json_send);
                 } else {
                     //Graphql
-                    $variables = [$item1key => $item1value, $item2key => $item2value, $item3key => $item3value];
                     $json_send = $miosHelper->jsonDecodeResponse($json_send);
                     $json_send['variables'] = $variables;
                     $json_send = json_encode($json_send);

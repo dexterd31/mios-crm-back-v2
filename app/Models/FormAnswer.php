@@ -5,12 +5,13 @@ namespace App\Models;
 use App\Models\Attachment;
 use App\Models\Tray;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\ClientNew;
 
 class FormAnswer extends Model
 {
     protected $table = 'form_answers';
     protected $PrimaryKey = 'id';
-    protected $fillable = ['form_id','rrhh_id', 'client_id','channel_id','structure_answer'];
+    protected $fillable = ['form_id','rrhh_id', 'client_id','channel_id','structure_answer', "client_new_id", "form_answer_index_data"];
 
     public function form(){
        return $this->hasMany('App\Models\Form','id');
@@ -18,6 +19,10 @@ class FormAnswer extends Model
 
     public function client(){
         return $this->belongsTo('App\Models\Client', 'client_id');
+    }
+
+    public function ClientNew(){
+        return $this->belongsTo(ClientNew::class, 'client_new_id');
     }
 
     public function channel(){

@@ -35,6 +35,7 @@ class GroupsSeeder extends Seeder
             $Group->name_group = $group['name_group'];
             $Group->description = $group['description'];
             $Group->state = $group['state'];
+            $Group->rrhh_id_creator = 1;
 
             $Group->save();
         }
