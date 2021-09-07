@@ -517,19 +517,17 @@ class FormController extends Controller
 
             if($i==0){
                 for($j=0;$j<count($fields);$j++){
-                    if($j>=7){
-                       if($fields[$j]->preloaded == false){
-                            unset($fields[$j]);
-                       }
+                    if($fields[$j]->preloaded == false){
+                        \Log::info($fields[$j]->label." no es precargable");
+                        unset($fields[$j]);
+                        \Log::info(json_encode($fields));
                     }
                 }
-            }
-            else{
+            }else{
                 $fields = $fields->filter(function($x){
-                                return $x->preloaded == true;
-                            });
+                            return $x->preloaded == true;
+                        });
             }
-
             $formsSections->section[$i]['fields'] = array_values($fields->toArray());
         }
 
