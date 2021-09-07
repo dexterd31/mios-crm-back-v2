@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Template;
 use App\Models\Report;
 use App\Models\Group;
+use App\Models\Section;
 
 class Form extends Model
 {
@@ -17,8 +18,9 @@ class Form extends Model
         return $this->belongsTo('App\Models\FormType', 'form_type_id');
     }
 
-    public function section(){
-        return $this->hasMany('App\Models\Section', 'form_id');
+    public function section()
+    {
+        return $this->hasMany(Section::class);
     }
 
     public function group(){

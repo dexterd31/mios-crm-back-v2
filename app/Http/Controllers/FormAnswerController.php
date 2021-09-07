@@ -40,7 +40,7 @@ class FormAnswerController extends Controller
         $this->dataCRMServices = $dataCRMServices;
     }
 
-    private function create($clientNewId, $formId, $structureAnswer, $formAnswerIndexData)
+    private function create($clientNewId, $formId, $structureAnswer, $formAnswerIndexData, $chronometer)
     {
         $formsAnswer = new FormAnswer([
             'rrhh_id' => auth()->user()->rrhh_id,
@@ -49,6 +49,7 @@ class FormAnswerController extends Controller
             'structure_answer' => json_encode($structureAnswer),
             'client_new_id' => $clientNewId,
             "form_answer_index_data" => json_encode($formAnswerIndexData),
+            'tipification_time' => $chronometer
         ]);
 
         return $this->saveModel($formsAnswer);
@@ -73,7 +74,7 @@ class FormAnswerController extends Controller
                 $register['value'] = $field['value'];
                 $register['preloaded'] = $field['preloaded'];
                 $register['label'] = $field['label'];
-                $register['isClientInfo'] = $field['isClientInfo'];
+                $register['isClientInfo'] = isset($field['isClientInfo']) ? $field['isClientInfo'] : false;
                 $register['client_unique'] = false;
                 if($field['controlType'] == 'file'){
                     $attachment = new Attachment();
@@ -100,7 +101,7 @@ class FormAnswerController extends Controller
                         $clientUnique = $register;
                     }
                 }
-                if(isset($field['isClientInfo']) && $field['isClientInfo'] && !isset($data["error"]))
+                if($register['isClientInfo'] && !isset($data["error"]))
                 {
                     array_push($clientNewInfo, [
                         "id" => $field['id'],
@@ -137,7 +138,7 @@ class FormAnswerController extends Controller
             $clientNew = $clientNewController->create($clientNew);
     
             //creando nuevo cliente formAnswer
-            $form_answer = $this->create($clientNew->id, $request->form_id, $formAnswerData, $formAnswerIndexData);
+            $form_answer = $this->create($clientNew->id, $request->form_id, $formAnswerData, $formAnswerIndexData, $request->chronometer);
             $keyValueController = new KeyValueController();
             $keyValueController->createKeysValue($dataPreloaded, $request->form_id, $clientNew->id);
     

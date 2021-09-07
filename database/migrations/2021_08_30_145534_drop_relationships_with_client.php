@@ -20,7 +20,7 @@ class DropRelationshipsWithClient extends Migration
                 {
                     $table->dropForeign(['client_id']);
                 }
-                $table->dropColumn('client_id');
+                $table->unsignedBigInteger('client_id')->default(0)->change();
             });
         }
 
@@ -31,7 +31,7 @@ class DropRelationshipsWithClient extends Migration
                 {
                     $table->dropForeign(['client_id']);
                 }
-                $table->dropColumn('client_id');
+                $table->unsignedBigInteger('client_id')->default(0)->change();
             });
         }
 
@@ -42,7 +42,7 @@ class DropRelationshipsWithClient extends Migration
                 {
                     $table->dropForeign(['client_id']);
                 }
-                $table->dropColumn('client_id');
+                $table->unsignedBigInteger('client_id')->default(0)->change();
             });
         }
     }

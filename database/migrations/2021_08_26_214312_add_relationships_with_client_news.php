@@ -3,6 +3,8 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Artisan;
+
 
 class AddRelationshipsWithClientNews extends Migration
 {
@@ -13,25 +15,29 @@ class AddRelationshipsWithClientNews extends Migration
      */
     public function up()
     {
-        Schema::table('directories', function ($table)
+        if(!Schema::hasColumn('directories', 'client_new_id'))
         {
-            $table->unsignedBigInteger('client_new_id'); 
-        });
+            Schema::table('directories', function ($table)
+            {
+                $table->unsignedBigInteger('client_new_id'); 
+            });
+        }
 
-        Schema::table('key_values', function ($table)
+        if(!Schema::hasColumn('key_values', 'client_new_id'))
         {
-            $table->unsignedBigInteger('client_new_id'); 
-        });
+            Schema::table('key_values', function ($table)
+            {
+                $table->unsignedBigInteger('client_new_id'); 
+            });
+        }
 
-        Schema::table('form_answers', function ($table)
+        if(!Schema::hasColumn('form_answers', 'client_new_id'))
         {
-            $table->unsignedBigInteger('client_new_id'); 
-        });
-
-        Schema::table('forms', function ($table)
-        {
-            $table->unsignedBigInteger('client_new_id'); 
-        });
+            Schema::table('form_answers', function ($table)
+            {
+                $table->unsignedBigInteger('client_new_id'); 
+            });
+        }
     }
 
     /**
@@ -41,6 +47,28 @@ class AddRelationshipsWithClientNews extends Migration
      */
     public function down()
     {
-        //
+        if(Schema::hasColumn('directories', 'client_new_id'))
+        {
+            Schema::table('directories', function ($table)
+            {
+                $table->dropColumn('client_new_id'); 
+            });
+        }
+
+        if(Schema::hasColumn('key_values', 'client_new_id'))
+        {
+            Schema::table('key_values', function ($table)
+            {
+                $table->dropColumn('client_new_id'); 
+            });
+        }
+
+        if(Schema::hasColumn('form_answers', 'client_new_id'))
+        {
+            Schema::table('form_answers', function ($table)
+            {
+                $table->dropColumn('client_new_id');
+            });
+        }
     }
 }

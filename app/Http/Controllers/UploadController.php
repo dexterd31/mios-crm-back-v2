@@ -78,6 +78,7 @@ class UploadController extends Controller
                 if(count($form_import_validate[0])>1 && count($form_import_validate[0][0])>0 && $form_import_validate[0][0]<>NULL){
                     $FormController = new FormController();
                     $prechargables = $FormController->searchPrechargeFields($request->form_id)->getData();
+                    \Log::info(json_encode($prechargables));
                     $answer['columnsFile'] = $form_import_validate[0][0];
                     $answer['prechargables']=[];
                     foreach($prechargables->section as $section){
@@ -158,6 +159,8 @@ class UploadController extends Controller
                                 $preloadData['value']=$dataValidate['field']->value;
                                 array_push($answerFields[$dataValidate['in'][$key]],$preloadData);
                             }
+                            \Log::info($answerFields[$dataValidate['in']]);
+                            \Log::info($dataValidate['field']);
                             array_push($answerFields[$dataValidate['in']],$dataValidate['field']);
                             array_push($directories[$c],$dataValidate['field']);
                         }

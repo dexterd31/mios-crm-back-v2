@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddRelationshipsWithClientNewsInFormAnswersAndForms extends Migration
+class AddColumnTipificationTimeTableFormanswer extends Migration
 {
     /**
      * Run the migrations.
@@ -13,9 +13,8 @@ class AddRelationshipsWithClientNewsInFormAnswersAndForms extends Migration
      */
     public function up()
     {
-        Schema::table('form_answers', function ($table)
-        {
-            $table->unsignedBigInteger('client_new_id'); 
+        Schema::table('form_answers', function (Blueprint $table) {
+            $table->string('tipification_time')->nullable();
         });
     }
 
@@ -26,8 +25,8 @@ class AddRelationshipsWithClientNewsInFormAnswersAndForms extends Migration
      */
     public function down()
     {
-        Schema::table('form_answers_and_forms', function (Blueprint $table) {
-            //
+        Schema::table('form_answers', function (Blueprint $table) {
+            $table->dropColumn('tipification_time');
         });
     }
 }

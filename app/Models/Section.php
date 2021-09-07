@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Form;
 
 class Section extends Model
 {
@@ -11,7 +12,7 @@ class Section extends Model
     protected $fillable = ['form_id', 'name_section', 'type_section','fields', 'collapse','duplicate','state'];
 
     public function Form(){
-        return $this->belongsTo('App\Models\Form', 'id');
+        return $this->belongsTo(Form::class, 'form_id');
     }
 
     public function parameter(){
