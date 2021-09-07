@@ -11,7 +11,7 @@ class FormAnswer extends Model
 {
     protected $table = 'form_answers';
     protected $PrimaryKey = 'id';
-    protected $fillable = ['form_id','rrhh_id', 'client_id','channel_id','structure_answer', "client_new_id", "form_answer_index_data"];
+    protected $fillable = ['form_id','rrhh_id', 'client_id','channel_id','structure_answer', "client_new_id", "form_answer_index_data", "tipification_time"];
 
     public function form(){
        return $this->hasMany('App\Models\Form','id');
