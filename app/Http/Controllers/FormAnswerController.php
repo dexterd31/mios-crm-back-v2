@@ -73,7 +73,7 @@ class FormAnswerController extends Controller
                 $register['value'] = $field['value'];
                 $register['preloaded'] = $field['preloaded'];
                 $register['label'] = $field['label'];
-                $register['isClientInfo'] = $field['isClientInfo'];
+                $register['isClientInfo'] = isset($field['isClientInfo']) ? $field['isClientInfo'] : false;
                 $register['client_unique'] = false;
                 if($field['controlType'] == 'file'){
                     $attachment = new Attachment();
@@ -100,7 +100,7 @@ class FormAnswerController extends Controller
                         $clientUnique = $register;
                     }
                 }
-                if(isset($field['isClientInfo']) && $field['isClientInfo'] && !isset($data["error"]))
+                if($register['isClientInfo'] && !isset($data["error"]))
                 {
                     array_push($clientNewInfo, [
                         "id" => $field['id'],
