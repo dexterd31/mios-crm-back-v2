@@ -129,6 +129,7 @@ class FormController extends Controller
                                 $section['fields'][$i]['client_unique']=true;
                                 $section['fields'][$i]['preloaded']=true;
                                 $section['fields'][$i]['required']=true;
+                                $section['fields'][$i]['isClientInfo']=true;
                             }
                         }
                         foreach($filters_form as $filter){
