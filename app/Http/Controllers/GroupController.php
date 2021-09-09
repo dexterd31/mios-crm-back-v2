@@ -128,21 +128,17 @@ class GroupController extends Controller
      */
     public function deleteGroup(Request $request, $id)
     {
-        try {
-            $group = Group::find($id);
-            $formsActive = $group->forms()->where('state', 1)->get();
-            
-            if(count($formsActive) > 0 && $request->state === 0)
-            {
-                return $this->errorResponse('El grupo no puede ser excluido por que existen formularios activos.', 500);
-            }
-            $group->state = $request->state;
-            $group->save();
-
-            return $this->successResponse('Grupo desactivado correctamente');
-        } catch (\Throwable $e) {
-            return $this->errorResponse('Error al desactivar el Grupo', 500);
+        $group = Group::find($id);
+        $formsActive = $group->forms()->where('state', 1)->get();
+        
+        if(count($formsActive) > 0 && $request->state === 0)
+        {
+            return $this->errorResponse('El grupo no puede ser excluido por que existen formularios activos.', 500);
         }
+        $group->state = $request->state;
+        $group->save();
+
+        return $this->successResponse('Grupo desactivado correctamente');
     }
 
     /**
