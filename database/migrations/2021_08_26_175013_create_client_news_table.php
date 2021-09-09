@@ -18,7 +18,6 @@ class CreateClientNewsTable extends Migration
             $table->foreignId('form_id')->constrained('forms');
             $table->json('information_data');
             $table->json('unique_indentificator');
-            $table->unique(array('unique_indentificator', 'form_id'));
             $table->timestamps();
         });
     }
