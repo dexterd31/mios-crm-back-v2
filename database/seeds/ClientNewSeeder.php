@@ -31,60 +31,67 @@ class ClientNewSeeder extends Seeder
         $clients = Client::all();
         foreach ($clients as $client)
         {
+            //busca respuesta para cada cliente
             $formAnswers = FormAnswer::join("forms", "forms.id", "form_answers.form_id")
                 ->join("sections", "forms.id", "sections.form_id")
-                ->where("form_answers.client_id",$client->id)->where("sections.type_section",1);
+                ->where("form_answers.client_id",$client->id)->where("sections.type_section",1)->select("form_answers.*", "sections.id as sections_id", "sections.fields as fields")->get();
 
+            //idForm es un array con las lista de formularios para cual ya se creo el cliente
+            $idForms = [];
+            //crea un cliente para cada formulario que tenga tipificacion
             foreach ($formAnswers as $formAnswer)
             {
-                $clientNew = ClientNew::find($formAnswer->client_id);
+                \Log::info($formAnswer->type_section);
                 $clientData = [];
                 $clientUnique = [];
-                foreach ($formAnswer->fields as $field)
+                $fields = json_decode($formAnswer->fields );
+
+                if(!in_array($formAnswer->form_id, $idForms))
                 {
-                    if(!$clientNew || ($clientNew && $clientNew->form_id != $formAnswers->form_id))
+                    array_push($idForms, $formAnswer->form_id);
+                    foreach ($fields as $field)
                     {
-                        if($client->$keyDataClient[$field->key])
+                        $key = array_key_exists($field->key,$keyDataClient) ? $keyDataClient[$field->key] : null;
+                        if($key && $client->$key)
                         {
-                            $clientUnique = ["label" => $field->label,
-                            "preloaded" => $field->preloaded,
-                            "id" => $field->id,
-                            "key" => $field->key,
-                            "value" => $client->$keyDataClient[$field->key],
-                            "isClientInfo" => true,
-                            "client_unique" => true];
+                            if($field->key == "document")
+                            {
+                                $clientUnique = [
+                                    "label" => $field->label,
+                                    "preloaded" => $field->preloaded,
+                                    "id" => $field->id,
+                                    "key" => $field->key,
+                                    "value" => $client->$key,
+                                    "isClientInfo" => true,
+                                    "client_unique" => true
+                                ];
+                            }
 
                             array_push($clientData, [
                                 "id" => $field->id,
-                                "value" => $client->$keyDataClient[$field->key],
+                                "value" => $client->$key,
                             ]);
                         }
-
-                        $createClientNew = new ClientNew([
-                            "information_data" => json_encode($clientData),
-                            "unique_indentificator" => json_encode($clientUnique),
-                            "form_id" => $formAnswer->form_id
-                        ]);
-
-                        if(!$clientNew)
-                        {
-                            $createClientNew->id = $client->id;
-                        }
-                        $createClientNew->save();
-
-                        Directory::where('form_id', $formAnswer->form_id)
-                            ->where('client_id', $formAnswer->client_id)
-                            ->update(['client_new_id' => $createClientNew->id]);
-
-                        KeyValue::where('form_id', $formAnswer->form_id)
-                            ->where('client_id', $formAnswer->client_id)
-                            ->update(['client_new_id' => $createClientNew->id]);
-
-                        FormAnswer::where('form_id', $formAnswer->form_id)
-                            ->where('client_id', $formAnswer->client_id)
-                            ->update(['client_new_id' => $createClientNew->id]);
-
                     }
+
+                    $createClientNew = new ClientNew([
+                        "information_data" => json_encode($clientData),
+                        "unique_indentificator" => json_encode($clientUnique),
+                        "form_id" => $formAnswer->form_id
+                    ]);
+                    $createClientNew->save();
+
+                    Directory::where('form_id', $formAnswer->form_id)
+                        ->where('client_id', $formAnswer->client_id)
+                        ->update(['client_new_id' => $createClientNew->id]);
+
+                    KeyValue::where('form_id', $formAnswer->form_id)
+                        ->where('client_id', $formAnswer->client_id)
+                        ->update(['client_new_id' => $createClientNew->id]);
+
+                    FormAnswer::where('form_id', $formAnswer->form_id)
+                        ->where('client_id', $formAnswer->client_id)
+                        ->update(['client_new_id' => $createClientNew->id]);
 
                 }
             }
