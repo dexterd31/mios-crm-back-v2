@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddDuplicateInSectionsTable extends Migration
+class AddRrhhIdCreatorInGroupsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class AddDuplicateInSectionsTable extends Migration
      */
     public function up()
     {
-        Schema::table('sections', function (Blueprint $table) {
-            $table->boolean('duplicate')->default(0);
+        Schema::table('groups', function (Blueprint $table) {
+            $table->unsignedBigInteger('rrhh_id_creator');
         });
     }
 
@@ -25,8 +25,8 @@ class AddDuplicateInSectionsTable extends Migration
      */
     public function down()
     {
-        Schema::table('sections', function (Blueprint $table) {
-            $table->dropColumn('duplicate');
+        Schema::table('groups', function (Blueprint $table) {
+            $table->dropColumn('rrhh_id_creator');
         });
     }
 }
