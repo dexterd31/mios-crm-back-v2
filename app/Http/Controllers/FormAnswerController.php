@@ -430,10 +430,14 @@ class FormAnswerController extends Controller
                 {
                     $clientNewId = $formAnswersData[0]->client_new_id;
                 }
-                $formAnswersData = $this->setNewStructureAnswer($formAnswersData, $request->form_id);
+
+                $data = $this->setNewStructureAnswer($formAnswersData, $request->form_id);
+                
+                $formAnswersData = $data["formAnswers"];
+                $files = $data["files"];
             }
             $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
-            if($clientNewId)$data["preloaded"] = $this->preloaded($request->form_id, $clientNewId);
+            if($clientNewId)$data["preloaded"] = $this->preloaded($request->form_id, $clientNewId, $files);
             return response()->json($data, $data['code']);
         }
         return $this->errorResponse('Error al buscar la gestion', 500);
@@ -464,6 +468,7 @@ class FormAnswerController extends Controller
     {
         foreach ($formAnswers as $formAnswer)
         {
+            $files = [];
             $formAnswer['userdata'] = $this->ciuService->fetchUserByRrhhId($formAnswer['rrhh_id']);
             $structureAnswer = json_decode($formAnswer['structure_answer']);
             foreach ($structureAnswer as $answer) {
@@ -473,16 +478,22 @@ class FormAnswerController extends Controller
                     if($select)
                     {
                         $answer->value = $select;
-                        $new_structure_answer[] = $answer;
-                    }else
-                    {
-                        $new_structure_answer[] = $answer;
                     }
+                    $new_structure_answer[] = $answer;
+                }
+                if(isset($answer->nameFile) && $answer->nameFile && $answer->preloaded)
+                {
+                    array_push($files, (Object)[
+                        "id" => $answer->id,
+                        "key" => $answer->key,
+                        "value" => $answer->value,
+                        "nameFile" => $answer->nameFile,
+                    ]);
                 }
             }
             $formAnswer['structure_answer'] = $new_structure_answer;
         }
-        return $formAnswers;
+        return ["formAnswers" => $formAnswers, "files" => $files];
     }
 
     private function filterFormAnswer($formId, $filters, $clientNewId)
@@ -846,14 +857,14 @@ class FormAnswerController extends Controller
         return response()->download(storage_path("app/" . $attachment->source), $attachment->name);
     }
 
-    private function preloaded($form_id, $client_new_id)
+    private function preloaded($form_id, $client_new_id, $files)
     {
         $form = Form::find($form_id);
         $structure_data = [];
         foreach($form->section as $section){
             $section->fields =json_decode($section->fields);
             foreach ( $section->fields as $field) {
-                if($field->preloaded == true){
+                if($field->preloaded == true && $field->controlType != "file"){
                     //Traemos descripcion pues alli se guarda el nombre del archivo
                     $key_value = KeyValue::where('client_new_id', $client_new_id)->where('field_id', $field->id)->select('field_id', 'value', 'key', 'description')->latest()->first();
                     if($key_value){
@@ -864,8 +875,7 @@ class FormAnswerController extends Controller
                 }
             }
         }
-
-        $answer['data']=$structure_data;
+        $answer['data'] = array_merge($structure_data, $files);
         $answer['client_id']=$client_new_id;
         return $answer;
 
