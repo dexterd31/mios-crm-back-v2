@@ -32,23 +32,23 @@ class ClientNewSeeder extends Seeder
         foreach ($clients as $client)
         {
             //busca respuesta para cada cliente
-            $formAnswers = FormAnswer::join("forms", "forms.id", "form_answers.form_id")
+
+            $allForm = KeyValue::join("forms", "forms.id", "key_values.form_id")
                 ->join("sections", "forms.id", "sections.form_id")
-                ->where("form_answers.client_id",$client->id)->where("sections.type_section",1)->select("form_answers.*", "sections.id as sections_id", "sections.fields as fields")->get();
+                ->where("key_values.client_id",$client->id)->where("sections.type_section",1)->select("key_values.*", "sections.id as sections_id", "sections.fields as fields")->get();
 
             //idForm es un array con las lista de formularios para cual ya se creo el cliente
             $idForms = [];
             //crea un cliente para cada formulario que tenga tipificacion
-            foreach ($formAnswers as $formAnswer)
+            foreach ($allForm as $form)
             {
-                \Log::info($formAnswer->type_section);
                 $clientData = [];
                 $clientUnique = [];
-                $fields = json_decode($formAnswer->fields );
+                $fields = json_decode($form->fields);
 
-                if(!in_array($formAnswer->form_id, $idForms))
+                if(!in_array($form->form_id, $idForms))
                 {
-                    array_push($idForms, $formAnswer->form_id);
+                    array_push($idForms, $form->form_id);
                     foreach ($fields as $field)
                     {
                         $key = array_key_exists($field->key,$keyDataClient) ? $keyDataClient[$field->key] : null;
@@ -58,7 +58,7 @@ class ClientNewSeeder extends Seeder
                             {
                                 $clientUnique = [
                                     "label" => $field->label,
-                                    "preloaded" => $field->preloaded,
+                                    "preloaded" => true,
                                     "id" => $field->id,
                                     "key" => $field->key,
                                     "value" => $client->$key,
@@ -77,22 +77,21 @@ class ClientNewSeeder extends Seeder
                     $createClientNew = new ClientNew([
                         "information_data" => json_encode($clientData),
                         "unique_indentificator" => json_encode($clientUnique),
-                        "form_id" => $formAnswer->form_id
+                        "form_id" => $form->form_id
                     ]);
                     $createClientNew->save();
 
-                    Directory::where('form_id', $formAnswer->form_id)
-                        ->where('client_id', $formAnswer->client_id)
+                    Directory::where('form_id', $form->form_id)
+                        ->where('client_id', $form->client_id)
                         ->update(['client_new_id' => $createClientNew->id]);
 
-                    KeyValue::where('form_id', $formAnswer->form_id)
-                        ->where('client_id', $formAnswer->client_id)
+                    KeyValue::where('form_id', $form->form_id)
+                        ->where('client_id', $form->client_id)
                         ->update(['client_new_id' => $createClientNew->id]);
 
-                    FormAnswer::where('form_id', $formAnswer->form_id)
-                        ->where('client_id', $formAnswer->client_id)
+                    FormAnswer::where('form_id', $form->form_id)
+                        ->where('client_id', $form->client_id)
                         ->update(['client_new_id' => $createClientNew->id]);
-
                 }
             }
         }
