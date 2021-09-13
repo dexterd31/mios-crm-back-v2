@@ -127,8 +127,9 @@ class FormController extends Controller
                                 $unique_client[$key]['key']=$section['fields'][$i]['key'];
                                 $unique_client[$key]['client_unique']=true;
                                 $section['fields'][$i]['client_unique']=true;
-                                $section['fields'][$i]['preload']=true;
+                                $section['fields'][$i]['preloaded']=true;
                                 $section['fields'][$i]['required']=true;
+                                $section['fields'][$i]['isClientInfo']=true;
                             }
                         }
                         foreach($filters_form as $filter){
