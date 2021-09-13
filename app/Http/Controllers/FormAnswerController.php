@@ -246,7 +246,7 @@ class FormAnswerController extends Controller
     {
         // try {
             if (Gate::allows('form_answer')) {
-
+                $files = [];
                 $json_body      = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
                 $formId         = $json_body['form_id'];
                 $form_answers   = null;
@@ -299,6 +299,7 @@ class FormAnswerController extends Controller
                         unset($form['data']);
 
                         $new_structure_answer = [];
+                        
                         foreach ($form['structure_answer'] as $value) {
                             if(!isset($value['duplicated'])){
                                 $select = $this->findSelect($formId, $value['id'], $value['value']);
@@ -308,6 +309,15 @@ class FormAnswerController extends Controller
                                 } else {
                                     $new_structure_answer[] = $value;
                                 }
+                            }
+                            if(isset($value->nameFile) && $value->nameFile && $value->preloaded)
+                            {
+                                array_push($files, (Object)[
+                                    "id" => $value->id,
+                                    "key" => $value->key,
+                                    "value" => $value->value,
+                                    "nameFile" => $value->nameFile,
+                                ]);
                             }
                         }
                         $form['structure_answer'] = $new_structure_answer;
@@ -321,7 +331,7 @@ class FormAnswerController extends Controller
 
                 $data = $miosHelper->jsonResponse(true, 200, 'result', $form_answers);
                 if( !empty($form_answers[0]['client']['id'])){
-                    $data['preloaded'] = $this->preloaded($formId, $form_answers[0]['client']['id']);
+                    $data['preloaded'] = $this->preloaded($formId, $form_answers[0]['client']['id'], $files);
                 }
 
             } else {
@@ -577,14 +587,14 @@ class FormAnswerController extends Controller
         return response()->download(storage_path("app/" . $attachment->source), $attachment->name);
     }
 
-    private function preloaded($form_id, $client_id)
+    private function preloaded($form_id, $client_id, $files)
     {
         $form = Form::find($form_id);
         $structure_data = [];
         foreach($form->section as $section){
             $section->fields =json_decode($section->fields);
             foreach ( $section->fields as $field) {
-                if($field->preloaded == true){
+                if($field->preloaded == true && $field->controlType != "file"){
                     //Traemos descripcion pues alli se guarda el nombre del archivo
                     $key_value = KeyValue::where('client_id', $client_id)->where('field_id', $field->id)->select('field_id', 'value', 'key', 'description')->latest()->first();
                     if($key_value){
@@ -597,7 +607,7 @@ class FormAnswerController extends Controller
             }
         }
 
-        $answer['data']=$structure_data;
+        $answer['data'] = array_merge($structure_data, $files);
         $answer['client_id']=$client_id;
         return $answer;
 
