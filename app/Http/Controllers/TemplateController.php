@@ -6,6 +6,7 @@ use App\Models\Template;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Helpers\MiosHelper;
+use Illuminate\Support\Facades\DB;
 
 class TemplateController extends Controller
 {
@@ -107,7 +108,9 @@ class TemplateController extends Controller
         {
             $templateModel = $templateModel->where("template_name", 'like', '%'.$fetch.'%');
         }
-        $template = $templateModel->select("id", "template_name", 'input_id', 'created_at')
+        
+        $template = $templateModel->select("id", "template_name", 'input_id', 'created_at',
+            DB::raw("(CASE WHEN state = '1' THEN 'Activado' ELSE 'Desactivado' END) AS state"))
             ->where("form_id", $formId)->paginate($paginate)->withQueryString();
 
         $template = $this->getiInputNames($template);
@@ -179,7 +182,6 @@ class TemplateController extends Controller
                             $csvValue.= $field["label"].":";
                         }
                         $csvValue.= $field["value"].$registerDelimiter;
-                        \Log::info($key);
                         if(!isset($plantilla[$key]['value'])){
                             $plantilla[$key]= $field;
                             $csv[$key]=$csvValue;
@@ -191,7 +193,6 @@ class TemplateController extends Controller
                 }
             }
         }
-        \Log::info(gettype($plantilla));
         $data = [];
         $data['csv'] = implode($valueDelimiter,$csv).$valueDelimiter;
         $data['plantilla'] = $plantilla;
