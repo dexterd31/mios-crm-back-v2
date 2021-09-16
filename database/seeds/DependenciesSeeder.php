@@ -21,6 +21,7 @@ class DependenciesSeeder extends Seeder
             foreach ($form->section as $section)
             {
                 $fields = json_decode($section->fields);
+                //\Log::info($fields);
                 $fieldData = $this->getFieldData($fields, $fieldData, $section->id);
                 foreach ($fields as $field)
                 {
@@ -46,6 +47,7 @@ class DependenciesSeeder extends Seeder
                 }
                 $timestamp = time();
                 $dependencieNewKey = null;
+                \Log::info(json_encode($dependencies, JSON_PRETTY_PRINT));
                 foreach ($dependencies as $idFather => $dependencie)
                 {
                     foreach ($dependencie as $depend)
@@ -117,8 +119,9 @@ class DependenciesSeeder extends Seeder
                 }
             }
 
-                foreach ($form->section as $section)
-                {
+            //\Log::info(json_encode($fieldsNew, JSON_PRETTY_PRINT));
+            foreach ($form->section as $section)
+            {
                 foreach ($fieldsNew as $fieldNew)
                 {
                     $fields = json_decode($section->fields);
@@ -127,15 +130,18 @@ class DependenciesSeeder extends Seeder
                         if(in_array($field->id, $fieldNew->datosAux->idsOld))
                         {
                             unset($fields[$key]);
+                            $fields = array_values($fields);
                         }
                     }
                     if($section->id == $fieldNew->datosAux->sectionId)
                     {
                         $aux = $fieldNew;
-                        //unset($aux->datosAux);
+                        // unset($aux->datosAux);
                         array_push($fields, $aux);
                     }
-                    \Log::info($fields);
+                    //\Log::info($fields);
+                    $section->fields = json_encode($fields);
+                    $section->save();
                 }
             }
             // \Log::info(json_encode($fieldData, JSON_PRETTY_PRINT));
@@ -170,8 +176,8 @@ class DependenciesSeeder extends Seeder
                     }
                 }
                 $formAnswer->structure_answer = json_encode($structureAnswer);
-                \Log::info($formAnswer->structure_answer);
-                //$formAnswer->save();
+                //\Log::info($formAnswer->structure_answer);
+                $formAnswer->save();
             }
             $form->formAnswers;
             //\Log::info(json_encode($fieldsNew, JSON_PRETTY_PRINT));
@@ -182,6 +188,7 @@ class DependenciesSeeder extends Seeder
     {
         foreach ($fields as $field)
         {
+            //\Log::info(json_encode($field, JSON_PRETTY_PRINT));
             $fieldData[$field->id] = (object)[
                 "label" => $field->label,
                 "options" => $field->options,
