@@ -6,6 +6,7 @@ use App\Models\Attachment;
 use App\Models\Tray;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\ClientNew;
+use App\Models\Form;
 
 class FormAnswer extends Model
 {
@@ -15,6 +16,10 @@ class FormAnswer extends Model
 
     public function form(){
        return $this->hasMany('App\Models\Form','id');
+    }
+
+    public function forms(){
+        return $this->belongsTo(Form::class, 'form_id');
     }
 
     public function client(){

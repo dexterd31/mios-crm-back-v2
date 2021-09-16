@@ -17,6 +17,8 @@ use Throwable;
 use App\Imports\ClientNewImport;
 use App\Http\Controllers\FormAnswerController;
 use Illuminate\Support\Facades\Validator;
+use PhpParser\Node\Expr\Cast\Object_;
+use stdClass;
 
 class UploadController extends Controller
 {
@@ -136,33 +138,27 @@ class UploadController extends Controller
                     }
                 }
             }
-            \Log::info($fieldsLoad);
+
             if(count($fieldsLoad)>0){
                 $directories = [];
                 $dataLoad=[];
                 $dataNotLoad=[];
                 $errorAnswers = [];
                 foreach($fileData as $c=>$client){
-                    $answerFields = [];
+                    $answerFields = (Object)[];
                     foreach($client as $d=>$data){
                         $dataValidate=$this->validateClientDataUpload($fieldsLoad[$d],$data);
-                        \Log::info(gettype($dataValidate));
-                        \Log::info($dataValidate);
-                        if(!$dataValidate['success']){
-                            array_push($errorAnswers,$dataValidate['message']);
-                        }else{
-                            if(in_array('preload',$dataValidate['in'])){
-                                $key = array_search('preload', $dataValidate['in']);
-                                $preloadData=[];
-                                $preloadData['id']=$dataValidate['field']->id;
-                                $preloadData['key']=$dataValidate['field']->key;
-                                $preloadData['value']=$dataValidate['field']->value;
-                                array_push($answerFields[$dataValidate['in'][$key]],$preloadData);
+                        if($dataValidate->success){
+                            foreach($dataValidate->in as $in){
+                                if (!isset($answerFields->$in)){
+                                    $answerFields->$in=[];
+                                }
+                                array_push($answerFields->$in,$dataValidate->field);
+                                array_push($directories,$dataValidate->field);
                             }
-                            \Log::info($answerFields[$dataValidate['in']]);
-                            \Log::info($dataValidate['field']);
-                            array_push($answerFields[$dataValidate['in']],$dataValidate['field']);
-                            array_push($directories[$c],$dataValidate['field']);
+                            \Log::info(json_encode($answerFields));
+                        }else{
+                            array_push($errorAnswers,$dataValidate['message']);
                         }
                     }
                     if(count($errorAnswers)==0){
@@ -170,10 +166,11 @@ class UploadController extends Controller
                         $newRequest = new Request();
                         $newRequest->replace([
                             "form_id" => $request->formId,
-                            "information_data" => json_encode($answerFields['informationClient']),
-                            "unique_indentificator" => json_encode($answerFields['uniqueIdentificator']),
+                            "information_data" => json_encode($answerFields->informationClient),
+                            "unique_indentificator" => isset($answerFields->uniqueIdentificator) ? json_encode($answerFields->uniqueIdentificator) : "",
                         ]);
-                        $client=$clientController->create($newRequest);
+                        \Log::info(json_encode($newRequest));
+                        /*$client=$clientController->create($newRequest);
                         if(isset($client->id)){
                             if($answerFields['preloadInputs']){
                                 $keyValuesController= new KeyValueController();
@@ -185,7 +182,7 @@ class UploadController extends Controller
                             array_push($dataLoad,$directories[$c]);
                         }else{
                             array_push($errorAnswers,"No se han podido insertar el cliente ".$answerFields['uniqueIdentificator']['value']);
-                        }
+                        }*/
                     }else{
                         array_push($dataNotLoad,$errorAnswers);
                     }
@@ -202,9 +199,9 @@ class UploadController extends Controller
     }
 
     public function validateClientDataUpload($field,$data){
-        $answer=[];
-        $answer['success']=false;
-        $answer['message']=[];
+        $answer=new stdClass();
+        $answer->success=false;
+        $answer->message=[];
         /*$rules= isset($field->required) ? 'required' : '';
         $rules.= '|'.$this->kindOfValidationType($field->type);
         $rules.= isset($field->minLength) ? '|min:'.$field->minLength : '';
@@ -219,18 +216,37 @@ class UploadController extends Controller
             }
         }else{*/
             $field->value=$data;
-            $answer['in']=[];
+            $answer->in=[];
             if(isset($field->isClientInfo)){
-                array_push($answer['in'],'informationClient');
+                $answer->field=(Object)[
+                    "id" => $field->id,
+                    "value" => $field->value
+                ];
+                array_push($answer->in,'informationClient');
             }
-            if(isset($field->isClientUnique)){
-                array_push($answer['in'],'uniqueIdentificator');
+            if(isset($field->client_unique)){
+                $answer->field=(Object)[
+                    "id" => $field->id,
+                    "key" => $field->key,
+                    "preloaded" => $field->preloaded,
+                    "label" => $field->label,
+                    "isClientInfo" => $field->isClientInfo,
+                    "client_unique" => $field->client_unique,
+                    "value" => $field->value
+
+                ];
+                array_push($answer->in,'uniqueIdentificator');
             }
-            if(isset($field->preload)){
-                array_push($answer['in'],'preload');
+            if(isset($field->preloaded)){
+                $answer->field=(Object)[
+                    "id" => $field->id,
+                    "key" => $field->key,
+                    "value" => $field->value
+                ];
+                array_push($answer->in,'preload');
             }
-            $answer['success']=true;
-            $answer['field']=$field;
+            $answer->success=true;
+            $answer->Originalfield=$field;
         //}
         return $answer;
     }
