@@ -7,6 +7,7 @@ use App\Models\Template;
 use App\Models\Report;
 use App\Models\Group;
 use App\Models\Section;
+use App\Models\FormAnswer;
 
 class Form extends Model
 {
@@ -35,9 +36,10 @@ class Form extends Model
         return $this->hasOne('App\Models\Campaing', 'campaign_id','id');
     }
 
-    public function formAnswer(){
-        return $this->belongsTo('App\Models\FormAnswer','form_id');
+    public function formAnswers(){
+        return $this->hasMany(FormAnswer::class);
     }
+
     public function keyvalue(){
         return $this->hasMany('App\Models\KeyValue','form_id');
     }
