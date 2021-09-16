@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Seeder;
 use App\Models\Form;
+use App\Models\KeyValue;
 
 class DependenciesSeeder extends Seeder
 {
@@ -12,7 +13,7 @@ class DependenciesSeeder extends Seeder
      */
     public function run()
     {
-        $forms = Form::where("id", 5)->get();
+        $forms = Form::all();
         foreach($forms as $form)
         {
             $dependencies = [];
@@ -47,11 +48,11 @@ class DependenciesSeeder extends Seeder
                 }
                 $timestamp = time();
                 $dependencieNewKey = null;
-                \Log::info(json_encode($dependencies, JSON_PRETTY_PRINT));
+                //Crea 
                 foreach ($dependencies as $idFather => $dependencie)
                 {
-                    foreach ($dependencie as $depend)
-                    {
+                    foreach ($dependencie as  $keyDepend => $depend)
+                    { 
                         foreach ($fieldsNew as $key => $fieldNew)
                         {
                             $dependencieNewKey = null;
@@ -98,7 +99,7 @@ class DependenciesSeeder extends Seeder
                         }
                         foreach ($depend->options as &$option)
                         {
-                            $option->idOld = $option->id;
+                            $option->idOld = isset($option->id)? $option->id: $option->Id;
                             $option->id = $fieldsNew[$dependencieNewKey]->datosAux->optionIdAux++;
                             if($depend->activators[0]->id == $option->idOld)
                             {
@@ -107,14 +108,15 @@ class DependenciesSeeder extends Seeder
                             }
                         }
                         array_push($fieldsNew[$dependencieNewKey]->datosAux->idsOld, $depend->field->id);
-                        $dependencie = (Object)[
+                        $dependencieNew = (Object)[
                             "activators" => $depend->activators,
                             "idField" => $idFather,
                             "label" => $fieldData[$idFather]->label,
                             "options" => $depend->options,
                             "idFieldOld" => $depend->field->id,
                         ];
-                        array_push($fieldsNew[$dependencieNewKey]->dependencies, $dependencie);
+                        array_push($fieldsNew[$dependencieNewKey]->dependencies, $dependencieNew);
+                        unset($dependencies[$idFather][$keyDepend]);
                     }
                 }
             }
@@ -130,13 +132,13 @@ class DependenciesSeeder extends Seeder
                         if(in_array($field->id, $fieldNew->datosAux->idsOld))
                         {
                             unset($fields[$key]);
-                            $fields = array_values($fields);
                         }
                     }
+                    $fields = array_values($fields);
                     if($section->id == $fieldNew->datosAux->sectionId)
                     {
-                        $aux = $fieldNew;
-                        // unset($aux->datosAux);
+                        $aux = (array)$fieldNew;
+                        unset($aux["datosAux"]);
                         array_push($fields, $aux);
                     }
                     //\Log::info($fields);
@@ -144,8 +146,7 @@ class DependenciesSeeder extends Seeder
                     $section->save();
                 }
             }
-            // \Log::info(json_encode($fieldData, JSON_PRETTY_PRINT));
-            // \Log::info(json_encode($dependencies, JSON_PRETTY_PRINT));
+
             foreach ($form->formAnswers as $formAnswer)
             {
                 $structureAnswer = json_decode($formAnswer->structure_answer);
@@ -164,23 +165,28 @@ class DependenciesSeeder extends Seeder
                                         if($option->idOld == $answer->value)
                                         {
                                             $answer->value = $option->id;
+                                            if($fieldNew->preloaded)
+                                            {
+                                                KeyValue::whereIn("field_id", $fieldNew->datosAux->idsOld)
+                                                    ->where("form_id", $form->id)    
+                                                    ->where("value", $option->idOld)
+                                                    ->update(['value' => $answer->value, "field_id" => $fieldNew->id]);
+                                            }
+                                            
                                         }
                                     }
                                 }
                             }
                             $answer->id = $fieldNew->id;
                             $answer->key = $fieldNew->key;
-                            // $answer->label = $fieldNew->label;
-                            // $answer->preloaded = $fieldNew->preloaded;
+                            $answer->label = $fieldNew->label;
+                            $answer->preloaded = $fieldNew->preloaded;
                         }
                     }
                 }
                 $formAnswer->structure_answer = json_encode($structureAnswer);
-                //\Log::info($formAnswer->structure_answer);
                 $formAnswer->save();
             }
-            $form->formAnswers;
-            //\Log::info(json_encode($fieldsNew, JSON_PRETTY_PRINT));
         }
     }
 
@@ -188,7 +194,6 @@ class DependenciesSeeder extends Seeder
     {
         foreach ($fields as $field)
         {
-            //\Log::info(json_encode($field, JSON_PRETTY_PRINT));
             $fieldData[$field->id] = (object)[
                 "label" => $field->label,
                 "options" => $field->options,
@@ -210,29 +215,3 @@ class DependenciesSeeder extends Seeder
         return $fieldData;
     }
 }
-
-// 1630445772796=[
-//     {
-//         "id"=1630445864052,
-//         "options"=[
-//             {
-//                 "id": 1,
-//                 "name": null
-//             }
-//         ],
-//         "Label"="",
-//         "name" = ""
-
-//     },
-//     {
-//         "id"=1630446261326,
-//         "options"=[
-//             {
-//                 "id": 1,
-//                 "name": null
-//             }
-//         ],
-//         "Label"=""
-
-//     }
-// ];

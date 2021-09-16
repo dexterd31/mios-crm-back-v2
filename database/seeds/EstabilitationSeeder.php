@@ -11,6 +11,7 @@ class EstabilitationSeeder extends Seeder
      */
     public function run()
     {
+        $this->call('DependenciesSeeder');
         $this->call('ClientNewSeeder');
         $this->call('FieldsClientUniqueIdentificatorSeeder');
         $this->call('UpdateFormAnswerSeeder');
