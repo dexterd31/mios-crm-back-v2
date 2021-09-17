@@ -29,8 +29,10 @@ class ClientNewSeeder extends Seeder
             "email" => "email"
         );
         $clients = Client::all();
+        $qtd = 0;
         foreach ($clients as $client)
         {
+            $this->command->info("Analisado clientes para crear ClientNew, Clientes analisados: ".$qtd++." Faltan: ".count($clients));
             //busca respuesta para cada cliente
 
             $allForm = KeyValue::join("forms", "forms.id", "key_values.form_id")
