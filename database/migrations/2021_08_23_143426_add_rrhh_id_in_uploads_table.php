@@ -5,6 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use App\Models\Upload;
 use App\Models\User;
+use Helpers\MiosHelper;
 
 class AddRrhhIdInUploadsTable extends Migration
 {
@@ -19,10 +20,15 @@ class AddRrhhIdInUploadsTable extends Migration
             $table->unsignedBigInteger('rrhh_id');
         });
         $uploads = Upload::all();
-        foreach ($uploads as $upload)
+        $miosHelper = new MiosHelper();
+        $idsUsers = $miosHelper->getArrayValues("user_id", $uploads);
+        $users = User::whereIn("id", $idsUsers)->get()->keyBy('id');
+        foreach ($idsUsers as $idUser)
         {
-            $upload->rrhh_id = User::find($upload->user_id)->id_rhh;
-            $upload->save();
+            if(isset($users[$idUser]))
+            {
+                Upload::where("user_id", $idUser)->update(['rrhh_id' => $users[$idUser]->id]);   
+            }
         }
     }
 

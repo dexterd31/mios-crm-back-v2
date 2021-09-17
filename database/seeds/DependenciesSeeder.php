@@ -3,6 +3,7 @@
 use Illuminate\Database\Seeder;
 use App\Models\Form;
 use App\Models\KeyValue;
+use Illuminate\Support\Facades\DB;
 
 class DependenciesSeeder extends Seeder
 {
@@ -13,9 +14,15 @@ class DependenciesSeeder extends Seeder
      */
     public function run()
     {
+        $sectionsNew = array();
+        $formAnswersNew = array();
+        $keyValues = array();
         $forms = Form::all();
+        $totalForm = count($forms);
+        
         foreach($forms as $form)
         {
+            $this->command->info("Preparando datos del formularo de id: ".$form->id. " faltan ". $totalForm--);
             $dependencies = [];
             $fieldData = [];
             $fieldsNew = [];
@@ -23,7 +30,6 @@ class DependenciesSeeder extends Seeder
             foreach ($form->section as $section)
             {
                 $fields = json_decode($section->fields);
-                //\Log::info($fields);
                 $fieldData = $this->getFieldData($fields, $fieldData, $section->id);
                 foreach ($fields as $field)
                 {
@@ -31,6 +37,10 @@ class DependenciesSeeder extends Seeder
                     {
                         foreach ($field->dependencies as $dependencie)
                         {
+                            if(!isset($fieldData[$dependencie->idField]))
+                            {
+                                continue;
+                            }
                             if(!isset($dependencies[$dependencie->idField]))
                             {
                                 $dependencies[$dependencie->idField] = [];
@@ -67,7 +77,6 @@ class DependenciesSeeder extends Seeder
                         }
                         if(!$dependencieNewKey && !isset($fieldsNew[$dependencieNewKey]))
                         {
-                            \Log::info("=======".$timestamp);
                             $fieldNew = (Object)[
                                 "id" => $timestamp++,
                                 "type" => $depend->field->type,
@@ -128,26 +137,24 @@ class DependenciesSeeder extends Seeder
                     }
                 }
                 //Actualizando los idField del padre en los hijos
-                \Log::info($idsAltered);
                 foreach ($fieldsNew as &$fieldNew)
                 {
                     foreach ($fieldNew->dependencies as &$dependencieAux)
                     {
                         if(isset($idsAltered[$dependencieAux->idField]))
                         {
-                            \Log::info("antes ".$dependencieAux->idField);
-                            \Log::info("despues ". $idsAltered[$dependencieAux->idField]);
                             $dependencieAux->idField = $idsAltered[$dependencieAux->idField];
                         }
                     }
                 }
             }
 
-            foreach ($form->section as $section)
+            foreach ($form->section as &$section)
             {
                 foreach ($fieldsNew as $fieldNew)
                 {
                     $fields = json_decode($section->fields);
+                    //Removiendo los campos que cambiaron
                     foreach ($fields as $key => $field)
                     {
                         if(in_array($field->id, $fieldNew->datosAux->idsOld))
@@ -155,17 +162,29 @@ class DependenciesSeeder extends Seeder
                             unset($fields[$key]);
                         }
                     }
-                    $fields = array_values($fields);
+                    //Agregando los nuevos campos
+                    $fildsUpdate = array_values($fields);
                     if($section->id == $fieldNew->datosAux->sectionId)
                     {
                         $aux = (array)$fieldNew;
                         unset($aux["datosAux"]);
-                        array_push($fields, $aux);
+                        array_push($fildsUpdate, $aux);
                     }
-                    //\Log::info($fields);
-                    $section->fields = json_encode($fields);
-                    $section->save();
+                    $section->fields = json_encode($fildsUpdate);
+
                 }
+                $sectionNew = [
+                    'id' => $section->id,
+                    'form_id' => $section->form_id,
+                    'name_section' => $section->name_section,
+                    'type_section' => $section->type_section,
+                    'fields' => $section->fields,
+                    'collapse' => $section->collapse,
+                    'duplicate' => $section->duplicate,
+                    'state' => $section->state
+                ];
+
+                array_push($sectionsNew, $sectionNew);
             }
 
             foreach ($form->formAnswers as $formAnswer)
@@ -188,12 +207,17 @@ class DependenciesSeeder extends Seeder
                                             $answer->value = $option->id;
                                             if($fieldNew->preloaded)
                                             {
-                                                KeyValue::whereIn("field_id", $fieldNew->datosAux->idsOld)
-                                                    ->where("form_id", $form->id)    
-                                                    ->where("value", $option->idOld)
-                                                    ->update(['value' => $answer->value, "field_id" => $fieldNew->id]);
+                                                $keyValue = [
+                                                    'form_id' => $formAnswer->form_id,
+                                                    'client_id' => $formAnswer->client_id,
+                                                    'key' => $fieldNew->key,
+                                                    'value' => $fieldNew->value,
+                                                    'description' => "",
+                                                    'field_id' => $fieldNew->id,
+                                                    'client_new_id' => $formAnswer->client_new_id
+                                                ];
+                                                array_push($keyValues, $keyValue);
                                             }
-                                            
                                         }
                                     }
                                 }
@@ -206,8 +230,47 @@ class DependenciesSeeder extends Seeder
                     }
                 }
                 $formAnswer->structure_answer = json_encode($structureAnswer);
-                $formAnswer->save();
+                $formAnswerNew = [
+                    'id' => $formAnswer->id,
+                    'form_id' => $formAnswer->form_id,
+                    'rrhh_id' => $formAnswer->rrhh_id,
+                    'client_id' => $formAnswer->client_id,
+                    'channel_id' => $formAnswer->channel_id,
+                    'structure_answer' => $formAnswer->structure_answer,
+                    "client_new_id" => $formAnswer->client_new_id,
+                    "form_answer_index_data" => $formAnswer->form_answer_index_data,
+                    "tipification_time" => $formAnswer->tipification_time
+                ];
+                array_push($formAnswersNew, $formAnswerNew);
             }
+        }
+        $sectionsNewChunk = array_chunk($sectionsNew, 50);
+        $qtd = 0;
+        foreach ($sectionsNewChunk as $sectionNewChunk)
+        {
+            
+            $this->command->info("guardando 50 sections, $qtd ya insertados, de un total de ".count($sectionsNew));
+            DB::table('sections_new')->insert($sectionNewChunk);
+            $qtd += 50;
+        }
+
+        $formAnswersNewChunk = array_chunk($formAnswersNew, 50);
+        $qtd = 0;
+        foreach ($formAnswersNewChunk as $formAnswerNewChunk)
+        {
+
+            $this->command->info("guardando 50 form_answer, $qtd ya insertados, de un total de ".count($formAnswersNew));
+            DB::table('form_answer_new')->insert($formAnswerNewChunk);
+            $qtd += 50;
+        }
+
+        $keyValuesChunk = array_chunk($keyValues, 50);
+        
+        foreach ($keyValuesChunk as $keyValueChunk)
+        {
+            $this->command->info("guardando 50 KeyValue, $qtd ya insertados, de un total de ".count($keyValues));
+            KeyValue::insert($keyValueChunk);
+            $qtd += 50;
         }
     }
 
