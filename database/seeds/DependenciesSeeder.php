@@ -310,7 +310,7 @@ class DependenciesSeeder extends Seeder
         $qtd = 0;
         foreach ($sectionsNewChunk as $sectionNewChunk)
         {
-            
+
             $this->command->info("guardando $insertQtd sections, $qtd ya insertados, de un total de ".count($sectionsNew));
             DB::table('sections_new')->insert($sectionNewChunk);
             $qtd += $insertQtd;

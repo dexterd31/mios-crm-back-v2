@@ -183,7 +183,7 @@ class UploadController extends Controller
                                     array_push($errorAnswers,"No se han podido insertar keyValues para el cliente ".$client->id);
                                 }
                             }
-                            array_push($dataLoad,$directories[$c]);
+                            $dataLoad=$dataLoad+1;
                         }else{
                             array_push($errorAnswers,"No se han podido insertar el cliente ".$answerFields['uniqueIdentificator']['value']);
                         }
@@ -191,7 +191,7 @@ class UploadController extends Controller
                         array_push($dataNotLoad,$errorAnswers);
                     }
                 }
-                $resume=["Total Registros: ".count($fileData) , "Cargados: ".count($dataLoad), "No Cargados: ".count($dataNotLoad)];
+                $resume=["Total Registros: ".count($fileData) , "Cargados: ".$dataLoad, "No Cargados: ".count($dataNotLoad)];
                 $data = $miosHelper->jsonResponse(true,200,"data",$resume);
             }else{
                 $data = $miosHelper->jsonResponse(false,400,"message","No se encuentra los campos en el formulario");
