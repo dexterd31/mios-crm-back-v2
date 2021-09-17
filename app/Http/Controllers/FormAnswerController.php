@@ -32,15 +32,15 @@ class FormAnswerController extends Controller
     private $nominaService;
     private $dataCRMServices;
 
-    public function __construct(CiuService $ciuService, NominaService $nominaService,DataCRMService $dataCRMServices)
+    public function __construct()
     {
         $this->middleware('auth');
-        $this->ciuService = $ciuService;
-        $this->nominaService = $nominaService;
-        $this->dataCRMServices = $dataCRMServices;
+        $this->ciuService = new CiuService();
+        $this->nominaService = new NominaService();
+        $this->dataCRMServices = new DataCRMService();
     }
 
-    private function create($clientNewId, $formId, $structureAnswer, $formAnswerIndexData, $chronometer)
+    public function create($clientNewId, $formId, $structureAnswer, $formAnswerIndexData, $chronometer)
     {
         $formsAnswer = new FormAnswer([
             'rrhh_id' => auth()->user()->rrhh_id,
@@ -136,12 +136,12 @@ class FormAnswerController extends Controller
                 "unique_indentificator" => json_encode($clientUnique)
             ]);
             $clientNew = $clientNewController->create($clientNew);
-    
+
             //creando nuevo cliente formAnswer
             $form_answer = $this->create($clientNew->id, $request->form_id, $formAnswerData, $formAnswerIndexData, $request->chronometer);
             $keyValueController = new KeyValueController();
             $keyValueController->createKeysValue($dataPreloaded, $request->form_id, $clientNew->id);
-    
+
             // Manejar bandejas
             $this->matchTrayFields($form_answer->form_id, $form_answer);
             // Log FormAnswer
@@ -165,7 +165,6 @@ class FormAnswerController extends Controller
             /**
              * Codigo Habilitado unicamente para pruebas, mientras DataCRM resuelve el bug
              */
-            Log::info('FormAnswer ID '.$form_answer->id);
             if($potentialIdObject) $this->dataCRMServices->updatePotentials($form_answer->form_id,json_decode($form_answer->structure_answer),$potentialIdObject->value);
             if($accountIdObject) $this->dataCRMServices->updateAccounts($form_answer->form_id,json_decode($form_answer->structure_answer),$accountIdObject->value);
         }
@@ -198,7 +197,6 @@ class FormAnswerController extends Controller
         $clientNewController = new ClientNewController();
         $clientNewData = new Request();
         $replace = [];
-        \Log::info($dataFilters);
         if(isset($dataFilters["isClientInfo"]))
         {
             $replace["information_data"] = $dataFilters["isClientInfo"];
@@ -211,9 +209,8 @@ class FormAnswerController extends Controller
 
         $clientNewData->replace($replace);
         $clientNew = [];
-        \Log::info($clientNewData);
         $clientNew = $clientNewController->index($clientNewData);
-        \Log::info($clientNew);
+
 
         if(!isset($clientNew["error"]))
         {
@@ -248,7 +245,6 @@ class FormAnswerController extends Controller
                 $files = $data["files"];
             }
             $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
-            \Log::info($clientNewId);
             if($clientNewId)
             {
                 $data["preloaded"] = $this->preloaded($request->form_id, $clientNewId, $files);

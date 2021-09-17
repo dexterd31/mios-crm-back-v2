@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Exports\FormExport;
-use App\Imports\ClientImport;
-use App\Imports\FormAnswerImport;
 use App\Imports\UploadImport;
 use Helpers\MiosHelper;
 use App\Models\Upload;
@@ -141,11 +139,13 @@ class UploadController extends Controller
 
             if(count($fieldsLoad)>0){
                 $directories = [];
-                $dataToLoad=[];
+                $dataLoad=0;
                 $dataNotLoad=[];
                 foreach($fileData as $c=>$client){
                     $answerFields = (Object)[];
                     $errorAnswers = [];
+                    $formAnswerClient=[];
+                    $formAnswerClientIndexado=[];
                     foreach($client as $d=>$data){
                         $dataValidate=$this->validateClientDataUpload($fieldsLoad[$d],$data);
                         if($dataValidate->success){
@@ -156,9 +156,12 @@ class UploadController extends Controller
                                 array_push($answerFields->$in,$dataValidate->$in);
                                 array_push($directories,$dataValidate->$in);
                             }
+                            array_push($formAnswerClient,$dataValidate->formAnswer);
+                            array_push($formAnswerClientIndexado,$dataValidate->formAnswerIndex);
                         }else{
                             array_push($errorAnswers,$dataValidate['message']);
                         }
+
                     }
                     //array_push($dataToLoad,$answerFields);
                     if(count($errorAnswers)==0){
@@ -171,6 +174,8 @@ class UploadController extends Controller
                         ]);
                         $client=$clientController->create($newRequest);
                         if(isset($client->id)){
+                            $formAnswerController=new FormAnswerController();
+                            $formAnswerSave=$formAnswerController->create($client->id,$request->form_id,$formAnswerClient,$formAnswerClientIndexado,"upload");
                             if(isset($answerFields->preload)){
                                 $keyValuesController= new KeyValueController();
                                 $keyValues=$keyValuesController->createKeysValue($answerFields->preload,$request->form_id,$client->id);
@@ -186,7 +191,7 @@ class UploadController extends Controller
                         array_push($dataNotLoad,$errorAnswers);
                     }
                 }
-                $resume=["Total Registros: ".count($fileData) , "Cargados: ".count($dataToLoad), "No Cargados: ".count($dataNotLoad)];
+                $resume=["Total Registros: ".count($fileData) , "Cargados: ".count($dataLoad), "No Cargados: ".count($dataNotLoad)];
                 $data = $miosHelper->jsonResponse(true,200,"data",$resume);
             }else{
                 $data = $miosHelper->jsonResponse(false,400,"message","No se encuentra los campos en el formulario");
@@ -243,6 +248,20 @@ class UploadController extends Controller
                 ];
                 array_push($answer->in,'preload');
             }
+            \Log::info(json_encode($field));
+            $answer->formAnswer = (Object)[
+                "id" => $field->id,
+                "key" => $field->key,
+                "preloaded" => $field->preloaded,
+                "label" => $field->label,
+                "isClientInfo" => $field->isClientInfo,
+                "client_unique" => isset($field->client_unique) ? $field->client_unique : false,
+                "value" => gettype($field->value) !=="string" ?  strval($field->value) : $field->value
+            ];
+            $answer->formAnswerIndex = (Object)[
+                "id" => $field->id,
+                "value" => gettype($field->value) !=="string" ?  strval($field->value) : $field->value
+            ];
             $answer->success=true;
             $answer->Originalfield=$field;
         //}

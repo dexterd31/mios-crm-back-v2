@@ -286,9 +286,10 @@ class FormController extends Controller
       $date1=Carbon::parse($request->date1)->setTimezone('America/Bogota');
       $date2=Carbon::parse($request->date2)->setTimezone('America/Bogota');
       $rrhhService= new RrhhService();
-      $formAnswers = FormAnswer::select('id', 'structure_answer', 'created_at', 'updated_at','rrhh_id')
+      $formAnswers = FormAnswer::select('id', 'structure_answer', 'created_at', 'updated_at','rrhh_id','tipification_time')
                           ->where('form_answers.form_id',$request->formId)
                           ->whereBetween('form_answers.created_at', [$date1, $date2])
+                          ->where('tipification_time','!=','upload')
                           ->get();
 
        //se extrae el restante de informacion que esta en directory por carga desde excel
@@ -330,21 +331,9 @@ class FormController extends Controller
         foreach($sections as $section){
             foreach(json_decode($section->fields) as $input){
                 if($input->inReport){
-                    /*if(count($input->dependencies)>0){
-                        if(isset($dependencies[$input->label])){
-                            array_push($dependencies[$input->label],$input->id);
-                        }else{
-                            $dependencies[$input->label]=[$input->id];
-                            array_push($titleHeaders,$input->label);
-                            array_push($inputReport,$input);
-                            $plantillaRespuestas[$input->label]="-";
-                        }
-                        $input->dependencies[0]->report=$input->label;
-                    }else{*/
-                        array_push($titleHeaders,$input->label);
-                        array_push($inputReport,$input);
-                        $plantillaRespuestas[$input->id]="-";
-                    //}
+                    array_push($titleHeaders,$input->label);
+                    array_push($inputReport,$input);
+                    $plantillaRespuestas[$input->id]="-";
                 }
             }
         }
@@ -391,8 +380,6 @@ class FormController extends Controller
                 }
             }
 
-            $respuestas['docuser'] = 0;
-            $respuestas['user'] = 0;
             if(isset($answer->id_rhh) && isset($adviserInfoDir[$answer->id_rhh]))
             {
                 if(isset($adviserInfoDir[$answer->id_rhh]->name))
@@ -403,7 +390,7 @@ class FormController extends Controller
                 {
                     $respuestas['docuser'] = $adviserInfoDir[$answer->id_rhh]->id_number;
                 }
-                
+
             }
             $respuestas['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
             $respuestas['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
@@ -415,7 +402,7 @@ class FormController extends Controller
          * !Parte de aca, es el recorrido para directories
          * !si es necesario traer de los directories?
          * */
-         if(count($directoryData)>0){
+         /*if(count($directoryData)>0){
             $userIdsDir=$miosHelper->getArrayValues('rrhh_id',$directoryData);
             $useStringDir=implode(',',$userIdsDir);
             $usersInfoDirectory=$rrhhService->fetchUsers($useStringDir);
@@ -479,16 +466,16 @@ class FormController extends Controller
                     {
                         $respuestas['docuser'] = $adviserInfoDir[$answer->id_rhh]->id_number;
                     }
-                    
+
                 }
                 $respuestas['created_at'] = Carbon::parse($directory->created_at->format('c'))->setTimezone('America/Bogota');
                 $respuestas['updated_at'] = Carbon::parse($directory->updated_at->format('c'))->setTimezone('America/Bogota');
                 $rows[$r]=$respuestas;
                 $r++;
             }
-         }
+         }*/
 
-        array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización');
+        array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización','Tiempo de Tipificación');
       }
       return Excel::download(new FormReportExport($rows, $titleHeaders), 'reporte_formulario.xlsx');
     }

@@ -110,7 +110,8 @@ class ClientNewController extends Controller
             $clientNewQuery = $clientNewQuery->where("unique_indentificator->id", $unique_indentificator->id)
                 ->where("unique_indentificator->value", $unique_indentificator->value);
         }
-        \Log::info($clientNewQuery->toSql(),$clientNewQuery->getBindings());
+        \Log::info($clientNewQuery->toSql());
+        \Log::info($clientNewQuery->getBindings());
         return $clientNewQuery->first();
     }
 
@@ -153,10 +154,23 @@ class ClientNewController extends Controller
 
     private function save($clientNewData)
     {
+        $informationData=json_decode($clientNewData->information_data);
+        foreach($informationData as $data){
+            if(gettype($data->value)!=="string"){
+                $data->value=strval($data->value);
+            }
+        }
+        $uniqueIdentificator=json_decode($clientNewData->unique_indentificator);
+        \Log::info(gettype($uniqueIdentificator->value));
+        if(gettype($uniqueIdentificator->value)!=="string"){
+            \Log::info($uniqueIdentificator->value);
+            $uniqueIdentificator->value=strval($uniqueIdentificator->value);
+        }
+
         $clientNew = new ClientNew([
             "form_id" => $clientNewData->form_id,
-            "information_data" => $clientNewData->information_data,
-            "unique_indentificator" => $clientNewData->unique_indentificator,
+            "information_data" => json_encode($informationData),
+            "unique_indentificator" => json_encode($uniqueIdentificator),
         ]);
         $clientNew->save();
         return $clientNew;
