@@ -4,6 +4,7 @@ use Illuminate\Database\Seeder;
 use App\Models\Form;
 use App\Models\KeyValue;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class DependenciesSeeder extends Seeder
 {
@@ -19,7 +20,7 @@ class DependenciesSeeder extends Seeder
         $keyValues = array();
         $forms = Form::all();
         $totalForm = count($forms);
-        
+
         foreach($forms as $form)
         {
             $this->command->info("Preparando datos del formularo de id: ".$form->id. " faltan ". $totalForm--);
@@ -59,11 +60,11 @@ class DependenciesSeeder extends Seeder
                 }
                 $timestamp = time();
                 $dependencieNewKey = null;
-                //Crea 
+                //Crea
                 foreach ($dependencies as $idFather => $dependencie)
                 {
                     foreach ($dependencie as  $keyDepend => $depend)
-                    { 
+                    {
                         foreach ($fieldsNew as $key => $fieldNew)
                         {
                             $dependencieNewKey = null;
@@ -113,6 +114,10 @@ class DependenciesSeeder extends Seeder
                         {
                             $option->idOld = isset($option->id)? $option->id: $option->Id;
                             $option->id = $fieldsNew[$dependencieNewKey]->datosAux->optionIdAux++;
+                            if(!isset($depend->activators[0]->id))
+                            {
+                                continue;
+                            }
                             if($depend->activators[0]->id == $option->idOld)
                             {
                                 $activatorsNew = [];
@@ -209,7 +214,6 @@ class DependenciesSeeder extends Seeder
                                             {
                                                 $keyValue = [
                                                     'form_id' => $formAnswer->form_id,
-                                                    'client_id' => $formAnswer->client_id,
                                                     'key' => $fieldNew->key,
                                                     'value' => $fieldNew->value,
                                                     'description' => "",
@@ -234,7 +238,6 @@ class DependenciesSeeder extends Seeder
                     'id' => $formAnswer->id,
                     'form_id' => $formAnswer->form_id,
                     'rrhh_id' => $formAnswer->rrhh_id,
-                    'client_id' => $formAnswer->client_id,
                     'channel_id' => $formAnswer->channel_id,
                     'structure_answer' => $formAnswer->structure_answer,
                     "client_new_id" => $formAnswer->client_new_id,
@@ -244,34 +247,41 @@ class DependenciesSeeder extends Seeder
                 array_push($formAnswersNew, $formAnswerNew);
             }
         }
-        $sectionsNewChunk = array_chunk($sectionsNew, 50);
+        $insertQtd = 100;
+        $sectionsNewChunk = array_chunk($sectionsNew, $insertQtd);
         $qtd = 0;
         foreach ($sectionsNewChunk as $sectionNewChunk)
         {
             
-            $this->command->info("guardando 50 sections, $qtd ya insertados, de un total de ".count($sectionsNew));
+            $this->command->info("guardando $insertQtd sections, $qtd ya insertados, de un total de ".count($sectionsNew));
             DB::table('sections_new')->insert($sectionNewChunk);
-            $qtd += 50;
+            $qtd += 1000;
         }
 
-        $formAnswersNewChunk = array_chunk($formAnswersNew, 50);
+        $formAnswersNewChunk = array_chunk($formAnswersNew, $insertQtd);
         $qtd = 0;
         foreach ($formAnswersNewChunk as $formAnswerNewChunk)
         {
 
-            $this->command->info("guardando 50 form_answer, $qtd ya insertados, de un total de ".count($formAnswersNew));
+            $this->command->info("guardando $insertQtd form_answer, $qtd ya insertados, de un total de ".count($formAnswersNew));
             DB::table('form_answer_new')->insert($formAnswerNewChunk);
-            $qtd += 50;
+            $qtd += $insertQtd;
         }
 
-        $keyValuesChunk = array_chunk($keyValues, 50);
-        
+        $keyValuesChunk = array_chunk($keyValues, $insertQtd);
+        $qtd = 0;
         foreach ($keyValuesChunk as $keyValueChunk)
         {
-            $this->command->info("guardando 50 KeyValue, $qtd ya insertados, de un total de ".count($keyValues));
+            $this->command->info("guardando $insertQtd KeyValue, $qtd ya insertados, de un total de ".count($keyValues));
             KeyValue::insert($keyValueChunk);
-            $qtd += 50;
+            $qtd += $insertQtd;
         }
+
+        $this->command->info("Renombrando tablas");
+        Schema::rename("form_answer", "form_answer_old");
+        Schema::rename("form_answer_new", "form_answer");
+        Schema::rename("sections", "sections_old");
+        Schema::rename("sections_new","sections");
     }
 
     private function getFieldData($fields, $fieldData, $sectionId)
