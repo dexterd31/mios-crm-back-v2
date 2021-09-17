@@ -28,7 +28,7 @@ class UpdateFormAnswerSeeder extends Seeder
         {
             $structureAnswers = json_decode($formAnswer->structure_answer);
             $formAnswerIndexData = [];
-            foreach ($structureAnswers as $structureAnswer)
+            foreach ($structureAnswers as &$structureAnswer)
             {
                 if(array_key_exists($structureAnswer->key, $keyDataClient))
                 {
