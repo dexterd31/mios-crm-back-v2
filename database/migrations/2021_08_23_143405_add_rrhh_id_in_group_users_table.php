@@ -5,6 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use App\Models\GroupUser;
 use App\Models\User;
+use Helpers\MiosHelper;
 
 class AddRrhhIdInGroupUsersTable extends Migration
 {
@@ -19,10 +20,15 @@ class AddRrhhIdInGroupUsersTable extends Migration
             $table->unsignedBigInteger('rrhh_id');
         });
         $groupUsers = GroupUser::all();
-        foreach ($groupUsers as $groupUser)
+        $miosHelper = new MiosHelper();
+        $idsUsers = $miosHelper->getArrayValues("user_id", $groupUsers);
+        $users = User::whereIn("id", $idsUsers)->get()->keyBy('id');
+        foreach ($idsUsers as $idUser)
         {
-            $groupUser->rrhh_id = User::find($groupUser->user_id)->id_rhh;
-            $groupUser->save();
+            if(isset($users[$idUser]))
+            {
+                GroupUser::where("user_id", $idUser)->update(['rrhh_id' => $users[$idUser]->id]);   
+            }
         }
     }
 
