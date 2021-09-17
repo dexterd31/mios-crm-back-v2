@@ -17,7 +17,7 @@ class CreateFormAnswerNewTable extends Migration
             $table->id();
             $table->foreignId('form_id')->constrained('forms');
             $table->foreignId('channel_id')->constrained('channels');
-            $table->foreignId('client_id')->constrained('clients');
+            $table->unsignedBigInteger('clients');
             $table->json('structure_answer');
             $table->unsignedBigInteger('client_new_id')->default(0); 
             $table->json('form_answer_index_data')->nullable();
