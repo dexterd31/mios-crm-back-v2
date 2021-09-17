@@ -113,6 +113,10 @@ class DependenciesSeeder extends Seeder
                         {
                             $option->idOld = isset($option->id)? $option->id: $option->Id;
                             $option->id = $fieldsNew[$dependencieNewKey]->datosAux->optionIdAux++;
+                            if(!isset($depend->activators[0]->id))
+                            {
+                                continue;
+                            }
                             if($depend->activators[0]->id == $option->idOld)
                             {
                                 $activatorsNew = [];
@@ -209,7 +213,6 @@ class DependenciesSeeder extends Seeder
                                             {
                                                 $keyValue = [
                                                     'form_id' => $formAnswer->form_id,
-                                                    'client_id' => $formAnswer->client_id,
                                                     'key' => $fieldNew->key,
                                                     'value' => $fieldNew->value,
                                                     'description' => "",
@@ -234,7 +237,6 @@ class DependenciesSeeder extends Seeder
                     'id' => $formAnswer->id,
                     'form_id' => $formAnswer->form_id,
                     'rrhh_id' => $formAnswer->rrhh_id,
-                    'client_id' => $formAnswer->client_id,
                     'channel_id' => $formAnswer->channel_id,
                     'structure_answer' => $formAnswer->structure_answer,
                     "client_new_id" => $formAnswer->client_new_id,
