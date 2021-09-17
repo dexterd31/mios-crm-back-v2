@@ -13,12 +13,13 @@ class DependenciesSeeder extends Seeder
      */
     public function run()
     {
-        $forms = Form::all();
+        $forms = Form::where("id", 15)->get();
         foreach($forms as $form)
         {
             $dependencies = [];
             $fieldData = [];
             $fieldsNew = [];
+            $idsAltered = [];
             foreach ($form->section as $section)
             {
                 $fields = json_decode($section->fields);
@@ -66,6 +67,7 @@ class DependenciesSeeder extends Seeder
                         }
                         if(!$dependencieNewKey && !isset($fieldsNew[$dependencieNewKey]))
                         {
+                            \Log::info("=======".$timestamp);
                             $fieldNew = (Object)[
                                 "id" => $timestamp++,
                                 "type" => $depend->field->type,
@@ -87,6 +89,7 @@ class DependenciesSeeder extends Seeder
                                 "editRoles" => $depend->field->editRoles,
                                 "seeRoles" => $depend->field->seeRoles,
                                 "tooltip" => $depend->field->tooltip,
+                                "options" => [],
                                 "datosAux" =>(Object)[
                                     "idFather" => $idFather,
                                     "optionIdAux" => 1,
@@ -103,11 +106,15 @@ class DependenciesSeeder extends Seeder
                             $option->id = $fieldsNew[$dependencieNewKey]->datosAux->optionIdAux++;
                             if($depend->activators[0]->id == $option->idOld)
                             {
-                                $depend->activators[0]->idOld = $option->idOld;
-                                $depend->activators[0]->id = $option->id;
+                                $activatorsNew = [];
+                                $activatorsNew[0] = (Object)[];
+                                $activatorsNew[0]->name = $option->name;
+                                $activatorsNew[0]->idOld = $option->idOld;
+                                $activatorsNew[0]->id = $option->id;
                             }
                         }
                         array_push($fieldsNew[$dependencieNewKey]->datosAux->idsOld, $depend->field->id);
+                        $idsAltered[$depend->field->id] = $fieldsNew[$dependencieNewKey]->id;
                         $dependencieNew = (Object)[
                             "activators" => $depend->activators,
                             "idField" => $idFather,
@@ -116,12 +123,26 @@ class DependenciesSeeder extends Seeder
                             "idFieldOld" => $depend->field->id,
                         ];
                         array_push($fieldsNew[$dependencieNewKey]->dependencies, $dependencieNew);
+                        $fieldsNew[$dependencieNewKey]->options = array_merge($fieldsNew[$dependencieNewKey]->options, $depend->options);
                         unset($dependencies[$idFather][$keyDepend]);
+                    }
+                }
+                //Actualizando los idField del padre en los hijos
+                \Log::info($idsAltered);
+                foreach ($fieldsNew as &$fieldNew)
+                {
+                    foreach ($fieldNew->dependencies as &$dependencieAux)
+                    {
+                        if(isset($idsAltered[$dependencieAux->idField]))
+                        {
+                            \Log::info("antes ".$dependencieAux->idField);
+                            \Log::info("despues ". $idsAltered[$dependencieAux->idField]);
+                            $dependencieAux->idField = $idsAltered[$dependencieAux->idField];
+                        }
                     }
                 }
             }
 
-            //\Log::info(json_encode($fieldsNew, JSON_PRETTY_PRINT));
             foreach ($form->section as $section)
             {
                 foreach ($fieldsNew as $fieldNew)
