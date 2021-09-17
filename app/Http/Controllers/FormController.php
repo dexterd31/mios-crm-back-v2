@@ -292,16 +292,11 @@ class FormController extends Controller
                           ->where('tipification_time','!=','upload')
                           ->get();
 
-       //se extrae el restante de informacion que esta en directory por carga desde excel
-      $directoryData = Directory::select('id', 'data', 'created_at', 'updated_at','rrhh_id')
-                    ->where('directories.form_id',$request->formId)
-                    ->get();
-
-      if(count($formAnswers)==0 && count($directoryData) == 0){
+      if(count($formAnswers)==0){
             // 406 Not Acceptable
             // se envia este error ya que no esta mapeado en interceptor angular.
             return $this->errorResponse('No se encontraron datos en el rango de fecha suministrado', 406);
-      } else if(count($formAnswers)>5000 && count($directoryData) > 5000){
+      } else if(count($formAnswers)>5000){
             return $this->errorResponse('El rango de fechas supera a los 5000 records', 413);
       } else {
         $inputReport=[];
@@ -348,19 +343,7 @@ class FormController extends Controller
             //Evaluamos los campos que deben ir en el reporte contra las respuestas
             foreach($inputReport as $input){
                 foreach(json_decode($answer->structure_answer) as $field){
-                    /*if(isset($input->dependencies[0]->report)){
-                        if(in_array($field->id,$dependencies[$input->dependencies[0]->report])){
-                            if(isset($field->value)){
-                                $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
-                                if($select){
-                                    $respuestas[$input->dependencies[0]->report] = $select;
-                                } else {
-                                    $respuestas[$input->dependencies[0]->report] = $field->value;
-                                }
-                            }
-                            break;
-                        }
-                    }else*/ if($field->id==$input->id){
+                    if($field->id==$input->id){
                         $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
                         if($select){
                             $respuestas[$input->id] = $select;
@@ -394,87 +377,10 @@ class FormController extends Controller
             }
             $respuestas['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
             $respuestas['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
+            $respuestas['tipification_time'] = $answer->tipification_time;
             $rows[$r]=$respuestas;
             $r++;
-          }
-
-        /**
-         * !Parte de aca, es el recorrido para directories
-         * !si es necesario traer de los directories?
-         * */
-         /*if(count($directoryData)>0){
-            $userIdsDir=$miosHelper->getArrayValues('rrhh_id',$directoryData);
-            $useStringDir=implode(',',$userIdsDir);
-            $usersInfoDirectory=$rrhhService->fetchUsers($useStringDir);
-            $adviserInfoDir=[];
-            foreach($usersInfoDirectory as $info){
-                if(in_array($info->id,$userIdsDir)){
-                    if(!isset($adviserInfoDir[$info->id])){
-                        $adviserInfoDir[$info->id]=$info;
-                    }
-                }
-            }
-
-            foreach ($directoryData as $key => $directory) {
-                $respuestas=$plantillaRespuestas;
-                $respuestas['id'] = $directory->id;
-                //Evaluamos los campos que deben ir en el reporte contra las respuestas
-                foreach($inputReport as $input){
-                    foreach(json_decode($directory->data) as $data){
-
-                        if(isset($input->dependencies[0]->report)){
-                            if(in_array($data->id,$dependencies[$input->dependencies[0]->report])){
-                                if(isset($data->value)){
-                                    $select = $this->findAndFormatValues($request->formId, $data->id,(is_numeric($data->value))?(int)$data->value:$data->value);
-                                    if($select){
-                                        $respuestas[$input->dependencies[0]->report] = $select;
-                                    } else {
-                                        $respuestas[$input->dependencies[0]->report] = $data->value;
-                                    }
-                                }
-                                break;
-                            }
-                        }else if($data->id==$input->id){
-                            $select = $this->findAndFormatValues($request->formId, $data->id, (is_numeric($data->value))?(int)$data->value:$data->value);
-                            if($select){
-                                $respuestas[$input->id] = $select;
-                            } else {
-                                $respuestas[$input->id] = $data->value;
-                            }
-                            break;
-                        }else if($data->key==$input->key){
-                            $select = $this->findAndFormatValues($request->formId, $input->id, (is_numeric($data->value))?(int)$data->value:$data->value);
-                            if($select){
-                                $respuestas[$input->id] = $select;
-                            } else {
-                                $respuestas[$input->id] = $data->value;
-                            }
-                            break;
-                        }
-                    }
-                }
-
-                $respuestas['docuser'] = 0;
-                $respuestas['user'] = 0;
-                if(isset($answer->id_rhh) && isset($adviserInfoDir[$answer->id_rhh]))
-                {
-                    if(isset($adviserInfoDir[$answer->id_rhh]->name))
-                    {
-                        $respuestas['user'] = $adviserInfoDir[$answer->id_rhh]->name;
-                    }
-                    if(isset($adviserInfoDir[$answer->id_rhh]->id_number))
-                    {
-                        $respuestas['docuser'] = $adviserInfoDir[$answer->id_rhh]->id_number;
-                    }
-
-                }
-                $respuestas['created_at'] = Carbon::parse($directory->created_at->format('c'))->setTimezone('America/Bogota');
-                $respuestas['updated_at'] = Carbon::parse($directory->updated_at->format('c'))->setTimezone('America/Bogota');
-                $rows[$r]=$respuestas;
-                $r++;
-            }
-         }*/
-
+        }
         array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización','Tiempo de Tipificación');
       }
       return Excel::download(new FormReportExport($rows, $titleHeaders), 'reporte_formulario.xlsx');

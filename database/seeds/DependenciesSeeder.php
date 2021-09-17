@@ -20,7 +20,7 @@ class DependenciesSeeder extends Seeder
         $keyValues = array();
         $forms = Form::all();
         $totalForm = count($forms);
-        
+
         foreach($forms as $form)
         {
             $this->command->info("Preparando datos del formularo de id: ".$form->id. " faltan ". $totalForm--);
@@ -60,11 +60,11 @@ class DependenciesSeeder extends Seeder
                 }
                 $timestamp = time();
                 $dependencieNewKey = null;
-                //Crea 
+                //Crea
                 foreach ($dependencies as $idFather => $dependencie)
                 {
                     foreach ($dependencie as  $keyDepend => $depend)
-                    { 
+                    {
                         foreach ($fieldsNew as $key => $fieldNew)
                         {
                             $dependencieNewKey = null;
