@@ -13,7 +13,7 @@ class DependenciesSeeder extends Seeder
      */
     public function run()
     {
-        $forms = Form::where("id", 15)->get();
+        $forms = Form::all();
         foreach($forms as $form)
         {
             $dependencies = [];
