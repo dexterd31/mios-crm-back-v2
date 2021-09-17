@@ -15,6 +15,16 @@ class DependenciesSeeder extends Seeder
      */
     public function run()
     {
+        $keyDataClient = array(
+            "firstName" => "first_name",
+            "middleName" => "middle_name",
+            "lastName" => "first_lastname",
+            "secondLastName" => "second_lastname",
+            "document_type_id" => "document_type_id",
+            "document" => "document",
+            "phone" => "phone",
+            "email" => "email"
+        );
         $sectionsNew = array();
         $formAnswersNew = array();
         $keyValues = array();
@@ -156,6 +166,22 @@ class DependenciesSeeder extends Seeder
 
             foreach ($form->section as &$section)
             {
+                if($section->type_section == 1)
+                {
+                    $fields = json_decode($section->fields);
+                    foreach ($fields as &$field)
+                    {
+                        if(array_key_exists($field->key, $keyDataClient))
+                        {
+                            $field->isClientInfo = true;
+                            if($field->key == "document")
+                            {
+                                $form->fields_client_unique_identificator = json_encode([$field]);
+                            }
+                        }
+                    }
+                    $section->fields = json_encode($fields);
+                }
                 foreach ($fieldsNew as $fieldNew)
                 {
                     $fields = json_decode($section->fields);
@@ -194,6 +220,7 @@ class DependenciesSeeder extends Seeder
 
             foreach ($form->formAnswers as $formAnswer)
             {
+                $formAnswerIndexData = [];
                 $structureAnswer = json_decode($formAnswer->structure_answer);
                 foreach ($structureAnswer as &$answer)
                 {
@@ -226,12 +253,25 @@ class DependenciesSeeder extends Seeder
                                     }
                                 }
                             }
+                            $answer->preloaded = $fieldNew->preloaded;
                             $answer->id = $fieldNew->id;
                             $answer->key = $fieldNew->key;
                             $answer->label = $fieldNew->label;
-                            $answer->preloaded = $fieldNew->preloaded;
                         }
                     }
+                    if(array_key_exists($answer->key, $keyDataClient))
+                    {
+                        $answer->isClientInfo = true;
+                        if($answer->key == "document")
+                        {
+                            $answer->preloaded = true;
+                            $answer->client_unique = true;
+                        }
+                    }
+                    array_push($formAnswerIndexData, [
+                        "id"=> $answer->id,
+                        "value"=> $answer->value
+                    ]);
                 }
                 $formAnswer->structure_answer = json_encode($structureAnswer);
                 $formAnswerNew = [
@@ -241,13 +281,31 @@ class DependenciesSeeder extends Seeder
                     'channel_id' => $formAnswer->channel_id,
                     'structure_answer' => $formAnswer->structure_answer,
                     "client_new_id" => $formAnswer->client_new_id,
-                    "form_answer_index_data" => $formAnswer->form_answer_index_data,
+                    "client_id" => $formAnswer->client_id,
+                    "form_answer_index_data" => json_encode($formAnswerIndexData),
                     "tipification_time" => $formAnswer->tipification_time
                 ];
                 array_push($formAnswersNew, $formAnswerNew);
             }
+            $filters = json_decode($form->filters);
+            foreach ($filters as $filter)
+            {
+                if(array_key_exists($filter->key, $keyDataClient))
+                {
+                    $filter->isClientInfo = true;
+                    if($filter->key == "document")
+                    {
+                        $filter->preloaded = true;
+                        $filter->client_unique = true;
+                        
+                    }
+                }
+            }
+            $form->filters = json_encode($filters);
+
+            $form->save();
         }
-        $insertQtd = 100;
+        $insertQtd = 2;
         $sectionsNewChunk = array_chunk($sectionsNew, $insertQtd);
         $qtd = 0;
         foreach ($sectionsNewChunk as $sectionNewChunk)
@@ -255,7 +313,7 @@ class DependenciesSeeder extends Seeder
             
             $this->command->info("guardando $insertQtd sections, $qtd ya insertados, de un total de ".count($sectionsNew));
             DB::table('sections_new')->insert($sectionNewChunk);
-            $qtd += 1000;
+            $qtd += $insertQtd;
         }
 
         $formAnswersNewChunk = array_chunk($formAnswersNew, $insertQtd);
@@ -278,8 +336,8 @@ class DependenciesSeeder extends Seeder
         }
 
         $this->command->info("Renombrando tablas");
-        Schema::rename("form_answer", "form_answer_old");
-        Schema::rename("form_answer_new", "form_answer");
+        Schema::rename("form_answers", "form_answer_old");
+        Schema::rename("form_answer_new", "form_answers");
         Schema::rename("sections", "sections_old");
         Schema::rename("sections_new","sections");
     }

@@ -16,7 +16,7 @@ class EstabilitationSeeder extends Seeder
         $this->call('PermissionSeeder');
         $this->call('DependenciesSeeder');
         $this->call('ClientNewSeeder');
-        $this->call('FieldsClientUniqueIdentificatorSeeder');
-        $this->call('UpdateFormAnswerSeeder');
+        //$this->call('FieldsClientUniqueIdentificatorSeeder');
+        //$this->call('UpdateFormAnswerSeeder');
     }
 }
