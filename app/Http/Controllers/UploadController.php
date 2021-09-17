@@ -141,11 +141,11 @@ class UploadController extends Controller
 
             if(count($fieldsLoad)>0){
                 $directories = [];
-                $dataLoad=[];
+                $dataToLoad=[];
                 $dataNotLoad=[];
-                $errorAnswers = [];
                 foreach($fileData as $c=>$client){
                     $answerFields = (Object)[];
+                    $errorAnswers = [];
                     foreach($client as $d=>$data){
                         $dataValidate=$this->validateClientDataUpload($fieldsLoad[$d],$data);
                         if($dataValidate->success){
@@ -153,28 +153,27 @@ class UploadController extends Controller
                                 if (!isset($answerFields->$in)){
                                     $answerFields->$in=[];
                                 }
-                                array_push($answerFields->$in,$dataValidate->field);
-                                array_push($directories,$dataValidate->field);
+                                array_push($answerFields->$in,$dataValidate->$in);
+                                array_push($directories,$dataValidate->$in);
                             }
-                            \Log::info(json_encode($answerFields));
                         }else{
                             array_push($errorAnswers,$dataValidate['message']);
                         }
                     }
+                    //array_push($dataToLoad,$answerFields);
                     if(count($errorAnswers)==0){
                         $clientController=new ClientNewController();
                         $newRequest = new Request();
                         $newRequest->replace([
-                            "form_id" => $request->formId,
+                            "form_id" => $request->form_id,
                             "information_data" => json_encode($answerFields->informationClient),
-                            "unique_indentificator" => isset($answerFields->uniqueIdentificator) ? json_encode($answerFields->uniqueIdentificator) : "",
+                            "unique_indentificator" => json_encode($answerFields->uniqueIdentificator[0]),
                         ]);
-                        \Log::info(json_encode($newRequest));
-                        /*$client=$clientController->create($newRequest);
+                        $client=$clientController->create($newRequest);
                         if(isset($client->id)){
-                            if($answerFields['preloadInputs']){
+                            if(isset($answerFields->preload)){
                                 $keyValuesController= new KeyValueController();
-                                $keyValues=$keyValuesController->createKeysValue($answerFields['preloadInputs'],$request->formId,$client->id);
+                                $keyValues=$keyValuesController->createKeysValue($answerFields->preload,$request->form_id,$client->id);
                                 if(!isset($keyValues->id)){
                                     array_push($errorAnswers,"No se han podido insertar keyValues para el cliente ".$client->id);
                                 }
@@ -182,12 +181,12 @@ class UploadController extends Controller
                             array_push($dataLoad,$directories[$c]);
                         }else{
                             array_push($errorAnswers,"No se han podido insertar el cliente ".$answerFields['uniqueIdentificator']['value']);
-                        }*/
+                        }
                     }else{
                         array_push($dataNotLoad,$errorAnswers);
                     }
                 }
-                $resume=["Total Registros: ".count($fileData) , "Cargados: ".count($dataLoad), "No Cargados: ".count($dataNotLoad)];
+                $resume=["Total Registros: ".count($fileData) , "Cargados: ".count($dataToLoad), "No Cargados: ".count($dataNotLoad)];
                 $data = $miosHelper->jsonResponse(true,200,"data",$resume);
             }else{
                 $data = $miosHelper->jsonResponse(false,400,"message","No se encuentra los campos en el formulario");
@@ -218,14 +217,14 @@ class UploadController extends Controller
             $field->value=$data;
             $answer->in=[];
             if(isset($field->isClientInfo)){
-                $answer->field=(Object)[
+                $answer->informationClient=(object)[
                     "id" => $field->id,
                     "value" => $field->value
                 ];
                 array_push($answer->in,'informationClient');
             }
             if(isset($field->client_unique)){
-                $answer->field=(Object)[
+                $answer->uniqueIdentificator = (Object)[
                     "id" => $field->id,
                     "key" => $field->key,
                     "preloaded" => $field->preloaded,
@@ -233,12 +232,11 @@ class UploadController extends Controller
                     "isClientInfo" => $field->isClientInfo,
                     "client_unique" => $field->client_unique,
                     "value" => $field->value
-
                 ];
                 array_push($answer->in,'uniqueIdentificator');
             }
             if(isset($field->preloaded)){
-                $answer->field=(Object)[
+                $answer->preload=[
                     "id" => $field->id,
                     "key" => $field->key,
                     "value" => $field->value

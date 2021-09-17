@@ -91,7 +91,7 @@ class ClientNewController extends Controller
             return $this->clientNewModel->find($request->client_new_id);
         }
 
-        $informations_data = $request->information_data;
+        $informations_data = $request->information_data     ;
         if($informations_data)
         {
             foreach($informations_data as $informationData)
@@ -110,6 +110,7 @@ class ClientNewController extends Controller
             $clientNewQuery = $clientNewQuery->where("unique_indentificator->id", $unique_indentificator->id)
                 ->where("unique_indentificator->value", $unique_indentificator->value);
         }
+        \Log::info($clientNewQuery->toSql(),$clientNewQuery->getBindings());
         return $clientNewQuery->first();
     }
 
@@ -118,7 +119,7 @@ class ClientNewController extends Controller
     // Parámetros:
     // Array Datos de uno o varios clientes en un objeto
     // Retorna: Objeto con un parámetro estado el cual será true or false dependiendo del resultado
-    // del proceso, y un parámetro data con el objeto de  creación del cliente ósea los datos almacenados en la tabla clients_new.
+    // del proceso, y un parámetro data con el objeto de  creación delto cliente ósea los datos almacenados en la tabla clients_new.
     public function create(Request $request)
     {
         $validator = Validator::make($request->all(),[
@@ -147,7 +148,6 @@ class ClientNewController extends Controller
                 $data = $this->save($request);
             }
         }
-
         return $data;
     }
 

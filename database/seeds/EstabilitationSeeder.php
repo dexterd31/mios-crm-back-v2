@@ -11,6 +11,9 @@ class EstabilitationSeeder extends Seeder
      */
     public function run()
     {
+        $this->call('ActionPermissionSeeder');
+        $this->call('ActionPermissionViewDisabledSeeder');
+        $this->call('PermissionSeeder');
         $this->call('DependenciesSeeder');
         $this->call('ClientNewSeeder');
         $this->call('FieldsClientUniqueIdentificatorSeeder');
