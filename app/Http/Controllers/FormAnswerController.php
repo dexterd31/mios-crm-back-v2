@@ -247,6 +247,7 @@ class FormAnswerController extends Controller
         $clientNewController = new ClientNewController();
         $clientNewData = new Request();
         $replace = [];
+        \Log::info($dataFilters);
         if(isset($dataFilters["isClientInfo"]))
         {
             $replace["information_data"] = $dataFilters["isClientInfo"];
@@ -259,9 +260,10 @@ class FormAnswerController extends Controller
 
         $clientNewData->replace($replace);
         $clientNew = [];
-
+        \Log::info($clientNewData);
         $clientNew = $clientNewController->index($clientNewData);
- 
+        \Log::info($clientNew);
+
         if(!isset($clientNew["error"]))
         {
             $clientNewId = $clientNew ? $clientNew->id : null;
@@ -281,7 +283,7 @@ class FormAnswerController extends Controller
                     $formAnswersData = $formAnswers->getCollection();
                 }
             }
-    
+
             if(count($formAnswersData) > 0)
             {
                 if(!$clientNewId)
@@ -290,7 +292,7 @@ class FormAnswerController extends Controller
                 }
 
                 $data = $this->setNewStructureAnswer($formAnswersData, $request->form_id);
-                
+
                 $formAnswersData = $data["formAnswers"];
                 $files = $data["files"];
             }
@@ -377,7 +379,7 @@ class FormAnswerController extends Controller
      * 26-02-2020
      * Método para filtrar las varias opciones en el formulario
      */
-    public function filterForm(Request $request, MiosHelper $miosHelper, FilterHelper $filterHelper, ApiHelper $apiHelper)
+    /*public function filterForm(Request $request, MiosHelper $miosHelper, FilterHelper $filterHelper, ApiHelper $apiHelper)
     {
         // try {
             if (Gate::allows('form_answer')) {
@@ -397,7 +399,7 @@ class FormAnswerController extends Controller
                 * Se busca el si el cliente existe en el sistema
                 * Se busca si hay registros en Mios
                 */
-                $form_answers = $filterHelper->filterByGestions($formId, $item1key, $item1value, $item2key, $item2value, $item3key, $item3value);
+                /*$form_answers = $filterHelper->filterByGestions($formId, $item1key, $item1value, $item2key, $item2value, $item3key, $item3value);
                 // Se valida si ya se ha encontrado inforación, sino se busca por id del cliente
                 $validador = $miosHelper->jsonDecodeResponse(json_encode($form_answers));
                 if ($form_answers == null || count($validador['data']) == 0) {
@@ -408,7 +410,7 @@ class FormAnswerController extends Controller
                     } */
 
                     // Se valida si ya se ha encontrado inforación, sino se busca en base de datos
-                    $validador = $miosHelper->jsonDecodeResponse(json_encode($form_answers));
+                    /*$validador = $miosHelper->jsonDecodeResponse(json_encode($form_answers));
                     if ($form_answers == null || count($validador['data']) == 0) {
                         // Se busca por el cargue de base de datos = directory
                         $form_answers = $filterHelper->filterByDataBase($formId, $clientId, $item1value, $item2value, $item3value);
@@ -466,7 +468,7 @@ class FormAnswerController extends Controller
         // } catch (\Throwable $e) {
         //     return $this->errorResponse('Error al buscar la gestion', 500);
         // }
-    }
+    }*/
 
     /**
      * Nicoll Ramirez
