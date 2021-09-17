@@ -167,11 +167,15 @@ class MiosHelper
         {
             if(is_object($array))
             {
-                array_push($arrayValues, $value->$key);
+                $valueNew = $value->$key;
             }
             elseif (is_array($array))
             {
-                array_push($arrayValues, $value[$key]);
+                $valueNew = $value[$key];
+            }
+            if(!in_array($valueNew, $arrayValues))
+            {
+                array_push($arrayValues, $valueNew);
             }
         }
         return $arrayValues;

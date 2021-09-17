@@ -47,14 +47,20 @@ class FieldsClientUniqueIdentificatorSeeder extends Seeder
                 if($section->type_section == 1)
                 {
                     $fields = json_decode($section->fields);
-                    foreach ($fields as $field)
+                    foreach ($fields as &$field)
                     {
-                        if($field->key == "document")
+                        if(array_key_exists($field->key, $keyDataClient))
                         {
-                            $form->fields_client_unique_identificator = json_encode($field);
+                            $field->isClientInfo = true;
+                            if($field->key == "document")
+                            {
+                                $form->fields_client_unique_identificator = json_encode([$field]);
+                            }
                         }
                     }
+                    $section->fields = json_encode($fields);
                 }
+                $section->save();
             }
             $form->save();
         }
