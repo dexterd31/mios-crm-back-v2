@@ -391,8 +391,20 @@ class FormController extends Controller
                 }
             }
 
-            $respuestas['user']=$adviserInfo[$answer->rrhh_id]->name;
-            $respuestas['docuser']=$adviserInfo[$answer->rrhh_id]->id_number;
+            $respuestas['docuser'] = 0;
+            $respuestas['user'] = 0;
+            if(isset($answer->id_rhh) && isset($adviserInfoDir[$answer->id_rhh]))
+            {
+                if(isset($adviserInfoDir[$answer->id_rhh]->name))
+                {
+                    $respuestas['user'] = $adviserInfoDir[$answer->id_rhh]->name;
+                }
+                if(isset($adviserInfoDir[$answer->id_rhh]->id_number))
+                {
+                    $respuestas['docuser'] = $adviserInfoDir[$answer->id_rhh]->id_number;
+                }
+                
+            }
             $respuestas['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
             $respuestas['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
             $rows[$r]=$respuestas;
@@ -455,8 +467,20 @@ class FormController extends Controller
                     }
                 }
 
-                $respuestas['user']=$adviserInfoDir[$answer->rrhh_id]->name;
-                $respuestas['docuser']=$adviserInfoDir[$answer->rrhh_id]->id_number;
+                $respuestas['docuser'] = 0;
+                $respuestas['user'] = 0;
+                if(isset($answer->id_rhh) && isset($adviserInfoDir[$answer->id_rhh]))
+                {
+                    if(isset($adviserInfoDir[$answer->id_rhh]->name))
+                    {
+                        $respuestas['user'] = $adviserInfoDir[$answer->id_rhh]->name;
+                    }
+                    if(isset($adviserInfoDir[$answer->id_rhh]->id_number))
+                    {
+                        $respuestas['docuser'] = $adviserInfoDir[$answer->id_rhh]->id_number;
+                    }
+                    
+                }
                 $respuestas['created_at'] = Carbon::parse($directory->created_at->format('c'))->setTimezone('America/Bogota');
                 $respuestas['updated_at'] = Carbon::parse($directory->updated_at->format('c'))->setTimezone('America/Bogota');
                 $rows[$r]=$respuestas;
