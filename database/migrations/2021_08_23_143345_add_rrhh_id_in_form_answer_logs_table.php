@@ -5,6 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use App\Models\FormAnswerLog;
 use App\Models\User;
+use Helpers\MiosHelper;
 
 class AddRrhhIdInFormAnswerLogsTable extends Migration
 {
@@ -19,10 +20,15 @@ class AddRrhhIdInFormAnswerLogsTable extends Migration
             $table->unsignedBigInteger('rrhh_id');
         });
         $formAnswerLogs = FormAnswerLog::all();
-        foreach ($formAnswerLogs as $formAnswerLog)
+        $miosHelper = new MiosHelper();
+        $idsUsers = $miosHelper->getArrayValues("user_id", $formAnswerLogs);
+        $users = User::whereIn("id", $idsUsers)->get()->keyBy('id');
+        foreach ($idsUsers as $idUser)
         {
-            $formAnswerLog->rrhh_id = User::find($formAnswerLog->user_id)->id_rhh;
-            $formAnswerLog->save();
+            if(isset($users[$idUser]))
+            {
+                FormAnswerLog::where("user_id", $idUser)->update(['rrhh_id' => $users[$idUser]->id]);   
+            }
         }
     }
 
