@@ -8,6 +8,7 @@ use App\Models\Form;
 use App\Models\FormAnswer;
 use App\Models\Directory;
 use App\Models\KeyValue;
+use Illuminate\Support\Facades\DB;
 
 class ClientNewSeeder extends Seeder
 {
@@ -30,6 +31,9 @@ class ClientNewSeeder extends Seeder
         );
         $clients = Client::all();
         $qtd = 0;
+        $idClientNew = 1;
+        $clientsNew = [];
+        $clientNewAux = [];
         foreach ($clients as $client)
         {
             $this->command->info("Analisado clientes para crear ClientNew, Clientes analisados: ".$qtd++." Faltan: ".count($clients));
@@ -76,26 +80,40 @@ class ClientNewSeeder extends Seeder
                         }
                     }
 
-                    $createClientNew = new ClientNew([
+                    array_push($clientsNew, [
+                        "id" => $idClientNew++,
                         "information_data" => json_encode($clientData),
                         "unique_indentificator" => json_encode($clientUnique),
-                        "form_id" => $form->form_id
+                        "form_id" => $form->form_id,
                     ]);
-                    $createClientNew->save();
 
-                    Directory::where('form_id', $form->form_id)
-                        ->where('client_id', $form->client_id)
-                        ->update(['client_new_id' => $createClientNew->id]);
-
-                    KeyValue::where('form_id', $form->form_id)
-                        ->where('client_id', $form->client_id)
-                        ->update(['client_new_id' => $createClientNew->id]);
-
-                    FormAnswer::where('form_id', $form->form_id)
-                        ->where('client_id', $form->client_id)
-                        ->update(['client_new_id' => $createClientNew->id]);
+                    
+                    $clientNewAux[$idClientNew] = (Object)[
+                        "form_id" => $form->form_id,
+                        "client_id" => $form->client_id
+                    ];
                 }
             }
+
         }
+        
+        $this->updateClientId($clientNewAux, "directories");
+        $this->updateClientId($clientNewAux, "key_values");
+        $this->updateClientId($clientNewAux, "form_answers");
+        ClientNew::insert($clientsNew);
+
+
+    }
+    private function updateClientId($clientNewAux, $table)
+    {
+        $cases = "";
+        $caseEnd = "";
+        $caseInicio = "UPDATE $table SET client_new_id = case ";
+        foreach ($clientNewAux as $idClientNew => $client)
+        {
+            $cases .= " WHEN client_id = ".$client->client_id." and form_id = ".$client->form_id." then ".$idClientNew;
+        }
+        $sql = $caseInicio.$cases."0"." END;";
+        DB::select($sql);
     }
 }
