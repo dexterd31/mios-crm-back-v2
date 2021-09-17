@@ -193,6 +193,7 @@ class FormAnswerController extends Controller
         $requestJson = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
         $dataFilters = $this->getDataFilters($requestJson['filter']);
         $data = [];
+        $files = [];
 
         $clientNewController = new ClientNewController();
         $clientNewData = new Request();
@@ -245,7 +246,11 @@ class FormAnswerController extends Controller
                 $files = $data["files"];
             }
             $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
-            if($clientNewId)$data["preloaded"] = $this->preloaded($request->form_id, $clientNewId, $files);
+            \Log::info($clientNewId);
+            if($clientNewId)
+            {
+                $data["preloaded"] = $this->preloaded($request->form_id, $clientNewId, $files);
+            }
             return response()->json($data, $data['code']);
         }
         return $this->errorResponse('Error al buscar la gestion', 500);
