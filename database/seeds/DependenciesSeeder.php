@@ -379,11 +379,12 @@ class DependenciesSeeder extends Seeder
             $qtd += $insertQtd;
         }
 
-        $insertQtd = 0;
+        $qtd = 0;
         $this->command->info("Actualizando directories");
         $clientsNewAuxChunk = array_chunk($clientsNewAux, $insertQtd);
         foreach ($clientsNewAuxChunk as $clientNewAuxChunk)
         {
+            $qtd++;
             $this->command->info("Actualizando $insertQtd directories, $qtd ya insertados, de un total de ".count($clientsNewAux));
             $this->updateClientId($clientNewAuxChunk, "directories");
             $this->command->info("Actualizando $insertQtd key_values, $qtd ya insertados, de un total de ".count($clientsNewAux));
