@@ -51,8 +51,10 @@ class FormAnswerController extends Controller
             "form_answer_index_data" => json_encode($formAnswerIndexData),
             'tipification_time' => $chronometer
         ]);
-
-        return $this->saveModel($formsAnswer);
+        $saveFormAnswer=$this->saveModel($formsAnswer);
+        // Guarda en Log FormAnswer
+        $this->logFormAnswer($saveFormAnswer);
+        return $saveFormAnswer;
     }
 
     public function saveinfo(Request $request)
@@ -144,8 +146,6 @@ class FormAnswerController extends Controller
 
             // Manejar bandejas
             $this->matchTrayFields($form_answer->form_id, $form_answer);
-            // Log FormAnswer
-            $this->logFormAnswer($form_answer);
             $this->updateDataCrm($clientNew->id, $form_answer);
             return $this->successResponse(['message'=>"Información guardada correctamente",'formAsnwerId'=>$form_answer->id]);
         }
