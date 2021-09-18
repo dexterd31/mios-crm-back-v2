@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ClientNew;
 use Illuminate\Database\Seeder;
 use App\Models\Form;
 use App\Models\KeyValue;
@@ -15,6 +16,9 @@ class DependenciesSeeder extends Seeder
      */
     public function run()
     {
+        $clientsNew = array();
+        $clientsNewAux = [];
+        $idClientNew = 1;
         $keyDataClient = array(
             "firstName" => "first_name",
             "middleName" => "middle_name",
@@ -222,6 +226,7 @@ class DependenciesSeeder extends Seeder
             {
                 $formAnswerIndexData = [];
                 $structureAnswer = json_decode($formAnswer->structure_answer);
+                $clientData = [];
                 foreach ($structureAnswer as &$answer)
                 {
                     foreach ($fieldsNew as $fieldNew)
@@ -266,13 +271,42 @@ class DependenciesSeeder extends Seeder
                         {
                             $answer->preloaded = true;
                             $answer->client_unique = true;
+                            $clientUnique = [(Object)[
+                                "label" => isset($answer->label) ? $answer->label : "no se encuntra label en el formAnswer" ,
+                                "preloaded" => true,
+                                "id" => $field->id,
+                                "key" => $answer->key,
+                                "value" => $answer->value,
+                                "isClientInfo" => true,
+                                "client_unique" => true
+                            ]];
                         }
                     }
                     array_push($formAnswerIndexData, [
                         "id"=> $answer->id,
                         "value"=> $answer->value
                     ]);
+                    if(isset($answer->preloaded) && $answer->preloaded)
+                    {   
+                        array_push($clientData, [
+                            "id" => $answer->id,
+                            "value" => $answer->value,
+                        ]);
+                    }
                 }
+
+                $clientNewAux = (Object)["form_id" => $formAnswer->form_id, "client_id" => $formAnswer->client_id ];
+                if(!in_array($clientNewAux, $clientsNewAux) && $clientUnique)
+                {
+                    array_push($clientsNew, [
+                        "id" => $idClientNew++,
+                        "information_data" => json_encode($clientData),
+                        "unique_indentificator" => json_encode($clientUnique),
+                        "form_id" => $formAnswer->form_id,
+                    ]);
+                    $clientsNewAux[$idClientNew] = $clientNewAux;
+                }
+
                 $formAnswer->structure_answer = json_encode($structureAnswer);
                 $formAnswerNew = [
                     'id' => $formAnswer->id,
@@ -285,6 +319,7 @@ class DependenciesSeeder extends Seeder
                     "form_answer_index_data" => json_encode($formAnswerIndexData),
                     "tipification_time" => $formAnswer->tipification_time
                 ];
+
                 array_push($formAnswersNew, $formAnswerNew);
             }
             $filters = json_decode($form->filters);
@@ -312,7 +347,7 @@ class DependenciesSeeder extends Seeder
         {
             
             $this->command->info("guardando $insertQtd sections, $qtd ya insertados, de un total de ".count($sectionsNew));
-            DB::table('sections_new')->insert($sectionNewChunk);
+            //DB::table('sections_new')->insert($sectionNewChunk);
             $qtd += $insertQtd;
         }
 
@@ -322,7 +357,7 @@ class DependenciesSeeder extends Seeder
         {
 
             $this->command->info("guardando $insertQtd form_answer, $qtd ya insertados, de un total de ".count($formAnswersNew));
-            DB::table('form_answer_new')->insert($formAnswerNewChunk);
+            //DB::table('form_answer_new')->insert($formAnswerNewChunk);
             $qtd += $insertQtd;
         }
 
@@ -331,8 +366,30 @@ class DependenciesSeeder extends Seeder
         foreach ($keyValuesChunk as $keyValueChunk)
         {
             $this->command->info("guardando $insertQtd KeyValue, $qtd ya insertados, de un total de ".count($keyValues));
-            KeyValue::insert($keyValueChunk);
+           // KeyValue::insert($keyValueChunk);
             $qtd += $insertQtd;
+        }
+
+        $clientsNewChunk = array_chunk($clientsNew, $insertQtd);
+        $qtd = 0;
+        foreach ($clientsNewChunk as $clientNewChunk)
+        {
+            $this->command->info("guardando $insertQtd clientNew, $qtd ya insertados, de un total de ".count($clientsNew));
+            //ClientNew::insert($clientNewChunk);
+            $qtd += $insertQtd;
+        }
+
+        $insertQtd = 0;
+        $this->command->info("Actualizando directories");
+        $clientsNewAuxChunk = array_chunk($clientsNewAux, $insertQtd);
+        foreach ($clientsNewAuxChunk as $clientNewAuxChunk)
+        {
+            $this->command->info("Actualizando $insertQtd directories, $qtd ya insertados, de un total de ".count($clientsNewAux));
+            $this->updateClientId($clientNewAuxChunk, "directories");
+            $this->command->info("Actualizando $insertQtd key_values, $qtd ya insertados, de un total de ".count($clientsNewAux));
+            $this->updateClientId($clientNewAuxChunk, "key_values");
+            $this->command->info("Actualizando $insertQtd form_answers, $qtd ya insertados, de un total de ".count($clientsNewAux));
+            $this->updateClientId($clientNewAuxChunk, "form_answers");
         }
 
         $this->command->info("Renombrando tablas");
@@ -365,5 +422,17 @@ class DependenciesSeeder extends Seeder
             }
         }
         return $fieldData;
+    }
+
+    private function updateClientId($clientNewAux, $table)
+    {
+        $cases = "";
+        $caseInicio = "UPDATE $table SET client_new_id = case ";
+        foreach ($clientNewAux as $idClientNew => $client)
+        {
+            $cases .= " WHEN client_id = ".$client->client_id." and form_id = ".$client->form_id." then ".$idClientNew;
+        }
+        $sql = $caseInicio.$cases."0"." END;";
+        DB::select($sql);
     }
 }
