@@ -3,7 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\form;
+use App\Models\Form;
+
 class Group extends Model
 {
     protected $table = 'groups';

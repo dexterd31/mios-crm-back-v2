@@ -19,7 +19,7 @@ class AddRelationshipsWithClientNews extends Migration
         {
             Schema::table('directories', function ($table)
             {
-                $table->unsignedBigInteger('client_new_id'); 
+                $table->unsignedBigInteger('client_new_id')->default(0); 
             });
         }
 
@@ -27,7 +27,7 @@ class AddRelationshipsWithClientNews extends Migration
         {
             Schema::table('key_values', function ($table)
             {
-                $table->unsignedBigInteger('client_new_id'); 
+                $table->unsignedBigInteger('client_new_id')->default(0); 
             });
         }
 
@@ -35,7 +35,7 @@ class AddRelationshipsWithClientNews extends Migration
         {
             Schema::table('form_answers', function ($table)
             {
-                $table->unsignedBigInteger('client_new_id'); 
+                $table->unsignedBigInteger('client_new_id')->default(0); 
             });
         }
     }

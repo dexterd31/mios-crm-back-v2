@@ -1,9 +1,14 @@
 <?php
 
+use App\Http\Controllers\ClientNewController;
 use Illuminate\Database\Seeder;
 use App\Models\ClientNew;
 use App\Models\Client;
+use App\Models\Form;
 use App\Models\FormAnswer;
+use App\Models\Directory;
+use App\Models\KeyValue;
+use Illuminate\Support\Facades\DB;
 
 class ClientNewSeeder extends Seeder
 {
@@ -14,40 +19,101 @@ class ClientNewSeeder extends Seeder
      */
     public function run()
     {
-        $keyDataClient = array("firstName","middleName","lastName","secondLastName", "document_type_id", "document", "phone", "email");
-        ///id,structure_answer,created_at,updated_at,form_id,channel_id,rrhh_id,client_new_id,form_answer_index_data
-        $formAnswers = FormAnswer::all();
-        foreach ($formAnswers as $formAnswer)
+        $keyDataClient = array(
+            "firstName" => "first_name",
+            "middleName" => "middle_name",
+            "lastName" => "first_lastname",
+            "secondLastName" => "second_lastname",
+            "document_type_id" => "document_type_id",
+            "document" => "document",
+            "phone" => "phone",
+            "email" => "email"
+        );
+        $clients = Client::all();
+        $qtd = 0;
+        $idClientNew = 1;
+        $clientsNew = [];
+        $clientNewAux = [];
+        foreach ($clients as $client)
         {
-            $structureAnswer = json_decode($formAnswer->structure_answer);
-            $informationData = [];
-            $uniqueIndentificator = null;
-            foreach ($structureAnswer as $answer)
+            $this->command->info("Analisado clientes para crear ClientNew, Clientes analisados: ".$qtd++." Faltan: ".count($clients));
+            //busca respuesta para cada cliente
+
+            $allForm = KeyValue::join("forms", "forms.id", "key_values.form_id")
+                ->join("sections", "forms.id", "sections.form_id")
+                ->where("key_values.client_id",$client->id)->where("sections.type_section",1)->select("key_values.*", "sections.id as sections_id", "sections.fields as fields")->get();
+
+            //idForm es un array con las lista de formularios para cual ya se creo el cliente
+            $idForms = [];
+            //crea un cliente para cada formulario que tenga tipificacion
+            foreach ($allForm as $form)
             {
-                $answer->isClientInfo = false;
-                if(in_array($answer->key, $keyDataClient))
+                $clientData = [];
+                $clientUnique = [];
+                $fields = json_decode($form->fields);
+
+                if(!in_array($form->form_id, $idForms))
                 {
-                    array_push($informationData, array(
-                        "id"=>$answer->id,
-                        "value"=>$answer->value,
-                    ));
-                    $answer->isClientInfo = true;
+                    array_push($idForms, $form->form_id);
+                    foreach ($fields as $field)
+                    {
+                        $key = array_key_exists($field->key,$keyDataClient) ? $keyDataClient[$field->key] : null;
+                        if($key && $client->$key)
+                        {
+                            if($field->key == "document")
+                            {
+                                $clientUnique = [
+                                    "label" => $field->label,
+                                    "preloaded" => true,
+                                    "id" => $field->id,
+                                    "key" => $field->key,
+                                    "value" => $client->$key,
+                                    "isClientInfo" => true,
+                                    "client_unique" => true
+                                ];
+                            }
+
+                            array_push($clientData, [
+                                "id" => $field->id,
+                                "value" => $client->$key,
+                            ]);
+                        }
+                    }
+
+                    array_push($clientsNew, [
+                        "id" => $idClientNew++,
+                        "information_data" => json_encode($clientData),
+                        "unique_indentificator" => json_encode($clientUnique),
+                        "form_id" => $form->form_id,
+                    ]);
+
+                    
+                    $clientNewAux[$idClientNew] = (Object)[
+                        "form_id" => $form->form_id,
+                        "client_id" => $form->client_id
+                    ];
                 }
-                $answer->client_unique = false;
-                if ($answer->key == "document")
-                {
-                    $answer->client_unique = true;
-                    $uniqueIndentificator = $answer;
-                }
-                $clientNew = new ClientNew (array(
-                    "id" => $answer->client_id,
-                    "form_id" => $formAnswer->form_id,
-                    "information_data" => json_encode($informationData),
-                    "unique_indentificator" => json_encode($uniqueIndentificator),
-                ));
-                $clientNew->save();
             }
-            $formAnswers->save();
+
         }
+        
+        $this->updateClientId($clientNewAux, "directories");
+        $this->updateClientId($clientNewAux, "key_values");
+        $this->updateClientId($clientNewAux, "form_answers");
+        ClientNew::insert($clientsNew);
+
+
+    }
+    private function updateClientId($clientNewAux, $table)
+    {
+        $cases = "";
+        $caseEnd = "";
+        $caseInicio = "UPDATE $table SET client_new_id = case ";
+        foreach ($clientNewAux as $idClientNew => $client)
+        {
+            $cases .= " WHEN client_id = ".$client->client_id." and form_id = ".$client->form_id." then ".$idClientNew;
+        }
+        $sql = $caseInicio.$cases."0"." END;";
+        DB::select($sql);
     }
 }

@@ -5,6 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use App\Models\FormAnswer;
 use App\Models\User;
+use Helpers\MiosHelper;
 
 class AddRrhhIdInFormAnswersTable extends Migration
 {
@@ -19,10 +20,15 @@ class AddRrhhIdInFormAnswersTable extends Migration
             $table->unsignedBigInteger('rrhh_id');
         });
         $formAnswers = FormAnswer::all();
-        foreach ($formAnswers as $formAnswer)
+        $miosHelper = new MiosHelper();
+        $idsUsers = $miosHelper->getArrayValues("user_id", $formAnswers);
+        $users = User::whereIn("id", $idsUsers)->get()->keyBy('id');
+        foreach ($idsUsers as $idUser)
         {
-            $formAnswer->rrhh_id = User::find($formAnswer->user_id)->id_rhh;
-            $formAnswer->save();
+            if(isset($users[$idUser]))
+            {
+                FormAnswer::where("user_id", $idUser)->update(['rrhh_id' => $users[$idUser]->id]);   
+            }
         }
     }
 
