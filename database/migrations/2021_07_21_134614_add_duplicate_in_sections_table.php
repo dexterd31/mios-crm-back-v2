@@ -14,7 +14,7 @@ class AddDuplicateInSectionsTable extends Migration
     public function up()
     {
         Schema::table('sections', function (Blueprint $table) {
-            $table->boolean('duplicate');
+            $table->boolean('duplicate')->default(0);
         });
     }
 

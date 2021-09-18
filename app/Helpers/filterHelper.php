@@ -6,10 +6,16 @@ use App\Models\FormAnswer;
 use App\Models\Client;
 use App\Models\Directory;
 use App\Models\ApiConnection;
+use PhpParser\Node\Stmt\Foreach_;
 
 class FilterHelper
 {
 
+    /**
+     * Joao Beleno
+     * 02-09-2021
+     * @deprecated: Funcio fue subtituida por FormAnswerController::filterFormAnswer()
+     */
     // Funcion para filtar por gestiones de mios
     function filterByGestions($formId, $item1key, $item1value, $item2key, $item2value, $item3key, $item3value)
     {
@@ -32,10 +38,15 @@ class FilterHelper
 
         }
 
-        $form_answers = $form_answers->with('client')->paginate(5);
+        $form_answers = $form_answers->paginate(5);
         return $form_answers;
     }
 
+    /**
+     * Joao Beleno
+     * 02-09-2021
+     * @deprecated: Tabla clientes fue borrada y susbtituida por ClientNew
+     */
     // funcion para obtener el id cliente
     function searchClient($item1value, $item2value, $item3value)
     {
@@ -47,6 +58,11 @@ class FilterHelper
         return $clientId;
     }
 
+    /**
+     * Joao Beleno
+     * 02-09-2021
+     * @deprecated: Tabla clientes fue borrada y susbtituida por ClientNew, no es mas utilizada
+     */
     // Funcion para buscar gestion por id del cliente
     function searchGestionByClientId($formId, $clientId)
     {
@@ -56,26 +72,27 @@ class FilterHelper
     }
 
     // Funcion para filtar por base de datos
-    function filterByDataBase($formId, $clientId, $item1value, $item2value, $item3value)
+    function filterByDataBase($formId, $clientId, $filters)
     {
-        $form_answers = null;
+        $formAnswersQuery = new Directory();
         if ($clientId != null) {
             // Se continua en directory
-            $where = ['form_id' => $formId, 'client_id' => $clientId];
-            $form_answers = Directory::where($where)->with('client')->paginate(5);
-        } else {
-            $form_answers = Directory::where('form_id', $formId)
-                            ->where('data', 'like', '%' . $item1value . '%')
-                            ->where('data', 'like', '%' . $item2value . '%')
-                            ->where('data', 'like', '%' . $item3value . '%')
-                            ->with('client')->paginate(5);
+            $where = ['form_id' => $formId, 'client_new_id' => $clientId];
+            $formAnswersQuery = $formAnswersQuery->where($where);
         }
-
-        return $form_answers;
+        else
+        {
+            $formAnswersQuery = $formAnswersQuery->where('form_id', $formId);
+            foreach ($filters as $filter)
+            {
+                $formAnswersQuery = $formAnswersQuery->where('data', 'like', '%' . $filter["value"] . '%');
+            }
+        }
+        return $formAnswersQuery->paginate(5);
     }
 
     // Funcion para buscar por api
-    function filterbyApi($formId, $item1key, $item1value, $item2key, $item2value, $item3key, $item3value){
+    function filterbyApi($formId, $filters){
         // Se busca si la solicitud tiene cargue por api
         $miosHelper = new MiosHelper();
         $apiHelper  = new ApiHelper();
@@ -86,17 +103,18 @@ class FilterHelper
         if ($apiFind) {
             // Se busca los item de busqueda
             if ($apiFind['parameter'] != null || $apiFind['parameter'] != '') {
-                if ($item1key == $apiFind['parameter']) {
-                    $parameter = $item1value;
-                } else if ($item2key == $apiFind['parameter']) {
-                    $parameter = $item2value;
-                } else if ($item3key == $apiFind['parameter']) {
-                    $parameter = $item3value;
+                foreach ($filters as $filter)
+                {
+                    if ($filter["value"] == $apiFind['parameter'])
+                    {
+                        $parameter = $filter["value"];
+                        break;
+                    }
                 }
             }
 
             // Se hace el cargue de la información con la api registrada.
-            $infoApi = $apiHelper->getInfoByApi($apiFind, $parameter, $formId, $item1key, $item1value, $item2key, $item2value, $item3key, $item3value );
+            $infoApi = $apiHelper->getInfoByApi($apiFind, $parameter, $formId, $filters);
 
             $form_answers = $infoApi;
 
