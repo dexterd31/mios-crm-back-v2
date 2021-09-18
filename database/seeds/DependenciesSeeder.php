@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Schema;
 
 class DependenciesSeeder extends Seeder
 {
+
+    public static $QTD_INSERT_REGISTER = 100;
     /**
      * Run the database seeds.
      *
@@ -380,7 +382,7 @@ class DependenciesSeeder extends Seeder
         $keyValuesNew = $this->createNewKeyValues($clientsNewAux2);
         $keyValues = array_merge($keyValuesNew, $keyValues);
 
-        $insertQtd = 10;
+        $insertQtd = self::$QTD_INSERT_REGISTER;
         $sectionsNewChunk = array_chunk($sectionsNew, $insertQtd);
         $qtd = 0;
         foreach ($sectionsNewChunk as $sectionNewChunk)
