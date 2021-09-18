@@ -48,7 +48,7 @@ class Form extends Model
     }
 
     public function directory(){
-        return $this->hasMany('App\Models\Upload','form_id');
+        return $this->hasOne('App\Models\Upload','form_id');
     }
 
     public function apiConnection(){
