@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\ClientNew;
 use Illuminate\Database\Seeder;
 use App\Models\Form;
+use App\Models\FormAnswer;
 use App\Models\KeyValue;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -15,6 +17,9 @@ class DependenciesSeeder extends Seeder
      */
     public function run()
     {
+        $clientsNew = array();
+        $clientsNewAux = [];
+        $idClientNew = 1;
         $keyDataClient = array(
             "firstName" => "first_name",
             "middleName" => "middle_name",
@@ -27,10 +32,12 @@ class DependenciesSeeder extends Seeder
         );
         $sectionsNew = array();
         $formAnswersNew = array();
-        $keyValues = array();
         $forms = Form::all();
         $totalForm = count($forms);
+        $this->command->info("Creando array values");
+        $keyValues = [];
 
+        $this->command->info("key Values creados: ".count($keyValues));
         foreach($forms as $form)
         {
             $this->command->info("Preparando datos del formularo de id: ".$form->id. " faltan ". $totalForm--);
@@ -218,10 +225,12 @@ class DependenciesSeeder extends Seeder
                 array_push($sectionsNew, $sectionNew);
             }
 
+
             foreach ($form->formAnswers as $formAnswer)
             {
                 $formAnswerIndexData = [];
                 $structureAnswer = json_decode($formAnswer->structure_answer);
+                $clientData = [];
                 foreach ($structureAnswer as &$answer)
                 {
                     foreach ($fieldsNew as $fieldNew)
@@ -245,7 +254,8 @@ class DependenciesSeeder extends Seeder
                                                     'value' => $fieldNew->value,
                                                     'description' => "",
                                                     'field_id' => $fieldNew->id,
-                                                    'client_new_id' => $formAnswer->client_new_id
+                                                    'client_new_id' => $formAnswer->client_new_id,
+                                                    'client_id' => $formAnswer->client_id
                                                 ];
                                                 array_push($keyValues, $keyValue);
                                             }
@@ -266,13 +276,50 @@ class DependenciesSeeder extends Seeder
                         {
                             $answer->preloaded = true;
                             $answer->client_unique = true;
+                            $clientUnique = [(Object)[
+                                "label" => isset($answer->label) ? $answer->label : "no se encuntra label en el formAnswer" ,
+                                "preloaded" => true,
+                                "id" => $field->id,
+                                "key" => $answer->key,
+                                "value" => $answer->value,
+                                "isClientInfo" => true,
+                                "client_unique" => true
+                            ]];
                         }
                     }
                     array_push($formAnswerIndexData, [
                         "id"=> $answer->id,
                         "value"=> $answer->value
                     ]);
+                    if(isset($answer->preloaded) && $answer->preloaded)
+                    {   
+                        array_push($clientData, [
+                            "id" => $answer->id,
+                            "value" => $answer->value,
+                        ]);
+                    }
                 }
+
+                $clientNewAux = (Object)["form_id" => $formAnswer->form_id, "client_id" => $formAnswer->client_id ];
+
+                if(!in_array($clientNewAux, $clientsNewAux) && $clientUnique)
+                {
+                    array_push($clientsNew, [
+                        "id" => $idClientNew++,
+                        "information_data" => json_encode($clientData),
+                        "unique_indentificator" => json_encode($clientUnique),
+                        "form_id" => $formAnswer->form_id,
+                    ]);
+                    $clientsNewAux[$idClientNew] = $clientNewAux;
+
+                    $clientNewAux2Index = $formAnswer->form_id.":".$formAnswer->client_id;
+                    $clientsNewAux2[$clientNewAux2Index] = (Object)[
+                        "form_id" => $formAnswer->form_id,
+                        "client_id" => $formAnswer->client_id,
+                        "client_new_id" => $formAnswer->client_new_id,
+                    ];
+                }
+
                 $formAnswer->structure_answer = json_encode($structureAnswer);
                 $formAnswerNew = [
                     'id' => $formAnswer->id,
@@ -285,6 +332,7 @@ class DependenciesSeeder extends Seeder
                     "form_answer_index_data" => json_encode($formAnswerIndexData),
                     "tipification_time" => $formAnswer->tipification_time
                 ];
+
                 array_push($formAnswersNew, $formAnswerNew);
             }
             $filters = json_decode($form->filters);
@@ -305,7 +353,34 @@ class DependenciesSeeder extends Seeder
 
             $form->save();
         }
-        $insertQtd = 2;
+
+        $this->command->info("Agregando client_id_new en formAnswersNew");
+        foreach ($formAnswersNew as &$formAnswerNew)
+        {
+            $clientOld = (Object)["form_id" => $formAnswerNew["form_id"], "client_id" => $formAnswerNew["client_id"]];
+            $idClientNew = array_search($clientOld, $clientsNewAux);
+            if($idClientNew)
+            {
+                $formAnswerNew["client_new_id"] = $idClientNew;
+            }
+        }
+
+        foreach ($keyValues as &$keyValue)
+        {
+            $clientOld = (Object)["form_id" => $keyValue["form_id"], "client_id" => $keyValue["client_id"]];
+            $idClientNew = array_search($clientOld, $clientsNewAux);
+            if($idClientNew)
+            {
+                $keyValue["client_new_id"] = $idClientNew;
+            }
+        }
+
+        $this->command->info("Agregando client_id_new en key values total:".count($keyValues));
+
+        $keyValuesNew = $this->createNewKeyValues($clientsNewAux2);
+        $keyValues = array_merge($keyValuesNew, $keyValues);
+
+        $insertQtd = 10;
         $sectionsNewChunk = array_chunk($sectionsNew, $insertQtd);
         $qtd = 0;
         foreach ($sectionsNewChunk as $sectionNewChunk)
@@ -332,6 +407,15 @@ class DependenciesSeeder extends Seeder
         {
             $this->command->info("guardando $insertQtd KeyValue, $qtd ya insertados, de un total de ".count($keyValues));
             KeyValue::insert($keyValueChunk);
+            $qtd += $insertQtd;
+        }
+
+        $clientsNewChunk = array_chunk($clientsNew, $insertQtd);
+        $qtd = 0;
+        foreach ($clientsNewChunk as $clientNewChunk)
+        {
+            $this->command->info("guardando $insertQtd clientNew, $qtd ya insertados, de un total de ".count($clientsNew));
+            ClientNew::insert($clientNewChunk);
             $qtd += $insertQtd;
         }
 
@@ -365,5 +449,42 @@ class DependenciesSeeder extends Seeder
             }
         }
         return $fieldData;
+    }
+
+    private function createNewKeyValues($clientsNewAux)
+    {
+        $formAnswers = FormAnswer::all();
+        $keyValues = [];
+        $i = 0;
+        foreach ($formAnswers as $formAnswer)
+        {
+            $this->command->info("Creando KeyValues para formAnswer ".$i++.", ".count($formAnswers));
+            $structureAnswer = json_decode($formAnswer->structure_answer);
+
+            foreach ($structureAnswer as $answer)
+            {
+                if(isset($answer->preloaded) && $answer->preloaded)
+                {
+                    $clientOld = (Object)["form_id" => $formAnswer->form_id, "client_id" => $formAnswer->client_id];
+                    if($clientsNewAux[$formAnswer->form_id.":".$formAnswer->client_id])
+                    {
+                        $idClientNew = $clientsNewAux[$formAnswer->form_id.":".$formAnswer->client_id]->client_new_id;
+                    }
+                    $idClientNew = array_search($clientOld, $clientsNewAux) ? array_search($clientOld, $clientsNewAux) : 0;
+                    $keyValue = [
+                        'form_id' => $formAnswer->form_id,
+                        'key' => $answer->key,
+                        'value' => $answer->value,
+                        'description' => "",
+                        'field_id' => $answer->id,
+                        'client_id' => $formAnswer->client_id,
+                        'client_new_id' => $idClientNew
+                    ];
+                    array_push($keyValues ,$keyValue);
+                }
+
+            }
+        }
+        return $keyValues;
     }
 }
