@@ -192,7 +192,7 @@ class UploadController extends Controller
                     }
                 }
                 $resume=["Total Registros: ".count($fileData) , "Cargados: ".$dataLoad, "No Cargados: ".count($dataNotLoad)];
-                $data = $miosHelper->jsonResponse(true,200,"data",$resume);
+                $data = $miosHelper->jsonResponse(true,200,"message",implode("<br>",$resume));
             }else{
                 $data = $miosHelper->jsonResponse(false,400,"message","No se encuentra los campos en el formulario");
             }

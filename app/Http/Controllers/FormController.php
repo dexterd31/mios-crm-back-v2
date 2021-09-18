@@ -286,104 +286,121 @@ class FormController extends Controller
       $date1=Carbon::parse($request->date1)->setTimezone('America/Bogota');
       $date2=Carbon::parse($request->date2)->setTimezone('America/Bogota');
       $rrhhService= new RrhhService();
-      $formAnswers = FormAnswer::select('id', 'structure_answer', 'created_at', 'updated_at','rrhh_id','tipification_time')
+      $formAnswers = FormAnswer::select('id', 'structure_answer', 'created_at', 'updated_at','rrhh_id','tipification_time','client_new_id')
                           ->where('form_answers.form_id',$request->formId)
                           ->whereBetween('form_answers.created_at', [$date1, $date2])
-                          ->where('tipification_time','!=','upload')
                           ->get();
 
-      if(count($formAnswers)==0){
+        $formAnswersId = FormAnswer::select('client_new_id')
+                            ->where('form_answers.form_id',$request->formId)
+                            ->whereBetween('form_answers.created_at', [$date1, $date2])
+                            ->where('tipification_time','!=','upload')
+                            ->get();
+        $clientId=array_values(array_unique($miosHelper->getArrayValues("client_new_id",$formAnswersId)));
+        \Log::info($clientId);
+        if(count($formAnswers)==0){
             // 406 Not Acceptable
             // se envia este error ya que no esta mapeado en interceptor angular.
             return $this->errorResponse('No se encontraron datos en el rango de fecha suministrado', 406);
-      } else if(count($formAnswers)>5000){
-            return $this->errorResponse('El rango de fechas supera a los 5000 records', 413);
-      } else {
-        $inputReport=[];
-        $titleHeaders=['Id'];
-        $dependencies=[];
-        $r=0;
-        $rows=[];
-        $plantillaRespuestas=[];
-        //Agrupamos los id_rrhh del usuario en un arreglo
-        $userRrhhIids=$miosHelper->getArrayValues('rrhh_id',$formAnswers);
-        //Se dejan los id unicos quitamos todos los repetidos
-        $useString=implode(',',array_values(array_unique($userRrhhIids)));
-        //Traemos los datos de rrhh de los usuarios
-        $usersInfo=$rrhhService->fetchUsers($useString);
-        //Organizamos la información del usuario en un array asociativo con la información necesaria
-        $adviserInfo=[];
-        foreach($usersInfo as $info){
-            if(in_array($info->id,$userRrhhIids)){
-                if(!isset($adviserInfo[$info->id])){
-                    $adviserInfo[$info->id]=$info;
-                }
-            }
-        }
-        //Verificamos cuales son los campos que deben ir en el reporte o que su elemento inReport sea true
-        $sections=Section::select('fields')->where("form_id",$request->formId)->get();
-        $plantillaRespuestas['id']="-";
-        foreach($sections as $section){
-            foreach(json_decode($section->fields) as $input){
-                if($input->inReport){
-                    array_push($titleHeaders,$input->label);
-                    array_push($inputReport,$input);
-                    $plantillaRespuestas[$input->id]="-";
-                }
-            }
-        }
-        $plantillaRespuestas['user']="-";
-        $plantillaRespuestas['docuser']="-";
-        $plantillaRespuestas['created_at'] ="-";
-        $plantillaRespuestas['updated_at'] ="-";
-
-        foreach($formAnswers as $answer){
-            $respuestas=$plantillaRespuestas;
-            $respuestas['id'] = $answer->id;
-            //Evaluamos los campos que deben ir en el reporte contra las respuestas
-            foreach($inputReport as $input){
-                foreach(json_decode($answer->structure_answer) as $field){
-                    if($field->id==$input->id){
-                        $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
-                        if($select){
-                            $respuestas[$input->id] = $select;
-                        } else {
-                            $respuestas[$input->id] = $field->value;
-                        }
-                        break;
-                    }else if($field->key==$input->key){
-                        $select = $this->findAndFormatValues($request->formId, $input->id, $field->value);
-                        if($select){
-                            $respuestas[$input->id] = $select;
-                        } else {
-                            $respuestas[$input->id] = $field->value;
-                        }
-                        break;
+        } else if(count($formAnswers)>5000){
+                return $this->errorResponse('El rango de fechas supera a los 5000 records', 413);
+        } else {
+            $inputReport=[];
+            $titleHeaders=['Id'];
+            $r=0;
+            $rows=[];
+            $plantillaRespuestas=[];
+            $cargadosNotipificados=[];
+            //Agrupamos los id_rrhh del usuario en un arreglo
+            $userRrhhIids=$miosHelper->getArrayValues('rrhh_id',$formAnswers);
+            //Se dejan los id unicos quitamos todos los repetidos
+            $useString=implode(',',array_values(array_unique($userRrhhIids)));
+            //Traemos los datos de rrhh de los usuarios
+            $usersInfo=$rrhhService->fetchUsers($useString);
+            //Organizamos la información del usuario en un array asociativo con la información necesaria
+            $adviserInfo=[];
+            foreach($usersInfo as $info){
+                if(in_array($info->id,$userRrhhIids)){
+                    if(!isset($adviserInfo[$info->id])){
+                        $adviserInfo[$info->id]=$info;
                     }
                 }
             }
-
-            if(isset($answer->id_rhh) && isset($adviserInfoDir[$answer->id_rhh]))
-            {
-                if(isset($adviserInfoDir[$answer->id_rhh]->name))
-                {
-                    $respuestas['user'] = $adviserInfoDir[$answer->id_rhh]->name;
+            //Verificamos cuales son los campos que deben ir en el reporte o que su elemento inReport sea true
+            $sections=Section::select('fields')->where("form_id",$request->formId)->get();
+            $plantillaRespuestas['id']="-";
+            foreach($sections as $section){
+                foreach(json_decode($section->fields) as $input){
+                    if($input->inReport){
+                        array_push($titleHeaders,$input->label);
+                        array_push($inputReport,$input);
+                        $plantillaRespuestas[$input->id]="-";
+                    }
                 }
-                if(isset($adviserInfoDir[$answer->id_rhh]->id_number))
-                {
-                    $respuestas['docuser'] = $adviserInfoDir[$answer->id_rhh]->id_number;
-                }
-
             }
-            $respuestas['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
-            $respuestas['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
-            $respuestas['tipification_time'] = $answer->tipification_time;
-            $rows[$r]=$respuestas;
-            $r++;
+            $plantillaRespuestas['user']="-";
+            $plantillaRespuestas['docuser']="-";
+            $plantillaRespuestas['created_at'] ="-";
+            $plantillaRespuestas['updated_at'] ="-";
+
+            foreach($formAnswers as $answer){
+                $respuestas=$plantillaRespuestas;
+                $respuestas['id'] = $answer->id;
+                //Evaluamos los campos que deben ir en el reporte contra las respuestas
+                foreach($inputReport as $input){
+                    foreach(json_decode($answer->structure_answer) as $field){
+                        if($field->id==$input->id){
+                            $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
+                            if($select){
+                                $respuestas[$input->id] = $select;
+                            } else {
+                                $respuestas[$input->id] = $field->value;
+                            }
+                            break;
+                        }else if($field->key==$input->key){
+                            $select = $this->findAndFormatValues($request->formId, $input->id, $field->value);
+                            if($select){
+                                $respuestas[$input->id] = $select;
+                            } else {
+                                $respuestas[$input->id] = $field->value;
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                if(isset($answer->id_rhh) && isset($adviserInfoDir[$answer->id_rhh]))
+                {
+                    if(isset($adviserInfoDir[$answer->id_rhh]->name))
+                    {
+                        $respuestas['user'] = $adviserInfoDir[$answer->id_rhh]->name;
+                    }
+                    if(isset($adviserInfoDir[$answer->id_rhh]->id_number))
+                    {
+                        $respuestas['docuser'] = $adviserInfoDir[$answer->id_rhh]->id_number;
+                    }
+
+                }
+                $respuestas['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
+                $respuestas['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
+                $respuestas['tipification_time'] = $answer->tipification_time;
+                if($respuestas['tipification_time'] =='upload'){
+                    if(!in_array($answer->client_new_id,$clientId)){
+                        \Log::info($answer->client_new_id);
+                        $respuestas['tipification_time'] = "Cargado no tipificado";
+                        $cargadosNotipificados[]=$respuestas;
+                    }
+                }else{
+                    $rows[$r]=$respuestas;
+                    $r++;
+                }
+            }
+            if(count($cargadosNotipificados)>0){
+                array_push($rows,$cargadosNotipificados);
+            }
+            array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización','Tiempo de Tipificación');
         }
-        array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización','Tiempo de Tipificación');
-      }
-      return Excel::download(new FormReportExport($rows, $titleHeaders), 'reporte_formulario.xlsx');
+        return Excel::download(new FormReportExport($rows, $titleHeaders), 'reporte_formulario.xlsx');
     }
 
     /**
