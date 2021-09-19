@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Schema;
 class DependenciesSeeder extends Seeder
 {
 
-    public static $QTD_INSERT_REGISTER = 2;
+    public static $QTD_INSERT_REGISTER = 10;
     /**
      * Run the database seeds.
      *
@@ -230,7 +230,9 @@ class DependenciesSeeder extends Seeder
                     'fields' => $section->fields,
                     'collapse' => $section->collapse,
                     'duplicate' => $section->duplicate,
-                    'state' => $section->state
+                    'state' => $section->state,
+                    'created_at' => $section->created_at,
+                    'updated_at' => date('Y-m-d H:i:s'),
                 ];
 
                 array_push($sectionsNew, $sectionNew);
@@ -266,7 +268,9 @@ class DependenciesSeeder extends Seeder
                                                     'description' => "",
                                                     'field_id' => $fieldNew->id,
                                                     'client_new_id' => $formAnswer->client_new_id,
-                                                    'client_id' => $formAnswer->client_id
+                                                    'client_id' => $formAnswer->client_id,
+                                                    'created_at' => date('Y-m-d H:i:s'),
+                                                    'updated_at' => date('Y-m-d H:i:s'),
                                                 ];
                                                 array_push($keyValues, $keyValue);
                                             }
@@ -320,6 +324,8 @@ class DependenciesSeeder extends Seeder
                         "information_data" => json_encode($clientData),
                         "unique_indentificator" => json_encode($clientUnique),
                         "form_id" => $formAnswer->form_id,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
                     ]);
                     $clientsNewAux[$idClientNew] = $clientNewAux;
 
@@ -341,7 +347,9 @@ class DependenciesSeeder extends Seeder
                     "client_new_id" => $formAnswer->client_new_id,
                     "client_id" => $formAnswer->client_id,
                     "form_answer_index_data" => json_encode($formAnswerIndexData),
-                    "tipification_time" => $formAnswer->tipification_time
+                    "tipification_time" => $formAnswer->tipification_time,
+                    'created_at' => $formAnswer->created_at,
+                    'updated_at' => date('Y-m-d H:i:s'),
                 ];
 
                 array_push($formAnswersNew, $formAnswerNew);
@@ -539,7 +547,9 @@ class DependenciesSeeder extends Seeder
                         'description' => "",
                         'field_id' => $answer->id,
                         'client_id' => $formAnswer->client_id,
-                        'client_new_id' => $idClientNew
+                        'client_new_id' => $idClientNew,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
                     ];
                     array_push($keyValues ,$keyValue);
                 }
