@@ -6,12 +6,13 @@ use App\Models\Form;
 use App\Models\FormAnswer;
 use App\Models\KeyValue;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 class DependenciesSeeder extends Seeder
 {
 
-    public static $QTD_INSERT_REGISTER = 100;
+    public static $QTD_INSERT_REGISTER = 2;
     /**
      * Run the database seeds.
      *
@@ -113,7 +114,7 @@ class DependenciesSeeder extends Seeder
                                 "disabled"=> $depend->field->disabled,
                                 "cols"=> $depend->field->cols,
                                 "preloaded"=> $depend->field->preloaded,
-                                //"isSon"=> $depend->field->isSon,
+                                "isSon"=> true,
                                 "dependencies"=> [],
                                 "editRoles" => $depend->field->editRoles,
                                 "seeRoles" => $depend->field->seeRoles,
@@ -269,6 +270,12 @@ class DependenciesSeeder extends Seeder
                             $answer->id = $fieldNew->id;
                             $answer->key = $fieldNew->key;
                             $answer->label = $fieldNew->label;
+                            $isSon = false;
+                            if(isset($answer->isSon) && $answer->isSon)
+                            {
+                                $isSon = true;
+                            }
+                            $answer->isSon = $isSon;
                         }
                     }
                     if(array_key_exists($answer->key, $keyDataClient))
@@ -385,6 +392,8 @@ class DependenciesSeeder extends Seeder
         $insertQtd = self::$QTD_INSERT_REGISTER;
         $sectionsNewChunk = array_chunk($sectionsNew, $insertQtd);
         $qtd = 0;
+        $this->dropRelations();
+        $this->createTableNew();
         foreach ($sectionsNewChunk as $sectionNewChunk)
         {
 
@@ -421,11 +430,48 @@ class DependenciesSeeder extends Seeder
             $qtd += $insertQtd;
         }
 
+
         $this->command->info("Renombrando tablas");
         Schema::rename("form_answers", "form_answer_old");
         Schema::rename("form_answer_new", "form_answers");
         Schema::rename("sections", "sections_old");
         Schema::rename("sections_new","sections");
+
+        // Schema::table('form_answers', function ($table)
+        // {
+        //     $table->unsignedInteger('channel_id')->unsigned()->index()->change();
+        //     $table->foreign('channel_id')->references('id')->on('channels')->onDelete('cascade'); 
+        // });
+
+        // Schema::table('form_answers', function ($table)
+        // {
+        //     $table->unsignedInteger('form_id')->unsigned()->index()->change();
+        //     $table->foreign('form_id')->references('id')->on('forms')->onDelete('cascade'); 
+        // });
+        // Schema::table('form_answer_logs', function ($table)
+        // {
+        //     $table->unsignedInteger('form_answer_id')->unsigned()->index()->change();
+        //     $table->foreign('form_answer_id')->references('id')->on('form_answers')->onDelete('cascade');  
+        // });
+
+        // Schema::table('form_answer_mios_phones', function ($table)
+        // {
+        //     $table->unsignedInteger('form_answer_id')->unsigned()->index()->change();
+        //     $table->foreign('form_answer_id')->references('id')->on('form_answers')->onDelete('cascade'); 
+        // });
+
+        // Schema::table('form_answers_trays', function ($table)
+        // {
+        //     $table->unsignedInteger('form_answer_id')->unsigned()->index()->change();
+        //     $table->foreign('form_answer_id')->references('id')->on('form_answers')->onDelete('cascade'); 
+        // });
+        
+        // Schema::table('sections', function ($table)
+        // {
+        //     $table->unsignedInteger('form_id')->unsigned()->index()->change();
+
+        //     $table->foreign('form_id')->references('id')->on('forms')->onDelete('cascade'); 
+        // });
     }
 
     private function getFieldData($fields, $fieldData, $sectionId)
@@ -488,5 +534,117 @@ class DependenciesSeeder extends Seeder
             }
         }
         return $keyValues;
+    }
+
+    private function dropRelations()
+    {
+        if(Schema::hasColumn('form_answers', 'channel_id'))
+        {
+            Schema::table('form_answers', function (Blueprint $table) {
+                if($this->foreignKeysExists('form_answers', "form_answers_channel_id_foreign"))
+                {
+                    $table->dropForeign(['channel_id']);
+                }
+                $table->unsignedBigInteger('channel_id')->nullable()->change();
+            });
+        }
+
+
+
+        if(Schema::hasColumn('form_answers', 'form_id'))
+        {
+            Schema::table('form_answers', function (Blueprint $table) {
+                if($this->foreignKeysExists('form_answers', "form_answers_form_id_foreign"))
+                {
+                    $table->dropForeign(['form_id']);
+                }
+                $table->unsignedBigInteger('form_id')->nullable()->change();
+            });
+        }
+
+
+
+        if(Schema::hasColumn('form_answer_logs', 'form_answer_id'))
+        {
+            Schema::table('form_answer_logs', function (Blueprint $table) {
+                if($this->foreignKeysExists('form_answer_logs', "form_answer_logs_form_answer_id_foreign"))
+                {
+                    $table->dropForeign(['form_answer_id']);
+                }
+                $table->unsignedBigInteger('form_answer_id')->nullable()->change();
+            });
+        }
+
+
+        if(Schema::hasColumn('form_answer_mios_phones', 'form_answer_id'))
+        {
+            Schema::table('form_answer_mios_phones', function (Blueprint $table) {
+                if($this->foreignKeysExists('form_answer_mios_phones', "form_answer_mios_phones_form_answer_id_foreign"))
+                {
+                    $table->dropForeign(['form_answer_id']);
+                }
+                $table->unsignedBigInteger('form_answer_id')->nullable()->change();
+            });
+        }
+
+        if(Schema::hasColumn('form_answers_trays', 'form_answer_id'))
+        {
+            Schema::table('form_answers_trays', function (Blueprint $table) {
+                if($this->foreignKeysExists('form_answers_trays', "form_answers_trays_form_answer_id_foreign"))
+                {
+                    $table->dropForeign(['form_answer_id']);
+                }
+                $table->unsignedBigInteger('form_answer_id')->nullable()->change();
+            });
+        }
+
+        if(Schema::hasColumn('sections', 'form_id'))
+        {
+            Schema::table('sections', function (Blueprint $table) {
+                if($this->foreignKeysExists('sections', "sections_form_id_foreign"))
+                {
+                    $table->dropForeign(['form_id']);
+                }
+                $table->unsignedBigInteger('form_id')->nullable()->change();
+            });
+        }
+    }
+
+    public function foreignKeysExists($table, $foreignKey)
+    {
+        $conn = Schema::getConnection()->getDoctrineSchemaManager();
+        $foreignKeys = array_map(function($key) {
+            return $key->getName();
+        }, $conn->listTableForeignKeys($table));
+
+        return in_array($foreignKey, $foreignKeys);
+    }
+
+    private function createTableNew()
+    {
+        Schema::create('sections_new', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('form_id'); 
+            $table->string('name_section');
+            $table->tinyInteger('type_section');
+            $table->json('fields');
+            $table->boolean('collapse');
+            $table->boolean('duplicate')->default(0);
+            $table->tinyInteger('state')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('form_answer_new', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('form_id');
+            $table->unsignedBigInteger('channel_id');
+            $table->unsignedBigInteger('client_id');
+            $table->json('structure_answer');
+            $table->unsignedBigInteger('client_new_id')->default(0); 
+            $table->json('form_answer_index_data')->nullable();
+            $table->string('tipification_time')->nullable();
+            $table->unsignedBigInteger('rrhh_id')->default(0); 
+            $table->timestamps();
+        });
     }
 }
