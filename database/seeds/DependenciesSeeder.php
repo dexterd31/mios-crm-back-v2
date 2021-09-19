@@ -186,6 +186,7 @@ class DependenciesSeeder extends Seeder
                             $field->isClientInfo = true;
                             if($field->key == "document")
                             {
+                                $field->client_unique=true;
                                 $form->fields_client_unique_identificator = json_encode([$field]);
                             }
                         }
@@ -302,7 +303,7 @@ class DependenciesSeeder extends Seeder
                         "value"=> $answer->value
                     ]);
                     if(isset($answer->preloaded) && $answer->preloaded)
-                    {   
+                    {
                         array_push($clientData, [
                             "id" => $answer->id,
                             "value" => $answer->value,
@@ -355,7 +356,7 @@ class DependenciesSeeder extends Seeder
                     {
                         $filter->preloaded = true;
                         $filter->client_unique = true;
-                        
+
                     }
                 }
             }
@@ -443,38 +444,38 @@ class DependenciesSeeder extends Seeder
         // Schema::table('form_answers', function ($table)
         // {
         //     $table->unsignedInteger('channel_id')->unsigned()->index()->change();
-        //     $table->foreign('channel_id')->references('id')->on('channels')->onDelete('cascade'); 
+        //     $table->foreign('channel_id')->references('id')->on('channels')->onDelete('cascade');
         // });
 
         // Schema::table('form_answers', function ($table)
         // {
         //     $table->unsignedInteger('form_id')->unsigned()->index()->change();
-        //     $table->foreign('form_id')->references('id')->on('forms')->onDelete('cascade'); 
+        //     $table->foreign('form_id')->references('id')->on('forms')->onDelete('cascade');
         // });
 
         // Schema::table('form_answer_logs', function ($table)
         // {
         //     $table->unsignedInteger('form_answer_id')->unsigned()->index()->change();
-        //     $table->foreign('form_answer_id')->references('id')->on('form_answers')->onDelete('cascade');  
+        //     $table->foreign('form_answer_id')->references('id')->on('form_answers')->onDelete('cascade');
         // });
 
         // Schema::table('form_answer_mios_phones', function ($table)
         // {
         //     $table->unsignedInteger('form_answer_id')->unsigned()->index()->change();
-        //     $table->foreign('form_answer_id')->references('id')->on('form_answers')->onDelete('cascade'); 
+        //     $table->foreign('form_answer_id')->references('id')->on('form_answers')->onDelete('cascade');
         // });
 
         // Schema::table('form_answers_trays', function ($table)
         // {
         //     $table->unsignedInteger('form_answer_id')->unsigned()->index()->change();
-        //     $table->foreign('form_answer_id')->references('id')->on('form_answers')->onDelete('cascade'); 
+        //     $table->foreign('form_answer_id')->references('id')->on('form_answers')->onDelete('cascade');
         // });
     
         // Schema::table('sections', function ($table)
         // {
         //     $table->unsignedInteger('form_id')->unsigned()->index()->change();
 
-        //     $table->foreign('form_id')->references('id')->on('forms')->onDelete('cascade'); 
+        //     $table->foreign('form_id')->references('id')->on('forms')->onDelete('cascade');
         // });
 
         //alter table `form_answers` add foreign key (`channel_id`) references `channels` (`id`) 
@@ -636,7 +637,7 @@ class DependenciesSeeder extends Seeder
     {
         Schema::create('sections_new', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('form_id'); 
+            $table->unsignedBigInteger('form_id');
             $table->string('name_section');
             $table->tinyInteger('type_section');
             $table->json('fields');
@@ -652,10 +653,10 @@ class DependenciesSeeder extends Seeder
             $table->unsignedBigInteger('channel_id');
             $table->unsignedBigInteger('client_id');
             $table->json('structure_answer');
-            $table->unsignedBigInteger('client_new_id')->default(0); 
+            $table->unsignedBigInteger('client_new_id')->default(0);
             $table->json('form_answer_index_data')->nullable();
             $table->string('tipification_time')->nullable();
-            $table->unsignedBigInteger('rrhh_id')->default(0); 
+            $table->unsignedBigInteger('rrhh_id')->default(0);
             $table->timestamps();
         });
     }

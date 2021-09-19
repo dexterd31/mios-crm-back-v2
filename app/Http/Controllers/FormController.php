@@ -424,7 +424,6 @@ class FormController extends Controller
     {
         $log = new FormLog();
         $log->group_id = $form->group_id ;
-        $log->campaign_id = $form->campaign_id ;
         $log->name_form = $form->name_form ;
         $log->filters = $form->filters ;
         $log->state = $form->state ;
@@ -442,7 +441,6 @@ class FormController extends Controller
             ->first();
         $formsSections->seeRoles = json_decode($formsSections->seeRoles);
         $formsSections->filters = json_decode($formsSections->filters);
-        \Log::info(json_encode($formsSections->section));
         for ($i = 0; $i < count($formsSections->section); $i++) {
             unset($formsSections->section[$i]['created_at']);
             unset($formsSections->section[$i]['updated_at']);
@@ -453,9 +451,7 @@ class FormController extends Controller
             if($i==0){
                 for($j=0;$j<count($fields);$j++){
                     if($fields[$j]->preloaded == false){
-                        \Log::info($fields[$j]->label." no es precargable");
                         unset($fields[$j]);
-                        \Log::info(json_encode($fields));
                     }
                 }
             }else{
@@ -467,9 +463,6 @@ class FormController extends Controller
         }
 
         return response()->json($formsSections);
-
-
-
     }
 
     private function findAndFormatValues($form_id, $field_id, $value)
