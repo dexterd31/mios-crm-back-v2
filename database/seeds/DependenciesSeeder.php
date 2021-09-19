@@ -198,6 +198,13 @@ class DependenciesSeeder extends Seeder
                     //Removiendo los campos que cambiaron
                     foreach ($fields as $key => $field)
                     {
+                        $isSon = false;
+                        if(isset($field->isSon) && $field->isSon)
+                        {
+                            $isSon = true;
+                        }
+                        $field->isSon = $isSon;
+
                         if(in_array($field->id, $fieldNew->datosAux->idsOld))
                         {
                             unset($fields[$key]);
@@ -270,12 +277,6 @@ class DependenciesSeeder extends Seeder
                             $answer->id = $fieldNew->id;
                             $answer->key = $fieldNew->key;
                             $answer->label = $fieldNew->label;
-                            $isSon = false;
-                            if(isset($answer->isSon) && $answer->isSon)
-                            {
-                                $isSon = true;
-                            }
-                            $answer->isSon = $isSon;
                         }
                     }
                     if(array_key_exists($answer->key, $keyDataClient))
@@ -437,6 +438,8 @@ class DependenciesSeeder extends Seeder
         Schema::rename("sections", "sections_old");
         Schema::rename("sections_new","sections");
 
+        
+
         // Schema::table('form_answers', function ($table)
         // {
         //     $table->unsignedInteger('channel_id')->unsigned()->index()->change();
@@ -448,6 +451,7 @@ class DependenciesSeeder extends Seeder
         //     $table->unsignedInteger('form_id')->unsigned()->index()->change();
         //     $table->foreign('form_id')->references('id')->on('forms')->onDelete('cascade'); 
         // });
+
         // Schema::table('form_answer_logs', function ($table)
         // {
         //     $table->unsignedInteger('form_answer_id')->unsigned()->index()->change();
@@ -465,13 +469,21 @@ class DependenciesSeeder extends Seeder
         //     $table->unsignedInteger('form_answer_id')->unsigned()->index()->change();
         //     $table->foreign('form_answer_id')->references('id')->on('form_answers')->onDelete('cascade'); 
         // });
-        
+    
         // Schema::table('sections', function ($table)
         // {
         //     $table->unsignedInteger('form_id')->unsigned()->index()->change();
 
         //     $table->foreign('form_id')->references('id')->on('forms')->onDelete('cascade'); 
         // });
+
+        //alter table `form_answers` add foreign key (`channel_id`) references `channels` (`id`) 
+        //alter table `form_answers` add foreign key (`form_id`) references `forms` (`id`) 
+        //alter table `form_answer_logs` add foreign key (`form_answer_id`) references `form_answers` (`id`) 
+        //alter table `form_answer_mios_phones` add foreign key (`form_answer_id`) references `form_answers` (`id`) 
+        //alter table `form_answers_trays` add foreign key (`form_answer_id`) references `form_answers` (`id`) 
+        //alter table `sections` add foreign key (`form_id`) references `forms` (`id`) 
+
     }
 
     private function getFieldData($fields, $fieldData, $sectionId)
