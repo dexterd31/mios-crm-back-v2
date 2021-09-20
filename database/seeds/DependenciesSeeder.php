@@ -20,6 +20,7 @@ class DependenciesSeeder extends Seeder
      */
     public function run()
     {
+        $clientsNewAux2 = [];
         $clientsNew = array();
         $clientsNewAux = [];
         $idClientNew = 1;
@@ -124,7 +125,7 @@ class DependenciesSeeder extends Seeder
                                     "idFather" => $idFather,
                                     "optionIdAux" => 1,
                                     "idsOld" =>[],
-                                    "sectionId" => $fieldData[$idFather]->sectionId,
+                                    "sectionId" => $section->id,
                                 ]
                             ];
                             array_push($fieldsNew, $fieldNew);
