@@ -110,8 +110,6 @@ class ClientNewController extends Controller
             $clientNewQuery = $clientNewQuery->where("unique_indentificator->id", $unique_indentificator->id)
                 ->where("unique_indentificator->value", $unique_indentificator->value);
         }
-        \Log::info($clientNewQuery->toSql());
-        \Log::info($clientNewQuery->getBindings());
         return $clientNewQuery->first();
     }
 
