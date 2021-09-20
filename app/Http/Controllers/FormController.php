@@ -8,30 +8,22 @@ use App\Models\Form;
 use App\Models\FormLog;
 use App\Models\FormAnswer;
 use App\Models\FormType;
-use App\Models\KeyValue;
 use App\Models\Section;
 use App\Models\User;
-use App\Services\CiuService;
 use App\Services\RrhhService;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Arr;
 use Carbon\Carbon;
 use stdClass;
 use App\Models\Directory;
 
 class FormController extends Controller
 {
-    private $ciuService;
-    private $rrhhService;
 
-    public function __construct(CiuService $ciuService, RrhhService $rrhhService)
+    public function __construct()
     {
         $this->middleware('auth');
-        $this->ciuService = $ciuService;
-        $this->rrhhService = $rrhhService;
     }
 
     /**
@@ -41,8 +33,7 @@ class FormController extends Controller
      */
     public function FormsList(Request $request)
     {
-        $userId = auth()->user()->rrhh_id;
-        $userLocal = User::where('id_rhh','=',$userId)->firstOrFail();
+        $rrhhid = auth()->user()->rrhh_id;
         $roles = auth()->user()->roles;
         $rolesArray = [];
         foreach ($roles as $value) {
@@ -51,7 +42,7 @@ class FormController extends Controller
             }
         }
         $paginate = $request->query('n', 5);
-        $forms = $this->getFormsByIdUser($userLocal->id, $paginate);
+        $forms = $this->getFormsByIdUser($rrhhid, $paginate);
 
         foreach ($forms as $value) {
             if (count(array_intersect($rolesArray, json_decode($value->seeRoles))) > 0) {
@@ -84,8 +75,8 @@ class FormController extends Controller
             unset($formsSections->section[$i]['updated_at']);
             unset($formsSections->section[$i]['form_id']);
             $formsSections->section[$i]['fields'] = json_decode($formsSections->section[$i]['fields']);
-
         }
+        $formsSections->client_unique = json_decode($formsSections->fields_client_unique_identificator);
         /**
          * Se agrega validacion de api_connections para integracion con SBS (DataCRM)
          */
@@ -105,6 +96,9 @@ class FormController extends Controller
     {
         //  try
         // {
+            $unique_client=$request->client_unique;
+            $filters_form=$request->filters;
+            $filters_form_new=[];
             $forms = new Form([
                 'group_id' =>  $request->input('group_id'),
                 'campaign_id' => $request->input('campaign_id'),
@@ -112,10 +106,9 @@ class FormController extends Controller
                 'name_form' => $request->input('name_form'),
                 'filters' => json_encode($request->filters),
                 'state' => $request->state,
-                'seeRoles' => json_encode($request->role)
+                'seeRoles' => json_encode($request->role),
             ]);
             $forms->save();
-
            foreach($request['sections'] as $section)
            {
                 for($i=0; $i<count($section['fields']); $i++){
@@ -129,44 +122,40 @@ class FormController extends Controller
                         $section['fields'][$i]['key'] = strtolower( str_replace(array(' ','  '),'-',$section['fields'][$i]['key']) );
                         //Concatenamos el resultado del label transformado con la variable $cadena
                         $section['fields'][$i]['key'] = $section['fields'][$i]['key'].$cadena;
+                        foreach($unique_client as $key=>$uniqueField){
+                            if($section['fields'][$i]['id'] == $uniqueField['id']){
+                                $unique_client[$key]['key']=$section['fields'][$i]['key'];
+                                $unique_client[$key]['client_unique']=true;
+                                $section['fields'][$i]['client_unique']=true;
+                                $section['fields'][$i]['preloaded']=true;
+                                $section['fields'][$i]['required']=true;
+                                $section['fields'][$i]['isClientInfo']=true;
+                            }
+                        }
+                        foreach($filters_form as $filter){
+                            if($section['fields'][$i]['id'] == $filter['id']){
+                                array_push($filters_form_new,$section['fields'][$i]);
+                            }
+                        }
                     }
-               }
-
-              if($section['sectionName'] == 'Datos básicos del cliente')
-              {
-                $firstSection = new Section([
-                      'id' => $section['idsection'],
-                      'form_id' => $forms->id,
-                      'name_section' => $section['sectionName'],
-                      'type_section' => $section['type_section'],
-                      'fields' => json_encode($section['fields']),
-                      'collapse' => empty($section['collapse'])? 0 : $section['collapse'],
-                      'duplicate' => empty($section['duplicar'])? 0 : $section['duplicar']
-                    ]);
-                    $firstSection->save();
-                }else{
-                    $fields = $section['fields'];
-                    $sections = new Section([
-                        'id' => $section['idsection'],
-                        'form_id' => $forms->id,
-                        'name_section' => $section['sectionName'],
-                        'type_section' => $section['type_section'],
-                        'fields' => json_encode($fields),
-                        'collapse' => empty($section['collapse'])? 0 : $section['collapse'],
-                        'duplicate' => empty($section['duplicar'])? 0 : $section['duplicar']
-                    ]);
-                    $sections->save();
                 }
+                $sections = new Section([
+                    'id' => $section['idsection'],
+                    'form_id' => $forms->id,
+                    'name_section' => $section['sectionName'],
+                    'type_section' => $section['type_section'],
+                    'fields' => json_encode($section['fields']),
+                    'collapse' => empty($section['collapse'])? 0 : $section['collapse'],
+                    'duplicate' => empty($section['duplicar'])? 0 : $section['duplicar']
+                ]);
+                $sections->save();
             }
-            if(!isset($sections)){
-                $data = ['forms' => $forms , 'firstSection'=> json_decode($firstSection->fields), 'code' => 200,'message'=>'Formulario Guardado Correctamente'];
-            }else{
-                $data = ['forms' => $forms , 'firstSection'=> json_decode($firstSection->fields),'sections' => json_decode($sections->fields), 'code' => 200,'message'=>'Formulario Guardado Correctamente'];
-            }
-
+            $forms->filters = json_encode($filters_form_new);
+            $forms->fields_client_unique_identificator = json_encode($unique_client);
+            $forms->update();
+            $data = ['code' => 200,'message'=>'Formulario Guardado Correctamente'];
             $this->logForm($forms, $request['sections']);
-
-           return response()->json($data, $data['code']);
+            return response()->json($data, $data['code']);
 
         //   }catch(\Throwable $e){
         //     return $this->errorResponse('Error al guardar el formulario',500);
@@ -296,187 +285,123 @@ class FormController extends Controller
     {
       $date1=Carbon::parse($request->date1)->setTimezone('America/Bogota');
       $date2=Carbon::parse($request->date2)->setTimezone('America/Bogota');
-      $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','users.id_rhh')
-                          ->join('users', 'users.id', '=', 'form_answers.user_id')
+      $rrhhService= new RrhhService();
+      $formAnswers = FormAnswer::select('id', 'structure_answer', 'created_at', 'updated_at','rrhh_id','tipification_time','client_new_id')
                           ->where('form_answers.form_id',$request->formId)
-                          //->whereBetween('form_answers.created_at', [$date1, $date2])
+                          ->whereBetween('form_answers.created_at', [$date1, $date2])
                           ->get();
 
-       //se extrae el restante de informacion que esta en directory por carga desde excel
-      $directoryData = Directory::select('directories.id', 'directories.data', 'directories.created_at', 'directories.updated_at','users.id_rhh')
-                    ->join('users', 'users.id', '=', 'directories.user_id')
-                    ->where('directories.form_id',$request->formId)
-                    ->get();
-
-      if(count($formAnswers)==0 && count($directoryData) == 0){
+        $formAnswersId = FormAnswer::select('client_new_id')
+                            ->where('form_answers.form_id',$request->formId)
+                            ->whereBetween('form_answers.created_at', [$date1, $date2])
+                            ->where('tipification_time','!=','upload')
+                            ->get();
+        $clientId=array_values(array_unique($miosHelper->getArrayValues("client_new_id",$formAnswersId)));
+        \Log::info($clientId);
+        if(count($formAnswers)==0){
             // 406 Not Acceptable
             // se envia este error ya que no esta mapeado en interceptor angular.
             return $this->errorResponse('No se encontraron datos en el rango de fecha suministrado', 406);
-      } else if(count($formAnswers)>5000 && count($directoryData) > 5000){
-            return $this->errorResponse('El rango de fechas supera a los 5000 records', 413);
-      } else {
-        $inputReport=[];
-        $titleHeaders=['Id'];
-        $dependencies=[];
-        $r=0;
-        $rows=[];
-        $plantillaRespuestas=[];
-        //Agrupamos los id_rrhh del usuario en un arreglo
-        $userIds=$miosHelper->getArrayValues('id_rhh',$formAnswers);
-        $useString=implode(',',$userIds);
-        //Traemos los datos de rrhh de los usuarios
-        $usersInfo=$this->rrhhService->fetchUsers($useString);
-        //Organizamos la información del usuario en un array asociativo con la información necesaria
-        $adviserInfo=[];
-        foreach($usersInfo as $info){
-            if(in_array($info->id,$userIds)){
-                if(!isset($adviserInfo[$info->id])){
-                    $adviserInfo[$info->id]=$info;
+        } else if(count($formAnswers)>5000){
+                return $this->errorResponse('El rango de fechas supera a los 5000 records', 413);
+        } else {
+            $inputReport=[];
+            $titleHeaders=['Id'];
+            $r=0;
+            $rows=[];
+            $plantillaRespuestas=[];
+            $cargadosNotipificados=[];
+            //Agrupamos los id_rrhh del usuario en un arreglo
+            $userRrhhIids=$miosHelper->getArrayValues('rrhh_id',$formAnswers);
+            //Se dejan los id unicos quitamos todos los repetidos
+            $useString=implode(',',array_values(array_unique($userRrhhIids)));
+            //Traemos los datos de rrhh de los usuarios
+            $usersInfo=$rrhhService->fetchUsers($useString);
+            //Organizamos la información del usuario en un array asociativo con la información necesaria
+            $adviserInfo=[];
+            foreach($usersInfo as $info){
+                if(in_array($info->id,$userRrhhIids)){
+                    if(!isset($adviserInfo[$info->id])){
+                        $adviserInfo[$info->id]=$info;
+                    }
                 }
             }
-        }
-        //Verificamos cuales son los campos que deben ir en el reporte o que su elemento inReport sea true
-        $sections=Section::select('fields')->where("form_id",$request->formId)->get();
-        $plantillaRespuestas['id']="-";
-        foreach($sections as $section){
-            foreach(json_decode($section->fields) as $input){
-                if($input->inReport){
-                    if(count($input->dependencies)>0){
-                        if(isset($dependencies[$input->label])){
-                            array_push($dependencies[$input->label],$input->id);
-                        }else{
-                            $dependencies[$input->label]=[$input->id];
-                            array_push($titleHeaders,$input->label);
-                            array_push($inputReport,$input);
-                            $plantillaRespuestas[$input->label]="-";
-                        }
-                        $input->dependencies[0]->report=$input->label;
-                    }else{
+            //Verificamos cuales son los campos que deben ir en el reporte o que su elemento inReport sea true
+            $sections=Section::select('fields')->where("form_id",$request->formId)->get();
+            $plantillaRespuestas['id']="-";
+            foreach($sections as $section){
+                foreach(json_decode($section->fields) as $input){
+                    if($input->inReport){
                         array_push($titleHeaders,$input->label);
                         array_push($inputReport,$input);
                         $plantillaRespuestas[$input->id]="-";
                     }
                 }
             }
-        }
-        $plantillaRespuestas['user']="-";
-        $plantillaRespuestas['docuser']="-";
-        $plantillaRespuestas['created_at'] ="-";
-        $plantillaRespuestas['updated_at'] ="-";
+            $plantillaRespuestas['user']="-";
+            $plantillaRespuestas['docuser']="-";
+            $plantillaRespuestas['created_at'] ="-";
+            $plantillaRespuestas['updated_at'] ="-";
 
-        foreach($formAnswers as $answer){
-            $respuestas=$plantillaRespuestas;
-            $respuestas['id'] = $answer->id;
-            //Evaluamos los campos que deben ir en el reporte contra las respuestas
-            foreach($inputReport as $input){
-                foreach(json_decode($answer->structure_answer) as $field){
-                    if(isset($input->dependencies[0]->report)){
-                        if(in_array($field->id,$dependencies[$input->dependencies[0]->report])){
-                            if(isset($field->value)){
-                                $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
-                                if($select){
-                                    $respuestas[$input->dependencies[0]->report] = $select;
-                                } else {
-                                    $respuestas[$input->dependencies[0]->report] = $field->value;
-                                }
+            foreach($formAnswers as $answer){
+                $respuestas=$plantillaRespuestas;
+                $respuestas['id'] = $answer->id;
+                //Evaluamos los campos que deben ir en el reporte contra las respuestas
+                foreach($inputReport as $input){
+                    foreach(json_decode($answer->structure_answer) as $field){
+                        if($field->id==$input->id){
+                            $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
+                            if($select){
+                                $respuestas[$input->id] = $select;
+                            } else {
+                                $respuestas[$input->id] = $field->value;
+                            }
+                            break;
+                        }else if($field->key==$input->key){
+                            $select = $this->findAndFormatValues($request->formId, $input->id, $field->value);
+                            if($select){
+                                $respuestas[$input->id] = $select;
+                            } else {
+                                $respuestas[$input->id] = $field->value;
                             }
                             break;
                         }
-                    }else if($field->id==$input->id){
-                        $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
-                        if($select){
-                            $respuestas[$input->id] = $select;
-                        } else {
-                            $respuestas[$input->id] = $field->value;
-                        }
-                        break;
-                    }else if($field->key==$input->key){
-                        $select = $this->findAndFormatValues($request->formId, $input->id, $field->value);
-                        if($select){
-                            $respuestas[$input->id] = $select;
-                        } else {
-                            $respuestas[$input->id] = $field->value;
-                        }
-                        break;
                     }
                 }
-            }
 
-            $respuestas['user']=$adviserInfo[$answer->id_rhh]->name;
-            $respuestas['docuser']=$adviserInfo[$answer->id_rhh]->id_number;
-            $respuestas['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
-            $respuestas['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
-            $rows[$r]=$respuestas;
-            $r++;
-          }
-
-        /**Parte de aca, es el recorrido para directories */
-
-         //Agrupamos los id_rrhh del usuario en un arreglo
-         $userIdsDir=$miosHelper->getArrayValues('id_rhh',$directoryData);
-         $useStringDir=implode(',',$userIdsDir);
-         //Traemos los datos de rrhh de los usuarios
-         $usersInfoDirectory=$this->rrhhService->fetchUsers($useStringDir);
-         //Organizamos la información del usuario en un array asociativo con la información necesaria
-         $adviserInfoDir=[];
-         foreach($usersInfoDirectory as $info){
-             if(in_array($info->id,$userIds)){
-                 if(!isset($adviserInfoDir[$info->id])){
-                     $adviserInfoDir[$info->id]=$info;
-                 }
-             }
-         }
-       
-        foreach ($directoryData as $key => $directory) {
-            $respuestas=$plantillaRespuestas;
-            $respuestas['id'] = $directory->id;
-              //Evaluamos los campos que deben ir en el reporte contra las respuestas
-              foreach($inputReport as $input){
-                foreach(json_decode($directory->data) as $data){
-                    
-                    if(isset($input->dependencies[0]->report)){
-                        if(in_array($data->id,$dependencies[$input->dependencies[0]->report])){
-                            if(isset($data->value)){
-                                $select = $this->findAndFormatValues($request->formId, $data->id,(is_numeric($data->value))?(int)$data->value:$data->value);
-                                if($select){
-                                    $respuestas[$input->dependencies[0]->report] = $select;
-                                } else {
-                                    $respuestas[$input->dependencies[0]->report] = $data->value;
-                                }
-                            }
-                            break;
-                        }
-                    }else if($data->id==$input->id){
-                        $select = $this->findAndFormatValues($request->formId, $data->id, (is_numeric($data->value))?(int)$data->value:$data->value);
-                        if($select){
-                            $respuestas[$input->id] = $select;
-                        } else {
-                            $respuestas[$input->id] = $data->value;
-                        }
-                        break;
-                    }else if($data->key==$input->key){
-                        $select = $this->findAndFormatValues($request->formId, $input->id, (is_numeric($data->value))?(int)$data->value:$data->value);
-                        if($select){
-                            $respuestas[$input->id] = $select;
-                        } else {
-                            $respuestas[$input->id] = $data->value;
-                        }
-                        break;
+                if(isset($answer->id_rhh) && isset($adviserInfoDir[$answer->id_rhh]))
+                {
+                    if(isset($adviserInfoDir[$answer->id_rhh]->name))
+                    {
+                        $respuestas['user'] = $adviserInfoDir[$answer->id_rhh]->name;
                     }
+                    if(isset($adviserInfoDir[$answer->id_rhh]->id_number))
+                    {
+                        $respuestas['docuser'] = $adviserInfoDir[$answer->id_rhh]->id_number;
+                    }
+
+                }
+                $respuestas['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
+                $respuestas['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
+                $respuestas['tipification_time'] = $answer->tipification_time;
+                if($respuestas['tipification_time'] =='upload'){
+                    if(!in_array($answer->client_new_id,$clientId)){
+                        \Log::info($answer->client_new_id);
+                        $respuestas['tipification_time'] = "Cargado no tipificado";
+                        $cargadosNotipificados[]=$respuestas;
+                    }
+                }else{
+                    $rows[$r]=$respuestas;
+                    $r++;
                 }
             }
-
-            $respuestas['user']=$adviserInfoDir[$answer->id_rhh]->name;
-            $respuestas['docuser']=$adviserInfoDir[$answer->id_rhh]->id_number;
-            $respuestas['created_at'] = Carbon::parse($directory->created_at->format('c'))->setTimezone('America/Bogota');
-            $respuestas['updated_at'] = Carbon::parse($directory->updated_at->format('c'))->setTimezone('America/Bogota');
-            $rows[$r]=$respuestas;
-            $r++;
+            if(count($cargadosNotipificados)>0){
+                array_push($rows,$cargadosNotipificados);
+            }
+            array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización','Tiempo de Tipificación');
         }
-        array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización');
-      }
-      return Excel::download(new FormReportExport($rows, $titleHeaders), 'reporte_formulario.xlsx');
-    }   
+        return Excel::download(new FormReportExport($rows, $titleHeaders), 'reporte_formulario.xlsx');
+    }
 
     /**
      * Olme Marin
@@ -484,10 +409,10 @@ class FormController extends Controller
      * Método para consultar el listado de los formularios asignados a un usuario por grupo
      * @deprecated: La función FormList ya realiza la busqueda por usuarios y grupos Reportada 2021-06-10
      */
-    public function formsByUser(MiosHelper $miosHelper, $idUser, Request $request)
+    public function formsByUser(MiosHelper $miosHelper, $rrhhId, Request $request)
     {
         $paginate = $request->query('n', 5);
-        $forms = $this->getFormsByIdUser($idUser, $paginate);
+        $forms = $this->getFormsByIdUser($rrhhId, $paginate);
         foreach ($forms as $form) {
             $form->filters = $miosHelper->jsonDecodeResponse($form->filters);
         }
@@ -497,15 +422,13 @@ class FormController extends Controller
 
     private function logForm($form, $sections)
     {
-        $userCrm = User::where('id_rhh',auth()->user()->rrhh_id)->first();
         $log = new FormLog();
         $log->group_id = $form->group_id ;
-        $log->campaign_id = $form->campaign_id ;
         $log->name_form = $form->name_form ;
         $log->filters = $form->filters ;
         $log->state = $form->state ;
         $log->sections = json_encode($sections) ;
-        $log->user_id = $userCrm->id ;
+        $log->rrhh_id = auth()->user()->rrhh_id;
         $log->form_id = $form->id;
         $log->save();
     }
@@ -527,26 +450,19 @@ class FormController extends Controller
 
             if($i==0){
                 for($j=0;$j<count($fields);$j++){
-                    if($j>=7){
-                       if($fields[$j]->preloaded == false){
-                            unset($fields[$j]);
-                       }
+                    if($fields[$j]->preloaded == false){
+                        unset($fields[$j]);
                     }
                 }
-            }
-            else{
+            }else{
                 $fields = $fields->filter(function($x){
-                                return $x->preloaded == true;
-                            });
+                            return $x->preloaded == true;
+                        });
             }
-
             $formsSections->section[$i]['fields'] = array_values($fields->toArray());
         }
 
         return response()->json($formsSections);
-
-
-
     }
 
     private function findAndFormatValues($form_id, $field_id, $value)
@@ -574,13 +490,13 @@ class FormController extends Controller
         }
     }
 
-    private function getFormsByIdUser($userId, $paginate)
+    private function getFormsByIdUser($rrhhId, $paginate)
     {
         $forms = Form::join('form_types', 'forms.form_type_id', '=', 'form_types.id')
             ->join("groups", "groups.id", "forms.group_id")
             ->join('group_users', 'group_users.group_id', 'groups.id')
             ->select('name_form', 'forms.id', 'name_type', 'forms.state', 'seeRoles', 'forms.campaign_id', 'forms.updated_at')
-            ->where('group_users.user_id', $userId)
+            ->where('group_users.rrhh_id', $rrhhId)
             ->paginate($paginate)->withQueryString();
         return $forms;
     }
@@ -617,4 +533,44 @@ class FormController extends Controller
 
         return json_encode($section);
     }
+
+    /**
+     * @desc Función para devolver las secciones de un formulario
+     * @param Integer $formId id del formulario que se necesitan traer las secciones
+     * @return Array Arreglo de objetos en donde se encuntran todas las secciones del formulario
+     * @author Leonardo Giraldo Quintero
+     *  */
+    public function getSections($formId){
+        if(isset($formId)){
+            return Section::where('form_id','=',$formId)->get();
+        }else{
+            return "Error al definir la variable formId";
+        }
+
+    }
+
+    /**
+     * @desc Busca los fields por su id en las secciones
+     * @param array $search Arreglo de objetos, cada objeto debe contener los elementos id: numero del field al que pertenece
+     * @param integer $formId Numero entero con el id del formulario al que se le debe realizar la busqueda de fields
+     * @return array arreglo con los field solicitados con toda su estructura
+     * @author Leonardo Giraldo Quintero
+     */
+    public function getSpecificFieldForSection($searchIdFileds , $formId){
+        $completeFileds=[];
+        $sections = $this->getSections($formId);
+        if(count($sections)>0){
+            foreach($sections as $section){
+                foreach(json_decode($section->fields) as $field){
+                    foreach($searchIdFileds as $search){
+                        if($search->id==$field->id){
+                            $completeFileds[$field->id]=$field;
+                        }
+                    }
+                }
+            }
+            return $completeFileds;
+        }
+    }
 }
+

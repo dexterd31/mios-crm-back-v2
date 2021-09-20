@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateCampaingsTable extends Migration
+class AddFormAnswerIndexDataInFormAnswersTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,8 @@ class CreateCampaingsTable extends Migration
      */
     public function up()
     {
-        Schema::create('campaings', function (Blueprint $table) {
-            $table->id();
-            $table->string('name_campaign');
-            $table->timestamps();
+        Schema::table('form_answers', function (Blueprint $table) {
+            $table->json('form_answer_index_data')->nullable();
         });
     }
 
@@ -27,6 +25,8 @@ class CreateCampaingsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('campaings');
+        Schema::table('form_answers', function (Blueprint $table) {
+            $table->dropColumn('form_answer_index_data');
+        });
     }
 }

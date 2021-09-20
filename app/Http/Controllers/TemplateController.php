@@ -6,6 +6,7 @@ use App\Models\Template;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Helpers\MiosHelper;
+use Illuminate\Support\Facades\DB;
 
 class TemplateController extends Controller
 {
@@ -107,7 +108,9 @@ class TemplateController extends Controller
         {
             $templateModel = $templateModel->where("template_name", 'like', '%'.$fetch.'%');
         }
-        $template = $templateModel->select("id", "template_name", 'input_id', 'created_at')
+
+        $template = $templateModel->select("id", "template_name", 'input_id', 'created_at',
+            DB::raw("(CASE WHEN state = '1' THEN 'Activado' ELSE 'Desactivado' END) AS state"))
             ->where("form_id", $formId)->paginate($paginate)->withQueryString();
 
         $template = $this->getiInputNames($template);
@@ -144,12 +147,11 @@ class TemplateController extends Controller
      */
     public function buildTemplate(Request $request)
     {
-        $formAnswer = $request->sections;
         $csv = [];
-        $plantilla = [];
+        $plantilla = array();
         $templateModel = $this->getTemplateModel();
         $template = $templateModel->findOrFail($request->template_id);
-        $formAnswer = json_decode($formAnswer, true);
+        $formAnswer = json_decode($request->formAnswer, true);
         $valueDelimiter = is_numeric($template->value_delimiter)  ? chr($template->value_delimiter) : "";
         $inputsId = json_decode($template->input_id, true);
         foreach ($inputsId as $key => $inputId)
@@ -161,7 +163,6 @@ class TemplateController extends Controller
                     $csvValue='';
                     if((is_array($inputId["id"]) && in_array($field['id'], $inputId["id"])) || $inputId["id"] == $field['id'])
                     {
-
                         if($field["type"] == "options")
                         {
                             foreach ($field["options"] as $option)
