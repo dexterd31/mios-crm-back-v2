@@ -124,7 +124,7 @@ class DependenciesSeeder extends Seeder
                                     "idFather" => $idFather,
                                     "optionIdAux" => 1,
                                     "idsOld" =>[],
-                                    "sectionId" => $fieldData[$idFather]->sectionId,
+                                    "sectionId" => $section->id,
                                 ]
                             ];
                             array_push($fieldsNew, $fieldNew);
