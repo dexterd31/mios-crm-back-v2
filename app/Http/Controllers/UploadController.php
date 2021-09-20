@@ -176,23 +176,45 @@ class UploadController extends Controller
                         if(isset($client->id)){
                             $formAnswerController=new FormAnswerController();
                             $formAnswerSave=$formAnswerController->create($client->id,$request->form_id,$formAnswerClient,$formAnswerClientIndexado,"upload");
-                            if(isset($answerFields->preload)){
-                                $keyValuesController= new KeyValueController();
-                                $keyValues=$keyValuesController->createKeysValue($answerFields->preload,$request->form_id,$client->id);
-                                if(!isset($keyValues->id)){
-                                    array_push($errorAnswers,"No se han podido insertar keyValues para el cliente ".$client->id);
+                            if(isset($formAnswerSave->id)){
+                                if(isset($answerFields->preload)){
+                                    $keyValuesController= new KeyValueController();
+                                    $keyValues=$keyValuesController->createKeysValue($answerFields->preload,$request->form_id,$client->id);
+                                    if(!isset($keyValues->id)){
+                                        array_push($errorAnswers,"No se han podido insertar keyValues para el cliente ".$client->id);
+                                    }else{
+                                        $dataLoad=$dataLoad+1;
+                                    }
+                                }else{
+                                    $dataLoad=$dataLoad+1;
                                 }
+                              } else {
+                                array_push($errorAnswers,"No se han podido insertar el form answer para el cliente ".$client->id);
                             }
-                            $dataLoad=$dataLoad+1;
                         }else{
-                            array_push($errorAnswers,"No se han podido insertar el cliente ".$answerFields['uniqueIdentificator']['value']);
+                            array_push($errorAnswers,"No se han podido insertar el cliente ubicado en la fila ".$c." del archivo cargado.");
                         }
                     }else{
                         array_push($dataNotLoad,$errorAnswers);
                     }
                 }
-                $resume=["Total Registros: ".count($fileData) , "Cargados: ".$dataLoad, "No Cargados: ".count($dataNotLoad)];
-                $data = $miosHelper->jsonResponse(true,200,"message",implode("<br>",$resume));
+                $resume = new stdClass();
+                $resume->totalRegistros = count($fileData);
+                $resume->cargados = $dataLoad;
+                $resume->nocargados = count($dataNotLoad);
+                $resume->errores=$errorAnswers;
+
+                $upload = new Upload();
+                $upload->name = $file->getClientOriginalName();
+                $upload->rrhh_id = $userRrhhId;
+                $upload->form_id = $request->form_id;
+                $upload->count = $dataLoad;
+                $upload->method = $request->action;
+                $upload->resume=json_encode($resume);
+                $upload->save();
+
+                $informe=["Total Archivo: ".$resume->totalRegistros , "Cargados: ".$resume->cargados, "No Cargados: ".$resume->nocargados];
+                $data = $miosHelper->jsonResponse(true,200,"message",implode("<br>",$informe));
             }else{
                 $data = $miosHelper->jsonResponse(false,400,"message","No se encuentra los campos en el formulario");
             }
@@ -248,7 +270,6 @@ class UploadController extends Controller
                 ];
                 array_push($answer->in,'preload');
             }
-            \Log::info(json_encode($field));
             $answer->formAnswer = (Object)[
                 "id" => $field->id,
                 "key" => $field->key,
