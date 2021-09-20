@@ -20,6 +20,7 @@ class DependenciesSeeder extends Seeder
      */
     public function run()
     {
+        $clientsNewAux2 = [];
         $clientsNew = array();
         $clientsNewAux = [];
         $idClientNew = 1;
