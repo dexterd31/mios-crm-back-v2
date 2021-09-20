@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Schema;
 class DependenciesSeeder extends Seeder
 {
 
-    public static $QTD_INSERT_REGISTER = 10;
+    public static $QTD_INSERT_REGISTER = 25;
     /**
      * Run the database seeds.
      *
