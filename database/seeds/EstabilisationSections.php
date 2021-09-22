@@ -14,20 +14,23 @@ class EstabilisationSections extends Seeder
      */
     public function run()
     {
-        $forms = Form::where("id", 3)->get();
-        $forms = Form::all();
+        $forms = Form::where("id", 21)->get();
+        //$forms = Form::all();
         $this->lestId = time();
         foreach ($forms as $form)
         {
-            $arbolDeDependencias = $this->creandoArboldeDependencias($form->section);
+            $newFilds = $this->creandoArboldeDependencias($form->section);
+            $this->updateFilds($newFilds, $form->section);
         }
+
+
     }
 
     //Metodo para creat unm arbol con las dependencias
     private function creandoArboldeDependencias($sections)
     {
         $arbolDeDependencias = (Object)[
-            "noAux" => true,
+            "nodoHead" => true,
             "hijos" => []
         ];
         foreach ($sections as $section)
@@ -35,6 +38,8 @@ class EstabilisationSections extends Seeder
             $fields = json_decode($section->fields);
             foreach ($fields as $field)
             {
+                $field->idSection = $section->id;
+                $field->isSon = false;
                 $this->agregarElementoEnArbol($arbolDeDependencias, $field);
                 if(!isset($field->campoInsertado))
                 {
@@ -43,14 +48,15 @@ class EstabilisationSections extends Seeder
             }
         }
         //\Log::info(json_encode($arbolDeDependencias, JSON_PRETTY_PRINT));
-        $newFilds = $this->updateSections($arbolDeDependencias);
+        $newFilds= [];
+        $this->updateSections($arbolDeDependencias, $newFilds);
         \Log::info(json_encode($newFilds, JSON_PRETTY_PRINT));
-        return $arbolDeDependencias;
+        return $newFilds;
     }
 
     private function agregarElementoEnArbol(&$arbol, &$field)
     {
-        if(!isset($arbol->noAux))
+        if(!isset($arbol->nodoHead))
         {
             if($field->id == $arbol->id)
             {
@@ -59,6 +65,7 @@ class EstabilisationSections extends Seeder
             //verifica si el campo es hijo
             if($this->checaSiYoSoyPadre($field->dependencies, $arbol->id))
             {
+                $field->isSon = true;
                 $field->campoInsertado = true;
                 if(!isset($arbol->hijos))
                 {
@@ -99,91 +106,68 @@ class EstabilisationSections extends Seeder
         return false;
     }
 
-    private function mesclaFilds($nodo, &$newFilds)
+    private function updateSections(&$arbol, &$newSection)
     {
-        if(!isset($nodo->hijos))
+        if(!isset($arbol->nodoHead) && isset($arbol->hijos))
         {
-            return;
+            $this->updateDependecias($arbol, $arbol->hijos);
         }
-        if(!isset($nodo->noAux))
+        if(isset($arbol->hijos))
         {
-            array_push($newFilds, $this->createNewFilds($nodo->hijos, $nodo->id, $nodo->label));
+            foreach ($arbol->hijos as $hijo)
+            {
+                $this->updateSections($hijo, $newSection);
+            }
         }
-        foreach ($nodo->hijos as $hijo)
+        if(!isset($arbol->nodoHead))
         {
-            $this->mesclaFilds($hijo, $newFilds);
+            unset($arbol->hijos);
+            array_push($newSection, $arbol);
         }
 
     }
 
-    private function createNewFilds($hijos, $idPadre, $labelPadre)
+    private function updateDependecias($padre, $hijos)
     {
-        $lestOptionId= 1;
-        $fieldNew = (Object)[
-            "id" => $this->lestId++,
-            "type" => $hijos[0]->type,
-            "key" => $hijos[0]->key,
-            "controlType" => $hijos[0]->controlType,
-            "label" => $hijos[0]->label,
-            "value" => "",
-            "required" => $hijos[0]->required,
-            "canAdd"=> $hijos[0]->canAdd,
-            "minLength"=> $hijos[0]->minLength,
-            "maxLength"=> $hijos[0]->maxLength,
-            "inReport"=> $hijos[0]->inReport,
-            "disabled"=> $hijos[0]->disabled,
-            "cols"=> $hijos[0]->cols,
-            "preloaded"=> $hijos[0]->preloaded,
-            "isSon"=> true,
-            "dependencies"=> [],
-            "editRoles" => $hijos[0]->editRoles,
-            "seeRoles" => $hijos[0]->seeRoles,
-            "tooltip" => $hijos[0]->tooltip,
-            "options" => []
-        ];
-
         foreach ($hijos as $hijo)
         {
-            $hijo->id = $this->lestId;
-            $activatorsNew = null;
-            foreach ($hijo->options as &$option)
+            foreach($padre->options as $optionPadre)
             {
-                $option->idOld = isset($option->id)? $option->id: $option->Id;
-                $option->id = $lestOptionId++;
-                $option->name = isset($option->Name)? $option->Name: $option->name;
-                if(isset($hijo->dependencies[0]->name) && $hijo->dependencies[0]->name == $option->name)
+                if($optionPadre->name == $hijo->dependencies[0]->name)
                 {
-                    $activatorsNew = [];
-                    $activatorsNew[0] = (Object)[
-                        "name"=>$option->name,
-                        "idOld"=>$option->idOld,
-                        "id"=>$option->id
-                    ];
+                    $activators = [(Object)[
+                        "id"=> $optionPadre->id ,
+                        "name"=> $optionPadre->name,
+                    ]];
                 }
             }
-            if(count($hijo->dependencies) > 0)
-            {
-                array_push($fieldNew->dependencies ,(Object)[
-                    "activators" => $activatorsNew,
-                    "idField" => $idPadre,
-                    "label" => $labelPadre,
-                    "options" => $hijo->options
-                ]);
-            }
-
+            $hijo->dependencies = [
+                (Object)[
+                    "label" => $padre->label,
+                    "idField" => $padre->id,
+                    "options" => $hijo->options,
+                    "activators" => $activators,
+                ]
+            ];
         }
-        return $fieldNew;
     }
 
-    public function updateSections($arbolDeDependencias)
+    private function updateFilds($newFilds, $sections)
     {
-        $newFilds = [];
-        $this->mesclaFilds($arbolDeDependencias, $newFilds);
-        foreach ($arbolDeDependencias->hijos as $filsd)
+        $filds = [];
+        foreach ($sections as $section)
         {
-            unset($filsd->hijos);
-            array_push($newFilds, $filsd);
+
+            foreach ($newFilds as $newFild)
+            {
+                \Log::info(json_encode($newFild, JSON_PRETTY_PRINT));
+                if($newFild->idSection == $section->id)
+                {
+                    array_push($filds, $newFild);
+                }
+            }
+            $section->fields = json_encode($filds);
+            $section->save();
         }
-        return $newFilds;
     }
 }
