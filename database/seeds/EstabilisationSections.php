@@ -20,6 +20,7 @@ class EstabilisationSections extends Seeder
         foreach ($forms as $form)
         {
             $newFilds = $this->creandoArboldeDependencias($form->section);
+            //\Log::info(json_encode($newFilds, JSON_PRETTY_PRINT));
             $this->updateFilds($newFilds, $form->section);
         }
 
@@ -49,7 +50,9 @@ class EstabilisationSections extends Seeder
         }
         //\Log::info(json_encode($arbolDeDependencias, JSON_PRETTY_PRINT));
         $newFilds= [];
-        $this->updateSections($arbolDeDependencias, $newFilds);
+        $fildsSinDependencias = [];
+        $this->updateSections($arbolDeDependencias, $newFilds, $fildsSinDependencias);
+        $newFilds = array_merge($fildsSinDependencias, $newFilds);
         \Log::info(json_encode($newFilds, JSON_PRETTY_PRINT));
         return $newFilds;
     }
@@ -106,50 +109,109 @@ class EstabilisationSections extends Seeder
         return false;
     }
 
-    private function updateSections(&$arbol, &$newSection)
+    private function updateSections(&$arbol, &$newSectons, &$sectionsSinDependencias)
     {
-        if(!isset($arbol->nodoHead) && isset($arbol->hijos))
+        if(!isset($arbol->nodoHead))
         {
-            $this->updateDependecias($arbol, $arbol->hijos);
+            if(isset($arbol->hijos))
+            {
+                $newSectonHijos = $this->createNewSection($arbol, $arbol->hijos);
+                $newSectons = array_merge($newSectons, $newSectonHijos);
+            }
         }
+
         if(isset($arbol->hijos))
         {
             foreach ($arbol->hijos as $hijo)
             {
-                $this->updateSections($hijo, $newSection);
+                $this->updateSections($hijo, $newSectons, $sectionsSinDependencias);
             }
         }
-        if(!isset($arbol->nodoHead))
+        if(isset($arbol->nodoHead))
         {
-            unset($arbol->hijos);
-            array_push($newSection, $arbol);
+            foreach ($arbol->hijos as $hijo)
+            {
+                unset($hijo->hijos);
+                array_push($sectionsSinDependencias, $hijo);
+            }
         }
 
     }
 
-    private function updateDependecias($padre, $hijos)
+    private function createNewSection($padre, $hijos)
     {
+        $lestOptionId= 1;
+        $fieldNews = [];
         foreach ($hijos as $hijo)
         {
+            $fieldNewKey = null;
+            foreach ($fieldNews as $key => $field)
+            {
+                if($field->type == $hijo->type &&
+                    $field->controlType == $hijo->controlType &&
+                    $field->idSection == $hijo->idSection)
+                {
+                    $fieldNewKey = $key;
+                    break;
+                }
+            }
+            if(!$fieldNewKey)
+            {
+                array_push($fieldNews, (Object)[
+                    "id" => $this->lestId++,
+                    "type" => $hijo->type,
+                    "key" => $hijo->key,
+                    "controlType" => $hijo->controlType,
+                    "label" => $hijo->label,
+                    "value" => "",
+                    "required" => $hijo->required,
+                    "canAdd"=> $hijo->canAdd,
+                    "minLength"=> $hijo->minLength,
+                    "maxLength"=> $hijo->maxLength,
+                    "inReport"=> $hijo->inReport,
+                    "disabled"=> $hijo->disabled,
+                    "cols"=> $hijo->cols,
+                    "preloaded"=> $hijo->preloaded,
+                    "isSon"=> true,
+                    "dependencies"=> [],
+                    "editRoles" => $hijo->editRoles,
+                    "seeRoles" => $hijo->seeRoles,
+                    "tooltip" => $hijo->tooltip,
+                    "options" => [],
+                    "idsOld" => [],
+                    "idSection" => $hijo->idSection
+                ]);
+
+                $fieldNewKey = array_key_last($fieldNews);
+            }
+            array_push($fieldNews[$fieldNewKey]->idsOld, $hijo->id);
+            foreach ($hijo->options as &$option)
+            {
+                $id = isset($option->id) ? $option->id: $option->Id;
+                $option->idOld = $id;
+                $option->id = $lestOptionId++;
+
+                array_push($fieldNews[$fieldNewKey]->options, $option); 
+            }
             foreach($padre->options as $optionPadre)
             {
                 if($optionPadre->name == $hijo->dependencies[0]->name)
                 {
                     $activators = [(Object)[
-                        "id"=> $optionPadre->id ,
+                        "id"=> $option->id,
                         "name"=> $optionPadre->name,
+                        "idOld"=> $option->idOld,
                     ]];
                 }
             }
-            $hijo->dependencies = [
-                (Object)[
+            array_push($fieldNews[$fieldNewKey]->dependencies, (Object)[
                     "label" => $padre->label,
                     "idField" => $padre->id,
                     "options" => $hijo->options,
                     "activators" => $activators,
-                ]
-            ];
+            ]);
         }
+        return $fieldNews;
     }
 
     private function updateFilds($newFilds, $sections)
@@ -157,10 +219,8 @@ class EstabilisationSections extends Seeder
         $filds = [];
         foreach ($sections as $section)
         {
-
             foreach ($newFilds as $newFild)
             {
-                \Log::info(json_encode($newFild, JSON_PRETTY_PRINT));
                 if($newFild->idSection == $section->id)
                 {
                     array_push($filds, $newFild);
