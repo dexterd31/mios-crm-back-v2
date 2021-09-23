@@ -21,6 +21,7 @@ class EstabilisationSections extends Seeder
         {
             $newFilds = $this->creandoArboldeDependencias($form->section);
             //\Log::info(json_encode($newFilds, JSON_PRETTY_PRINT));
+            $newFilds = $this->updateIdFilds($newFilds);
             $this->updateFilds($newFilds, $form->section);
         }
 
@@ -53,7 +54,7 @@ class EstabilisationSections extends Seeder
         $fildsSinDependencias = [];
         $this->updateSections($arbolDeDependencias, $newFilds, $fildsSinDependencias);
         $newFilds = array_merge($fildsSinDependencias, $newFilds);
-        \Log::info(json_encode($newFilds, JSON_PRETTY_PRINT));
+        //\Log::info(json_encode($newFilds, JSON_PRETTY_PRINT));
         return $newFilds;
     }
 
@@ -198,9 +199,8 @@ class EstabilisationSections extends Seeder
                 if($optionPadre->name == $hijo->dependencies[0]->name)
                 {
                     $activators = [(Object)[
-                        "id"=> $option->id,
+                        "id"=> $optionPadre->id,
                         "name"=> $optionPadre->name,
-                        "idOld"=> $option->idOld,
                     ]];
                 }
             }
@@ -216,9 +216,9 @@ class EstabilisationSections extends Seeder
 
     private function updateFilds($newFilds, $sections)
     {
-        $filds = [];
         foreach ($sections as $section)
         {
+            $filds = [];
             foreach ($newFilds as $newFild)
             {
                 if($newFild->idSection == $section->id)
@@ -229,5 +229,25 @@ class EstabilisationSections extends Seeder
             $section->fields = json_encode($filds);
             $section->save();
         }
+    }
+
+    private function updateIdFilds($filds)
+    {
+
+        foreach ($filds as &$fild)
+        {
+            foreach ($fild->dependencies as &$dependencie)
+            {
+                foreach ($filds as $fildAux) 
+                {
+                    if(isset($fildAux->idsOld) && in_array($dependencie->idField, $fildAux->idsOld))
+                    {
+                        $dependencie->idField = $fildAux->id;
+                    }
+                }
+            }
+          
+        }
+        return $filds;
     }
 }
