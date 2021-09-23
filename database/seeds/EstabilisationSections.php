@@ -6,7 +6,18 @@ use App\Models\Form;
 
 class EstabilisationSections extends Seeder
 {
-    private $lestId;
+    private $lestId = 1;
+    private static $idForm = 1;
+    private $keyDataClient = array(
+        "firstName" => "first_name",
+        "middleName" => "middle_name",
+        "lastName" => "first_lastname",
+        "secondLastName" => "second_lastname",
+        "document_type_id" => "document_type_id",
+        "document" => "document",
+        "phone" => "phone",
+        "email" => "email"
+    );
     /**
      * Run the database seeds.
      *
@@ -14,18 +25,32 @@ class EstabilisationSections extends Seeder
      */
     public function run()
     {
-        $forms = Form::where("id", 21)->get();
-        //$forms = Form::all();
-        $this->lestId = time();
-        foreach ($forms as $form)
+        $newFildsForms = [];
+        if($this->idForm)
         {
-            $newFilds = $this->creandoArboldeDependencias($form->section);
-            //\Log::info(json_encode($newFilds, JSON_PRETTY_PRINT));
-            $newFilds = $this->updateIdFilds($newFilds);
-            $this->updateFilds($newFilds, $form->section);
+            $forms = Form::where("id", $this->idForm)->get();
+        }else
+        {
+            $forms = Form::all();
         }
 
+        //$forms = Form::all();
+        $this->lestId = time();
+        foreach ($forms as &$form)
+        {
+            $newFilds = $this->creandoArboldeDependencias($form->section);
+            $newFilds = $this->updateIdFilds($newFilds, $form);
+            $newFildsForms[$form->id] = $newFilds;
+        }
 
+        $total = count($forms);
+        $i = 1;
+        foreach ($forms as $form)
+        {
+            $this->saveFilds($newFildsForms[$form->id], $form->section);
+            $form->save();
+            $this->command->info("Actualizando sections del formulario: ".$form->id." , Formularios actualizados: .".$i++.", Total: $total");
+        }
     }
 
     //Metodo para creat unm arbol con las dependencias
@@ -214,7 +239,7 @@ class EstabilisationSections extends Seeder
         return $fieldNews;
     }
 
-    private function updateFilds($newFilds, $sections)
+    private function saveFilds($newFilds, $sections)
     {
         foreach ($sections as $section)
         {
@@ -231,11 +256,12 @@ class EstabilisationSections extends Seeder
         }
     }
 
-    private function updateIdFilds($filds)
+    private function updateIdFilds($filds, &$form)
     {
-
         foreach ($filds as &$fild)
         {
+            $fild->isClientInfo = false;
+            $fild->client_unique = false;
             foreach ($fild->dependencies as &$dependencie)
             {
                 foreach ($filds as $fildAux) 
@@ -244,6 +270,17 @@ class EstabilisationSections extends Seeder
                     {
                         $dependencie->idField = $fildAux->id;
                     }
+                }
+            }
+
+            if(array_key_exists($fild->key, $this->keyDataClient))
+            {
+                $fild->isClientInfo = true;
+                if($fild->key == "document")
+                {
+                    $fild->preloaded = true;
+                    $fild->client_unique=true;
+                    $form->fields_client_unique_identificator = json_encode([$fild]);
                 }
             }
           
