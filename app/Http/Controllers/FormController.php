@@ -122,6 +122,7 @@ class FormController extends Controller
                         $section['fields'][$i]['key'] = strtolower( str_replace(array(' ','  '),'-',$section['fields'][$i]['key']) );
                         //Concatenamos el resultado del label transformado con la variable $cadena
                         $section['fields'][$i]['key'] = $section['fields'][$i]['key'].$cadena;
+                        $section->idSection = $section['idsection'];
                         foreach($unique_client as $key=>$uniqueField){
                             if($section['fields'][$i]['id'] == $uniqueField['id']){
                                 $unique_client[$key]['key']=$section['fields'][$i]['key'];
