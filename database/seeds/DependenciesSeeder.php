@@ -163,13 +163,13 @@ class DependenciesSeeder extends Seeder
                     }
                 }
                 //Actualizando los idField del padre en los hijos
-                foreach ($fieldsNew as &$fieldNew)
+                foreach ($fieldsNew as $keyFields => $fieldNew)
                 {
-                    foreach ($fieldNew->dependencies as &$dependencieAux)
+                    foreach ($fieldNew->dependencies as $keyEependencie => $dependencieAux)
                     {
                         if(isset($idsAltered[$dependencieAux->idField]))
                         {
-                            $dependencieAux->idField = $idsAltered[$dependencieAux->idField];
+                            $fieldsNew[$keyFields]->dependencies[$keyEependencie]->idField = $idsAltered[$dependencieAux->idField];
                         }
                     }
                 }
