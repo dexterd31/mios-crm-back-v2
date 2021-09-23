@@ -7,7 +7,7 @@ use App\Models\Form;
 class EstabilisationSections extends Seeder
 {
     private $lestId = 1;
-    private static $idForm = 1;
+    private $idForm = 1;
     private $keyDataClient = array(
         "firstName" => "first_name",
         "middleName" => "middle_name",
