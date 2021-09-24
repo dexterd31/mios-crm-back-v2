@@ -4,7 +4,7 @@ use Illuminate\Database\Seeder;
 use App\Models\Form;
 use App\Models\Section;
 
-class StabilizationSections2Seeder extends Seeder
+class StabilizationSectionsSeeder extends Seeder
 {
     private $keyDataClient = array(
         "firstName" => "first_name",
@@ -87,6 +87,7 @@ class StabilizationSections2Seeder extends Seeder
                             $field->preloaded = true;
                             $field->client_unique=true;
                             $form->fields_client_unique_identificator = json_encode([$field]);
+                            $form->save();
                         }
                     }
                 }
@@ -146,7 +147,6 @@ class StabilizationSections2Seeder extends Seeder
             {
                 $section->save();
             }
-            $form->save();
         }
     }
 }

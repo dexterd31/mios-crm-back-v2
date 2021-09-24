@@ -3,6 +3,7 @@
 use Illuminate\Database\Seeder;
 use App\Models\FormAnswer;
 use App\Models\KeyValue;
+use App\Models\ClientNew;
 
 class StabilizationKeyValueSeeder extends Seeder
 {
@@ -16,48 +17,21 @@ class StabilizationKeyValueSeeder extends Seeder
 
         if(env('ID_FORM'))
         {
-            $formAnswer = FormAnswer::where("form_id", env('ID_FORM'))->get();
+            $keyValues = KeyValue::where("form_id", env('ID_FORM'))->get();
         }
         else
         {
-            $formAnswer = FormAnswer::all();
+            $keyValues = KeyValue::all();
         }
-        $keyValues = [];
-        $a = 0;
-        $total = count($formAnswer);
-        foreach ($formAnswer as $answer)
-        {
-            $this->command->info("Armando data clientNew del formulario: ".$answer->form_id." , clientNew armadors: .".$a++.", Total de formAnswers: $total");
-            $structureAnswers = json_decode($answer->structure_answer);
-            foreach ($structureAnswers as $structureAnswer)
-            {
         
-                if($structureAnswer->preloaded)
-                {
-                    $keyValue = [
-                        'form_id' => $answer->form_id,
-                        'key' => $structureAnswer->key,
-                        'value' => $structureAnswer->value,
-                        'description' => "",
-                        'field_id' => $structureAnswer->id,
-                        'client_new_id' => $answer->client_new_id,
-                        'client_id' => $answer->client_id,
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ];
-                    array_push($keyValues, $keyValue);
-                }
-            }
-        }
-
-        $insertQtd = 100;
-        $keyValuesChunk = array_chunk($keyValues, $insertQtd);
-        $qtd = 0;
-        foreach ($keyValuesChunk as $keyValueChunk)
+        $i = 0;
+        $total = count($keyValues);
+        foreach ($keyValues as $keyValue)
         {
-            $this->command->info("guardando $insertQtd KeyValue, $qtd ya insertados, de un total de ".count($keyValues));
-            KeyValue::insert($keyValueChunk);
-            $qtd += $insertQtd;
+            $clientNew = ClientNew::where("form_id", $keyValue->form_id)->where("cliet_old_id", $keyValue->client_id)->first();
+            $keyValue->client_new_id = isset($clientNew) ? $clientNew->id : 0;
+            $keyValue->save();
+            $this->command->info("Actualizando keyValues del formulario: ".$keyValue->form_id." , keyValues actualizados: .".$i++.", Total: $total");
         }
     }
 }

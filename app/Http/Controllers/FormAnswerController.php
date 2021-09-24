@@ -599,9 +599,14 @@ class FormAnswerController extends Controller
 
     private function findSelect($form_id, $field_id, $value)
     {
-        $fields = Section::where('form_id', $form_id)
+        $sections = Section::where('form_id', $form_id)
         ->whereJsonContains('fields', ['id' => $field_id])
-        ->first()->fields;
+        ->first();
+        if(!$sections)
+        {
+            return null;
+        }
+        $fields = $sections->fields;
 
         $field = collect(json_decode($fields))->filter(function($x) use ($field_id){
             return $x->id == $field_id;

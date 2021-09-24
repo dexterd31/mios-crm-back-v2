@@ -4,7 +4,7 @@ use Illuminate\Database\Seeder;
 use app\Models\Section;
 use App\Models\Form;
 
-class StabilizationSectionsSeeder extends Seeder
+class StabilizationSectionsOldSeeder extends Seeder
 {
     private $lestId = 1;
     private $keyDataClient = array(

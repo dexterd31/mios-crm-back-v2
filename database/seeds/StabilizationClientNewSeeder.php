@@ -26,8 +26,10 @@ class StabilizationClientNewSeeder extends Seeder
         $clientsNew = [];
         $clientNewList = [];
         $a = 0;
-        $lestClientNew = ClientNew::orderByDesc('id')->first();
-        $clientNewId = $lestClientNew ? $lestClientNew->id + 1: 1;
+        $clientNewId = ClientNew::max('id') ? ClientNew::max('id') + 1 : 1;
+
+        
+        \Log::info("ulyimo Id: === ". $clientNewId);
         $total = count($formAnswer);
         foreach ($formAnswer as &$answer)
         {
@@ -35,8 +37,8 @@ class StabilizationClientNewSeeder extends Seeder
             //Verifica si ja fue creado um cliente new
             if(in_array((Object)[$answer->form_id, $answer->client_id], $clientNewList))
             {
-                $clientNewId = array_search((Object)[$answer->form_id, $answer->client_id], $clientNewList);
-                $answer->client_new_id = $clientNewId;
+                $clientNewIdAux = array_search((Object)[$answer->form_id, $answer->client_id], $clientNewList);
+                $answer->client_new_id = $clientNewIdAux;
                 continue;
             }
             $structureAnswers = json_decode($answer->structure_answer);
@@ -48,7 +50,7 @@ class StabilizationClientNewSeeder extends Seeder
                     "value" => $structureAnswer->value,
                 ]);
 
-                if(isset($structureAnswer->isClientInfo) && $structureAnswer->isClientInfo)
+                if(isset($structureAnswer->isClientInfo) && $structureAnswer->key == 'document')
                 {
                     $clientUnique = [(Object)[
                         "label" => isset($structureAnswer->label) ? $structureAnswer->label : "no se encuntra label en el formAnswer" ,
@@ -64,8 +66,9 @@ class StabilizationClientNewSeeder extends Seeder
             }
             if(isset($clientUnique))
             {
+                $clientNewId++;
                 array_push($clientsNew,[
-                    "id" => $clientNewId++,
+                    "id" => $clientNewId,
                     "information_data" => json_encode($clientData),
                     "unique_indentificator" => json_encode($clientUnique),
                     "form_id" => $answer->form_id,
@@ -78,19 +81,24 @@ class StabilizationClientNewSeeder extends Seeder
                 $answer->client_new_id = $clientNewId;
             }
 
-            \Log::info($answer->client_new_id);
         }
         $i = 0;
         foreach ($formAnswer as $answer)
         {
-            $this->command->info('Update formAnswer '.$i++.' Total: '.count($clientsNew));
+            $this->command->info('Update formAnswer '.$i++.' Total: '.count($formAnswer));
             $formAnswerUpdate = FormAnswer::find($answer->id);
             $formAnswerUpdate->client_new_id = $answer->client_new_id;
             $formAnswerUpdate->save();
         }
 
         $this->command->info('Insertadno '.count($clientsNew).'  clientNew');
-        ClientNew::insert($clientsNew);
-
+        $clientsNewChunk = array_chunk($clientsNew, 100);
+        $qtd = 0;
+        foreach ($clientsNewChunk as $clientNewChunk)
+        {
+            $this->command->info("guardando 100 ClientNew, $qtd ya insertados, de un total de ".count($clientsNew));
+            ClientNew::insert($clientNewChunk);
+            $qtd += 100;
+        }
     }
 }
