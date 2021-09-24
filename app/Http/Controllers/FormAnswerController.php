@@ -582,7 +582,7 @@ class FormAnswerController extends Controller
             foreach ( $section->fields as $field) {
                 if($field->preloaded == true && $field->controlType != "file"){
                     //Traemos descripcion pues alli se guarda el nombre del archivo
-                    $key_value = KeyValue::where('client_new_id', $client_new_id)->where('field_id', $field->id)->select('field_id', 'value', 'key', 'description')->latest()->first();
+                    $key_value = KeyValue::where('form_id', $form_id)->where('client_new_id', $client_new_id)->where('field_id', $field->id)->select('field_id', 'value', 'key', 'description')->latest()->first();
                     if($key_value){
                         $key_value->id = $key_value->field_id;
                         unset($key_value->field_id);
