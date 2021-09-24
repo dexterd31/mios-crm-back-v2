@@ -8,6 +8,7 @@ use App\Models\Report;
 use App\Models\Group;
 use App\Models\Section;
 use App\Models\FormAnswer;
+use App\Models\Tray;
 
 class Form extends Model
 {
@@ -17,6 +18,11 @@ class Form extends Model
 
     public function formtype(){
         return $this->belongsTo('App\Models\FormType', 'form_type_id');
+    }
+
+    public function trays()
+    {
+        return $this->hasMany(Tray::class);
     }
 
     public function section()
