@@ -4,10 +4,9 @@ use Illuminate\Database\Seeder;
 use app\Models\Section;
 use App\Models\Form;
 
-class EstabilisationSections extends Seeder
+class StabilizationSectionsSeeder extends Seeder
 {
     private $lestId = 1;
-    private $idForm = 1;
     private $keyDataClient = array(
         "firstName" => "first_name",
         "middleName" => "middle_name",
@@ -26,15 +25,14 @@ class EstabilisationSections extends Seeder
     public function run()
     {
         $newFildsForms = [];
-        if($this->idForm)
+        if(env('ID_FORM'))
         {
-            $forms = Form::where("id", $this->idForm)->get();
+            $forms = Form::where("id", env('ID_FORM'))->get();
         }else
         {
             $forms = Form::all();
         }
 
-        //$forms = Form::all();
         $this->lestId = time();
         foreach ($forms as &$form)
         {
@@ -74,12 +72,10 @@ class EstabilisationSections extends Seeder
                 }
             }
         }
-        //\Log::info(json_encode($arbolDeDependencias, JSON_PRETTY_PRINT));
         $newFilds= [];
         $fildsSinDependencias = [];
         $this->updateSections($arbolDeDependencias, $newFilds, $fildsSinDependencias);
         $newFilds = array_merge($fildsSinDependencias, $newFilds);
-        //\Log::info(json_encode($newFilds, JSON_PRETTY_PRINT));
         return $newFilds;
     }
 
