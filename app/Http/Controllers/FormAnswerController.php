@@ -472,6 +472,10 @@ class FormAnswerController extends Controller
                     if($field->type == "options"){
                         if($value->id==$field->id){
                             $validate = false;
+                            if(!isset($field->value))
+                            {
+                                return 0;
+                            }
                             foreach($field->value as $fieldValue){
                                 if($value->value == $fieldValue->id){
                                     $validate = true;
