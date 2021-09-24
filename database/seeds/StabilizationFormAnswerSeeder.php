@@ -46,32 +46,12 @@ class StabilizationFormAnswerSeeder extends Seeder
                 {
                     foreach ($allFilds as $fild)
                     {
-                        
-                        if(isset($fild->idsOld) && in_array($structureAnswer->id, $fild->idsOld))
+                        if($structureAnswer->id == $fild->id)
                         {
-                            $structureAnswer->id = $fild->id;
-                            $structureAnswer->key = $fild->key;
-                            $structureAnswer->preloaded = $fild->preloaded;
+                            $structureAnswer->preloaded = isset($fild->preloaded) ? $fild->preloaded : false;
                             $structureAnswer->label = $fild->label;
-                            $structureAnswer->isClientInfo = $fild->isClientInfo;
-                            $structureAnswer->client_unique = $fild->client_unique;
-                            if(isset($fild->options))
-                            {
-                                foreach ($fild->options as $option)
-                                {
-                                    if($option->idOld == $structureAnswer->value)
-                                    {
-                                        $structureAnswer->value = $option->id;
-                                    }
-                                }
-                            }
-                        }
-                        else if($structureAnswer->id == $fild->id)
-                        {
-                            $structureAnswer->preloaded = $fild->preloaded;
-                            $structureAnswer->label = $fild->label;
-                            $structureAnswer->isClientInfo = $fild->isClientInfo;
-                            $structureAnswer->client_unique = $fild->client_unique;
+                            $structureAnswer->isClientInfo = isset($fild->isClientInfo) ? $fild->isClientInfo : false;
+                            $structureAnswer->client_unique = isset($fild->client_unique) ? $fild->client_unique : false;;
                         }
                     }
                     array_push($formAnswerIndexData, (Object)["id"=>$structureAnswer->id, "value"=>$structureAnswer->value]);                    
