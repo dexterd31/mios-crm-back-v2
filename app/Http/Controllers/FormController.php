@@ -101,7 +101,6 @@ class FormController extends Controller
             $filters_form_new=[];
             $forms = new Form([
                 'group_id' =>  $request->input('group_id'),
-                'campaign_id' => $request->input('campaign_id'),
                 'form_type_id' => $request->input('type_form'),
                 'name_form' => $request->input('name_form'),
                 'filters' => json_encode($request->filters),
@@ -496,7 +495,7 @@ class FormController extends Controller
         $forms = Form::join('form_types', 'forms.form_type_id', '=', 'form_types.id')
             ->join("groups", "groups.id", "forms.group_id")
             ->join('group_users', 'group_users.group_id', 'groups.id')
-            ->select('name_form', 'forms.id', 'name_type', 'forms.state', 'seeRoles', 'forms.campaign_id', 'forms.updated_at')
+            ->select('name_form', 'forms.id', 'name_type', 'forms.state', 'seeRoles', 'forms.updated_at')
             ->where('group_users.rrhh_id', $rrhhId)
             ->paginate($paginate)->withQueryString();
         return $forms;
