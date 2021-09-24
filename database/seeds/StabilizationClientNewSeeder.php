@@ -37,7 +37,7 @@ class StabilizationClientNewSeeder extends Seeder
             {
                 $clientNewId = array_search((Object)[$answer->form_id, $answer->client_id], $clientNewList);
                 $answer->client_new_id = $clientNewId;
-                break;
+                continue;
             }
             $structureAnswers = json_decode($answer->structure_answer);
             $clientData = [];
@@ -78,12 +78,15 @@ class StabilizationClientNewSeeder extends Seeder
                 $answer->client_new_id = $clientNewId;
             }
 
+            \Log::info($answer->client_new_id);
         }
         $i = 0;
         foreach ($formAnswer as $answer)
         {
             $this->command->info('Update formAnswer '.$i++.' Total: '.count($clientsNew));
-            $answer->save();
+            $formAnswerUpdate = FormAnswer::find($answer->id);
+            $formAnswerUpdate->client_new_id = $answer->client_new_id;
+            $formAnswerUpdate->save();
         }
 
         $this->command->info('Insertadno '.count($clientsNew).'  clientNew');
