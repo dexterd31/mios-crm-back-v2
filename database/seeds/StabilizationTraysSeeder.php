@@ -41,7 +41,7 @@ class StabilizationTraysSeeder extends Seeder
                 {
                     foreach ($allFilds as $filds)
                     {
-                        if($filds->id == $fieldTray->id)
+                        if($filds->id == $fieldTray->id || (isset($filds->idsOld) && in_array($fieldTray->id, $filds->idsOld)))
                         {
                             array_push($newFilds, $filds); 
                         }
@@ -50,9 +50,9 @@ class StabilizationTraysSeeder extends Seeder
                 $tray->fields = json_encode($newFilds);
             }
 
+            $newFildsTable = [];
             foreach ($form->trays as &$tray)
             {
-                $newFildsTable = [];
                 $fieldsTable = json_decode($tray->fields_table);
                 foreach ($fieldsTable as &$fieldTray)
                 {

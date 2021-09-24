@@ -12,9 +12,11 @@ class StabilizationSeeder extends Seeder
      */
     public function run()
     {
-        $this->call('EstabilisationSections');
-        $this->call('EstabilisationFormAnswerSeeder');
-        $this->call('EstabilisationClientNewSeeder');
-        $this->call('EstabilisationKeyValueSeeder');
+        $this->call('StabilizationSectionsSeeder');
+        $this->call('StabilizationFormAnswerSeeder');
+        $this->call('StabilizationClientNewSeeder');
+        $this->call('StabilizationKeyValueSeeder');
+        $this->call("StabilizationTraysSeeder");
+        $this->call("StabilizationDirectoriesSeeder");
     }
 }
