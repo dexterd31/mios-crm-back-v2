@@ -1,12 +1,11 @@
 <?php
 
 use Illuminate\Database\Seeder;
-use app\Models\Section;
 use App\Models\Form;
+use App\Models\Section;
 
-class StabilizationSectionsSeeder extends Seeder
+class StabilizationSections2Seeder extends Seeder
 {
-    private $lestId = 1;
     private $keyDataClient = array(
         "firstName" => "first_name",
         "middleName" => "middle_name",
@@ -33,254 +32,121 @@ class StabilizationSectionsSeeder extends Seeder
             $forms = Form::all();
         }
 
-        $this->lestId = time();
+        $forms = $this->updateDependencies($forms);
+        $forms = $this->updateFilds($forms);
+        $this->saveFromsAdnSections($forms);
+    }
+
+    private function getActivatorsInFather($name, $optionsFather)
+    {
+        foreach($optionsFather as $optionFather)
+        {
+            if($optionFather->name == $name)
+            {
+                return [(Object)[
+                    "id"=> $optionFather->id ,
+                    "name"=> $optionFather->name,
+                ]];
+            }
+        }
+    }
+    private function mregeSections($sections)
+    {
+        $allFilds = [];
+        foreach ($sections as $section)
+        {
+            $sectionArray = json_decode($section->fields);
+            $allFilds = array_merge($allFilds, $sectionArray);
+        }
+        return $allFilds;
+    }
+
+
+    private function updateFilds(&$forms)
+    {
         foreach ($forms as &$form)
         {
-            $newFilds = $this->creandoArboldeDependencias($form->section);
-            $newFilds = $this->updateIdFilds($newFilds, $form);
-            $newFildsForms[$form->id] = $newFilds;
-        }
-
-        $total = count($forms);
-        $i = 1;
-        foreach ($forms as $form)
-        {
-            $this->saveFilds($newFildsForms[$form->id], $form->section);
-            $form->save();
-            $this->command->info("Actualizando sections del formulario: ".$form->id." , Formularios actualizados: .".$i++.", Total: $total");
-        }
-    }
-
-    //Metodo para creat unm arbol con las dependencias
-    private function creandoArboldeDependencias($sections)
-    {
-        $arbolDeDependencias = (Object)[
-            "nodoHead" => true,
-            "hijos" => []
-        ];
-        foreach ($sections as $section)
-        {
-            $fields = json_decode($section->fields);
-            foreach ($fields as $field)
+            foreach ($form->section as &$section)
             {
-                $field->idSection = $section->id;
-                $field->isSon = false;
-                $this->agregarElementoEnArbol($arbolDeDependencias, $field);
-                if(!isset($field->campoInsertado))
+                $fields = json_decode($section->fields);
+                foreach ($fields as &$field)
                 {
-                    array_push($arbolDeDependencias->hijos, $field);
-                }
-            }
-        }
-        $newFilds= [];
-        $fildsSinDependencias = [];
-        $this->updateSections($arbolDeDependencias, $newFilds, $fildsSinDependencias);
-        $newFilds = array_merge($fildsSinDependencias, $newFilds);
-        return $newFilds;
-    }
-
-    private function agregarElementoEnArbol(&$arbol, &$field)
-    {
-        if(!isset($arbol->nodoHead))
-        {
-            if($field->id == $arbol->id)
-            {
-                return;
-            }
-            //verifica si el campo es hijo
-            if($this->checaSiYoSoyPadre($field->dependencies, $arbol->id))
-            {
-                $field->isSon = true;
-                $field->campoInsertado = true;
-                if(!isset($arbol->hijos))
-                {
-                    $arbol->hijos = array();
-                }
-                array_push($arbol->hijos, $field);
-            }
-            //verifica si en campo es padre
-            else if($this->checaSiYoSoyPadre($arbol->dependencies, $field->id))
-            {
-                $field->campoInsertado = true;
-                if(!isset($field->hijos))
-                {
-                    $field->hijos = array();
-                }
-                array_push($field->hijos, $arbol);
-            }
-        }
-
-        if(isset($arbol->hijos))
-        {
-            foreach ($arbol->hijos as $hijo)
-            {
-                $this->agregarElementoEnArbol($hijo, $field);
-            }
-        }
-    }
-    private function checaSiYoSoyPadre($dependencies, $id)
-    {
-
-        foreach ($dependencies as $dependend)
-        {
-            if($dependend->idField == $id)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private function updateSections(&$arbol, &$newSectons, &$sectionsSinDependencias)
-    {
-        if(!isset($arbol->nodoHead))
-        {
-            if(isset($arbol->hijos))
-            {
-                $newSectonHijos = $this->createNewSection($arbol, $arbol->hijos);
-                $newSectons = array_merge($newSectons, $newSectonHijos);
-            }
-        }
-
-        if(isset($arbol->hijos))
-        {
-            foreach ($arbol->hijos as $hijo)
-            {
-                $this->updateSections($hijo, $newSectons, $sectionsSinDependencias);
-            }
-        }
-        if(isset($arbol->nodoHead))
-        {
-            foreach ($arbol->hijos as $hijo)
-            {
-                unset($hijo->hijos);
-                array_push($sectionsSinDependencias, $hijo);
-            }
-        }
-
-    }
-
-    private function createNewSection($padre, $hijos)
-    {
-        $lestOptionId= 1;
-        $fieldNews = [];
-        foreach ($hijos as $hijo)
-        {
-            $fieldNewKey = null;
-            foreach ($fieldNews as $key => $field)
-            {
-                if($field->type == $hijo->type &&
-                    $field->controlType == $hijo->controlType &&
-                    $field->idSection == $hijo->idSection)
-                {
-                    $fieldNewKey = $key;
-                    break;
-                }
-            }
-            if(!$fieldNewKey)
-            {
-                array_push($fieldNews, (Object)[
-                    "id" => $this->lestId++,
-                    "type" => $hijo->type,
-                    "key" => $hijo->key,
-                    "controlType" => $hijo->controlType,
-                    "label" => $hijo->label,
-                    "value" => "",
-                    "required" => $hijo->required,
-                    "canAdd"=> $hijo->canAdd,
-                    "minLength"=> $hijo->minLength,
-                    "maxLength"=> $hijo->maxLength,
-                    "inReport"=> $hijo->inReport,
-                    "disabled"=> $hijo->disabled,
-                    "cols"=> $hijo->cols,
-                    "preloaded"=> $hijo->preloaded,
-                    "isSon"=> true,
-                    "dependencies"=> [],
-                    "editRoles" => $hijo->editRoles,
-                    "seeRoles" => $hijo->seeRoles,
-                    "tooltip" => $hijo->tooltip,
-                    "options" => [],
-                    "idsOld" => [],
-                    "idSection" => $hijo->idSection
-                ]);
-
-                $fieldNewKey = array_key_last($fieldNews);
-            }
-            array_push($fieldNews[$fieldNewKey]->idsOld, $hijo->id);
-            foreach ($hijo->options as &$option)
-            {
-                $id = isset($option->id) ? $option->id: $option->Id;
-                $option->idOld = $id;
-                $option->id = $lestOptionId++;
-
-                array_push($fieldNews[$fieldNewKey]->options, $option); 
-            }
-            foreach($padre->options as $optionPadre)
-            {
-                if($optionPadre->name == $hijo->dependencies[0]->name)
-                {
-                    $activators = [(Object)[
-                        "id"=> $optionPadre->id,
-                        "name"=> $optionPadre->name,
-                    ]];
-                }
-            }
-            array_push($fieldNews[$fieldNewKey]->dependencies, (Object)[
-                    "label" => $padre->label,
-                    "idField" => $padre->id,
-                    "options" => $hijo->options,
-                    "activators" => $activators,
-            ]);
-        }
-        return $fieldNews;
-    }
-
-    private function saveFilds($newFilds, $sections)
-    {
-        foreach ($sections as $section)
-        {
-            $filds = [];
-            foreach ($newFilds as $newFild)
-            {
-                if($newFild->idSection == $section->id)
-                {
-                    array_push($filds, $newFild);
-                }
-            }
-            $section->fields = json_encode($filds);
-            $section->save();
-        }
-    }
-
-    private function updateIdFilds($filds, &$form)
-    {
-        foreach ($filds as &$fild)
-        {
-            $fild->isClientInfo = false;
-            $fild->client_unique = false;
-            foreach ($fild->dependencies as &$dependencie)
-            {
-                foreach ($filds as $fildAux) 
-                {
-                    if(isset($fildAux->idsOld) && in_array($dependencie->idField, $fildAux->idsOld))
+                    $field->isClientInfo = false;
+                    $field->client_unique = false;
+        
+                    if(!isset($field->isSon))
                     {
-                        $dependencie->idField = $fildAux->id;
+                        $field->isSon = false;
+                    }
+
+                    if(array_key_exists($field->key, $this->keyDataClient))
+                    {
+                        $field->isClientInfo = true;
+                        if($field->key == "document")
+                        {
+                            $field->preloaded = true;
+                            $field->client_unique=true;
+                            $form->fields_client_unique_identificator = json_encode([$field]);
+                        }
                     }
                 }
+                $section->fields = json_encode($fields);
             }
-
-            if(array_key_exists($fild->key, $this->keyDataClient))
-            {
-                $fild->isClientInfo = true;
-                if($fild->key == "document")
-                {
-                    $fild->preloaded = true;
-                    $fild->client_unique=true;
-                    $form->fields_client_unique_identificator = json_encode([$fild]);
-                }
-            }
-          
         }
-        return $filds;
+        return $forms;
+    }
+
+    private function updateDependencies($forms)
+    {
+        foreach ($forms as &$form)
+        {
+            $allFilds = $this->mregeSections($form->section);
+            \Log::info($allFilds);
+            foreach ($form->section as &$section)
+            {
+                $fields = json_decode($section->fields);
+                foreach ($fields as &$field)
+                {
+                    foreach ($allFilds as $fildAux)
+                    {
+                        //Verifica si el campo tiene dependencia
+                        \Log::info("entroooooooooooooooooo");
+                        if(isset($field->dependencies) && isset($field->dependencies[0]) && isset($field->dependencies[0]->idField))
+                        {
+                            \Log::info("entroooooooooooooooooo");
+                            //busca el padre
+                            if($field->dependencies[0]->idField == $fildAux->id)
+                            {
+                                $activators = $this->getActivatorsInFather($field->dependencies[0]->name, $fildAux->options);
+                                $field->isSon = true;
+                               
+                                $field->dependencies = [
+                                    (Object)[
+                                        "label" => $fildAux->label,
+                                        "idField" => $fildAux->id,
+                                        "options" => $field->options,
+                                        "activators" => $activators,
+                                    ]
+                                ];
+                            }
+                        }
+                    }
+                }
+                $section->fields = json_encode($fields);
+            }
+        }
+        return $forms;
+    }
+
+    private function saveFromsAdnSections($forms)
+    {
+        foreach ($forms as $form)
+        {
+            foreach ($form->section as $section)
+            {
+                $section->save();
+            }
+            $form->save();
+        }
     }
 }
