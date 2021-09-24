@@ -14,7 +14,7 @@ class AddClientOldIdInClientNewTable extends Migration
     public function up()
     {
         Schema::table('client_news', function (Blueprint $table) {
-            $table->bigInteger('cliet_old_id');
+            $table->bigInteger('cliet_old_id')->nullable();
         });
     }
 

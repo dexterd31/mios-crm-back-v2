@@ -27,7 +27,7 @@ class StabilizationKeyValueSeeder extends Seeder
         $total = count($formAnswer);
         foreach ($formAnswer as $answer)
         {
-            $this->command->info("Armando data clientNew del formulario: ".$answer->form_id." , clientNew armadors: .".$a++.", Total de formAnswers: $total");
+            $this->command->info("Armando data KeyValue del formulario: ".$answer->form_id." , KeyValue armadors: .".$a++.", Total de formAnswers: $total");
             $structureAnswers = json_decode($answer->structure_answer);
             foreach ($structureAnswers as $structureAnswer)
             {
