@@ -9,6 +9,7 @@ use App\Models\Group;
 use App\Models\Section;
 use App\Models\FormAnswer;
 use App\Models\Tray;
+use App\Models\Directory;
 
 class Form extends Model
 {
@@ -50,7 +51,7 @@ class Form extends Model
     }
 
     public function directory(){
-        return $this->hasOne('App\Models\Upload','form_id');
+        return $this->hasMany(Directory::class);
     }
 
     public function apiConnection(){

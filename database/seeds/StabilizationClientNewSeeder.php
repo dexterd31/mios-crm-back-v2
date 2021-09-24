@@ -45,10 +45,13 @@ class StabilizationClientNewSeeder extends Seeder
             $clientData = [];
             foreach ($structureAnswers as $structureAnswer)
             {
-                array_push($clientData, [
-                    "id" => $structureAnswer->id,
-                    "value" => $structureAnswer->value,
-                ]);
+                if(isset($structureAnswer->isClientInfo) && $structureAnswer->isClientInfo)
+                {
+                    array_push($clientData, [
+                        "id" => $structureAnswer->id,
+                        "value" => $structureAnswer->value,
+                    ]);
+                }
 
                 if(isset($structureAnswer->isClientInfo) && $structureAnswer->key == 'document')
                 {

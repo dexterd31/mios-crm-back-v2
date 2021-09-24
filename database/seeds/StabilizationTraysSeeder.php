@@ -49,40 +49,6 @@ class StabilizationTraysSeeder extends Seeder
                 }
                 $tray->fields = json_encode($newFilds);
             }
-
-            foreach ($form->trays as &$tray)
-            {
-                $newFildsTable = [];
-                $fieldsTable = json_decode($tray->fields_table);
-                foreach ($fieldsTable as &$fieldTray)
-                {
-                    foreach ($allFilds as $filds)
-                    {
-                        if($filds->id == $fieldTray->id)
-                        {
-                            array_push($newFildsTable, $filds); 
-                        }
-                    }
-                }
-                $tray->fields_table = json_encode($newFildsTable);
-            }
-
-            foreach ($form->trays as &$tray)
-            {
-                $newFildsTableExit = [];
-                $fieldsExit = json_decode($tray->fields_exit);
-                foreach ($fieldsExit as &$fieldExit)
-                {
-                    foreach ($allFilds as $filds)
-                    {
-                        if($filds->id == $fieldExit->id)
-                        {
-                            array_push($newFildsTable, $filds); 
-                        }
-                    }
-                }
-                $tray->fields_table = json_encode($newFildsTableExit);
-            }
         }
 
         $i=1;

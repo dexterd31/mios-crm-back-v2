@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\ClientNew;
+use App\Models\Form;
 
 class Directory extends Model
 {
@@ -12,7 +13,7 @@ class Directory extends Model
     protected $fillable = ['form_id','rrhh_id', 'client_id','data', 'client_new_id'];
 
     public function form(){
-       return $this->belongsTo('App\Models\Form','form_id');
+       return $this->belongsTo(Form::class,'form_id');
     }
 
     public function client(){
