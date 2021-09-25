@@ -472,6 +472,10 @@ class FormAnswerController extends Controller
                     if($field->type == "options"){
                         if($value->id==$field->id){
                             $validate = false;
+                            if(!isset($field->value))
+                            {
+                                return 0;
+                            }
                             foreach($field->value as $fieldValue){
                                 if($value->value == $fieldValue->id){
                                     $validate = true;
@@ -582,7 +586,7 @@ class FormAnswerController extends Controller
             foreach ( $section->fields as $field) {
                 if($field->preloaded == true && $field->controlType != "file"){
                     //Traemos descripcion pues alli se guarda el nombre del archivo
-                    $key_value = KeyValue::where('client_new_id', $client_new_id)->where('field_id', $field->id)->select('field_id', 'value', 'key', 'description')->latest()->first();
+                    $key_value = KeyValue::where('form_id', $form_id)->where('client_new_id', $client_new_id)->where('field_id', $field->id)->select('field_id', 'value', 'key', 'description')->latest()->first();
                     if($key_value){
                         $key_value->id = $key_value->field_id;
                         unset($key_value->field_id);
@@ -599,9 +603,14 @@ class FormAnswerController extends Controller
 
     private function findSelect($form_id, $field_id, $value)
     {
-        $fields = Section::where('form_id', $form_id)
+        $sections = Section::where('form_id', $form_id)
         ->whereJsonContains('fields', ['id' => $field_id])
-        ->first()->fields;
+        ->first();
+        if(!$sections)
+        {
+            return null;
+        }
+        $fields = $sections->fields;
 
         $field = collect(json_decode($fields))->filter(function($x) use ($field_id){
             return $x->id == $field_id;
