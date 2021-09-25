@@ -8,15 +8,22 @@ use App\Models\Report;
 use App\Models\Group;
 use App\Models\Section;
 use App\Models\FormAnswer;
+use App\Models\Tray;
+use App\Models\Directory;
 
 class Form extends Model
 {
     protected $table = 'forms';
     protected $PrimaryKey = 'id';
-    protected $fillable = ['group_id', 'campaign_id', 'form_type_id', 'name_form','filters','state', 'seeRoles', 'fields_client_unique_identificator'];
+    protected $fillable = ['group_id', 'form_type_id', 'name_form','filters','state', 'seeRoles', 'fields_client_unique_identificator'];
 
     public function formtype(){
         return $this->belongsTo('App\Models\FormType', 'form_type_id');
+    }
+
+    public function trays()
+    {
+        return $this->hasMany(Tray::class);
     }
 
     public function section()
@@ -32,10 +39,6 @@ class Form extends Model
         return $this->hasMany('App\Models\StateForm','form_id');
     }
 
-    public function campaign(){
-        return $this->hasOne('App\Models\Campaing', 'campaign_id','id');
-    }
-
     public function formAnswers(){
         return $this->hasMany(FormAnswer::class);
     }
@@ -48,7 +51,7 @@ class Form extends Model
     }
 
     public function directory(){
-        return $this->hasOne('App\Models\Upload','form_id');
+        return $this->hasMany(Directory::class);
     }
 
     public function apiConnection(){

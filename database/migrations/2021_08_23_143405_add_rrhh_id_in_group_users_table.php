@@ -27,7 +27,7 @@ class AddRrhhIdInGroupUsersTable extends Migration
         {
             if(isset($users[$idUser]))
             {
-                GroupUser::where("user_id", $idUser)->update(['rrhh_id' => $users[$idUser]->id]);   
+                GroupUser::where("user_id", $idUser)->update(['rrhh_id' => $users[$idUser]->rrhh_id]);   
             }
         }
     }
