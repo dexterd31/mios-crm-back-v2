@@ -8,12 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Tray extends Model
 {
+    protected $PrimaryKey = 'id';
     protected $fillable = [
         'name','form_id','fields','rols', 'state'
     ];
 
     public function form(){
-        return $this->belongsTo(Form::class);
+        return $this->belongsTo(Form::class, "form_id");
     }
 
     public function formAnswers(){
