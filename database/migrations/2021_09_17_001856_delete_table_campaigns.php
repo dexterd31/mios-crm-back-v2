@@ -23,6 +23,13 @@ class DeleteTableCampaigns extends Migration
                 $table->dropColumn('campaign_id');
             });
         }
+        if(Schema::hasColumn('forms', 'campaign_id'))
+        {
+            Schema::table('forms', function (Blueprint $table) {
+                $table->dropColumn('campaign_id');
+
+            });
+        }
         Schema::dropIfExists('campaings');
     }
 
