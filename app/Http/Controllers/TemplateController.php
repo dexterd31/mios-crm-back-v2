@@ -110,7 +110,7 @@ class TemplateController extends Controller
             $templateModel = $templateModel->where("template_name", 'like', '%'.$fetch.'%');
         }
 
-        $template = $templateModel->select("id", "template_name", 'input_id', 'created_at',
+        $template = $templateModel->select("id", "template_html", "template_name", 'input_id', 'created_at',
             DB::raw("(CASE WHEN state = '1' THEN 'Activado' ELSE 'Desactivado' END) AS state"))
             ->where("form_id", $formId)->paginate($paginate)->withQueryString();
 
