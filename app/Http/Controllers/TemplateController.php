@@ -151,7 +151,7 @@ class TemplateController extends Controller
         $plantilla = array();
         $templateModel = $this->getTemplateModel();
         $template = $templateModel->findOrFail($request->template_id);
-        $formAnswer = json_decode($request->formAnswer, true);
+        $formAnswer = json_decode($request->sections, true);
         $valueDelimiter = is_numeric($template->value_delimiter)  ? chr($template->value_delimiter) : "";
         $inputsId = json_decode($template->input_id, true);
         foreach ($inputsId as $key => $inputId)

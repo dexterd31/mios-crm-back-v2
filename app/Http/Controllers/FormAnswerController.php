@@ -281,7 +281,7 @@ class FormAnswerController extends Controller
         {
             $files = [];
             $formAnswer['userdata'] = $this->ciuService->fetchUserByRrhhId($formAnswer['rrhh_id']);
-            $structureAnswer = json_decode($formAnswer['structure_answer']);
+            $structureAnswer = $formAnswer['structure_answer'] ? json_decode($formAnswer['structure_answer']) : json_decode($formAnswer['data']);
             foreach ($structureAnswer as $answer) {
                 if(!isset($answer->duplicated))
                 {

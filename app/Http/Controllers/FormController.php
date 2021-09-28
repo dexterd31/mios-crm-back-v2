@@ -77,6 +77,7 @@ class FormController extends Controller
             $formsSections->section[$i]['fields'] = json_decode($formsSections->section[$i]['fields']);
         }
         $formsSections->client_unique = json_decode($formsSections->fields_client_unique_identificator);
+        $formsSections->campaign_id = auth()->user()->rrhh->campaign_id;
         /**
          * Se agrega validacion de api_connections para integracion con SBS (DataCRM)
          */
