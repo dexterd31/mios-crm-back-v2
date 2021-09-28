@@ -25,13 +25,16 @@ class StabilizationDirectorySeeder extends Seeder
 
         $clientsNew = [];
         $clientNewList = [];
-        $clientNewId = ClientNew::max('id'); 
+        $clientNewId = ClientNew::max('id') + 1000; 
         foreach ($forms as $form)
         {
             $i=0;
             $allFilds = $this->mergeSections($form->section);
+            $documentFild = $this->getFildDocument($allFilds);
             foreach ($form->directory as $directory)
             {
+                $clientUnique = null;
+                $clientData = [];
                 $this->command->info("Actualisando directory: ". $i++.", ".count($form->directory));
                 $clientNew = ClientNew::where("cliet_old_id", $directory->client_id)->where("form_id", $directory->form_id)->first();
                 if($clientNew)
@@ -49,56 +52,70 @@ class StabilizationDirectorySeeder extends Seeder
                 }
                 else
                 {
-                    $clientData = [];
-                    foreach ($allFilds as $fild)
+                    $directorysData = json_decode($directory->data);
+                    foreach ($directorysData as $directoryData)
                     {
-                        $directorysData = json_decode($directory->data);
-                        foreach ($directorysData as $directoryData)
+                        foreach ($allFilds as $fild)
                         {
+
                             if($fild->id == $directoryData->id)
-                            {
-                                
+                            {                            
                                 if(isset($fild->isClientInfo) && $fild->isClientInfo)
                                 {
                                     array_push($clientData, [
                                         "id" => $directoryData->id,
                                         "value" => $directoryData->value,
                                     ]);
-                                }                
-                                if(isset($fild->client_unique) && $fild->client_unique)
+                                }
+                                            
+                                if(isset($fild->client_unique) && $fild->client_unique && $directoryData->value)
                                 {
                                     $clientUnique = [(Object)[
                                         "label" => isset($fild->label) ? $fild->label : "no se encuntra label en el formAnswer" ,
                                         "preloaded" => true,
                                         "id" => $fild->id,
                                         "key" => $fild->key,
-                                        "value" => $fild->value,
+                                        "value" => $directoryData->value,
                                         "isClientInfo" => true,
                                         "client_unique" => true,
                                         "cliet_old_id" => $directory->client_id
                                     ]];
                                 }
+                                else if($fild->key == "phone" && $documentFild && $form->id == 13)
+                                {
+                                    $clientUnique = [(Object)[
+                                        "label" => isset($documentFild->label) ? $documentFild->label : "no se encuntra label en el formAnswer" ,
+                                        "preloaded" => true,
+                                        "id" => $documentFild->id,
+                                        "key" => $documentFild->key,
+                                        "value" => $directoryData->value,
+                                        "isClientInfo" => true,
+                                        "client_unique" => true,
+                                        "cliet_old_id" => $directory->client_id
+                                    ]];
+                                    
+                                }
                             }
                         }
-
-                        if(isset($clientUnique))
-                        {
-                            $clientNewId++;
-                            array_push($clientsNew,[
-                                "id" => $clientNewId,
-                                "information_data" => json_encode($clientData),
-                                "unique_indentificator" => json_encode($clientUnique),
-                                "form_id" => $directory->form_id,
-                                "cliet_old_id" => $directory->client_id,
-                                'created_at' => date('Y-m-d H:i:s'),
-                                'updated_at' => date('Y-m-d H:i:s'),
-                            ]);
-                
-                            $clientNewList[$clientNewId] = (Object)[$directory->form_id, $directory->client_id];
-                            $directory->client_new_id = $clientNewId;
-                            $directory->save();
-                        }
                     }
+                }
+
+                if(isset($clientUnique))
+                {
+                    $clientNewId++;
+                    array_push($clientsNew,[
+                        "id" => $clientNewId,
+                        "information_data" => json_encode($clientData),
+                        "unique_indentificator" => json_encode($clientUnique),
+                        "form_id" => $directory->form_id,
+                        "cliet_old_id" => $directory->client_id,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ]);
+        
+                    $clientNewList[$clientNewId] = (Object)[$directory->form_id, $directory->client_id];
+                    $directory->client_new_id = $clientNewId;
+                    $directory->save();
                 }
             }             
         }
@@ -111,6 +128,17 @@ class StabilizationDirectorySeeder extends Seeder
             $this->command->info("guardando 100 ClientNew, $qtd ya insertados, de un total de ".count($clientsNew));
             ClientNew::insert($clientNewChunk);
             $qtd += 100;
+        }
+    }
+
+    private function getFildDocument($filds)
+    {
+        foreach ($filds as $fild)
+        {
+            if($fild->key == 'document')
+            {
+                return $fild;
+            }
         }
     }
 

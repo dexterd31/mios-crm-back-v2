@@ -99,10 +99,11 @@ class StabilizationSectionsSeeder extends Seeder
 
     private function updateDependencies($forms)
     {
+        $i = 0;
         foreach ($forms as &$form)
         {
+            $this->command->info("Actualizando sections del formulario: ".$form->id." , Formularios actualizados: .".$i++.", Total: ".count($forms));
             $allFilds = $this->mregeSections($form->section);
-            \Log::info($allFilds);
             foreach ($form->section as &$section)
             {
                 $fields = json_decode($section->fields);
@@ -111,13 +112,13 @@ class StabilizationSectionsSeeder extends Seeder
                     foreach ($allFilds as $fildAux)
                     {
                         //Verifica si el campo tiene dependencia
-                        \Log::info("entroooooooooooooooooo");
-                        if(isset($field->dependencies) && isset($field->dependencies[0]) && isset($field->dependencies[0]->idField))
+                        if(isset($field->dependencies) && isset($field->dependencies[0]) &&
+                            isset($field->dependencies[0]->idField) && isset($field->dependencies[0]->name))
                         {
-                            \Log::info("entroooooooooooooooooo");
                             //busca el padre
                             if($field->dependencies[0]->idField == $fildAux->id)
                             {
+
                                 $activators = $this->getActivatorsInFather($field->dependencies[0]->name, $fildAux->options);
                                 $field->isSon = true;
                                
