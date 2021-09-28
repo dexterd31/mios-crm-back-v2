@@ -62,6 +62,7 @@ class TemplateController extends Controller
                 "fields_writable" => json_encode($template->fields_writable),
                 "state" => 1,
                 "value_delimiter" => $template->value_delimiter,
+                "template_html" => $template->template_html,
             ]);
             $template->save();
             $miosHelper = $this->getMiosHelper();
@@ -198,5 +199,42 @@ class TemplateController extends Controller
         $data['fields_writable'] = $template->fields_writable;
         $data['value_delimiter'] = $template->value_delimiter;
         return $data;
+    }
+
+    /**
+     * Metodo para generar plantilla html
+     * @param Request id del la plantilla en  $request->templateId.
+     * @param Request La tipificacion del formulario en $request->sections.
+     * @return String Retorna una string que es el codigo html de la plantilla
+     * @author Joao Alfonso Beleño
+     * @exemple 
+     * @createdate 28/09/2021
+     */
+    public function buildTemplateHtml(Request $request)
+    {
+        $template = Template::find($request->templateId);
+        $templateHtml = $template->template_html;
+        if(!$template || !$template->template_html)
+        {
+            //mensaje de error
+            return "";
+        }
+
+        $formAnswer = json_decode($request->sections);
+        $inputsId = json_decode($template->input_id);
+        foreach ($formAnswer as $section)
+        {
+            foreach($section->fields as $field)
+            {
+                foreach ($inputsId as $inputId)
+                {
+                    if($inputId["id"] == $field['id'])
+                    {
+                        $templateHtml = str_replace("{{".$field->id."}}", $field->value, $templateHtml);
+                    }
+                }
+            }
+        }
+        return json_encode($templateHtml);;
     }
 }

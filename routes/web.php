@@ -59,6 +59,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/template/store','TemplateController@store');
     $router->post('/template/buildTemplate','TemplateController@buildTemplate');
     $router->get('/template/show/{formId}','TemplateController@show');
+    $router->post('/template/buildTemplateHtml','TemplateController@buildTemplateHtml');
 
     //Rutas de grupos
     $router->get('/searchgroup/{id}', 'GroupController@searchGroup');
