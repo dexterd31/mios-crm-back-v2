@@ -138,10 +138,10 @@ class ClientNewController extends Controller
                 "form_id" => $request->form_id,
                 "unique_indentificator" => $request->unique_indentificator,
             ]);
-            $clientsNew = $this->index($clientNewRequest);
-            if($clientsNew && isset($clientsNew->id))
+            $clientsNewList = $this->index($clientNewRequest);
+            if($clientsNewList && isset($clientsNewList->id))
             {
-                $data = $this->update($request, $clientsNew);
+                $data = $this->update($request, $clientsNewList);
             }else
             {
                 $data = $this->save($request);
@@ -152,22 +152,27 @@ class ClientNewController extends Controller
 
     private function save($clientNewData)
     {
-        $informationData=json_decode($clientNewData->information_data);
+        $informationDataClient = [];
+        $informationData = json_decode($clientNewData->information_data);
         foreach($informationData as $data){
             if(gettype($data->value)!=="string"){
                 $data->value=strval($data->value);
             }
+            array_push($informationDataClient, (Object)
+            [
+                "id"=> $data->id,
+                "value"=> $data->value,
+            ]);
         }
+
         $uniqueIdentificator=json_decode($clientNewData->unique_indentificator);
-        \Log::info(gettype($uniqueIdentificator->value));
         if(gettype($uniqueIdentificator->value)!=="string"){
-            \Log::info($uniqueIdentificator->value);
             $uniqueIdentificator->value=strval($uniqueIdentificator->value);
         }
 
         $clientNew = new ClientNew([
             "form_id" => $clientNewData->form_id,
-            "information_data" => json_encode($informationData),
+            "information_data" => json_encode($informationDataClient),
             "unique_indentificator" => json_encode($uniqueIdentificator),
         ]);
         $clientNew->save();
