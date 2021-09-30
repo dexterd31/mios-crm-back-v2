@@ -17,7 +17,6 @@ class CreateRelTraysUsersTable extends Migration
             $table->id();
             $table->foreignId('trays_id')->constrained('trays'); 
             $table->unsignedBigInteger('rrhh_id');
-            $table->string('nombre');
             $table->timestamps();
         });
     }
