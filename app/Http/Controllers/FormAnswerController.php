@@ -78,7 +78,7 @@ class FormAnswerController extends Controller
                 $register['label'] = $field['label'];
                 $register['isClientInfo'] = isset($field['isClientInfo']) ? $field['isClientInfo'] : false;
                 $register['client_unique'] = false;
-                if($field['controlType'] == 'file' && $field['id'] !=''){
+                if($field['controlType'] == 'file' && $field['value'] !=''){
                     $attachment = new Attachment();
                     $attachment->name = $request->file($field['id'])->getClientOriginalName();
                     $attachment->source = $request->file($field['id'])->store($date_string);
@@ -469,27 +469,16 @@ class FormAnswerController extends Controller
                 // Filtrar que contenga el id del field buscado
                 $tray_in = collect($estructura)->filter( function ($value, $key) use ($field) {
                     // si es tipo options, validar el valor del option
-                    \Log::info(json_encode($field));
-                    \Log::info(json_encode($value));
-
-                    if($field->type == "options"  && $field->value != ""){
+                    if($field->type == "options"){
                         if($value->id==$field->id){
                             $validate = false;
                             if(!isset($field->value))
                             {
                                 return 0;
                             }
-                            foreach($field->value as $fieldValue){
+                            foreach($field->options as $fieldValue){
                                 if($value->value == $fieldValue->id){
                                     $validate = true;
-                                    // return 1;
-                                // }else{
-                                //     if($validate == true){
-                                //         $validate = true;
-                                //     }else{
-                                //         $validate = false;
-                                //     }
-                                //     // return 0;
                                 }
                             }
                             if($validate == true){
