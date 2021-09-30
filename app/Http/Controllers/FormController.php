@@ -568,5 +568,57 @@ class FormController extends Controller
             return $completeFileds;
         }
     }
+
+    /**
+     * @desc Busca los campos que son datos basicos del cliente en las sections y el identificador unico
+     * @param integer id del formulario
+     * @return object arreglo con los campos que son datos basicos del cliente (clientData) y su identificados unico 
+     * @return array El campo clientData contine las informaciones  preloaded, id, key, type, controlType y required 
+     * @author Joao Beleno
+     */
+    public function getDataClientInForm($idForm)
+    {
+        $form = Form::find($idForm);
+        $result = [
+            "fields_client_unique_identificator" => [],
+            "clientData" => []
+        ];
+        foreach ($form->section as $section)
+        {
+            $fields = json_decode($section->fields);
+            foreach ($fields as $field)
+            {
+                if(isset($field->isClientInfo) && $field->isClientInfo)
+                {
+                    $fieldClientData = (Object)[
+                        "id" => $field->id,
+                        "label" => $field->label,
+                        "value" => '',
+                        "type" => $field->type,
+                        "controlType" => $field->controlType,
+                        "required" => isset($field->required) && $field->required ? $field->required : false,
+                    ];
+                    array_push($result["clientData"], $fieldClientData);
+                }
+                if(isset($field->client_unique) && $field->client_unique)
+                {
+                    $fieldClient_unique = (Object)[
+                        "id" => $field->id,
+                        "label" => $field->label,
+                        "key" => $field->key,
+                        "value" => '',
+                        "type" => $field->type,
+                        "controlType" => $field->controlType,
+                        "required" => true,
+                        "isClientInfo" => true,
+                        "preloaded" => true,
+                        "client_unique" => true,
+                    ];
+                    $result["fields_client_unique_identificator"] = $fieldClient_unique;
+                }
+            }
+        }
+        return $result;
+    }
 }
 

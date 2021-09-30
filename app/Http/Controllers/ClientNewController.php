@@ -152,22 +152,28 @@ class ClientNewController extends Controller
 
     private function save($clientNewData)
     {
-        $informationData=json_decode($clientNewData->information_data);
+        $informationDataClient = [];
+        $informationData = json_decode($clientNewData->information_data);
         foreach($informationData as $data){
             if(gettype($data->value)!=="string"){
                 $data->value=strval($data->value);
             }
+            array_push($informationDataClient, (Object)
+            [
+                "id"=> $data->id,
+                "value"=> $data->value,
+            ]);
         }
+
         $uniqueIdentificator=json_decode($clientNewData->unique_indentificator);
-        \Log::info(gettype($uniqueIdentificator->value));
-        if(gettype($uniqueIdentificator->value)!=="string"){
-            \Log::info($uniqueIdentificator->value);
+        if(gettype($uniqueIdentificator->value)!=="string")
+        {
             $uniqueIdentificator->value=strval($uniqueIdentificator->value);
         }
 
         $clientNew = new ClientNew([
             "form_id" => $clientNewData->form_id,
-            "information_data" => json_encode($informationData),
+            "information_data" => json_encode($informationDataClient),
             "unique_indentificator" => json_encode($uniqueIdentificator),
         ]);
         $clientNew->save();

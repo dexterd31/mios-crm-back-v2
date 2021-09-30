@@ -29,6 +29,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/report','FormController@report');
     $router->get('/formsbyuser/{idUser}', 'FormController@formsByUser');
     $router->post('/addSection', 'FormController@addSection');
+    $router->get('/getDataClientInForm/{idForm}', 'FormController@getDataClientInForm');
 
     //Base de datos
     // la variable parameters esta en base64 y puede contener el caracter '/', lo cual lanza error 404,
@@ -59,6 +60,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/template/store','TemplateController@store');
     $router->post('/template/buildTemplate','TemplateController@buildTemplate');
     $router->get('/template/show/{formId}','TemplateController@show');
+    $router->post('/template/buildTemplateHtml','TemplateController@buildTemplateHtml');
 
     //Rutas de grupos
     $router->get('/searchgroup/{id}', 'GroupController@searchGroup');
