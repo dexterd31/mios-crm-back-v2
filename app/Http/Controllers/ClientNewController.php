@@ -138,10 +138,10 @@ class ClientNewController extends Controller
                 "form_id" => $request->form_id,
                 "unique_indentificator" => $request->unique_indentificator,
             ]);
-            $clientsNew = $this->index($clientNewRequest);
-            if($clientsNew && isset($clientsNew->id))
+            $clientsNewList = $this->index($clientNewRequest);
+            if($clientsNewList && isset($clientsNewList->id))
             {
-                $data = $this->update($request, $clientsNew);
+                $data = $this->update($request, $clientsNewList);
             }else
             {
                 $data = $this->save($request);
@@ -166,8 +166,7 @@ class ClientNewController extends Controller
         }
 
         $uniqueIdentificator=json_decode($clientNewData->unique_indentificator);
-        if(gettype($uniqueIdentificator->value)!=="string")
-        {
+        if(gettype($uniqueIdentificator->value)!=="string"){
             $uniqueIdentificator->value=strval($uniqueIdentificator->value);
         }
 
