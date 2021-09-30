@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Form;
 use App\Models\FormAnswer;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\RelTrayUser;
 
 class Tray extends Model
 {
@@ -19,5 +20,10 @@ class Tray extends Model
 
     public function formAnswers(){
         return $this->belongsToMany(FormAnswer::class, 'form_answers_trays');
+    }
+
+    public function RelTrayUser()
+    {
+        return $this->hasMany(RelTrayUser::class);
     }
 }
