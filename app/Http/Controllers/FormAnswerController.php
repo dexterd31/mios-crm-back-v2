@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\Calculation\Statistical\Distributions\F;
+use App\Models\FormAnswersTray;
 
 class FormAnswerController extends Controller
 {
@@ -405,26 +406,29 @@ class FormAnswerController extends Controller
         $obj = array();
         $i=0;
         $trayFilds = [];
-        $date_string = Carbon::now()->format('YmdHis');
+        $request->trayId = 35;
         foreach ($request->sections as $section) {
             foreach ($section['fields'] as $field) {
                 if(isset($field["tray"]))
-                {   
-                    foreach ($field["tray"] as $tray)
+                {
+                    if(isset($request->trayId))
                     {
-                        if($tray['id'] == $request->trayId)
+                        foreach ($field["tray"] as $tray)
                         {
-                            array_push($trayFilds, (Object)[
-                                "id"=>$field['id'],
-                                "key"=>$field['key'],
-                                "value"=>$field['value'],
-                                "preloaded"=>$field['preloaded'],
-                                "label"=>$field['label']
-                            ]);
-                            continue;
+                            if($tray['id'] == $request->trayId)
+                            {
+                                array_push($trayFilds, (Object)[
+                                    "id"=>$field['id'],
+                                    "key"=>$field['key'],
+                                    "value"=>$field['value'],
+                                    "preloaded"=>$field['preloaded'],
+                                    "label"=>$field['label']
+                                ]);
+                                continue;
+                            }
                         }
-                        continue;
                     }
+                    continue;
                 }
                 $register=[];
                 if ($i == 0) {
@@ -462,9 +466,13 @@ class FormAnswerController extends Controller
         $form_answer->update();
         if(isset($request->trayId))
         {
-            $formAnswersTrays = $form_answer->formAnswersTrays()->where("tray_id", $request->trayId)->first();
-            $formAnswersTrays->structure_answer_tray = json_encode($trayFilds);
-            $formAnswersTrays->update();
+            FormAnswersTray::where("tray_id", $request->trayId)->where("form_answer_id", $form_answer->id)->where('lastAnswersTrays', 1)->update(['lastAnswersTrays' => 0]);
+            $formAnswersTrays = new FormAnswersTray([
+                "form_answer_id" => $form_answer->id,
+                "tray_id" => $request->trayId,
+                "structure_answer_tray" => json_encode($trayFilds)
+            ]);
+            $formAnswersTrays->save();
         }
 
         // Manejar bandejas

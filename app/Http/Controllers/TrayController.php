@@ -127,7 +127,13 @@ class TrayController extends Controller
     public function formAnswersByTray(Request $request, $id) {
         $tray = Tray::where('id',$id)->firstOrFail();
         $fieldsTable = json_decode($tray->fields_table);
-        $formsAnswers = $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
+
+        $formsAnswers = FormAnswer::join('form_answers_trays', "form_answers.id", 'form_answers_trays.form_answer_id')
+            ->join('trays', "trays.id", 'form_answers_trays.tray_id')->where("lastAnswersTrays", 1)->where("trays.id", $id)
+            ->select("form_answers.id", "form_answers.structure_answer", "form_answers.form_id",
+                "form_answers.channel_id", "form_answers.rrhh_id", "form_answers.client_new_id",)
+            ->paginate($request->query('n', 5))->withQueryString();
+
         foreach($formsAnswers as $form)
         {
             $tableValues = [];
@@ -155,15 +161,17 @@ class TrayController extends Controller
                     }
             }
                 $form->table_values = $tableValues;
-                $form->formAnswersTray = $this->getFormAnswersTray($form->id, $tray->id);
+                $structureAnswer = $form->structure_answer ? json_decode($form->structure_answer, true) : [];
+                $formAnswersTray = $this->getFormAnswersTray($form->id, $tray->id);
+                $form->structure_answer = json_encode(array_merge($structureAnswer, $formAnswersTray));
         }
         return $formsAnswers;
     }
 
     private function getFormAnswersTray($idFormAnswer, $idTray)
     {
-        $formAnswersTray = FormAnswersTray::where("tray_id", $idTray)->where("form_answer_id", $idFormAnswer)->first();
-        return json_decode($formAnswersTray->structure_answer_tray);
+        $formAnswersTray = FormAnswersTray::where("tray_id", $idTray)->where("form_answer_id", $idFormAnswer)->where("lastAnswersTrays", 1)->first();
+        return $formAnswersTray ? json_decode($formAnswersTray->structure_answer_tray, true): [];
     }
 
     public function changeState($id){
