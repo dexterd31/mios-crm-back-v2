@@ -16,7 +16,7 @@ class FormAnswerTrayController extends Controller
 
     public function index($formAnswerId, $trayId)
     {
-        return FormAnswersTray::where("form_answer_id", $formAnswerId)->where("tray_id", $trayId)->get();
+        return FormAnswersTray::where("form_answer_id", $formAnswerId)->where("tray_id", $trayId)->whereNotNull("structure_answer_tray")->get();
     }
 
     public function getFormAnswersTray($idFormAnswer, $idTray, $formId)
