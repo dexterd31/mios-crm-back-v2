@@ -17,6 +17,5 @@ class StabilizationSeeder extends Seeder
         $this->call('StabilizationClientNewSeeder');
         $this->call('StabilizationKeyValueSeeder');
         $this->call("StabilizationTraysSeeder");
-        $this->call("StabilizationDirectoriesSeeder");
     }
 }

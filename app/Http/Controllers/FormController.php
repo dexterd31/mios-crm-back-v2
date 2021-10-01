@@ -59,7 +59,7 @@ class FormController extends Controller
      * 27-01-2020
      * Método para consultar el formulario con sus respectivas secciones
      */
-    public function searchForm($id)
+    public function searchForm($id, $idTray = null)
     {
         $formsSections = Form::where('id', $id)
             ->with(["section" => function($q){
@@ -73,8 +73,7 @@ class FormController extends Controller
         for ($i = 0; $i < count($formsSections->section); $i++) {
             unset($formsSections->section[$i]['created_at']);
             unset($formsSections->section[$i]['updated_at']);
-            unset($formsSections->section[$i]['form_id']);
-            $formsSections->section[$i]['fields'] = json_decode($formsSections->section[$i]['fields']);
+            $formsSections->section[$i]['fields'] = $this->getFildsFormAndFildsTray($formsSections->section[$i], $idTray);
         }
         $formsSections->client_unique = json_decode($formsSections->fields_client_unique_identificator);
         $formsSections->campaign_id = auth()->user()->rrhh->campaign_id;
@@ -86,6 +85,33 @@ class FormController extends Controller
         if($apiConnection) $formsSections->externalNotifications = true;
 
         return response()->json($formsSections);
+    }
+
+    private function getFildsFormAndFildsTray($section, $idTray)
+    {
+        $fildsFormAndTray = [];
+        $fields = json_decode($section->fields);
+        foreach ($fields as $field)
+        {
+            if(isset($field->tray))
+            {
+                if($idTray)
+                {
+                    foreach ($field->tray as $tray)
+                    {
+                        if($tray->id == $idTray)
+                        {
+                            array_push($fildsFormAndTray, $field);
+                        }
+                    } 
+                }
+            }
+            else
+            {
+                array_push($fildsFormAndTray, $field);
+            }
+        }
+        return $fildsFormAndTray; 
     }
 
     /**

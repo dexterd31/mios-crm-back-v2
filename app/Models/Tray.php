@@ -26,4 +26,8 @@ class Tray extends Model
     {
         return $this->hasMany(RelTrayUser::class);
     }
+
+    public function formAnswersTray(){
+        return $this->hasMany(FormAnswersTray::class);
+    }
 }
