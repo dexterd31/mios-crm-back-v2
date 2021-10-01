@@ -138,10 +138,10 @@ class ClientNewController extends Controller
                 "form_id" => $request->form_id,
                 "unique_indentificator" => $request->unique_indentificator,
             ]);
-            $clientsNewList = $this->index($clientNewRequest);
-            if($clientsNewList && isset($clientsNewList->id))
+            $clientsNew = $this->index($clientNewRequest);
+            if($clientsNew && isset($clientsNew->id))
             {
-                $data = $this->update($request, $clientsNewList);
+                $data = $this->update($request, $clientsNew);
             }else
             {
                 $data = $this->save($request);
