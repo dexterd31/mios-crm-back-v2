@@ -171,7 +171,7 @@ class TrayController extends Controller
     private function getFormAnswersTray($idFormAnswer, $idTray)
     {
         $formAnswersTray = FormAnswersTray::where("tray_id", $idTray)->where("form_answer_id", $idFormAnswer)->where("lastAnswersTrays", 1)->first();
-        return $formAnswersTray ? json_decode($formAnswersTray->structure_answer_tray, true): [];
+        return isset($formAnswersTray) ? json_decode($formAnswersTray->structure_answer_tray, true): [];
     }
 
     public function changeState($id){
