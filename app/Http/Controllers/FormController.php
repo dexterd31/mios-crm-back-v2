@@ -59,9 +59,9 @@ class FormController extends Controller
      * 27-01-2020
      * Método para consultar el formulario con sus respectivas secciones
      */
-    public function searchForm($id, $idTray = null)
+    public function searchForm($idForm, $idTray = null)
     {
-        $formsSections = Form::where('id', $id)
+        $formsSections = Form::where('id', $idForm)
             ->with(["section" => function($q){
                 $q->where('state', '!=', 1);
             }])
@@ -81,7 +81,7 @@ class FormController extends Controller
          * Se agrega validacion de api_connections para integracion con SBS (DataCRM)
          */
         $formsSections->externalNotifications = false;
-        $apiConnection = ApiConnection::where('form_id',$id)->where('api_type',10)->where('status',1)->first();
+        $apiConnection = ApiConnection::where('form_id',$idForm)->where('api_type',10)->where('status',1)->first();
         if($apiConnection) $formsSections->externalNotifications = true;
 
         return response()->json($formsSections);
