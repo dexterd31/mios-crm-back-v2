@@ -412,7 +412,7 @@ class FormAnswerController extends Controller
                 {   
                     foreach ($field["tray"] as $tray)
                     {
-                        if($tray->id == $request->trayId)
+                        if($tray['id'] == $request->trayId)
                         {
                             array_push($trayFilds, (Object)[
                                 "id"=>$field['id'],
@@ -421,7 +421,9 @@ class FormAnswerController extends Controller
                                 "preloaded"=>$field['preloaded'],
                                 "label"=>$field['label']
                             ]);
+                            continue;
                         }
+                        continue;
                     }
                 }
                 $register=[];
@@ -458,9 +460,9 @@ class FormAnswerController extends Controller
 
         $form_answer->structure_answer = json_encode($obj);
         $form_answer->update();
-        if(isset($request->tray_id))
+        if(isset($request->trayId))
         {
-            $formAnswersTrays = $form_answer->formAnswersTrays()->where("tray_id", $request->tray_id)->first();
+            $formAnswersTrays = $form_answer->formAnswersTrays()->where("tray_id", $request->trayId)->first();
             $formAnswersTrays->structure_answer_tray = json_encode($trayFilds);
             $formAnswersTrays->update();
         }

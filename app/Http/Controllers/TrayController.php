@@ -7,6 +7,7 @@ use App\Models\Tray;
 use App\Models\Section;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\FormAnswersTray;
 use stdClass;
 
 class TrayController extends Controller
@@ -154,9 +155,15 @@ class TrayController extends Controller
                     }
             }
                 $form->table_values = $tableValues;
+                $form->formAnswersTray = $this->getFormAnswersTray($form->id, $tray->id);
         }
         return $formsAnswers;
+    }
 
+    private function getFormAnswersTray($idFormAnswer, $idTray)
+    {
+        $formAnswersTray = FormAnswersTray::where("tray_id", $idTray)->where("form_answer_id", $idFormAnswer)->first();
+        return json_decode($formAnswersTray->structure_answer_tray);
     }
 
     public function changeState($id){
