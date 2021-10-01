@@ -136,7 +136,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/getPermissionsByIdRole/{idRole}', 'PermissionController@getPermissionsByIdRole');
     $router->get('/getPermissions', 'PermissionController@getPermissions');
 
-    $router->get('formAnswerTray/show/{formAnswerId}/{trayId}','FormAnswerTrayController@show');
+    $router->get('formAnswerTray/index/{formAnswerId}/{trayId}','FormAnswerTrayController@index');
 
     $router->get('/prueba-jsoncontains/{formId}', function($formId){
         $form_answers = FormAnswer::where('form_id', $formId)

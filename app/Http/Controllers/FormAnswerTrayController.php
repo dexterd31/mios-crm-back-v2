@@ -14,7 +14,7 @@ class FormAnswerTrayController extends Controller
         $this->middleware('auth');
     }
 
-    public function show($formAnswerId, $trayId)
+    public function index($formAnswerId, $trayId)
     {
         return FormAnswersTray::where("form_answer_id", $formAnswerId)->where("tray_id", $trayId)->get();
     }
