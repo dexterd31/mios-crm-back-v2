@@ -131,7 +131,7 @@ class TrayController extends Controller
         $formsAnswers = FormAnswer::join('form_answers_trays', "form_answers.id", 'form_answers_trays.form_answer_id')
             ->join('trays', "trays.id", 'form_answers_trays.tray_id')->where("lastAnswersTrays", 1)->where("trays.id", $id)
             ->select("form_answers.id", "form_answers.structure_answer", "form_answers.form_id",
-                "form_answers.channel_id", "form_answers.rrhh_id", "form_answers.client_new_id",)
+                "form_answers.channel_id", "form_answers.rrhh_id", "form_answers.client_new_id")
             ->paginate($request->query('n', 5))->withQueryString();
 
         foreach($formsAnswers as $form)
@@ -162,16 +162,11 @@ class TrayController extends Controller
             }
                 $form->table_values = $tableValues;
                 $structureAnswer = $form->structure_answer ? json_decode($form->structure_answer, true) : [];
-                $formAnswersTray = $this->getFormAnswersTray($form->id, $tray->id);
+                $formAnswerTrayController = new FormAnswerTrayController();
+                $formAnswersTray = $formAnswerTrayController->getFormAnswersTray($form->id, $tray->id, $tray->form_id);
                 $form->structure_answer = isset($formAnswersTray) ? array_merge($structureAnswer, $formAnswersTray) : $structureAnswer;
         }
         return $formsAnswers;
-    }
-
-    private function getFormAnswersTray($idFormAnswer, $idTray)
-    {
-        $formAnswersTray = FormAnswersTray::where("tray_id", $idTray)->where("form_answer_id", $idFormAnswer)->where("lastAnswersTrays", 1)->first();
-        return isset($formAnswersTray) ? json_decode($formAnswersTray->structure_answer_tray, true): [];
     }
 
     public function changeState($id){
