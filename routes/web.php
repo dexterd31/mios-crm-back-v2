@@ -20,8 +20,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas para creación de formulario dinamico
     $router->post('/saveform', 'FormController@saveForm');
     $router->get('/formslist', 'FormController@FormsList');
-    $router->get('/searchform/{idForm}', 'FormController@searchForm');
-    $router->get('/searchformTray/{idForm}/{idTray}', 'FormController@searchForm');
+    $router->get('/searchform/{id}', 'FormController@searchForm');
     $router->get('/searchPrechargeFields/{id}', 'FormController@searchPrechargeFields');
     $router->get('/searchformtype', 'FormController@searchFormType');
     $router->put('/editform/{id}', 'FormController@editForm');

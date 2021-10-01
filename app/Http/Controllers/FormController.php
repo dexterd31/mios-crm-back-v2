@@ -59,9 +59,9 @@ class FormController extends Controller
      * 27-01-2020
      * Método para consultar el formulario con sus respectivas secciones
      */
-    public function searchForm($idForm, $idTray = null)
+    public function searchForm($id)
     {
-        $formsSections = Form::where('id', $idForm)
+        $formsSections = Form::where('id', $id)
             ->with(["section" => function($q){
                 $q->where('state', '!=', 1);
             }])
@@ -73,7 +73,8 @@ class FormController extends Controller
         for ($i = 0; $i < count($formsSections->section); $i++) {
             unset($formsSections->section[$i]['created_at']);
             unset($formsSections->section[$i]['updated_at']);
-            $formsSections->section[$i]['fields'] = $this->getFildsFormAndFildsTray($formsSections->section[$i], $idTray);
+            unset($formsSections->section[$i]['form_id']);
+            $formsSections->section[$i]['fields'] = json_decode($formsSections->section[$i]['fields']);
         }
         $formsSections->client_unique = json_decode($formsSections->fields_client_unique_identificator);
         $formsSections->campaign_id = auth()->user()->rrhh->campaign_id;
@@ -81,37 +82,10 @@ class FormController extends Controller
          * Se agrega validacion de api_connections para integracion con SBS (DataCRM)
          */
         $formsSections->externalNotifications = false;
-        $apiConnection = ApiConnection::where('form_id',$idForm)->where('api_type',10)->where('status',1)->first();
+        $apiConnection = ApiConnection::where('form_id',$id)->where('api_type',10)->where('status',1)->first();
         if($apiConnection) $formsSections->externalNotifications = true;
 
         return response()->json($formsSections);
-    }
-
-    private function getFildsFormAndFildsTray($section, $idTray)
-    {
-        $fildsFormAndTray = [];
-        $fields = json_decode($section->fields);
-        foreach ($fields as $field)
-        {
-            if(isset($field->tray))
-            {
-                if($idTray)
-                {
-                    foreach ($field->tray as $tray)
-                    {
-                        if($tray->id == $idTray)
-                        {
-                            array_push($fildsFormAndTray, $field);
-                        }
-                    } 
-                }
-            }
-            else
-            {
-                array_push($fildsFormAndTray, $field);
-            }
-        }
-        return $fildsFormAndTray; 
     }
 
     /**
