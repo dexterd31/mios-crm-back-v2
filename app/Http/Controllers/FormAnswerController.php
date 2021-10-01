@@ -406,7 +406,6 @@ class FormAnswerController extends Controller
         $obj = array();
         $i=0;
         $trayFilds = [];
-        $request->trayId = 35;
         foreach ($request->sections as $section) {
             foreach ($section['fields'] as $field) {
                 if(isset($field["tray"]))
