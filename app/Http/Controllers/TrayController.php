@@ -163,7 +163,7 @@ class TrayController extends Controller
                 $form->table_values = $tableValues;
                 $structureAnswer = $form->structure_answer ? json_decode($form->structure_answer, true) : [];
                 $formAnswersTray = $this->getFormAnswersTray($form->id, $tray->id);
-                $form->structure_answer = json_encode(array_merge($structureAnswer, $formAnswersTray));
+                $form->structure_answer =isset($formAnswersTray) ? json_encode(array_merge($structureAnswer, $formAnswersTray)) : $structureAnswer;
         }
         return $formsAnswers;
     }
