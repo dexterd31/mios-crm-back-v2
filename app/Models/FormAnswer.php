@@ -7,6 +7,7 @@ use App\Models\Tray;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\ClientNew;
 use App\Models\Form;
+use App\Models\FormAnswersTray;
 
 class FormAnswer extends Model
 {
@@ -40,5 +41,9 @@ class FormAnswer extends Model
 
     public function trays(){
         return $this->belongsToMany(Tray::class, 'form_answers_trays');
+    }
+
+    public function formAnswersTrays(){
+        return $this->hasMany(FormAnswersTray::class);
     }
 }
