@@ -217,24 +217,18 @@ class TemplateController extends Controller
         if(!$template || !$template->template_html)
         {
             //mensaje de error
-            return "";
+            return json_encode("Fromulario no tiene template en Html");;
         }
 
         $formAnswer = json_decode($request->sections);
-        $inputsId = json_decode($template->input_id);
         foreach ($formAnswer as $section)
         {
             foreach($section->fields as $field)
             {
-                foreach ($inputsId as $inputId)
-                {
-                    if($inputId["id"] == $field['id'])
-                    {
-                        $templateHtml = str_replace("{{".$field->id."}}", $field->value, $templateHtml);
-                    }
-                }
+                $templateHtml = str_replace("{{".$field->id."}}", $field->value, $templateHtml);
             }
         }
-        return json_encode($templateHtml);;
+        $templateHtml = preg_replace('/\{{(.*?)\}}/', '', $templateHtml);
+        return json_encode($templateHtml);
     }
 }
