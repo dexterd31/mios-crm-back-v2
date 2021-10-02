@@ -261,4 +261,9 @@ class GroupController extends Controller
     {
         return GroupUser::where('rrhh_id', $rrhhId)->get();
     }
+
+    public function search()
+    {
+        return Group::where("state", 1)->select("id", "campaign_id", "name_group", "description")->get();
+    }
 }

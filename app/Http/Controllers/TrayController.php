@@ -7,6 +7,7 @@ use App\Models\Tray;
 use App\Models\Section;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\FormAnswersTray;
 use stdClass;
 
 class TrayController extends Controller
@@ -126,7 +127,13 @@ class TrayController extends Controller
     public function formAnswersByTray(Request $request, $id) {
         $tray = Tray::where('id',$id)->firstOrFail();
         $fieldsTable = json_decode($tray->fields_table);
-        $formsAnswers = $tray->formAnswers()->paginate($request->query('n', 5))->withQueryString();
+
+        $formsAnswers = FormAnswer::join('form_answers_trays', "form_answers.id", 'form_answers_trays.form_answer_id')
+            ->join('trays', "trays.id", 'form_answers_trays.tray_id')->where("lastAnswersTrays", 1)->where("trays.id", $id)
+            ->select("form_answers.id", "form_answers.structure_answer", "form_answers.form_id",
+                "form_answers.channel_id", "form_answers.rrhh_id", "form_answers.client_new_id")
+            ->paginate($request->query('n', 5))->withQueryString();
+
         foreach($formsAnswers as $form)
         {
             $tableValues = [];
@@ -154,9 +161,12 @@ class TrayController extends Controller
                     }
             }
                 $form->table_values = $tableValues;
+                $structureAnswer = $form->structure_answer ? json_decode($form->structure_answer, true) : [];
+                $formAnswerTrayController = new FormAnswerTrayController();
+                $formAnswersTray = $formAnswerTrayController->getFormAnswersTray($form->id, $tray->id, $tray->form_id);
+                $form->structure_answer = isset($formAnswersTray) ? array_merge($structureAnswer, $formAnswersTray) : $structureAnswer;
         }
         return $formsAnswers;
-
     }
 
     public function changeState($id){

@@ -25,6 +25,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Carbon\Carbon;
+use PhpOffice\PhpSpreadsheet\Calculation\Statistical\Distributions\F;
+use App\Models\FormAnswersTray;
 
 class FormAnswerController extends Controller
 {
@@ -78,7 +80,7 @@ class FormAnswerController extends Controller
                 $register['label'] = $field['label'];
                 $register['isClientInfo'] = isset($field['isClientInfo']) ? $field['isClientInfo'] : false;
                 $register['client_unique'] = false;
-                if($field['controlType'] == 'file'){
+                if($field['controlType'] == 'file' && $field['value'] !=''){
                     $attachment = new Attachment();
                     $attachment->name = $request->file($field['id'])->getClientOriginalName();
                     $attachment->source = $request->file($field['id'])->store($date_string);
@@ -281,7 +283,7 @@ class FormAnswerController extends Controller
         {
             $files = [];
             $formAnswer['userdata'] = $this->ciuService->fetchUserByRrhhId($formAnswer['rrhh_id']);
-            $structureAnswer = json_decode($formAnswer['structure_answer']);
+            $structureAnswer = $formAnswer['structure_answer'] ? json_decode($formAnswer['structure_answer']) : json_decode($formAnswer['data']);
             foreach ($structureAnswer as $answer) {
                 if(!isset($answer->duplicated))
                 {
@@ -403,9 +405,30 @@ class FormAnswerController extends Controller
     public function updateInfo(Request $request, $id){
         $obj = array();
         $i=0;
-        $date_string = Carbon::now()->format('YmdHis');
+        $trayFilds = [];
         foreach ($request->sections as $section) {
             foreach ($section['fields'] as $field) {
+                if(isset($field["tray"]))
+                {
+                    if(isset($request->trayId))
+                    {
+                        foreach ($field["tray"] as $tray)
+                        {
+                            if($tray['id'] == $request->trayId)
+                            {
+                                array_push($trayFilds, (Object)[
+                                    "id"=>$field['id'],
+                                    "key"=>$field['key'],
+                                    "value"=>$field['value'],
+                                    "preloaded"=>$field['preloaded'],
+                                    "label"=>$field['label']
+                                ]);
+                                continue;
+                            }
+                        }
+                    }
+                    continue;
+                }
                 $register=[];
                 if ($i == 0) {
                     $clientData[$field['key']] = $field['value'];
@@ -415,7 +438,6 @@ class FormAnswerController extends Controller
                 $register['value'] = $field['value'];
                 $register['preloaded'] = $field['preloaded'];
                 $register['label'] = $field['label'];//Campo necesario para procesos de sincronizacion con DataCRM
-
                 //manejo de adjuntos
                 /*if($field['controlType'] == 'file'){
                     $attachment = new Attachment();
@@ -441,6 +463,16 @@ class FormAnswerController extends Controller
 
         $form_answer->structure_answer = json_encode($obj);
         $form_answer->update();
+        if(isset($request->trayId))
+        {
+            FormAnswersTray::where("tray_id", $request->trayId)->where("form_answer_id", $form_answer->id)->where('lastAnswersTrays', 1)->update(['lastAnswersTrays' => 0]);
+            $formAnswersTrays = new FormAnswersTray([
+                "form_answer_id" => $form_answer->id,
+                "tray_id" => $request->trayId,
+                "structure_answer_tray" => json_encode($trayFilds)
+            ]);
+            $formAnswersTrays->save();
+        }
 
         // Manejar bandejas
         $this->matchTrayFields($form_answer->form_id, $form_answer);
@@ -476,17 +508,9 @@ class FormAnswerController extends Controller
                             {
                                 return 0;
                             }
-                            foreach($field->value as $fieldValue){
+                            foreach($field->options as $fieldValue){
                                 if($value->value == $fieldValue->id){
                                     $validate = true;
-                                    // return 1;
-                                // }else{
-                                //     if($validate == true){
-                                //         $validate = true;
-                                //     }else{
-                                //         $validate = false;
-                                //     }
-                                //     // return 0;
                                 }
                             }
                             if($validate == true){
