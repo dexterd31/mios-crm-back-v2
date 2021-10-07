@@ -166,7 +166,7 @@ class ClientNewController extends Controller
         }
 
         $uniqueIdentificator=json_decode($clientNewData->unique_indentificator);
-        if(gettype($uniqueIdentificator->value)!=="string"){
+        if(gettype($uniqueIdentificator->value) !== "string"){
             $uniqueIdentificator->value=strval($uniqueIdentificator->value);
         }
 
@@ -237,4 +237,36 @@ class ClientNewController extends Controller
     {
         //
     }
+
+    /**
+     * @desc Funcion para extraer la data de un cliente de las formAnswers almacenadas y puede crear o actualizar el cliente ya existente
+     * @param form_id Integer Required: Id del formulario
+     * @param form_answer Objeto Required: Form answer
+     * @return \Illuminate\Http\Response Objeto con los datos almacenados del cliente
+     */
+    public function getClientInfoFromFormAnswers($form_id,$form_answers){
+        $formController = new FormController();
+        $clientNewFields = $formController->getDataClientInForm($form_id);
+        foreach($clientNewFields['clientData'] as $clientNewInformation){
+            foreach($form_answers as $formAnswer){
+                \Log::info($clientNewInformation->id);
+                \Log::info($formAnswer["id"]);
+                if($clientNewInformation->id == $formAnswer["id"]){
+                    $clientNewInformation->value=$formAnswer["value"];
+                }
+                if($clientNewFields['fields_client_unique_identificator']->id == $formAnswer["id"]){
+                    $clientNewFields['fields_client_unique_identificator']->value = $formAnswer["value"];
+                }
+            }
+        }
+
+        $clientNew = new Request();
+        $clientNew->replace([
+            "form_id" => $form_id,
+            "information_data" => json_encode($clientNewFields['clientData']),
+            "unique_indentificator" => json_encode($clientNewFields['fields_client_unique_identificator'])
+        ]);
+        return $this->create($clientNew);
+    }
+
 }
