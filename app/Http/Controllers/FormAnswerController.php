@@ -403,13 +403,12 @@ class FormAnswerController extends Controller
     }
 
     public function updateInfo(Request $request, $id){
+        $date_string = Carbon::now()->toDateTimeString();
         $obj = array();
-        $i=0;
         $trayFilds = [];
         foreach ($request->sections as $section) {
             foreach ($section['fields'] as $field) {
-                if(isset($field["tray"]))
-                {
+                if(isset($field["tray"])) {
                     if(isset($request->trayId))
                     {
                         foreach ($field["tray"] as $tray)
@@ -427,26 +426,25 @@ class FormAnswerController extends Controller
                             }
                         }
                     }
-                    continue;
                 }
                 $register=[];
-                if ($i == 0) {
-                    $clientData[$field['key']] = $field['value'];
-                }
                 $register['id'] = $field['id'];
                 $register['key'] = $field['key'];
                 $register['value'] = $field['value'];
                 $register['preloaded'] = $field['preloaded'];
                 $register['label'] = $field['label'];//Campo necesario para procesos de sincronizacion con DataCRM
                 //manejo de adjuntos
-                /*if($field['controlType'] == 'file'){
+                if($field['controlType'] == 'file'){
+
+                    if ($request->file($field['id']) !== null) {
                     $attachment = new Attachment();
                     $attachment->name = $request->file($field['id'])->getClientOriginalName();
                     $attachment->source = $request->file($field['id'])->store($date_string);
                     $attachment->save();
                     $register['value'] = $attachment->id;
                     $register['nameFile']=$attachment->name; //Agregamos el nombre del archivo para que en el momento de ver las respuestas en el formulario se visualice el nombre.
-                }*/
+                    }
+                }
 
                 if(isset($field['duplicated'])){
                     $register['duplicated']=$field['duplicated'];
@@ -456,13 +454,14 @@ class FormAnswerController extends Controller
                     array_push($obj, $register);
                 }
             }
-            $i++;
         }
-
         $form_answer = FormAnswer::where('id', $id)->first();
-
         $form_answer->structure_answer = json_encode($obj);
         $form_answer->update();
+
+        $clientNewController = new ClientNewController();
+        $clientNew = $clientNewController->getClientInfoFromFormAnswers($request->form_id , $obj);
+
         if(isset($request->trayId))
         {
             FormAnswersTray::where("tray_id", $request->trayId)->where("form_answer_id", $form_answer->id)->where('lastAnswersTrays', 1)->update(['lastAnswersTrays' => 0]);
@@ -580,6 +579,7 @@ class FormAnswerController extends Controller
                 }
             }
             if((count(json_decode($tray->fields_exit)) >0 ) && ($exit_fields_matched == count(json_decode($tray->fields_exit)))){
+                //$tray->FormAnswers()->detach($formAnswer->id);
                 $tray->FormAnswers()->detach($formAnswer->id);
             }
         }

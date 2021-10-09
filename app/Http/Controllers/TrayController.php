@@ -66,7 +66,7 @@ class TrayController extends Controller
     public function show(Request $request, $id)
     {
 
-        $trays = Tray::where('form_id', $id)->leftJoin('form_answers_trays', 'trays.id', '=', 'form_answers_trays.tray_id');
+        $trays = Tray::where('form_id', $id)->where('lastAnswersTrays',1)->leftJoin('form_answers_trays', 'trays.id', '=', 'form_answers_trays.tray_id');
         if($request->query('showall', 0) == 0)
         {
             $trays = $trays->where('state', 1)->having(DB::raw('count(tray_id)'), '>', 0);
