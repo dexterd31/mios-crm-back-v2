@@ -435,12 +435,15 @@ class FormAnswerController extends Controller
                 $register['label'] = $field['label'];//Campo necesario para procesos de sincronizacion con DataCRM
                 //manejo de adjuntos
                 if($field['controlType'] == 'file'){
+
+                    if ($request->file($field['id']) !== null) {
                     $attachment = new Attachment();
                     $attachment->name = $request->file($field['id'])->getClientOriginalName();
                     $attachment->source = $request->file($field['id'])->store($date_string);
                     $attachment->save();
                     $register['value'] = $attachment->id;
                     $register['nameFile']=$attachment->name; //Agregamos el nombre del archivo para que en el momento de ver las respuestas en el formulario se visualice el nombre.
+                    }
                 }
 
                 if(isset($field['duplicated'])){
