@@ -66,7 +66,7 @@ class TrayController extends Controller
     public function show(Request $request, $id)
     {
 
-        $trays = Tray::where('form_id', $id)->leftJoin('form_answers_trays', 'trays.id', '=', 'form_answers_trays.tray_id');
+        $trays = Tray::where('form_id', $id)->where('lastAnswersTrays',1)->leftJoin('form_answers_trays', 'trays.id', '=', 'form_answers_trays.tray_id');
         if($request->query('showall', 0) == 0)
         {
             $trays = $trays->where('state', 1)->having(DB::raw('count(tray_id)'), '>', 0);
@@ -74,16 +74,22 @@ class TrayController extends Controller
 
         $trays = $trays->selectRaw('trays.*, count(tray_id) as count')
             ->groupBy('trays.id')->get();
+
         if(count($trays)==0) {
             return $this->successResponse([]);
         }
+
 
         // validar si el usuario actual puede visualizar trays dependiendo de su rol.
         $trays = $trays->filter(function($x){
             return count(array_intersect(auth()->user()->roles, json_decode($x->rols)));
         });
+        $ArrayTrays=[];
+        foreach($trays as $tray){
+            array_push($ArrayTrays,$tray);
+        }
 
-        return $this->successResponse($trays);
+        return $this->successResponse($ArrayTrays);
     }
 
     /**
@@ -136,6 +142,7 @@ class TrayController extends Controller
 
         foreach($formsAnswers as $form)
         {
+            \Log::info("ID de la respuesta: ".$form->id);
             $tableValues = [];
             foreach($fieldsTable as $field)
             {
@@ -232,6 +239,7 @@ class TrayController extends Controller
 
     private function findSelect($form_id, $field_id, $value)
     {
+
         $fields = json_decode(Section::select('fields')->where('form_id', $form_id)
         ->whereJsonContains('fields', ['id' => $field_id])
         ->first()->fields);
