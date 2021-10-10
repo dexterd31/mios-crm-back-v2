@@ -237,13 +237,17 @@ class TrayController extends Controller
 
     }
 
-    private function findSelect($form_id, $field_id, $value)
-    {
-
-        $fields = json_decode(Section::select('fields')->where('form_id', $form_id)
+    private function findSelect($form_id, $field_id, $value){
+        $sections = Section::where('form_id', $form_id)
         ->whereJsonContains('fields', ['id' => $field_id])
-        ->first()->fields);
-        $field = collect($fields)->filter(function($x) use ($field_id){
+        ->first();
+        if(!$sections)
+        {
+            return null;
+        }
+        $fields = $sections->fields;
+
+        $field = collect(json_decode($fields))->filter(function($x) use ($field_id){
             return $x->id == $field_id;
         })->first();
 
