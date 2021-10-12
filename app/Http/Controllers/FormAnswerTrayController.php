@@ -21,7 +21,7 @@ class FormAnswerTrayController extends Controller
 
     public function getFormAnswersTray($idFormAnswer, $idTray, $formId)
     {
-        $formAnswersTray = FormAnswersTray::where("tray_id", $idTray)->where("form_answer_id", $idFormAnswer)->where("lastAnswersTrays", 1)->first();
+        $formAnswersTray = FormAnswersTray::where("tray_id", $idTray)->where("form_answer_id", $idFormAnswer)->first();
         $structureAnswerTray = json_decode($formAnswersTray->structure_answer_tray);
         $answerTray = [];
         if(!isset($structureAnswerTray))
@@ -45,7 +45,7 @@ class FormAnswerTrayController extends Controller
                                 array_push($answerTray, $answer);
                             }
                         }
-        
+
                     }
                 }
             }
