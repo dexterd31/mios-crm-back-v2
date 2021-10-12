@@ -65,20 +65,33 @@ class TrayController extends Controller
      */
     public function show(Request $request, $id)
     {
+        if($request->query('showall', 0) == 0){
+            $trays = Tray::where('form_id', $id)->where('state', 1)->get();
+        }else{
+            $trays = Tray::where('form_id', $id)->get();
+        }
+        foreach($trays as $tray){
+            if($tray->advisor_manage==1){
+                $formAnswersTrays= FormAnswersTray::selectRaw('count(form_answers_trays.id) as NumAnswers')->where('form_answers_trays.tray_id',$tray->id)->join('rel_trays_users','form_answers_trays.id','=','rel_trays_users.form_answers_trays_id')->where('rel_trays_users.rrhh_id',auth()->user()->rrhh_id)->get();
+            }else{
+                $formAnswersTrays= FormAnswersTray::selectRaw('count(form_answers_trays.id) as NumAnswers')->where('form_answers_trays.tray_id',$tray->id)->get();
+            }
 
-        $trays = Tray::where('form_id', $id)->where('lastAnswersTrays',1)->leftJoin('form_answers_trays', 'trays.id', '=', 'form_answers_trays.tray_id');
+            $tray->count=json_decode($formAnswersTrays[0])->NumAnswers;
+        }
+        \Log::info(json_encode($trays));
+
+        //$trays = Tray::where('form_id', $id)->get();
+        /*->leftJoin('form_answers_trays', 'trays.id', '=', 'form_answers_trays.tray_id');
         if($request->query('showall', 0) == 0)
         {
             $trays = $trays->where('state', 1)->having(DB::raw('count(tray_id)'), '>', 0);
         }
-
         $trays = $trays->selectRaw('trays.*, count(tray_id) as count')
-            ->groupBy('trays.id')->get();
-
+            ->groupBy('trays.id', 'trays.name', "trays.form_id", "trays.fields", "trays.rols", "trays.state", "trays.created_at", "trays.updated_at", "trays.fields_exit", "trays.fields_table", "trays.advisor_manage", "trays.save_historic")->get();*/
         if(count($trays)==0) {
             return $this->successResponse([]);
         }
-
 
         // validar si el usuario actual puede visualizar trays dependiendo de su rol.
         $trays = $trays->filter(function($x){
@@ -133,16 +146,24 @@ class TrayController extends Controller
     public function formAnswersByTray(Request $request, $id) {
         $tray = Tray::where('id',$id)->firstOrFail();
         $fieldsTable = json_decode($tray->fields_table);
-
-        $formsAnswers = FormAnswer::join('form_answers_trays', "form_answers.id", 'form_answers_trays.form_answer_id')
-            ->join('trays', "trays.id", 'form_answers_trays.tray_id')->where("lastAnswersTrays", 1)->where("trays.id", $id)
+        if($tray->advisor_manage==1){
+            $formsAnswers = FormAnswer::join('form_answers_trays', "form_answers.id", 'form_answers_trays.form_answer_id')
+            ->join('trays', "trays.id", 'form_answers_trays.tray_id')
+            ->join('rel_trays_users','form_answers_trays.id','rel_trays_users.form_answers_trays_id')
+            ->where("trays.id", $id)
             ->select("form_answers.id", "form_answers.structure_answer", "form_answers.form_id",
                 "form_answers.channel_id", "form_answers.rrhh_id", "form_answers.client_new_id")
             ->paginate($request->query('n', 5))->withQueryString();
+        }else{
+            $formsAnswers = FormAnswer::join('form_answers_trays', "form_answers.id", 'form_answers_trays.form_answer_id')
+            ->join('trays', "trays.id", 'form_answers_trays.tray_id')->where("trays.id", $id)
+            ->select("form_answers.id", "form_answers.structure_answer", "form_answers.form_id",
+                "form_answers.channel_id", "form_answers.rrhh_id", "form_answers.client_new_id")
+            ->paginate($request->query('n', 5))->withQueryString();
+        }
 
         foreach($formsAnswers as $form)
         {
-            \Log::info("ID de la respuesta: ".$form->id);
             $tableValues = [];
             foreach($fieldsTable as $field)
             {

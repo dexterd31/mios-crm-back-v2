@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateRelTraysUsersTable extends Migration
+class CreatedTableFormAnswersTraysHistoric extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,10 @@ class CreateRelTraysUsersTable extends Migration
      */
     public function up()
     {
-        Schema::create('rel_trays_users', function (Blueprint $table) {
+        Schema::create('form_answer_trays_historic', function (Blueprint $table) {
             $table->id();
             $table->foreignId('form_answers_trays_id')->constrained('form_answers_trays');
-            $table->unsignedBigInteger('rrhh_id');
+            $table->json('structure_answer');
             $table->timestamps();
         });
     }
@@ -28,6 +28,6 @@ class CreateRelTraysUsersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('rel_trays_users');
+        Schema::dropIfExists('form_answer_trays_historic');
     }
 }
