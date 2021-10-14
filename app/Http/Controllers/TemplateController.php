@@ -225,7 +225,18 @@ class TemplateController extends Controller
         {
             foreach($section->fields as $field)
             {
-                $templateHtml = str_replace("{{".$field->id."}}", $field->value, $templateHtml);
+                if($field->type == "options"){
+
+                    foreach($field->options as $option){
+                        $idOption = isset($option->id)?$option->id:$option->Id;
+                        if($field->value == $idOption){
+                            $templateHtml = str_replace("{{".$field->id."}}", $option->name, $templateHtml);
+                        }
+                    }
+
+                } else {
+                    $templateHtml = str_replace("{{".$field->id."}}", $field->value, $templateHtml);
+                }
             }
         }
         $templateHtml = preg_replace('/\{{(.*?)\}}/', '', $templateHtml);
