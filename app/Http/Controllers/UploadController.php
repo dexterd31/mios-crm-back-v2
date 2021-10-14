@@ -243,14 +243,14 @@ class UploadController extends Controller
         }else{*/
             $field->value=$data;
             $answer->in=[];
-            if(isset($field->isClientInfo)){
+            if(isset($field->isClientInfo) && $field->isClientInfo){
                 $answer->informationClient=(object)[
                     "id" => $field->id,
                     "value" => $field->value
                 ];
                 array_push($answer->in,'informationClient');
             }
-            if(isset($field->client_unique)){
+            if(isset($field->client_unique) && $field->client_unique){
                 $answer->uniqueIdentificator = (Object)[
                     "id" => $field->id,
                     "key" => $field->key,
@@ -262,7 +262,7 @@ class UploadController extends Controller
                 ];
                 array_push($answer->in,'uniqueIdentificator');
             }
-            if(isset($field->preloaded)){
+            if(isset($field->preloaded) && $field->preloaded){
                 $answer->preload=[
                     "id" => $field->id,
                     "key" => $field->key,
