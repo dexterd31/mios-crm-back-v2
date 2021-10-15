@@ -41,7 +41,7 @@ class KeyValueController extends Controller
                 $keyValue['field_id'] = $keyValueData["id"];
                 $keyValue['key'] = $keyValueData["key"];
                 $keyValue['value'] = $keyValueData["value"];
-                $keyValue['description'] = null;
+                $keyValue['description'] = 'crm';
                 $keyValue['created_at'] = Carbon::now()->format('Y-m-d H:i:s');
                 $keyValue['updated_at'] = Carbon::now()->format('Y-m-d H:i:s');
                 array_push($keysValue, $keyValue);
