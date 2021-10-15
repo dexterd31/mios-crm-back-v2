@@ -206,7 +206,7 @@ class TemplateController extends Controller
      * @param Request id del la plantilla en  $request->templateId.
      * @param Request La tipificacion del formulario en $request->sections.
      * @return String Retorna una string que es el codigo html de la plantilla
-     * @author Joao Alfonso Beleño
+     * @author Daniel Martinez Vargas
      * @exemple 
      * @createdate 28/09/2021
      */
@@ -214,6 +214,8 @@ class TemplateController extends Controller
     {
         $template = Template::find($request->templateId);
         $templateHtml = $template->template_html;
+        $user_name = $this->authUser()->rrhh->name;
+
         if(!$template || !$template->template_html)
         {
             //mensaje de error
@@ -239,6 +241,8 @@ class TemplateController extends Controller
                 }
             }
         }
+        
+        $templateHtml = preg_replace("{{ASESORMIOS}}", $user_name, $templateHtml);
         $templateHtml = preg_replace('/\{{(.*?)\}}/', '', $templateHtml);
         return json_encode($templateHtml);
     }
