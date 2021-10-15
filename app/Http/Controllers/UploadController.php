@@ -76,6 +76,7 @@ class UploadController extends Controller
             if(isset($file)){
                 $form_import_validate = Excel::toArray(new UploadImport, $file);
                 if(count($form_import_validate[0])>1 && count($form_import_validate[0][0])>0 && $form_import_validate[0][0]<>NULL){
+                if(count($form_import_validate[0])>0 && count($form_import_validate[0][0])>0 && $form_import_validate[0][0]<>NULL){
                     $FormController = new FormController();
                     $prechargables = $FormController->searchPrechargeFields($request->form_id)->getData();
                     \Log::info(json_encode($prechargables));
@@ -125,7 +126,7 @@ class UploadController extends Controller
         $userRrhhId=auth()->user()->rrhh_id;
         $file = $request->file('excel');
         $fileData = json_decode(Excel::toCollection(new ClientNewImport(), $file)[0]);
-        if(count($fileData)>1){
+        if(count($fileData)>0){
             $formController = new FormController();
             $fieldsLoad=$formController->getSpecificFieldForSection(json_decode($request->assigns),$request->form_id);
             foreach(json_decode($request->assigns) as $assign){

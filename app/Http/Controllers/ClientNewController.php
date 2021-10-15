@@ -78,20 +78,18 @@ class ClientNewController extends Controller
             'client_new_id' => 'required|integer'
         ]);
 
-        if($validator->fails() && $validatorId->fails())
-        {
+        if($validator->fails() && $validatorId->fails()){
             $error["error"] = array_merge($validator->errors()->all(), $validatorId->errors()->all());
             return $error["error"];
         }
 
         $clientNewQuery = $this->getClientNewModel();
         $clientNewQuery = $clientNewQuery->where("form_id", $request->form_id);
-        if($request->client_new_id)
-        {
+        if($request->client_new_id){
             return $this->clientNewModel->find($request->client_new_id);
         }
 
-        $informations_data = $request->information_data     ;
+        $informations_data = $request->information_data;
         if($informations_data)
         {
             foreach($informations_data as $informationData)
@@ -221,7 +219,20 @@ class ClientNewController extends Controller
      */
     private function update(Request $request, ClientNew $clientNew)
     {
-        $clientNew->information_data = $request->information_data;
+        $informationDataClient=[];
+        $informationData = json_decode($request->information_data);
+        foreach($informationData as $data){
+            if(gettype($data->value)!=="string"){
+                $data->value=strval($data->value);
+            }
+            array_push($informationDataClient, (Object)
+            [
+                "id"=> $data->id,
+                "value"=> $data->value,
+            ]);
+        }
+
+        $clientNew->information_data = $informationDataClient;
         $clientNew->save();
         return $clientNew;
     }
@@ -249,8 +260,6 @@ class ClientNewController extends Controller
         $clientNewFields = $formController->getDataClientInForm($form_id);
         foreach($clientNewFields['clientData'] as $clientNewInformation){
             foreach($form_answers as $formAnswer){
-                \Log::info($clientNewInformation->id);
-                \Log::info($formAnswer["id"]);
                 if($clientNewInformation->id == $formAnswer["id"]){
                     $clientNewInformation->value=$formAnswer["value"];
                 }

@@ -17,6 +17,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use stdClass;
 use App\Models\Directory;
+use App\Http\Controllers\AttachmentController;
 
 class FormController extends Controller
 {
@@ -452,7 +453,7 @@ class FormController extends Controller
             }else{
                 $fields = $fields->filter(function($x){
                             return $x->preloaded == true;
-                        });
+                          });
             }
             $formsSections->section[$i]['fields'] = array_values($fields->toArray());
         }
@@ -477,6 +478,10 @@ class FormController extends Controller
                 return $field_name;
             }elseif($field->controlType == 'datepicker'){
                 return Carbon::parse($value)->setTimezone('America/Bogota')->format('Y-m-d');
+            }elseif($field->controlType == 'file'){
+                $attachmentController = new AttachmentController();
+                $attachment = $attachmentController->show($value);
+                return url().'/api/attachment/downloadFile/'.$attachment->id;
             }else {
                 return null;
             }
