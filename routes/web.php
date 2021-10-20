@@ -178,6 +178,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->post('documentType/create','DocumentTypeController@create');
       $router->put('documentType/update/{id}','DocumentTypeController@update');
 
+      $router->get('attachment/downloadFile/{id}', 'AttachmentController@downloadFile');
 
 });
 

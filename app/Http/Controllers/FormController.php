@@ -17,6 +17,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use stdClass;
 use App\Models\Directory;
+use App\Http\Controllers\AttachmentController;
 
 class FormController extends Controller
 {
@@ -226,7 +227,6 @@ class FormController extends Controller
                             'duplicate' => empty($section['duplicar'])? 0 : $section['duplicar']
                         ]);
                         $sections->save();
-
                     }else{
                         $sections->name_section = $section['sectionName'];
                         $sections->type_section = $section['type_section'];
@@ -282,7 +282,6 @@ class FormController extends Controller
      * Se cambia la funcion reportes evalua primero los campos que se deben reportar y despues compara con las respuestas
      */
     public function report(Request $request, MiosHelper $miosHelper){
-        date_default_timezone_set('America/Bogota');
         $date1=Carbon::parse($request->date1)->setTimezone('America/Bogota');
         $date2=Carbon::parse($request->date2)->setTimezone('America/Bogota');
         $rrhhService = new RrhhService();
@@ -454,7 +453,7 @@ class FormController extends Controller
             }else{
                 $fields = $fields->filter(function($x){
                             return $x->preloaded == true;
-                        });
+                          });
             }
             $formsSections->section[$i]['fields'] = array_values($fields->toArray());
         }
@@ -479,6 +478,10 @@ class FormController extends Controller
                 return $field_name;
             }elseif($field->controlType == 'datepicker'){
                 return Carbon::parse($value)->setTimezone('America/Bogota')->format('Y-m-d');
+            }elseif($field->controlType == 'file'){
+                $attachmentController = new AttachmentController();
+                $attachment = $attachmentController->show($value);
+                return url().'/api/attachment/downloadFile/'.$attachment->id;
             }else {
                 return null;
             }

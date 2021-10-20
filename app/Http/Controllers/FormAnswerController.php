@@ -27,6 +27,8 @@ use Illuminate\Support\Facades\Gate;
 use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\Calculation\Statistical\Distributions\F;
 use App\Models\FormAnswersTray;
+use App\Models\RelTrayUser;
+use App\Models\FormAnswersTrayHistoric;
 
 class FormAnswerController extends Controller
 {
@@ -458,19 +460,20 @@ class FormAnswerController extends Controller
         $form_answer = FormAnswer::where('id', $id)->first();
         $form_answer->structure_answer = json_encode($obj);
         $form_answer->update();
-
         $clientNewController = new ClientNewController();
         $clientNew = $clientNewController->getClientInfoFromFormAnswers($request->form_id , $obj);
-
         if(isset($request->trayId))
         {
-            FormAnswersTray::where("tray_id", $request->trayId)->where("form_answer_id", $form_answer->id)->where('lastAnswersTrays', 1)->update(['lastAnswersTrays' => 0]);
-            $formAnswersTrays = new FormAnswersTray([
-                "form_answer_id" => $form_answer->id,
-                "tray_id" => $request->trayId,
-                "structure_answer_tray" => json_encode($trayFilds)
-            ]);
-            $formAnswersTrays->save();
+            $fromAnswersTrays = FormAnswersTray::where("tray_id", $request->trayId)->where("form_answer_id", $form_answer->id)->first();
+
+            if(count($fromAnswersTrays)==1){
+                $formAmswersTraysHistoric = new FormAnswersTrayHistoric([
+                    "form_answer_id" => $fromAnswersTrays->id,
+                    "tray_id" => $request->trayId,
+                    "structure_answer" => json_encode($trayFilds)
+                ]);
+                $formAmswersTraysHistoric->save();
+            }
         }
 
         // Manejar bandejas
@@ -537,7 +540,18 @@ class FormAnswerController extends Controller
 
             if((count(json_decode($tray->fields))> 0) && ($in_fields_matched == count(json_decode($tray->fields)))){
                 if(!$tray->FormAnswers->contains($formAnswer->id)){
-                    $tray->FormAnswers()->attach($formAnswer->id);
+                    $formAnswerTrays = new FormAnswersTray([
+                        'form_answer_id' => $formAnswer->id,
+                        'tray_id' =>  $tray->id
+                    ]);
+                    $formAnswerTrays->save();
+
+                    $relUsersTraysModel = new RelTrayUser([
+                        'form_answers_trays_id' => $formAnswerTrays->id,
+                        'rrhh_id' => auth()->user()->rrhh_id
+                    ]);
+                    $relUsersTraysModel->save();
+                    \Log::info($relUsersTraysModel);
                 }
             }
 
@@ -579,7 +593,6 @@ class FormAnswerController extends Controller
                 }
             }
             if((count(json_decode($tray->fields_exit)) >0 ) && ($exit_fields_matched == count(json_decode($tray->fields_exit)))){
-                //$tray->FormAnswers()->detach($formAnswer->id);
                 $tray->FormAnswers()->detach($formAnswer->id);
             }
         }
