@@ -31,6 +31,7 @@ use App\Models\FormAnswersTray;
 use App\Models\RelTrayUser;
 use App\Models\FormAnswersTrayHistoric;
 
+
 class FormAnswerController extends Controller
 {
     private $ciuService;
@@ -64,6 +65,7 @@ class FormAnswerController extends Controller
 
     public function saveinfo(Request $request)
     {
+        \Log::info("Inicio FormAnswerController saveInfo");
         $sections = json_decode($request['sections'], true);
         $clientNewInfo = [];
         $dataPreloaded = [];
@@ -79,6 +81,7 @@ class FormAnswerController extends Controller
                 $register['id'] = $field['id'];
                 $register['key'] = $field['key'];
                 $register['value'] = $field['value'];
+                $register['section_id'] = $section['id'];
                 $register['preloaded'] = $field['preloaded'];
                 $register['label'] = $field['label'];
                 $register['isClientInfo'] = isset($field['isClientInfo']) ? $field['isClientInfo'] : false;
@@ -165,7 +168,7 @@ class FormAnswerController extends Controller
 
             \Log::info("Inicio: updateDataCrm tablas key_values, api_connections");
             $this->updateDataCrm($clientNew->id, $form_answer);
-            \Log::info("Inicio: updateDataCrm");
+            \Log::info("Salida: updateDataCrm");
             return $this->successResponse(['message'=>"Información guardada correctamente",'formAsnwerId'=>$form_answer->id]);
         }
         return $this->errorResponse($data["message"], 500);
@@ -206,7 +209,7 @@ class FormAnswerController extends Controller
 
     public function filterForm(Request $request)
     {
-        \Log::info("Inicio getDataFilters : ".Route::getCurrentRoute()->getActionName());
+        \Log::info("Inicio FomrAnswerController filterForm");
         $miosHelper = new MiosHelper();
         $filterHelper = new FilterHelper();
         $requestJson = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
@@ -432,9 +435,13 @@ class FormAnswerController extends Controller
     }
 
     public function updateInfo(Request $request, $id){
+        \Log::info("Inicio FomrAnswerController updateInfo");
         $date_string = Carbon::now()->toDateTimeString();
         $obj = array();
+        $formAnswerData = [];
+        $formAnswerIndexData = [];
         $trayFilds = [];
+        $data = [];
         foreach ($request->sections as $section) {
             foreach ($section['fields'] as $field) {
                 if(isset($field["tray"])) {
@@ -460,11 +467,13 @@ class FormAnswerController extends Controller
                 $register['id'] = $field['id'];
                 $register['key'] = $field['key'];
                 $register['value'] = $field['value'];
+                $register['section_id'] = $section['id'];
                 $register['preloaded'] = $field['preloaded'];
-                $register['label'] = $field['label'];//Campo necesario para procesos de sincronizacion con DataCRM
+                $register['label'] = $field['label'];
+                $register['isClientInfo'] = isset($field['isClientInfo']) ? $field['isClientInfo'] : false;
+                $register['client_unique'] = false;//Campo necesario para procesos de sincronizacion con DataCRM
                 //manejo de adjuntos
                 if($field['controlType'] == 'file'){
-
                     if ($request->file($field['id']) !== null) {
                     $attachment = new Attachment();
                     \Log::info("Inicio Attatchment: Consulta tabla attatchments");
@@ -481,34 +490,40 @@ class FormAnswerController extends Controller
                     $register['duplicated']=$field['duplicated'];
                 }
 
-                if(!empty($register['value'])){
-                    array_push($obj, $register);
+                if(!empty($register['value']))
+                {
+                    array_push($formAnswerData, $register);
+                    array_push($formAnswerIndexData, [
+                        "id" =>$register["id"],
+                        "value" =>$register["value"],
+                    ]);
                 }
             }
         }
         \Log::info("Inicio FormAnswer: Consulta tabla form_answers");
         $form_answer = FormAnswer::where('id', $id)->first();
-        $form_answer->structure_answer = json_encode($obj);
+        $form_answer->structure_answer = json_encode($formAnswerData);
+        $form_answer->form_answer_index_data = json_encode($formAnswerIndexData);
         $form_answer->update();
         \Log::info("Salida FormAnswer");
         $clientNewController = new ClientNewController();
         $clientNew = $clientNewController->getClientInfoFromFormAnswers($request->form_id , $obj);
-        if(isset($request->trayId))
+        /*if(isset($request->trayId))
         {
             \Log::info("Inicio FormAnswersTray: Consulta tabla form_answers_trays");
-            $fromAnswersTrays = FormAnswersTray::where("tray_id", $request->trayId)->where("form_answer_id", $form_answer->id)->first();
+            $fromAnswersTrays = FormAnswersTray::where("tray_id", $request->trayId)->where("form_answer_id", $form_answer->id)->get();
             \Log::info("Salida FormAnswersTray");
-            if(count($fromAnswersTrays)==1){
+            if(count($fromAnswersTrays)>0){
                 \Log::info("Inicio FormAnswersTrayHistoric: Consulta tabla form_answer_trays_historic");
                 $formAmswersTraysHistoric = new FormAnswersTrayHistoric([
-                    "form_answer_id" => $fromAnswersTrays->id,
+                    "form_answers_trays_id" => $form_answer->id,
                     "tray_id" => $request->trayId,
                     "structure_answer" => json_encode($trayFilds)
                 ]);
                 $formAmswersTraysHistoric->save();
                 \Log::info("Salida FormAnswersTrayHistoric");
             }
-        }
+        }*/
 
         // Manejar bandejas
         \Log::info("Inicio matchTrayFields: Consulta tabla trays");
@@ -585,11 +600,10 @@ class FormAnswerController extends Controller
                     $formAnswerTrays->save();
 
                     $relUsersTraysModel = new RelTrayUser([
-                        'form_answers_trays_id' => $formAnswerTrays->id,
+                        'trays_id' => $tray->id,
                         'rrhh_id' => auth()->user()->rrhh_id
                     ]);
                     $relUsersTraysModel->save();
-                    \Log::info($relUsersTraysModel);
                 }
             }
 
