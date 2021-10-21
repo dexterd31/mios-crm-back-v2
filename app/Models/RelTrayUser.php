@@ -11,12 +11,8 @@ class RelTrayUser extends Model
     protected $table = 'rel_trays_users';
     protected $PrimaryKey = 'id';
     protected $fillable = [
-        "form_answers_trays_id",
+        "trays_id",
         "rrhh_id"
     ];
 
-    public function formAnswersTrays()
-    {
-        return $this->belongsTo(FormAnswersTray::class, 'form_answers_trays_id');
-    }
 }
