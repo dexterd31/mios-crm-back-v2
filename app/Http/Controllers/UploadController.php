@@ -17,6 +17,7 @@ use App\Http\Controllers\FormAnswerController;
 use Illuminate\Support\Facades\Validator;
 use PhpParser\Node\Expr\Cast\Object_;
 use stdClass;
+use Throwable;
 
 class UploadController extends Controller
 {
@@ -76,10 +77,8 @@ class UploadController extends Controller
             if(isset($file)){
                 $form_import_validate = Excel::toArray(new UploadImport, $file);
                 if(count($form_import_validate[0])>1 && count($form_import_validate[0][0])>0 && $form_import_validate[0][0]<>NULL){
-                if(count($form_import_validate[0])>0 && count($form_import_validate[0][0])>0 && $form_import_validate[0][0]<>NULL){
                     $FormController = new FormController();
                     $prechargables = $FormController->searchPrechargeFields($request->form_id)->getData();
-                    \Log::info(json_encode($prechargables));
                     $answer['columnsFile'] = $form_import_validate[0][0];
                     $answer['prechargables']=[];
                     foreach($prechargables->section as $section){

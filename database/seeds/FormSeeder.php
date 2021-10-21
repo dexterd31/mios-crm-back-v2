@@ -14,7 +14,6 @@ class FormSeeder extends Seeder
         $Form = array(
             [
                 'group_id' => 1,
-                'campaign_id' => 1,
                 'form_type_id' => 1,
                 'name_form' => 'Laika',
                 'state' => 1,
@@ -57,9 +56,8 @@ class FormSeeder extends Seeder
                 )
             ],
             [
-                
+
                 'group_id' => 1,
-                'campaign_id' => 1,
                 'form_type_id' => 1,
                 'name_form' => 'SOAT',
                 'state' => 1,
@@ -101,10 +99,9 @@ class FormSeeder extends Seeder
                     ]
                 )
                     ],
-                    [
-                
+            [
+
                         'group_id' => 1,
-                        'campaign_id' => 1,
                         'form_type_id' => 1,
                         'name_form' => 'Form dependencias',
                         'state' => 1,
@@ -152,7 +149,6 @@ class FormSeeder extends Seeder
         {
             $Form = new Form();
             $Form->group_id = $form['group_id'];
-            $Form->campaign_id = $form['campaign_id'];
             $Form->form_type_id = $form['form_type_id'];
             $Form->name_form = $form['name_form'];
             $Form->filters = json_encode($form['filters']);
