@@ -18,6 +18,9 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use DB;
 use stdClass;
+use App\Http\Controllers\ClientNewController;
+use App\Http\Controllers\KeyValueController;
+use Illuminate\Http\Request;
 
 use function GuzzleHttp\json_decode;
 
@@ -194,17 +197,28 @@ class DataCRMService
             if(count($potential) > 0){
 
                 $ponteialClean = $this->transformValues($potential[0],2);
-                $client = Client::where('phone',$clientClean['phone'])->first();
+                //$client = Client::where('phone',$clientClean['phone'])->first();
+                $clientInformationData='[{"id": 1623365960247,"value": "'.$clientClean['firstName'].'"},{"id": 1623365960249,"value": "'.$clientClean['lastName'].'"},{"id": 1623365960253,"value": "'.$clientClean['phone'].'"},{"id": 1623365960254,"value": "'.$clientClean['email'].'"}]';
+                $clientUniqueIdentificator='{"id":1623365960253,"key":"phone","label":"Teléfono","value":"'.$clientClean['phone'].'","preloaded":true,"isClientInfo":true,"client_unique":true}';
+                $clientNewRequest = new Request();
+                $clientNewRequest->replace([
+                    "form_id" => 13,
+                    "information_data" => $clientInformationData,
+                    "unique_indentificator" => $clientUniqueIdentificator
+                ]);
+                $clienNewController=new ClientNewController();
+                $clientNew = $clienNewController->create($clientNewRequest);
+
                 $keyValue = null;
-                if( $client ){
-                    $keyValue = KeyValue::where('client_id',$client->id)
+                if( $clientNew ){
+                    $keyValue = KeyValue::where('client_new_id',$clientNew->id)
                                         ->where('key','tipo-producto8')
                                         ->where('value',$ponteialClean['tipo-producto8'])
                                         ->first();
                 }
                 if(!$keyValue){
 
-            $keysToDirectory = [];
+                    $keysToDirectory = [];
 
              /**
             *   SOLO PARA PRUEBAS DE DEMOSTRACION, ESTO SE DEBE ELIMINAR UNA VEZ SE TERMINE LA DEMOSTRACION ##########################
@@ -220,7 +234,7 @@ class DataCRMService
              }*/
             // Quitar las lineas 156 a 163 para produccion
 
-            $dataClient = [
+            /*$dataClient = [
                 'first_name'=>$clientClean['firstName'],
                 'middle_name'=>'',
                 'first_lastname'=>$clientClean['lastName'],
@@ -235,7 +249,7 @@ class DataCRMService
 
 
             $create = true;
-            $client = Client::create($dataClient);
+            $client = Client::create($dataClient);*/
 
             //,'potential-id1','fase-de-venta','descripcion','origen-del-negocio'
             $keysToSave = ['firstName','lastName','phone','email','account-id0','tipo-producto8','potential-id1','descripciòn-9','campaña-origen11'];
@@ -250,7 +264,7 @@ class DataCRMService
                 }
                 $keyValueToSave = [
                     'form_id' => $this->formId,
-                    'client_id' => $client->id,
+                    'client_new_id' => $clientNew->id,
                     'key' => $value->key,
                     'value' => $valueDynamic,
                     'description' => null,
@@ -266,9 +280,9 @@ class DataCRMService
             }
                 Directory::create([
                     'data'=>json_encode($keysToDirectory),
-                    'rrhh_id'=>env('USER_ID_CREATOR_DIRECTORIES_CRM_LEAD'), //NOTE: ID DE USUARIO QUEMADO EN EL .ENV POR AHORA
+                    'rrhh_id'=>1, //NOTE: ID DE USUARIO QUEMADO EN EL .ENV POR AHORA
                     'form_id'=>$this->formId,
-                    'client_id'=>$client->id
+                    'client_new_id'=>$clientNew->id
                 ]);
 
 
@@ -278,12 +292,14 @@ class DataCRMService
              *
              */
            NotificationLeads::create(
-               ['client_id'=>$client->id,
-               'phone'=>$clientClean['phone'],
-               'form_id'=>$this->formId,
-                'createdtime'=>$clientClean['createdtime'],
-                'id_datacrm'=>$clientClean['account-id0']
-            ]);
+                [
+                    'client_id'=>0,
+                    'phone'=>$clientClean['phone'],
+                    'form_id'=>$this->formId,
+                    'createdtime'=>$clientClean['createdtime'],
+                    'id_datacrm'=>$clientClean['account-id0'],
+                    'client_new_id'=>$clientNew->id
+                ]);
 
            $newLeadVicidial = array(
                "producto"=>$this->productVicidial, // "leads"
