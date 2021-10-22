@@ -1,0 +1,13 @@
+stages:
+    -  develop
+deploy:
+    only:
+        - develop
+        - merge request
+        
+    stage: develop
+    script:
+        - cd /var/www/mios/mios-backend/mios-crm-back-v2
+        - git pull
+    tags:
+        - crm-back-develop
