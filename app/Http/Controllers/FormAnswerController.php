@@ -598,10 +598,10 @@ class FormAnswerController extends Controller
                         'tray_id' =>  $tray->id
                     ]);
                     $formAnswerTrays->save();
-
                     $relUsersTraysModel = new RelTrayUser([
                         'trays_id' => $tray->id,
-                        'rrhh_id' => auth()->user()->rrhh_id
+                        'rrhh_id' => auth()->user()->rrhh_id,
+                        'form_answers_trays_id' =>$formAnswerTrays->id
                     ]);
                     $relUsersTraysModel->save();
                 }
