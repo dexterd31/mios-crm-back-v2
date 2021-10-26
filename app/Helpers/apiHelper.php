@@ -28,7 +28,7 @@ class ApiHelper
                 $url  = $url . '/' . $parameter;
             }
 
-            // Se valida si valida si el registro requiere de login 
+            // Se valida si valida si el registro requiere de login
             $whereLogin = ['status' => 1, 'form_id' => $formId, 'request_type' => 1];
             $isLogin = ApiConnection::where($whereLogin)->first();
             if (!empty($isLogin)) {
@@ -38,7 +38,6 @@ class ApiHelper
             }
 
             if ($login) {
-
                 $variables = [];
                 foreach ($filters as $filter)
                 {
@@ -64,7 +63,7 @@ class ApiHelper
                 $num = isset($apiData) ? count($apiData) : 0;
 
                 /**
-                 * Se hace el match con la respuesta de mios 
+                 * Se hace el match con la respuesta de mios
                  * Se llama la relación del api con el formulario de mios
                  */
                 $where = ['status' => 1, 'form_id' => $formId, 'api_id' => $registerApi['id']];
@@ -73,7 +72,7 @@ class ApiHelper
                 if ($apiRelationship && $num > 0) {
                     $relationship = $miosHelper->jsonDecodeResponse($apiRelationship['relationship']);
                     $i = 0;
-                    // foreach para recorrer cada registro de la realación                    
+                    // foreach para recorrer cada registro de la realación
                     foreach ($relationship as $rel) {
                         foreach ($rel as $key => $value) {
                             // Se valida que la key se value y que el valor no este ni nulo o vacio
@@ -95,7 +94,7 @@ class ApiHelper
                                 } else {
                                     $relationship[$i]['value'] = $apiData[$value];
                                 }
-                            } 
+                            }
                         }
                         $i ++;
                     }
@@ -184,8 +183,8 @@ class ApiHelper
             'first_name'    => null,
             'last_name'     => null,
             'id_number'     => null,
-            'id_type'       => null, 
-            'email'         => null, 
+            'id_type'       => null,
+            'email'         => null,
             'phone'         => null,
             'campaign_id'   => null,
         ];

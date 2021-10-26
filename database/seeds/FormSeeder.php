@@ -56,9 +56,8 @@ class FormSeeder extends Seeder
                 )
             ],
             [
-                
+
                 'group_id' => 1,
-                
                 'form_type_id' => 1,
                 'name_form' => 'SOAT',
                 'state' => 1,
@@ -100,10 +99,9 @@ class FormSeeder extends Seeder
                     ]
                 )
                     ],
-                    [
-                
+            [
+
                         'group_id' => 1,
-                        
                         'form_type_id' => 1,
                         'name_form' => 'Form dependencias',
                         'state' => 1,
