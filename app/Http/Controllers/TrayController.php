@@ -151,6 +151,7 @@ class TrayController extends Controller
             ->join('trays', "trays.id", 'form_answers_trays.tray_id')
             ->join('rel_trays_users','form_answers_trays.id','rel_trays_users.form_answers_trays_id')
             ->where("trays.id", $id)
+            ->where('rel_trays_users.rrhh_id',auth()->user()->rrhh_id)
             ->select("form_answers.id", "form_answers.structure_answer", "form_answers.form_id",
                 "form_answers.channel_id", "form_answers.rrhh_id", "form_answers.client_new_id")
             ->paginate($request->query('n', 5))->withQueryString();
