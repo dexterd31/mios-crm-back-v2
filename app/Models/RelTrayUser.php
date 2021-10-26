@@ -12,6 +12,7 @@ class RelTrayUser extends Model
     protected $PrimaryKey = 'id';
     protected $fillable = [
         "trays_id",
+        "form_answers_trays_id",
         "rrhh_id"
     ];
 
