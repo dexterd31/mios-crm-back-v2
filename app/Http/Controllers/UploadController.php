@@ -73,7 +73,7 @@ class UploadController extends Controller
             $answer = [];
             if(isset($file)){
                 $form_import_validate = Excel::toArray(new UploadImport, $file);
-                if(count($form_import_validate[0])>1 && count($form_import_validate[0][0])>0 && $form_import_validate[0][0]<>NULL){
+                if(count($form_import_validate[0])>1 && count($form_import_validate[0][0])>0 && $form_import_validate[0][0]<>NULL && count($form_import_validate[0])<5001){
                     $FormController = new FormController();
                     $prechargables = $FormController->searchPrechargeFields($request->form_id)->getData();
                     $answer['columnsFile'] = $form_import_validate[0][0];
@@ -90,6 +90,8 @@ class UploadController extends Controller
                         }
                     }
                     $data = $miosHelper->jsonResponse(true,200,"data",$answer);
+                }elseif(count($form_import_validate[0])>5000){
+                    $data = $miosHelper->jsonResponse(false,406,"message","El archivo cargado tiene mas de 5000 registros. Recuerde que solo se pueden hacer cargas de 5000 registros.");
                 }else{
                     $data = $miosHelper->jsonResponse(false,406,"message","El archivo cargado no tiene datos para cargar, recuerde que en la primera fila se debe utilizar para identificar los datos asignados a cada columna.");
                 }
@@ -177,7 +179,7 @@ class UploadController extends Controller
                                 if(isset($answerFields->preload)){
                                     $keyValuesController= new KeyValueController();
                                     $keyValues=$keyValuesController->createKeysValue($answerFields->preload,$request->form_id,$client->id);
-                                    if(!isset($keyValues->id)){
+                                    if(!isset($keyValues)){
                                         array_push($errorAnswers,"No se han podido insertar keyValues para el cliente ".$client->id);
                                     }else{
                                         $dataLoad=$dataLoad+1;
@@ -200,7 +202,6 @@ class UploadController extends Controller
                 $resume->cargados = $dataLoad;
                 $resume->nocargados = count($dataNotLoad);
                 $resume->errores=$errorAnswers;
-
                 $upload = new Upload();
                 $upload->name = $file->getClientOriginalName();
                 $upload->rrhh_id = $userRrhhId;
