@@ -180,6 +180,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
       $router->get('attachment/downloadFile/{id}', 'AttachmentController@downloadFile');
 
+      // requerimiento tmk-pymes
+      $router->get("v1/tmkPymes/clientToken", "TmkPymes\TmkPymesController@generateToken");
+      $router->post("v1/tmkPymes/ingresaSolicitud", "TmkPymes\TmkPymesController@store");
 });
 
 
