@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\ClientNew;
+use App\Models\Escalation;
 use Illuminate\Http\Request;
 use Helper\MiosHelper;
 use Illuminate\Support\Facades\Validator;
 use Log;
+use PhpParser\Node\Expr\Cast\Object_;
 
 class ClientNewController extends Controller
 {
@@ -276,6 +278,40 @@ class ClientNewController extends Controller
             "unique_indentificator" => json_encode($clientNewFields['fields_client_unique_identificator'])
         ]);
         return $this->create($clientNew);
+    }
+
+
+    /**
+     * @desc Funcion que devuelve toda la data del cliente identificado con el id que envian
+     * @param id Integer Required: Id del cliemte a consultar
+     * @return \Illuminate\Http\Response Objeto con los datos almacenados del cliente {"first_name":"firstName","first_lastname":"lastName","document":"1234567890"}
+     */
+    public function getClient(Request $request){
+        $validator = Validator::make($request->all(),[
+            'clientId' => 'required|integer',
+            'asuntoId' => 'integer'
+        ]);
+        if($validator->fails())
+        {
+            return $validator->errors()->all();
+        }else{
+            $informationCliente = Escalation :: select('information_client')->where('asunto_id',$request->asuntoId)->first();
+            $client = ClientNew::select('information_data')->where('id',$request->clientId)->first();
+            $clientInformation = json_decode($client->information_data);
+            $informationClientNeed=json_decode($informationCliente->information_client);
+            $newClientInformation=(Object)[];
+            foreach($informationClientNeed as $attClient){
+                $name=$attClient->name;
+                foreach($clientInformation as $client){
+                    if(!isset($attClient->id)){
+                        $newClientInformation->$name="";
+                    }elseif($attClient->id == $client->id){
+                        $newClientInformation->$name=$client->value;
+                    }
+                }
+            }
+            return json_encode($newClientInformation);
+        }
     }
 
 }
