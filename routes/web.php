@@ -86,6 +86,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/getUsersFromMyGroups', 'UserController@getUsersFromMyGroups');
 
     //Rutas de clientes
+    $router->post('/getClient', 'ClientNewController@getClient');
     // $router->get('/getClient/{id}', 'ClientController@getClient');
     // $router->post('/client','ClientController@store');
     // $router->post('/updateClient','ClientController@update');
