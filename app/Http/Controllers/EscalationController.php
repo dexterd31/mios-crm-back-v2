@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Escalation;
 use App\Models\Client;
+use App\Models\ClientNew;
 use Illuminate\Http\Request;
 use App\Services\PqrsService;
 use Log;
+use App\Http\Controllers\ClientNewController;
 
 class EscalationController extends Controller
 {
@@ -124,33 +126,37 @@ class EscalationController extends Controller
                 //dd($form['sections'][0]['fields']);
                 // revisar que todos los campos se hayan validado correctamente
                 if($validated_fields == count($scalation->fields)){
-                    
+
                     if(json_decode($request->client_id)){
                         // si se envia el id del cliente en el request usar esa info
-                        $client_json = json_encode(Client::findOrFail($request->client_id));
+                        $client_json = json_encode(ClientNew::findOrFail($request->client_id));
                     } else {
                         //si no se envia en el request buscar en el formulario la informacion del cliente
-                        $document = null;
-                        $document_type_id = null;
+                        $uniqueClient = new \stdClass();
                         foreach ($form[0]['fields'] as $value) {
-                            if ($value['key']== 'document'){
-                                $document = $value['value'];
-                            }
-                            if($value['key'] == 'document_type_id'){
-                                $document_type_id = $value['value'];
+                            if (isset($value['client_unique'])){
+                                $uniqueClient->id = $value['id'];
+                                $uniqueClient->value = $value['value'];
                             }
                         }
-                        $client_json = json_encode(Client::where('document', $document)->where('document_type_id', $document_type_id)->firstOrFail());
+                        $clientNewRequest = new Request();
+                        $clientNewRequest->replace([
+                            "form_id" => $form_id,
+                            "unique_indentificator" => json_encode($uniqueClient),
+                        ]);
+                        $clientNewController = new ClientNewController();
+                        $client_json = json_encode($clientNewController->index($clientNewRequest));
                     }
 
                     $form_data = (object) ['sections' => json_decode($request->form)];
+
                     $this->pqrsService->createEscalation($scalation->asunto_id, $scalation->estado_id, $client_json, 1, json_encode($form_data), null, 'hola');
                     // return $this->successResponse('Peticion escalada');
                 }
             }
         }
-        
-        
+
+
         return $this->successResponse('Peticion procesada');
     }
 }
