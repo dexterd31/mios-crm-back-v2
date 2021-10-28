@@ -31,6 +31,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/addSection', 'FormController@addSection');
     $router->get('/getDataClientInForm/{idForm}', 'FormController@getDataClientInForm');
 
+    $router->get('/getSpecificFieldForSection/{idForm}','FormController@getIdAndKeyFormFields');
+
     //Base de datos
     // la variable parameters esta en base64 y puede contener el caracter '/', lo cual lanza error 404,
     // por eso se usa el regex para capturar todo el contenido de la url
