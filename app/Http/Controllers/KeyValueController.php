@@ -6,10 +6,12 @@ use Illuminate\Http\Request;
 use App\Models\KeyValue;
 use Carbon\Carbon;
 use Throwable;
+use Illuminate\Support\Facades\DB;
 
 class KeyValueController extends Controller
 {
     private $keyValueModel;
+    public $intentos=5;
     public function setKeyValueModel($keyValueModel)
 	{
 		$this->keyValueModel = $keyValueModel;
@@ -27,7 +29,12 @@ class KeyValueController extends Controller
     private function save($keysValue)
     {
         $this->getKeyValueModel();
-        return $this->keyValueModel->insert($keysValue);
+        // Transaction
+        $result=null;
+        DB::transaction(function() use($keysValue,&$result) {
+            $result=$this->keyValueModel->insert($keysValue);
+        },$this->intentos);
+        return $result;
     }
 
     public function createKeysValue($keysValueData, $formId, $idClientNew)
@@ -87,11 +94,12 @@ class KeyValueController extends Controller
             'form_id' => 'required|integer',
             'client_new_id' => 'required|integer',
         ]);
-        try{
+        //try{
             $this->getKeyValueModel();
-            return $this->keyValueModel->where('form_id',$request['form_id'])->where('client_new_id',$request['client_new_id'])->delete();
-        }catch(Throwable $e){
+            $idToDelete=$this->keyValueModel->where('form_id',$request['form_id'])->where('client_new_id',$request['client_new_id'])->pluck('id')->all();
+            $this->keyValueModel->whereIn('id',$idToDelete)->delete();
+        /*}catch(Throwable $e){
             return $e->getMessage();
-        }
+        }*/
     }
 }

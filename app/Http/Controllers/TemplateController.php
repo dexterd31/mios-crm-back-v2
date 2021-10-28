@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Helpers\MiosHelper;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class TemplateController extends Controller
 {
@@ -236,7 +237,10 @@ class TemplateController extends Controller
                         }
                     }
 
-                } else {
+                } else if ($field->type == "date" && $field->value != "" ) { 
+                    $templateHtml = str_replace("{{".$field->id."}}", date_format(date_create($field->value), "Y-m-d"), $templateHtml);
+                }
+                  else {
                     $templateHtml = str_replace("{{".$field->id."}}", $field->value, $templateHtml);
                 }
             }
