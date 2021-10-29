@@ -88,6 +88,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/getUsersFromMyGroups', 'UserController@getUsersFromMyGroups');
 
     //Rutas de clientes
+    $router->post('/getClient', 'ClientNewController@getClient');
     // $router->get('/getClient/{id}', 'ClientController@getClient');
     // $router->post('/client','ClientController@store');
     // $router->post('/updateClient','ClientController@update');
@@ -182,6 +183,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
       $router->get('attachment/downloadFile/{id}', 'AttachmentController@downloadFile');
 
+      // requerimiento tmk-pymes
+      $router->get("v1/tmkPymes/clientToken", "TmkPymes\TmkPymesController@generateToken");
+      $router->post("v1/tmkPymes/ingresaSolicitud", "TmkPymes\TmkPymesController@store");
 });
 
 
