@@ -19,18 +19,15 @@ use Throwable;
 class UploadController extends Controller
 {
 
-    private $ciuService;
-
     //Constante para limitar la carga de filas
     static $LIMIT_ROW_UPLOAD_FILE = 10000;
 
     //Constante para limitar la carga de filas
     static $LIMIT_CHARACTERS_CELL = 2000;
 
-    public function __construct(CiuService $ciuService)
+    public function __construct()
     {
         $this->middleware('auth');
-        $this->ciuService = $ciuService;
     }
 
     /**
@@ -40,7 +37,8 @@ class UploadController extends Controller
     {
         $menu= Upload::with('form:id,name_form')->where('form_id', $form_id)->orderBy('created_at', 'desc')->paginate($request->query('n', 5))->withQueryString();
         foreach ($menu as $value) {
-            $user_info = $this->ciuService->fetchUserByRrhhId($value->rrhh_id);
+            $ciuService= new CiuService();
+            $user_info = $ciuService->fetchUserByRrhhId($value->rrhh_id);
             $value->created_by = $user_info->rrhh->first_name.' '.$user_info->rrhh->last_name;
         }
         return $this->successResponse($menu);
@@ -202,6 +200,7 @@ class UploadController extends Controller
                 $resume->cargados = $dataLoad;
                 $resume->nocargados = count($dataNotLoad);
                 $resume->errores=$errorAnswers;
+
                 $upload = new Upload();
                 $upload->name = $file->getClientOriginalName();
                 $upload->rrhh_id = $userRrhhId;
