@@ -3,107 +3,96 @@
 namespace App\Services;
 
 use App\Http\Controllers\ClientNewController;
-use App\Models\Directory;
-use App\Models\KeyValue;
+use App\Http\Controllers\KeyValueController;
+use App\Http\Controllers\FormAnswerController;
+use App\Http\Controllers\UploadController;
 use App\Models\NotificationLeads;
-use App\Models\Section;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class TmkPymesServices
 {
     private $leadFields;
-    private $keyPrimary = "razon_social";
 
     /**
      * @param $formId
      * @return string
      */
-    public function setAccount($formId)
+    public function setAccount($formId,$fieldFillIn)
     {
-        $clientNewRequest = new Request();
-        $clientNewRequest->replace([
-            "form_id" => $formId,
-            "information_data" => $this->buildClientInformationData(),
-            "unique_indentificator" => $this->buildClientUniqueId()
-        ]);
-        $clienNewController = new ClientNewController();
-        $clientNew = $clienNewController->create($clientNewRequest);
+        //try{
+            $answerFields = (Object)[];
+            $errorAnswers = [];
+            $formAnswerClient=[];
+            $formAnswerClientIndexado=[];
+            $respuesta=(Object)[];
+            $uploadController = new UploadController();
+            foreach($this->leadFields as $key=>$lead){
+                if(isset($fieldFillIn[$key])){
+                    $dataValidate=$uploadController->validateClientDataUpload($fieldFillIn[$key],$this->cleanString($lead));
+                    if($dataValidate->success){
+                        foreach($dataValidate->in as $in){
+                            if (!isset($answerFields->$in)){
+                                $answerFields->$in=[];
+                            }
+                            array_push($answerFields->$in,$dataValidate->$in);
+                        }
+                        array_push($formAnswerClient,$dataValidate->formAnswer);
+                        array_push($formAnswerClientIndexado,$dataValidate->formAnswerIndex);
+                    }else{
+                        array_push($errorAnswers,$dataValidate['message']);
+                    }
+                }
 
-        $keyValue = null;
-        $keysToDirectory = [];
-        //$keysToSaveLocal = Section::getFields($formId, $this->leadColumns());
-
-        // controller -> keyValueController -> create
-        /*foreach ($keysToSaveLocal as $key => $value) {
-            $keyValue = null;
-            $valueDynamic = $this->leadFields[$value->key] ?? '';
-            $keyValueToSave = [
-                'form_id' => $formId,
-                'client_new_id' => $clientNew->id,
-                'key' => $value->key,
-                'value' => $valueDynamic,
-                'description' => null,
-                'field_id' => $value->id
-            ];
-            KeyValue::create($keyValueToSave);
-
-            $keysToDirectory[] = array(
-                'id' => $value->id,
-                'value' => $valueDynamic,
-                'key' => $value->key
-            );
+            }
+            $clientNewRequest = new Request();
+            $clientNewRequest->replace([
+                "form_id" => $formId,
+                "information_data" => json_encode($answerFields->informationClient),
+                "unique_indentificator" => json_encode($answerFields->uniqueIdentificator[0]),
+            ]);
+            $clienNewController = new ClientNewController();
+            $clientNew = $clienNewController->create($clientNewRequest);
+            if(isset($clientNew->id)){
+                $formAnswerController=new FormAnswerController();
+                $formAnswerSave=$formAnswerController->create($clientNew->id,$formId,$formAnswerClient,$formAnswerClientIndexado,"upload");
+                if(isset($formAnswerSave->id)){
+                    if(isset($answerFields->preload)){
+                        $keyValuesController= new KeyValueController();
+                        $keyValues=$keyValuesController->createKeysValue($answerFields->preload,$formId,$clientNew->id);
+                        if(!isset($keyValues)){
+                            array_push($errorAnswers,"No se han podido insertar keyValues para el cliente ".$client->id);
+                        }
+                    }
+                    NotificationLeads::create([
+                        'client_id' => 0,
+                        'phone' => $this->leadFields['telefono'],
+                        'form_id' => $formId,
+                        'createdtime' => Carbon::now()->format('Y-m-d H:i:s'),
+                        'id_datacrm' => $this->leadFields['razon_social'],
+                        'client_new_id' => $clientNew->id
+                    ]);
+                    /*$newLeadVicidial = array(
+                        "producto"=>$this->productVicidial,
+                        "token_key"=>$this->tokenVicidial,
+                        "Celular"=>$this->leadFields['telefono']
+                    );
+                    $this->newLeadVicidial($newLeadVicidial);*/
+                    $respuesta->message="SUCCESS";
+                    $respuesta->code=0;
+                  } else {
+                    $respuesta->message="No se ha podido crear la respuesta: ".$formAnswerSave;
+                    $respuesta->code=-1;
+                  }
+            }else{
+                $respuesta->message="No se ha podido crear el cliente: ".$clientNew;
+                $respuesta->code=-1;
+            }
+            return $respuesta;
+        /*}catch(\Throwable $th){
+            response()->json(['message' => $th->getMessage(),'code' => -1]);
         }*/
-        // validar si se guarda o no
-        /*Directory::create([
-            'data' => json_encode($keysToDirectory),
-            'rrhh_id' => 1, //NOTE: ID DE USUARIO QUEMADO EN EL .ENV POR AHORA
-            'form_id' => $formId,
-            'client_new_id' => $clientNew->id
-        ]);*/
-
-        NotificationLeads::create([
-            'client_id' => 0,
-            'phone' => $this->leadFields['telefono'],
-            'form_id' => $formId,
-            'createdtime' => Carbon::now()->format('Y-m-d H:i:s'),
-            'id_datacrm' => $this->leadFields['razon_social'],
-            'client_new_id' => $clientNew->id
-        ]);
-
-        return 'pendiente validar';
-    }
-
-
-    /**
-     * @return false|string
-     */
-    private function buildClientInformationData()
-    {
-        $timeId = time();
-        $values = [];
-        $i = 0;
-        foreach ($this->leadFields as $leadField) {
-            $values[] = ['id' => $timeId + $i, 'value' => $this->cleanString($leadField)];
-            $i++;
-        }
-        return json_encode($values);
-    }
-
-    /**
-     * @return false|string
-     */
-    private function buildClientUniqueId()
-    {
-        return json_encode([
-            'id' => time(),
-            'key' => $this->keyPrimary,
-            'label' => 'Razon social',
-            'value' => "{$this->leadFields[$this->keyPrimary]}",
-            'preloaded' => true,
-            'isClientInfo' => true,
-            'client_unique' => true
-        ]);
     }
 
     private function cleanString($string)
@@ -122,8 +111,7 @@ class TmkPymesServices
     /**
      * @return string[]
      */
-    public function leadColumns(): array
-    {
+    public function leadColumns(): array{
         return [
             "nombre",
             "razon_social",
@@ -160,6 +148,10 @@ class TmkPymesServices
     public function setLeadFields($leadFields): void
     {
         $this->leadFields = $leadFields;
+    }
+
+    private function newLeadVicidial($params){
+        Http::post(env('SERVICE_SYNC_VICIDIAL').'/cos/services',$params);
     }
 
 }
