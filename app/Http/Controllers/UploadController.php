@@ -19,18 +19,15 @@ use Throwable;
 class UploadController extends Controller
 {
 
-    private $ciuService;
-
     //Constante para limitar la carga de filas
     static $LIMIT_ROW_UPLOAD_FILE = 10000;
 
     //Constante para limitar la carga de filas
     static $LIMIT_CHARACTERS_CELL = 2000;
 
-    public function __construct(CiuService $ciuService)
+    public function __construct()
     {
         $this->middleware('auth');
-        $this->ciuService = $ciuService;
     }
 
     /**
@@ -40,7 +37,8 @@ class UploadController extends Controller
     {
         $menu= Upload::with('form:id,name_form')->where('form_id', $form_id)->orderBy('created_at', 'desc')->paginate($request->query('n', 5))->withQueryString();
         foreach ($menu as $value) {
-            $user_info = $this->ciuService->fetchUserByRrhhId($value->rrhh_id);
+            $ciuService= new CiuService();
+            $user_info = $ciuService->fetchUserByRrhhId($value->rrhh_id);
             $value->created_by = $user_info->rrhh->first_name.' '.$user_info->rrhh->last_name;
         }
         return $this->successResponse($menu);
@@ -73,7 +71,7 @@ class UploadController extends Controller
             $answer = [];
             if(isset($file)){
                 $form_import_validate = Excel::toArray(new UploadImport, $file);
-                if(count($form_import_validate[0])>1 && count($form_import_validate[0][0])>0 && $form_import_validate[0][0]<>NULL){
+                if(count($form_import_validate[0])>1 && count($form_import_validate[0][0])>0 && $form_import_validate[0][0]<>NULL && count($form_import_validate[0])<5001){
                     $FormController = new FormController();
                     $prechargables = $FormController->searchPrechargeFields($request->form_id)->getData();
                     $answer['columnsFile'] = $form_import_validate[0][0];
@@ -90,6 +88,8 @@ class UploadController extends Controller
                         }
                     }
                     $data = $miosHelper->jsonResponse(true,200,"data",$answer);
+                }elseif(count($form_import_validate[0])>5000){
+                    $data = $miosHelper->jsonResponse(false,406,"message","El archivo cargado tiene mas de 5000 registros. Recuerde que solo se pueden hacer cargas de 5000 registros.");
                 }else{
                     $data = $miosHelper->jsonResponse(false,406,"message","El archivo cargado no tiene datos para cargar, recuerde que en la primera fila se debe utilizar para identificar los datos asignados a cada columna.");
                 }
@@ -177,7 +177,7 @@ class UploadController extends Controller
                                 if(isset($answerFields->preload)){
                                     $keyValuesController= new KeyValueController();
                                     $keyValues=$keyValuesController->createKeysValue($answerFields->preload,$request->form_id,$client->id);
-                                    if(!isset($keyValues->id)){
+                                    if(!isset($keyValues)){
                                         array_push($errorAnswers,"No se han podido insertar keyValues para el cliente ".$client->id);
                                     }else{
                                         $dataLoad=$dataLoad+1;
