@@ -71,14 +71,15 @@ class TmkPymesServices
                         'form_id' => $formId,
                         'createdtime' => Carbon::now()->format('Y-m-d H:i:s'),
                         'id_datacrm' => $this->leadFields['razon_social'],
-                        'client_new_id' => $clientNew->id
+                        'client_new_id' => $clientNew->id,
+                        'lead_information' => json_encode($this->leadFields)
                     ]);
-                    /*$newLeadVicidial = array(
+                    $newLeadVicidial = array(
                         "producto"=>$this->productVicidial,
                         "token_key"=>$this->tokenVicidial,
                         "Celular"=>$this->leadFields['telefono']
                     );
-                    $this->newLeadVicidial($newLeadVicidial);*/
+                    $this->newLeadVicidial($newLeadVicidial);
                     $respuesta->message="SUCCESS";
                     $respuesta->code=0;
                   } else {
