@@ -9,3 +9,4 @@ storage
 storage/framework/laravel-excel/*
 *.lock
 reports/
+.gitlab-ci.yml
