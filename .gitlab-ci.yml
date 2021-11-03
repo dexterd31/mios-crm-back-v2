@@ -9,5 +9,8 @@ deploy:
     script:
         - cd /var/www/mios/mios-backend/mios-crm-back-v2
         - git pull
+        - composer update
+        - php artisan migrate:status
+        - php artisan migrate
     tags:
         - crm-back-develop
