@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Http;
 class TmkPymesServices
 {
     private $leadFields;
+    private $productVicidial;
+    private $tokenVicidial;
+
 
     /**
      * @param $formId
@@ -149,10 +152,13 @@ class TmkPymesServices
     public function setLeadFields($leadFields): void
     {
         $this->leadFields = $leadFields;
+        $this->productVicidial="TMK";
+        $this->tokenVicidial="TmK202111031233";
     }
 
     private function newLeadVicidial($params){
-        Http::post(env('SERVICE_SYNC_VICIDIAL').'/cos/services',$params);
+        $vicidialInsertion=Http::post(env('SERVICE_SYNC_VICIDIAL').'/cos/services',$params);
+        \Log::notice("Incersion Vicidial TMK Pymes: ".$params['Celular'].$vicidialInsertion);
     }
 
 }
