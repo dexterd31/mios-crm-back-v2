@@ -545,7 +545,6 @@ class FormAnswerController extends Controller
 
         $trays = Tray::where('form_id',$formId)
                         ->get();
-
         foreach ($trays as $tray) {
 
             /* entrada a bandeja */
@@ -563,7 +562,7 @@ class FormAnswerController extends Controller
                             {
                                 return 0;
                             }
-                            foreach($field->options as $fieldValue){
+                            foreach($field->value as $fieldValue){
                                 if($value->value == $fieldValue->id){
                                     $validate = true;
                                 }
@@ -585,13 +584,11 @@ class FormAnswerController extends Controller
                     }
 
                 });
-
                 if(count($tray_in)>=1){
                     $in_fields_matched++;
                 }
             }
-
-            if((count(json_decode($tray->fields))> 0) && ($in_fields_matched == count(json_decode($tray->fields)))){
+            if($in_fields_matched>0 && ((count(json_decode($tray->fields))> 0) || ($in_fields_matched == count(json_decode($tray->fields))))){
                 if(!$tray->FormAnswers->contains($formAnswer->id)){
                     $formAnswerTrays = new FormAnswersTray([
                         'form_answer_id' => $formAnswer->id,
@@ -637,9 +634,7 @@ class FormAnswerController extends Controller
                             return 0;
                         }
                     }
-
                 });
-
                 if(count($tray_out)>=1){
                     $exit_fields_matched++;
                 }
@@ -648,7 +643,6 @@ class FormAnswerController extends Controller
                 $tray->FormAnswers()->detach($formAnswer->id);
             }
         }
-
     }
 
     private function logFormAnswer($form_answer)
