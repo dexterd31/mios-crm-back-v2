@@ -18,6 +18,7 @@ use Carbon\Carbon;
 use stdClass;
 use App\Models\Directory;
 use App\Http\Controllers\AttachmentController;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class FormController extends Controller
 {
@@ -551,7 +552,7 @@ class FormController extends Controller
 
     /**
      * @desc Busca los fields por su id en las secciones
-     * @param array $search Arreglo de objetos, cada objeto debe contener los elementos id: numero del field al que pertenece
+     * @param array $searchIdFileds Arreglo de objetos, cada objeto debe contener los elementos id: numero del field al que pertenece
      * @param integer $formId Numero entero con el id del formulario al que se le debe realizar la busqueda de fields
      * @return array arreglo con los field solicitados con toda su estructura
      * @author Leonardo Giraldo Quintero
@@ -623,6 +624,36 @@ class FormController extends Controller
             }
         }
         return $result;
+    }
+
+    /**
+     * @desc Función que retorna el el id y el value de los fi para ser usada en las rutas
+     * @param $idForm: id del formulario a consultar
+     * @return array arreglo de objtos con los field id y key de cada formulario separado por sus secciones
+     * @author Juan Pablo Camargo Vaenags
+     */
+    public function getIdAndKeyFormFields($idForm, MiosHelper $miosHelper){
+        $response = []; //areglo de la respuesta
+        $arrayResponse = Section::where('form_id',$idForm)->get(['id','fields']);
+        if(count($arrayResponse) > 0){
+            foreach ( $arrayResponse  as $key=>$value){
+                $objectFields = json_decode($value);
+                $responseSection = new stdClass();
+                $responseSection->sectionId = $objectFields->id;
+                $formFields = [];
+                $fieldArray = json_decode($objectFields->fields);
+                foreach($fieldArray as $field){
+                    $objectResponse = new stdClass();
+                    $objectResponse->id = $field->id;
+                    $objectResponse->key = $field->key;
+                    array_push($formFields,$objectResponse);
+                }
+                $responseSection->ids = $formFields;
+                array_push($response,$responseSection);
+            }
+            return response($response);
+        }
+        return response("no se encontró el formulario");
     }
 }
 
