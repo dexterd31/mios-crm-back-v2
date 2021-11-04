@@ -13,4 +13,6 @@ class Upload extends Model
     public function form(){
         return $this->belongsTo('App\Models\Form','form_id');
     }
+
+
 }
