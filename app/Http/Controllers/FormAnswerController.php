@@ -558,7 +558,7 @@ class FormAnswerController extends Controller
                     if($field->type == "options"){
                         if($value->id==$field->id){
                             $validate = false;
-                            if(!isset($field->value))
+                            if(!isset($field->value) || empty($field->value))
                             {
                                 return 0;
                             }
