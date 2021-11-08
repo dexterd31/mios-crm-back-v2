@@ -525,6 +525,7 @@ class FormController extends Controller
             $element->id = intval($element->id.$request->cont);
             $element->key = $element->key.'_'.$request->cont;
             $element->label = $element->label.'_'.$request->cont;
+
             foreach ($element->dependencies as $value) {
                 $value->idField = intval($value->idField.$request->cont);
                 $element->seeDepen = false;
@@ -539,7 +540,7 @@ class FormController extends Controller
      * @param Integer $formId id del formulario que se necesitan traer las secciones
      * @return Array Arreglo de objetos en donde se encuntran todas las secciones del formulario
      * @author Leonardo Giraldo Quintero
-     *  */
+     **/
     public function getSections($formId){
         if(isset($formId)){
             return Section::where('form_id','=',$formId)->get();
@@ -565,6 +566,7 @@ class FormController extends Controller
                     foreach($searchIdFileds as $search){
                         if($search->id==$field->id){
                             $completeFileds[$field->id]=$field;
+                            continue;
                         }
                     }
                 }
@@ -623,6 +625,17 @@ class FormController extends Controller
             }
         }
         return $result;
+    }
+
+    /**
+     * @desc Función que devuelve los formularios por campaña
+     * @param Integer $campaignId id de la campaña a la que se desean biuscar los formularios
+     * @return Array Arreglo de objetos con los elementos forms.id y forms.name_form en donde se encuntran el id y nombre del formulario respectivamente
+     */
+    public function getFormsByCampaignId($campaignId){
+        return Form::join("groups", 'groups.id', "forms.group_id")
+        ->where("groups.campaign_id", $campaignId)
+        ->select('forms.id', 'forms.name_form')->get();
     }
 }
 
