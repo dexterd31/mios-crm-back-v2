@@ -6,6 +6,7 @@ use App\Models\FormAnswerLog;
 use App\Models\Tray;
 use App\Models\FormAnswersTray;
 use App\Models\Section;
+use App\Http\Controllers\FormController;
 
 class FormAnswerTrayController extends Controller
 {
@@ -18,7 +19,9 @@ class FormAnswerTrayController extends Controller
     {
         $historicAnswer = [];
         $formAnswerLogs = FormAnswerLog::where('form_answer_id',$formAnswerId)->get('structure_answer')->toArray();
-        $traysSaveHistoric = Tray::where('id',$trayId)->first('save_historic');
+        $traysSaveHistoric = Tray::where('id',$trayId)->first();
+
+        \Log::info($traysSaveHistoric->form_id);
         $saveHistoric = json_decode($traysSaveHistoric)->save_historic;
         if($saveHistoric === null){
             $response = new \stdClass();
@@ -28,6 +31,8 @@ class FormAnswerTrayController extends Controller
         foreach ($formAnswerLogs as $structureAnswer){
             foreach (json_decode($structureAnswer['structure_answer']) as $answer){
                 if(array_search($answer->id,json_decode($saveHistoric))!== false){
+                    $formController = new FormController();
+                    $answer->value=$formController->findAndFormatValues($traysSaveHistoric->form_id,$answer->id,$answer->value);
                     array_push($historicAnswer,$answer);
                 }
             }

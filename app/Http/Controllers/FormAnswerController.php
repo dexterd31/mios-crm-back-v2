@@ -3,33 +3,25 @@
 namespace App\Http\Controllers;
 
 use App\Models\ApiConnection;
-use App\Models\Client;
 use App\Models\FormAnswer;
 use App\Models\Form;
 use App\Models\KeyValue;
 use App\Models\Section;
 use App\Models\Tray;
 use App\Models\Attachment;
-use App\Models\ClientNew;
 use App\Models\FormAnswerLog;
-use App\Models\User;
 use App\Models\FormAnswerMiosPhone;
 use App\Services\CiuService;
 use App\Services\DataCRMService;
 use App\Services\NominaService;
-use Helpers\ApiHelper;
 use Helpers\FilterHelper;
-use Helpers\FormAnswerHelper;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Gate;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Route;
-use PhpOffice\PhpSpreadsheet\Calculation\Statistical\Distributions\F;
 use App\Models\FormAnswersTray;
 use App\Models\RelTrayUser;
-use App\Models\FormAnswersTrayHistoric;
+use App\Http\Controllers\FormController;
 
 
 class FormAnswerController extends Controller
