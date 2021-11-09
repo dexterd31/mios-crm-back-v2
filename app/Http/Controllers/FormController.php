@@ -525,6 +525,7 @@ class FormController extends Controller
             $element->id = intval($element->id.$request->cont);
             $element->key = $element->key.'_'.$request->cont;
             $element->label = $element->label.'_'.$request->cont;
+            $element->disabled = false;
             foreach ($element->dependencies as $value) {
                 $value->idField = intval($value->idField.$request->cont);
                 $element->seeDepen = false;
