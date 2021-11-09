@@ -49,7 +49,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
     $router->post('/formanswer/integration/voice', 'FormAnswerController@saveIntegrationVoice');
-
+    $router->get('/getFormsByCampaignId/{campaignId}', 'FormController@getFormsByCampaignId');
 
     $router->post('/formanswer/filterform', 'FormAnswerController@filterForm');
     $router->get('/formanswer/historic/{id}', 'FormAnswerController@formAnswerHistoric');
@@ -184,8 +184,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->get('attachment/downloadFile/{id}', 'AttachmentController@downloadFile');
 
       // requerimiento tmk-pymes
-      $router->get("v1/tmkPymes/clientToken", "TmkPymes\TmkPymesController@generateToken");
       $router->post("v1/tmkPymes/ingresaSolicitud", "TmkPymes\TmkPymesController@store");
+
 });
 
 
