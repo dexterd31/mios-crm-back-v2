@@ -31,7 +31,10 @@ class KeyValueController extends Controller
     {
         $keysValue = [];
         foreach ($keysValueData as $keyValueData){
-            if(!empty($keyValueData["value"])){
+            if(isset($keyValueData["value"])){
+                if(is_array($keyValueData["value"])){
+                    $keyValueData["value"] = implode(",",$keyValueData["value"]);
+                }
                 $keyValue = [];
                 $keyValue['form_id'] = $formId;
                 $keyValue['client_new_id'] = $idClientNew;
