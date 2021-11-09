@@ -31,6 +31,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/addSection', 'FormController@addSection');
     $router->get('/getDataClientInForm/{idForm}', 'FormController@getDataClientInForm');
 
+    $router->get('/getSpecificFieldForSection/{idForm}','FormController@getIdAndKeyFormFields');
+
+
     //Base de datos
     // la variable parameters esta en base64 y puede contener el caracter '/', lo cual lanza error 404,
     // por eso se usa el regex para capturar todo el contenido de la url
@@ -42,7 +45,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     //Nuevas rutas para importar Base de Clientes
     $router->post('/form/upload/extractColumnsNames', 'UploadController@extractColumnsNames');
     $router->post('/form/upload/excelClients', 'UploadController@excelClients');
-
+    $router->post('/form/upload/downloadManagement','UploadController@downloadManagement');
 
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');

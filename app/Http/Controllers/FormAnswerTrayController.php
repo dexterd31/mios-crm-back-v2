@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\FormAnswerLog;
+use App\Models\Tray;
 use App\Models\FormAnswersTray;
 use App\Models\Section;
-use App\Models\getFormAnswersTray;
 
 class FormAnswerTrayController extends Controller
 {
@@ -16,7 +16,23 @@ class FormAnswerTrayController extends Controller
 
     public function index($formAnswerId, $trayId)
     {
-        return FormAnswersTray::where("form_answer_id", $formAnswerId)->where("tray_id", $trayId)->whereNotNull("structure_answer_tray")->get();
+        $historicAnswer = [];
+        $formAnswerLogs = FormAnswerLog::where('form_answer_id',$formAnswerId)->get('structure_answer')->toArray();
+        $traysSaveHistoric = Tray::where('id',$trayId)->first('save_historic');
+        $saveHistoric = json_decode($traysSaveHistoric)->save_historic;
+        if($saveHistoric === null){
+            $response = new \stdClass();
+            $response->data = "no se encontraron historicos asociados";
+            return response()->json($response,204);
+        }
+        foreach ($formAnswerLogs as $structureAnswer){
+            foreach (json_decode($structureAnswer['structure_answer']) as $answer){
+                if(array_search($answer->id,json_decode($saveHistoric))!== false){
+                    array_push($historicAnswer,$answer);
+                }
+            }
+        }
+        return $historicAnswer;
     }
 
     public function getFormAnswersTray($idFormAnswer, $idTray, $formId)

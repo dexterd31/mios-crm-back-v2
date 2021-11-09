@@ -5,30 +5,20 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\KeyValue;
 use Carbon\Carbon;
-use Throwable;
 use Illuminate\Support\Facades\DB;
 
 class KeyValueController extends Controller
 {
     private $keyValueModel;
     public $intentos=5;
-    public function setKeyValueModel($keyValueModel)
-	{
-		$this->keyValueModel = $keyValueModel;
-	}
 
-    public function getKeyValueModel()
-	{
-		if($this->keyValueModel == null)
-		{
-			$this->setKeyValueModel(new KeyValue());
-		}
-		return $this->keyValueModel;
-	}
+    public function __construct()
+    {
+        $this->keyValueModel = new KeyValue();
+    }
 
     private function save($keysValue)
     {
-        $this->getKeyValueModel();
         // Transaction
         $result=null;
         DB::transaction(function() use($keysValue,&$result) {
@@ -41,7 +31,7 @@ class KeyValueController extends Controller
     {
         $keysValue = [];
         foreach ($keysValueData as $keyValueData){
-            if($keyValueData["value"] !== null && $keyValueData["value"] !==''){
+            if(!empty($keyValueData["value"])){
                 $keyValue = [];
                 $keyValue['form_id'] = $formId;
                 $keyValue['client_new_id'] = $idClientNew;
@@ -60,8 +50,12 @@ class KeyValueController extends Controller
             "form_id" => $formId
         ]);
         $existKeyValue=$this->index($keyValuesRequest);
-        if(count($existKeyValue)>0){
-            $this->delete($keyValuesRequest);
+        if(count($existKeyValue) > 0){
+            $deleteRequest = new Request();
+            $deleteRequest->replace([
+                "form_ids"=>$existKeyValue
+            ]);
+            $this->delete($deleteRequest);
         }
         return $this->save($keysValue);
     }
@@ -74,12 +68,7 @@ class KeyValueController extends Controller
     * @author Leonardo Giraldo Quintero
     */
     public function index(Request $request){
-        $this->validate($request,[
-            'form_id' => 'required|integer',
-            'client_new_id' => 'required|integer',
-        ]);
-        $this->getKeyValueModel();
-        return $this->keyValueModel->where('form_id',$request['form_id'])->where('client_new_id',$request['client_new_id'])->get();
+        return $this->keyValueModel->where('form_id',$request['form_id'])->where('client_new_id',$request['client_new_id'])->pluck('id')->all();
     }
 
     /**
@@ -90,14 +79,8 @@ class KeyValueController extends Controller
     * @author Leonardo Giraldo Quintero
     */
     public function delete(Request $request){
-        $this->validate($request,[
-            'form_id' => 'required|integer',
-            'client_new_id' => 'required|integer',
-        ]);
         //try{
-            $this->getKeyValueModel();
-            $idToDelete=$this->keyValueModel->where('form_id',$request['form_id'])->where('client_new_id',$request['client_new_id'])->pluck('id')->all();
-            $this->keyValueModel->whereIn('id',$idToDelete)->delete();
+            $this->keyValueModel->whereIn('id',$request['form_ids'])->delete();
         /*}catch(Throwable $e){
             return $e->getMessage();
         }*/
