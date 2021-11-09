@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\UploadsExport;
 use Illuminate\Http\Request;
 use App\Exports\FormExport;
 use App\Imports\UploadImport;
@@ -9,21 +10,16 @@ use Helpers\MiosHelper;
 use App\Models\Upload;
 use App\Models\Directory;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FormReportExport;
 use App\Services\CiuService;
 use App\Imports\ClientNewImport;
-use App\Http\Controllers\FormAnswerController;
 use stdClass;
 use Throwable;
 
 class UploadController extends Controller
 {
-
-    private $ciuService;
-    private $uploadModel;
 
     //Constante para limitar la carga de filas
     static $LIMIT_ROW_UPLOAD_FILE = 10000;
@@ -31,11 +27,9 @@ class UploadController extends Controller
     //Constante para limitar la carga de filas
     static $LIMIT_CHARACTERS_CELL = 2000;
 
-    public function __construct(CiuService $ciuService,Upload $model)
+    public function __construct()
     {
         $this->middleware('auth');
-        $this->ciuService = $ciuService;
-        $this->uploadModel = $model;
     }
 
     /**
@@ -45,7 +39,8 @@ class UploadController extends Controller
     {
         $menu= Upload::with('form:id,name_form')->where('form_id', $form_id)->orderBy('created_at', 'desc')->paginate($request->query('n', 5))->withQueryString();
         foreach ($menu as $value) {
-            $user_info = $this->ciuService->fetchUserByRrhhId($value->rrhh_id);
+            $ciuService = new CiuService();
+            $user_info = $ciuService->fetchUserByRrhhId($value->rrhh_id);
             $value->created_by = $user_info->rrhh->first_name.' '.$user_info->rrhh->last_name;
         }
         return $this->successResponse($menu);
@@ -119,7 +114,6 @@ class UploadController extends Controller
      *
      */
     public function excelClients(Request $request , MiosHelper $miosHelper, FormController $formController, ClientNewController $clientNewController, FormAnswerController $formAnswerController, KeyValueController $keyValuesController){
-        Log::info("ACTION: ".filter_var($request->action,FILTER_VALIDATE_BOOLEAN));
         //Primero Validamos que todos los parametros necesarios para el correcto funcionamiento esten
         $this->validate($request,[
             'excel' => 'required',
@@ -151,7 +145,6 @@ class UploadController extends Controller
                     $formAnswerClientIndexado=[];
                     $updateExisting = true;
                     foreach($client as $d=>$data){
-                        Log::info("");
                         $dataValidate=$this->validateClientDataUpload($fieldsLoad[$d],$data);
                         if($dataValidate->success){
                             foreach($dataValidate->in as $in){
@@ -222,10 +215,11 @@ class UploadController extends Controller
                     "method" => $request->action,
                     "resume"=> json_encode($resume)
                 ]);
-                $this->saveUpload($saveUploadRequest);
-                $informe=["Total Archivo: ".$resume->totalRegistros , "Cargados: ".$resume->cargados, "No Cargados: ".$resume->nocargados];
-                //todo: crear json para respuesta
-                $data = $miosHelper->jsonResponse(true,200,"message",implode("<br>",$informe));
+                $uploadId = $this->saveUpload($saveUploadRequest);
+                $response = new stdClass();
+                $response->uploadId = $uploadId;
+                $response->informe = implode("<br>",["Total Archivo: ".$resume->totalRegistros , "Cargados: ".$resume->cargados, "No Cargados: ".$resume->nocargados]);
+                $data = $miosHelper->jsonResponse(true,200,"data",$response);
             }else{
                 $data = $miosHelper->jsonResponse(false,400,"message","No se encuentra los campos en el formulario");
             }
@@ -249,7 +243,6 @@ class UploadController extends Controller
             $field->label => $rules
         ]);
         if ($validator->fails()){
-            Log::info('Error en la validación'.$validator->errors()->toJson());
             foreach ($validator->errors()->all() as $message) {
                 array_push($answer->message,$message." in ".$field->label);
             }
@@ -339,7 +332,22 @@ class UploadController extends Controller
      * @return File Archivo de excel con los datos de gestion
      */
     public function downloadManagement(Request $request){
-
+        $this->validate($request,[
+            'uploadId' => 'required',
+        ]);
+        /*$upload = Upload::where('id',$request->uploadId)->first();
+        $objectUpload = json_decode($upload);
+        $response = [
+            $objectUpload->name,
+            $objectUpload->created_at,
+            $objectUpload->updated_at,
+        ];
+        return response($response)->withHeaders([
+            'Content-Type' => 'text/plain',
+            'Cache-Control' => 'no-store, no-cache',
+            'Content-Disposition' => 'attachment; filename="management.txt',
+        ]);*/
+        return (new UploadsExport)->setUploadId($request->uploadId)->download('manager.xlsx');
     }
 
     public function exportDatabase(Request $request)
@@ -389,13 +397,15 @@ class UploadController extends Controller
      * @return bool
      */
     public function saveUpload(Request $request){
-        $this->uploadModel->name = $request['name'];
-        $this->uploadModel->rrhh_id = $request['rrhh_id'];
-        $this->uploadModel->form_id = $request['form_id'];
-        $this->uploadModel->count = $request['count'];
-        $this->uploadModel->method = $request['method'];
-        $this->uploadModel->resume = $request['resume'];
-        return $this->uploadModel->save();
+        $uploadModel = new Upload();
+        $uploadModel->name = $request['name'];
+        $uploadModel->rrhh_id = $request['rrhh_id'];
+        $uploadModel->form_id = $request['form_id'];
+        $uploadModel->count = $request['count'];
+        $uploadModel->method = $request['method'];
+        $uploadModel->resume = $request['resume'];
+        $uploadModel->save();
+        return DB::getPdo()->lastInsertId();
     }
 
 

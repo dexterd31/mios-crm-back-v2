@@ -2,13 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use App\Models\KeyValue;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
-use Throwable;
 use Illuminate\Support\Facades\DB;
 
 class KeyValueController extends Controller
@@ -16,10 +12,9 @@ class KeyValueController extends Controller
     private $keyValueModel;
     public $intentos=5;
 
-    public function __construct(KeyValue $model)
+    public function __construct()
     {
-        $this->keyValueModel = $model;
-        DB::connection()->enableQueryLog();
+        $this->keyValueModel = new KeyValue();
     }
 
     private function save($keysValue)
@@ -56,14 +51,12 @@ class KeyValueController extends Controller
         ]);
         $existKeyValue=$this->index($keyValuesRequest);
         if(count($existKeyValue) > 0){
-            Log::info('elimina campo');
             $deleteRequest = new Request();
             $deleteRequest->replace([
                 "form_ids"=>$existKeyValue
             ]);
             $this->delete($deleteRequest);
         }
-        Log::info('guarda campo');
         return $this->save($keysValue);
     }
 
