@@ -293,7 +293,8 @@ class FormAnswerController extends Controller
             foreach ($structureAnswer as $answer) {
                 if(!isset($answer->duplicated))
                 {
-                    $select = $this->findSelect($formId, $answer->id, $answer->value);
+                    $formController = new FormController();
+                    $select = $formController->findAndFormatValues($formId, $answer->id, $answer->value);
                     if($select)
                     {
                         $answer->value = $select;
@@ -363,10 +364,11 @@ class FormAnswerController extends Controller
 
                 $new_structure_answer = [];
                 foreach($form_answers->structure_answer as $field){
+                    $formController = new FormController();
                     if(isset($field['duplicated'])){
-                        $select = $this->findSelect($form_answers->form_id, $field['duplicated']['idOriginal'], $field['value']);
+                        $select = $formController->findAndFormatValues($form_answers->form_id, $field['duplicated']['idOriginal'], $field['value']);
                     }else{
-                        $select = $this->findSelect($form_answers->form_id, $field['id'], $field['value']);
+                        $select = $formController->findAndFormatValues($form_answers->form_id, $field['id'], $field['value']);
                     }
                     if($select){
                         $field['value'] = $select;
