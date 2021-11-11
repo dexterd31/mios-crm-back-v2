@@ -120,7 +120,6 @@ class TmkPymesController extends Controller
             ]);
             $clienNewController = new ClientNewController();
             $clientNew = $clienNewController->create($clientNewRequest);
-            \Log::info($clientNew);
             if(isset($clientNew->id)){
                 $formAnswerSave = new FormAnswer([
                     'rrhh_id' => 1,
@@ -145,7 +144,7 @@ class TmkPymesController extends Controller
                             array_push($errorAnswers,"No se han podido insertar keyValues para el cliente ".$clientNew->id);
                         }
                     }
-                    /*NotificationLeads::create([
+                    NotificationLeads::create([
                         'client_id' => 0,
                         'phone' => $this->leadFields['telefono'],
                         'form_id' => $formId,
@@ -159,7 +158,7 @@ class TmkPymesController extends Controller
                         "token_key"=>$this->tokenVicidial,
                         "Celular"=>$this->leadFields['telefono']
                     );
-                    $this->newLeadVicidial($newLeadVicidial);*/
+                    $this->newLeadVicidial($newLeadVicidial);
                     $respuesta->message="SUCCESS";
                     $respuesta->code=0;
                   } else {
