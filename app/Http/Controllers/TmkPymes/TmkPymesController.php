@@ -5,17 +5,16 @@ namespace App\Http\Controllers\TmkPymes;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\FormController;
 use stdClass;
 use App\Models\NotificationLeads;
 use App\Http\Controllers\ClientNewController;
 use App\Http\Controllers\KeyValueController;
-use App\Http\Controllers\FormAnswerController;
 use App\Http\Controllers\UploadController;
 use Carbon\Carbon;
 use App\Models\FormAnswer;
 use App\Models\FormAnswerLog;
+use Illuminate\Support\Facades\Http;
 
 class TmkPymesController extends Controller
 {
@@ -25,6 +24,7 @@ class TmkPymesController extends Controller
     private $productVicidial;
     private $tokenVicidial;
     private $leadTMK;
+    private $leadTMKModify;
 
     public function __construct()
     {
@@ -32,9 +32,10 @@ class TmkPymesController extends Controller
         $this->idFieldsInFormLead=(Object)[
             'nombre' => 1635436624162,
             'razon_social' => 1635436930539,
-            'nit' => 1635436893514,
             'telefono' => 1635436912538,
-            'utm_campaign' => 1635518784366
+            'utm_campaign' => 1635518784366,
+            'tipo_documento' => 1637160407586,
+            'numero_documento' => 1635549672268
         ];
         $this->productVicidial="TMK";
         $this->tokenVicidial="TmK202111031233";
@@ -69,12 +70,20 @@ class TmkPymesController extends Controller
     {
         //try {
             $validator = validator($request->all(), [
-                'razon_social' => 'required',
                 'ciudad' => 'required',
                 'telefono' => 'required',
                 'optin' => 'required',
             ]);
             $this->leadTMK=$request->all();
+            $this->leadTMKModify=$request->all();
+            $this->leadTMKModify['tipo_documento']="";
+            $this->leadTMKModify['numero_documento']="";
+            if(isset($this->leadTMKModify['email'])){
+                $identification=explode("*",$this->leadTMKModify['email']);
+                $this->leadTMKModify['tipo_documento']=$identification[0];
+                $this->leadTMKModify['numero_documento']=$identification[1];
+            }
+            unset($this->leadTMKModify['email']);
             if ($validator->fails()) return $this->responseTmk(implode(", ", $validator->errors()->all()), -1);
             $acount=(Object)[];
             $acount=$this->setAccount($this->formId,$this->setFieldToFillIn());
@@ -94,8 +103,9 @@ class TmkPymesController extends Controller
             $formAnswerClientIndexado=[];
             $respuesta=(Object)[];
             $uploadController = new UploadController();
-            foreach($this->leadTMK as $key=>$lead){
+            foreach($this->leadTMKModify as $key=>$lead){
                 if(isset($fieldFillIn[$key])){
+                    \Log::info(json_encode($fieldFillIn[$key])." = ".$this->cleanString($lead));
                     $dataValidate=$uploadController->validateClientDataUpload($fieldFillIn[$key],$this->cleanString($lead));
                     if($dataValidate->success){
                         foreach($dataValidate->in as $in){
@@ -107,7 +117,8 @@ class TmkPymesController extends Controller
                         array_push($formAnswerClient,$dataValidate->formAnswer);
                         array_push($formAnswerClientIndexado,$dataValidate->formAnswerIndex);
                     }else{
-                        array_push($errorAnswers,$dataValidate['message']);
+                        \Log::info($dataValidate->message);
+                        array_push($errorAnswers,$dataValidate->message);
                     }
                 }
 
@@ -146,19 +157,20 @@ class TmkPymesController extends Controller
                     }
                     NotificationLeads::create([
                         'client_id' => 0,
-                        'phone' => $this->leadFields['telefono'],
+                        'phone' => $this->leadTMK['telefono'],
                         'form_id' => $formId,
                         'createdtime' => Carbon::now()->format('Y-m-d H:i:s'),
-                        'id_datacrm' => $this->leadFields['razon_social'],
                         'client_new_id' => $clientNew->id,
-                        'lead_information' => json_encode($this->leadFields)
+                        'lead_information' => json_encode($this->leadTMK)
                     ]);
-                    $newLeadVicidial = array(
-                        "producto"=>$this->productVicidial,
-                        "token_key"=>$this->tokenVicidial,
-                        "Celular"=>$this->leadFields['telefono']
-                    );
-                    $this->newLeadVicidial($newLeadVicidial);
+                    if(env('APP_ENVIROMENT')=='prod' || env('APP_ENVIROMENT')=='qa'){
+                        $newLeadVicidial = array(
+                            "producto"=>$this->productVicidial,
+                            "token_key"=>$this->tokenVicidial,
+                            "Celular"=>$this->leadTMK['telefono']
+                        );
+                        $this->newLeadVicidial($newLeadVicidial);
+                    }
                     $respuesta->message="SUCCESS";
                     $respuesta->code=0;
                   } else {
@@ -206,7 +218,12 @@ class TmkPymesController extends Controller
                 }
             }
         }
+        \Log::info(json_encode($fullField));
         return $fullField;
+    }
+
+    private function newLeadVicidial($params){
+        Http::post(env('SERVICE_SYNC_VICIDIAL').'/cos/services',$params);
     }
 }
 
