@@ -55,7 +55,7 @@ class RelAdvisorClientNewController extends Controller
                 'rrhh_id' => $request->rrhh_id
             ]);
         }catch (\Exception $ex){
-            return $this->errorResponse($ex->getMessage(),200);
+            return $this->errorResponse($ex->getMessage(),204);
         }
     }
 
