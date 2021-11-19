@@ -10,6 +10,7 @@ use Helpers\MiosHelper;
 use App\Models\Upload;
 use App\Models\Directory;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FormReportExport;
@@ -51,6 +52,11 @@ class UploadController extends Controller
      * Olme Marin
      * 10-03-2021
      * Método para descargar la plantilla de excel del formularios
+     * @param $parameters:
+     * @return array: retorna un arreglo con las siguientes claves:
+     *                - columnsFile: arreglo con los nombres de las columnas
+     *                - prechargables: arreglo con los datos precargables del formulario
+     *                - rowsFile: número de filas cargadas
      */
     public function exportExcel($parameters)
     {
@@ -78,6 +84,7 @@ class UploadController extends Controller
                     $prechargables = $FormController->searchPrechargeFields($request->form_id)->getData();
                     $answer['columnsFile'] = $form_import_validate[0][0];
                     $answer['prechargables']=[];
+                    $answer['rowsFile'] = count($form_import_validate) - 1;
                     foreach($prechargables->section as $section){
                         foreach($section->fields as $field){
                             if($field){
@@ -113,18 +120,52 @@ class UploadController extends Controller
      * @param string ->action Cadena de texto con dos posibles opciones update o none
      *
      */
-    public function excelClients(Request $request , MiosHelper $miosHelper, FormController $formController, ClientNewController $clientNewController, FormAnswerController $formAnswerController, KeyValueController $keyValuesController){
+    public function excelClients(Request $request , MiosHelper $miosHelper, FormController $formController, ClientNewController $clientNewController, FormAnswerController $formAnswerController, KeyValueController $keyValuesController,GroupController $groupController,RelAdvisorClientNewController $relAdvisorClientNewController){
         //Primero Validamos que todos los parametros necesarios para el correcto funcionamiento esten
         $this->validate($request,[
             'excel' => 'required',
             'form_id' => 'required',
             'assigns' => 'required',
-            'action' => 'required'
+            'action' => 'required',
+            'assignUsers' => 'required',
         ]);
         $userRrhhId=auth()->user()->rrhh_id;
         $file = $request->file('excel');
         $fileData = json_decode(Excel::toCollection(new ClientNewImport(), $file)[0]);
-        if(count($fileData)>0){
+        $totalArchivos = count($fileData);
+        $assignUsers = filter_var($request->assignUsers,FILTER_VALIDATE_BOOLEAN);
+        if($assignUsers){
+            //se obtiene el group_id
+            $groupId =  json_decode($formController->searchForm($request->form_id)->getContent())->group_id;
+            $advisers = $groupController->searchGroup($groupId)['members'];
+            //se valida si el resultado es exacto
+            $quantity = $totalArchivos / count($advisers);
+            if(is_float($quantity)){
+                //se aproxima el valor para repartirlo proporcionalmente
+                $equalRegisters = round($quantity,0,PHP_ROUND_HALF_DOWN);
+                // se le asigna a cada asesor la cantidad correspondiente de datos
+                foreach ($advisers as $key=>$adviser){
+                    $advisers[$key]['quantity'] = $equalRegisters;
+                }
+                // se extrae el residuo de la división para asignarlo uno a uno entre los asesores hasta que qyede en 0
+                $moduleRegisters = $totalArchivos % count($advisers);
+                foreach ($advisers as $key=>$adviser){
+                    if($moduleRegisters > 0){
+                        $advisers[$key]['quantity']++;
+                        $moduleRegisters--;
+                    }
+                }
+            }else{
+                // se le asigna a cada asesor la cantidad correspondiente de datos
+                foreach ($advisers as $key=>$adviser){
+                    $advisers[$key]['quantity'] = $quantity;
+                }
+            }
+            //se generan las banderas para contar la cantidad y saber el indice del asesor
+            $quantity = 0;
+            $advisersIndex = 0;
+        }
+        if($totalArchivos>0){
             $fieldsLoad=$formController->getSpecificFieldForSection(json_decode($request->assigns),$request->form_id);
             foreach(json_decode($request->assigns) as $assign){
                 foreach($fieldsLoad as $key=>$field){
@@ -138,6 +179,7 @@ class UploadController extends Controller
                 $directories = [];
                 $dataLoad=0;
                 $dataNotLoad=[];
+
                 foreach($fileData as $c=>$client){
                     $answerFields = (Object)[];
                     $errorAnswers = [];
@@ -162,9 +204,14 @@ class UploadController extends Controller
                             array_push($errorAnswers,$dataValidate->message);
                         }
                     }
+
                     //array_push($dataToLoad,$answerFields);
                     if(count($errorAnswers)==0){
                         $newRequest = new Request();
+                        $newRequest->replace([
+                            "form_id" => $request->form_id,
+                            "unique_indentificator" => json_encode($answerFields->uniqueIdentificator[0]),
+                        ]);
                         $existingClient = $clientNewController->index($newRequest);
                         if(!empty($existingClient) && !filter_var($request->action,FILTER_VALIDATE_BOOLEAN)){
                             $updateExisting = false;
@@ -177,6 +224,27 @@ class UploadController extends Controller
                             ]);
                             $client=$clientNewController->create($newRequest);
                             if(isset($client->id)){
+                                //insertar en rel_advisor_client_new
+                                if($assignUsers){
+                                    $existingRel = $relAdvisorClientNewController->show($client->id,$advisers[$advisersIndex]['id_rhh']);
+                                    if(!isset($existingRel->id)){
+                                        $relAdvisorRequest = new Request();
+                                        $relAdvisorRequest->replace([
+                                            'client_new_id'=>$client->id,
+                                            'rrhh_id'=>$advisers[$advisersIndex]['id_rhh']
+                                        ]);
+                                        $relAdvisorClient = $relAdvisorClientNewController->create($relAdvisorRequest);
+                                        if(!empty($relAdvisorClient)){
+                                            $quantity++;
+                                        }
+                                    }else{
+                                       $quantity++;
+                                    }
+                                    if($advisers[$advisersIndex]['quantity'] == $quantity){
+                                        $advisersIndex++;
+                                        $quantity = 0;
+                                    }
+                                }
                                 $formAnswerSave=$formAnswerController->create($client->id,$request->form_id,$formAnswerClient,$formAnswerClientIndexado,"upload");
                                 if(isset($formAnswerSave->id)){
                                     if(isset($answerFields->preload)){
@@ -202,7 +270,7 @@ class UploadController extends Controller
                 }
 
                 $resume = new stdClass();
-                $resume->totalRegistros = count($fileData);
+                $resume->totalRegistros = $totalArchivos;
                 $resume->cargados = $dataLoad;
                 $resume->nocargados = count($dataNotLoad);
                 $resume->errores=$dataNotLoad;
@@ -250,7 +318,7 @@ class UploadController extends Controller
             $field->value=$validationType->formatedData;
             $answer->in=[];
             if(isset($field->isClientInfo) && $field->isClientInfo){
-                $answer->informationClient=(object)[
+                $answer->informationClient= (object)[
                     "id" => $field->id,
                     "value" => $field->value
                 ];
@@ -297,6 +365,7 @@ class UploadController extends Controller
     }
 
     /**
+     * crea las validaciones correspondientes a cada tipo de dato
      * @param $type
      * @param $data
      * @return object objeto con 2 valores: 1. type: tipo de validación, 2. formatedData: dato formateado según lo requiera el campo
@@ -335,19 +404,24 @@ class UploadController extends Controller
         $this->validate($request,[
             'uploadId' => 'required',
         ]);
-        /*$upload = Upload::where('id',$request->uploadId)->first();
+        $upload = Upload::where('id',$request->uploadId)->first();
         $objectUpload = json_decode($upload);
         $response = [
             $objectUpload->name,
             $objectUpload->created_at,
             $objectUpload->updated_at,
         ];
-        return response($response)->withHeaders([
+        File::put('../storage/app/temp.txt',$response);
+        return response()->download('../storage/app/temp.txt','temp.txt',[
+            'Content-Type' => 'text/plain',
+            'Cache-Control' => 'no-store, no-cache',
+        ]);
+        /* ->withHeaders([
             'Content-Type' => 'text/plain',
             'Cache-Control' => 'no-store, no-cache',
             'Content-Disposition' => 'attachment; filename="management.txt',
         ]);*/
-        return (new UploadsExport)->setUploadId($request->uploadId)->download('manager.xlsx');
+        //return (new UploadsExport)->setUploadId($request->uploadId)->download('manager.xlsx');
     }
 
     public function exportDatabase(Request $request)

@@ -114,6 +114,8 @@ class ClientNewController extends Controller
         return $clientNewQuery->first();
     }
 
+    //TODO: crear método para consultar el indice con la relación
+
     // Descripción: Función que recibe un objeto y realiza las validaciones y arreglos a
     // la data para pasar a la función saveClient para que sean almacenados en la tabla clients_new
     // Parámetros:
