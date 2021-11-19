@@ -15,6 +15,13 @@ class FormAnswerTrayController extends Controller
         $this->middleware('auth');
     }
 
+    /**
+     * Método que retorna un arreglo de objetos con los datos históricos obtenidos de form_answer_logs
+     * según el arreglo del campo save_historic de la tabla trays
+     * @param $formAnswerId
+     * @param $trayId
+     * @return array|\Illuminate\Http\JsonResponse
+     */
     public function index($formAnswerId, $trayId)
     {
         $historicAnswer = [];
