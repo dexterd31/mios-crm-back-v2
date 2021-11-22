@@ -1,16 +1,14 @@
 stages:
-    -  develop
+    -  quality
 deploy:
     only:
-        - develop
+        - Quality
         - merge request
         
-    stage: develop
+    stage: quality
     script:
         - cd /var/www/mios/mios-backend/mios-crm-back-v2
         - git pull
-        - composer update
-        - php artisan migrate:status
-        - php artisan migrate
+
     tags:
-        - crm-back-develop
+        - crm-back-quality
