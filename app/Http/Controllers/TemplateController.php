@@ -237,7 +237,7 @@ class TemplateController extends Controller
                         }
                     }
 
-                } else if ($field->type == "date" && $field->value != "" ) { 
+                } else if ($field->type == "date" && $field->value != "" && $field->value != 'Invalid date') { 
                     $templateHtml = str_replace("{{".$field->id."}}", date_format(date_create($field->value), "Y-m-d"), $templateHtml);
                 }
                   else {
