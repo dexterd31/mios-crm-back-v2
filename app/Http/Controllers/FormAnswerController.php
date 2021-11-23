@@ -3,33 +3,25 @@
 namespace App\Http\Controllers;
 
 use App\Models\ApiConnection;
-use App\Models\Client;
 use App\Models\FormAnswer;
 use App\Models\Form;
 use App\Models\KeyValue;
 use App\Models\Section;
 use App\Models\Tray;
 use App\Models\Attachment;
-use App\Models\ClientNew;
 use App\Models\FormAnswerLog;
-use App\Models\User;
 use App\Models\FormAnswerMiosPhone;
 use App\Services\CiuService;
 use App\Services\DataCRMService;
 use App\Services\NominaService;
-use Helpers\ApiHelper;
 use Helpers\FilterHelper;
-use Helpers\FormAnswerHelper;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Gate;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Route;
-use PhpOffice\PhpSpreadsheet\Calculation\Statistical\Distributions\F;
 use App\Models\FormAnswersTray;
 use App\Models\RelTrayUser;
-use App\Models\FormAnswersTrayHistoric;
+use App\Http\Controllers\FormController;
 
 
 class FormAnswerController extends Controller
@@ -65,7 +57,6 @@ class FormAnswerController extends Controller
 
     public function saveinfo(Request $request)
     {
-        \Log::info("Inicio FormAnswerController saveInfo");
         $sections = json_decode($request['sections'], true);
         $clientNewInfo = [];
         $dataPreloaded = [];
@@ -87,12 +78,10 @@ class FormAnswerController extends Controller
                 $register['isClientInfo'] = isset($field['isClientInfo']) ? $field['isClientInfo'] : false;
                 $register['client_unique'] = false;
                 if($field['controlType'] == 'file' && $field['value'] !=''){
-                    \Log::info("Inicio filterFormAnswer: Consulta tabla form_answers");
                     $attachment = new Attachment();
                     $attachment->name = $request->file($field['id'])->getClientOriginalName();
                     $attachment->source = $request->file($field['id'])->store($date_string);
                     $attachment->save();
-                    \Log::info("Salida filterFormAnswer");
                     $register['value'] = $attachment->id;
                     $register['nameFile']=$attachment->name; //Agregamos el nombre del archivo para que en el momento de ver las respuestas en el formulario se visualice el nombre.
                 }
@@ -147,28 +136,18 @@ class FormAnswerController extends Controller
                 "information_data" => json_encode($clientNewInfo),
                 "unique_indentificator" => json_encode($clientUnique)
             ]);
-            \Log::info("Inicio: clientController->create Tabla clients");
             $clientNew = $clientNewController->create($clientNew);
-            \Log::info("Salida: clientController->create");
 
             //creando nuevo cliente formAnswer
-            \Log::info("Inicio: create tabla form_answers");
             $form_answer = $this->create($clientNew->id, $request->form_id, $formAnswerData, $formAnswerIndexData, $request->chronometer);
-            \Log::info("Salida: create");
 
             $keyValueController = new KeyValueController();
-            \Log::info("Inicio: createKeysValue tabla key_values");
             $keyValueController->createKeysValue($dataPreloaded, $request->form_id, $clientNew->id);
-            \Log::info("Salida: createKeysValue");
 
             // Manejar bandejas
-            \Log::info("Inicio: matchTrayFields tabla trays");
             $this->matchTrayFields($form_answer->form_id, $form_answer);
-            \Log::info("Salida: matchTrayFields");
 
-            \Log::info("Inicio: updateDataCrm tablas key_values, api_connections");
             $this->updateDataCrm($clientNew->id, $form_answer);
-            \Log::info("Salida: updateDataCrm");
             return $this->successResponse(['message'=>"Información guardada correctamente",'formAsnwerId'=>$form_answer->id]);
         }
         return $this->errorResponse($data["message"], 500);
@@ -209,7 +188,6 @@ class FormAnswerController extends Controller
 
     public function filterForm(Request $request)
     {
-        \Log::info("Inicio FomrAnswerController filterForm");
         $miosHelper = new MiosHelper();
         $filterHelper = new FilterHelper();
         $requestJson = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
@@ -232,30 +210,22 @@ class FormAnswerController extends Controller
 
         $clientNewData->replace($replace);
         $clientNew = [];
-        \Log::info("Ingreso index cliente");
         $clientNew = $clientNewController->index($clientNewData);
-        \Log::info("Salida index cliente");
 
 
         if(!isset($clientNew["error"]))
         {
             $clientNewId = $clientNew ? $clientNew->id : null;
-            \Log::info("Inicio filterFormAnswer: Consulta tabla FormAnswer columna FormAnswerIndexData");
             $formAnswers = $this->filterFormAnswer($request->form_id, $requestJson['filter'], $clientNewId);
-            \Log::info("Salida filterFormAnswer");
             $formAnswersData = $formAnswers->getCollection();
             if(count($formAnswersData) == 0)
             {
-                \Log::info("Inicio filterByDataBase: Consulta tabla Directory columna form_id y client_new_id");
                 $formAnswers = $filterHelper->filterByDataBase($request->form_id, $clientNewId, $requestJson['filter']);
-                \Log::info("Salida filterByDataBase");
                 $formAnswersData = $formAnswers->getCollection();
             }
             if(count($formAnswersData) == 0)
             {
-                \Log::info("Inicio filterbyApi: Consulta tabla api_connections columnas form_id request_type y status");
                 $formAnswersApi = $filterHelper->filterbyApi($request->form_id, $requestJson['filter']);
-                \Log::info("Salida filterbyApi");
                 if(isset($formAnswersApi))
                 {
                     $formAnswers = $formAnswersApi;
@@ -269,9 +239,7 @@ class FormAnswerController extends Controller
                 {
                     $clientNewId = $formAnswersData[0]->client_new_id;
                 }
-                \Log::info("Inicio setNewStructureAnswer: Consulta servicio fetchUserByRrhhId, tabla sections");
                 $data = $this->setNewStructureAnswer($formAnswersData, $request->form_id);
-                \Log::info("Salida setNewStructureAnswer");
 
                 $formAnswersData = $data["formAnswers"];
                 $files = $data["files"];
@@ -279,9 +247,7 @@ class FormAnswerController extends Controller
             $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
             if($clientNewId)
             {
-                \Log::info("Inicio preloaded: Consulta tabla forms, key_values");
                 $data["preloaded"] = $this->preloaded($request->form_id, $clientNewId, $files);
-                \Log::info("Salida preloaded");
             }
             return response()->json($data, $data['code']);
         }
@@ -319,7 +285,8 @@ class FormAnswerController extends Controller
             foreach ($structureAnswer as $answer) {
                 if(!isset($answer->duplicated))
                 {
-                    $select = $this->findSelect($formId, $answer->id, $answer->value);
+                    $formController = new FormController();
+                    $select = $formController->findAndFormatValues($formId, $answer->id, $answer->value);
                     if($select)
                     {
                         $answer->value = $select;
@@ -389,10 +356,11 @@ class FormAnswerController extends Controller
 
                 $new_structure_answer = [];
                 foreach($form_answers->structure_answer as $field){
+                    $formController = new FormController();
                     if(isset($field['duplicated'])){
-                        $select = $this->findSelect($form_answers->form_id, $field['duplicated']['idOriginal'], $field['value']);
+                        $select = $formController->findAndFormatValues($form_answers->form_id, $field['duplicated']['idOriginal'], $field['value']);
                     }else{
-                        $select = $this->findSelect($form_answers->form_id, $field['id'], $field['value']);
+                        $select = $formController->findAndFormatValues($form_answers->form_id, $field['id'], $field['value']);
                     }
                     if($select){
                         $field['value'] = $select;
@@ -435,7 +403,6 @@ class FormAnswerController extends Controller
     }
 
     public function updateInfo(Request $request, $id){
-        \Log::info("Inicio FomrAnswerController updateInfo");
         $date_string = Carbon::now()->toDateTimeString();
         $obj = array();
         $formAnswerData = [];
@@ -476,11 +443,9 @@ class FormAnswerController extends Controller
                 if($field['controlType'] == 'file'){
                     if ($request->file($field['id']) !== null) {
                     $attachment = new Attachment();
-                    \Log::info("Inicio Attatchment: Consulta tabla attatchments");
                     $attachment->name = $request->file($field['id'])->getClientOriginalName();
                     $attachment->source = $request->file($field['id'])->store($date_string);
                     $attachment->save();
-                    \Log::info("Salida Attatchment");
                     $register['value'] = $attachment->id;
                     $register['nameFile']=$attachment->name; //Agregamos el nombre del archivo para que en el momento de ver las respuestas en el formulario se visualice el nombre.
                     }
@@ -500,40 +465,18 @@ class FormAnswerController extends Controller
                 }
             }
         }
-        \Log::info("Inicio FormAnswer: Consulta tabla form_answers");
         $form_answer = FormAnswer::where('id', $id)->first();
         $form_answer->structure_answer = json_encode($formAnswerData);
         $form_answer->form_answer_index_data = json_encode($formAnswerIndexData);
         $form_answer->update();
-        \Log::info("Salida FormAnswer");
         $clientNewController = new ClientNewController();
         $clientNew = $clientNewController->getClientInfoFromFormAnswers($request->form_id , $obj);
-        /*if(isset($request->trayId))
-        {
-            \Log::info("Inicio FormAnswersTray: Consulta tabla form_answers_trays");
-            $fromAnswersTrays = FormAnswersTray::where("tray_id", $request->trayId)->where("form_answer_id", $form_answer->id)->get();
-            \Log::info("Salida FormAnswersTray");
-            if(count($fromAnswersTrays)>0){
-                \Log::info("Inicio FormAnswersTrayHistoric: Consulta tabla form_answer_trays_historic");
-                $formAmswersTraysHistoric = new FormAnswersTrayHistoric([
-                    "form_answers_trays_id" => $form_answer->id,
-                    "tray_id" => $request->trayId,
-                    "structure_answer" => json_encode($trayFilds)
-                ]);
-                $formAmswersTraysHistoric->save();
-                \Log::info("Salida FormAnswersTrayHistoric");
-            }
-        }*/
 
         // Manejar bandejas
-        \Log::info("Inicio matchTrayFields: Consulta tabla trays");
         $this->matchTrayFields($form_answer->form_id, $form_answer);
-        \Log::info("Salida matchTrayFields");
 
         // Log FormAnswer
-        \Log::info("Inicio logFormAnswer: Consulta tabla form_answer_logs");
         $this->logFormAnswer($form_answer);
-        \Log::info("Salida logFormAnswer");
 
         return response()->json('Guardado' ,200);
     }
@@ -545,7 +488,6 @@ class FormAnswerController extends Controller
 
         $trays = Tray::where('form_id',$formId)
                         ->get();
-
         foreach ($trays as $tray) {
 
             /* entrada a bandeja */
@@ -559,11 +501,11 @@ class FormAnswerController extends Controller
                     if($field->type == "options"){
                         if($value->id==$field->id){
                             $validate = false;
-                            if(!isset($field->value))
+                            if(!isset($field->value) || empty($field->value))
                             {
                                 return 0;
                             }
-                            foreach($field->options as $fieldValue){
+                            foreach($field->value as $fieldValue){
                                 if($value->value == $fieldValue->id){
                                     $validate = true;
                                 }
@@ -585,13 +527,11 @@ class FormAnswerController extends Controller
                     }
 
                 });
-
                 if(count($tray_in)>=1){
                     $in_fields_matched++;
                 }
             }
-
-            if((count(json_decode($tray->fields))> 0) && ($in_fields_matched == count(json_decode($tray->fields)))){
+            if($in_fields_matched>0 && ((count(json_decode($tray->fields))> 0) || ($in_fields_matched == count(json_decode($tray->fields))))){
                 if(!$tray->FormAnswers->contains($formAnswer->id)){
                     $formAnswerTrays = new FormAnswersTray([
                         'form_answer_id' => $formAnswer->id,
@@ -637,9 +577,7 @@ class FormAnswerController extends Controller
                             return 0;
                         }
                     }
-
                 });
-
                 if(count($tray_out)>=1){
                     $exit_fields_matched++;
                 }
@@ -648,7 +586,6 @@ class FormAnswerController extends Controller
                 $tray->FormAnswers()->detach($formAnswer->id);
             }
         }
-
     }
 
     private function logFormAnswer($form_answer)

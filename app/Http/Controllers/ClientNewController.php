@@ -6,6 +6,7 @@ use App\Models\ClientNew;
 use App\Models\Escalation;
 use Illuminate\Http\Request;
 use Helper\MiosHelper;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Log;
 use PhpParser\Node\Expr\Cast\Object_;
@@ -107,8 +108,8 @@ class ClientNewController extends Controller
         if($request->unique_indentificator)
         {
             $unique_indentificator = json_decode($request->unique_indentificator);
-            $clientNewQuery = $clientNewQuery->where("unique_indentificator->id", $unique_indentificator->id)
-                ->where("unique_indentificator->value", $unique_indentificator->value);
+            $clientNewQuery = $clientNewQuery->whereJsonContains("unique_indentificator",["id"=>$unique_indentificator->id])
+                ->whereJsonContains("unique_indentificator",["value"=>$unique_indentificator->value]);
         }
         return $clientNewQuery->first();
     }

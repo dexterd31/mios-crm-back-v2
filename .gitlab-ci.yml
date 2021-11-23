@@ -9,5 +9,6 @@ deploy:
     script:
         - cd /var/www/mios/mios-backend/mios-crm-back-v2
         - git pull
+
     tags:
         - crm-back-quality
