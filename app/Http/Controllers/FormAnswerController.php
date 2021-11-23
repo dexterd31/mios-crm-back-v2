@@ -356,12 +356,20 @@ class FormAnswerController extends Controller
 
                 $new_structure_answer = [];
                 foreach($form_answers->structure_answer as $field){
+                    $fieldSend=[];
                     $formController = new FormController();
                     if(isset($field['duplicated'])){
                         $select = $formController->findAndFormatValues($form_answers->form_id, $field['duplicated']['idOriginal'], $field['value']);
                     }else{
                         $select = $formController->findAndFormatValues($form_answers->form_id, $field['id'], $field['value']);
                     }
+                    $object= new \stdClass();
+                    $object->id=$field['id'];
+                    array_push($fieldSend,$object);
+                    $input=$formController->getSpecificFieldForSection($fieldSend,$form_answers->form_id);
+                    $field['type']=$input[$object->id]->type;
+                    $field['controlType']=$input[$object->id]->controlType;
+
                     if($select){
                         $field['value'] = $select;
                         $new_structure_answer[] = $field;

@@ -469,8 +469,8 @@ class FormController extends Controller
         $field = collect($fields)->filter(function($x) use ($field_id){
             return $x->id == $field_id;
         })->first();
-
-        if($field->controlType == 'dropdown' || $field->controlType == 'autocomplete' || $field->controlType == 'radiobutton'){
+        $valueInt=intval($value);
+        if(($field->controlType == 'dropdown' || $field->controlType == 'autocomplete' || $field->controlType == 'radiobutton') && $valueInt != 0){
             $field_name = collect($field->options)->filter(function($x) use ($value){
                 return $x->id == $value;
             })->first()->name;
@@ -482,7 +482,6 @@ class FormController extends Controller
             $attachment = $attachmentController->show($value);
             return url().'/api/attachment/downloadFile/'.$attachment->id;
         }elseif($field->controlType == 'multiselect'){
-            \Log::info($value);
             $multiAnswer=[];
             foreach($value as $val){
                 $field_name = collect($field->options)->filter(function($x) use ($val){
