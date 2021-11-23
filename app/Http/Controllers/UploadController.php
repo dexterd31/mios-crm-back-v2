@@ -84,7 +84,7 @@ class UploadController extends Controller
                     $prechargables = $FormController->searchPrechargeFields($request->form_id)->getData();
                     $answer['columnsFile'] = $form_import_validate[0][0];
                     $answer['prechargables']=[];
-                    $answer['rowsFile'] = count($form_import_validate) - 1;
+                    $answer['rowsFile'] = count($form_import_validate[0]) - 1;
                     foreach($prechargables->section as $section){
                         foreach($section->fields as $field){
                             if($field){
@@ -305,8 +305,18 @@ class UploadController extends Controller
         $rules= isset($field->required) ? 'required' : '';
         $validationType = $this->kindOfValidationType($field->type,$data);
         $rules.= '|'.$validationType->type;
-        $rules.= isset($field->minLength) ? '|min:'.$field->minLength : '';
-        $rules.= isset($field->maxLength) ? '|max:'.$field->maxLength : '';
+        $minLength = $field->minLength;
+        $maxLength = $field->maxLength;
+        if($field->type == 'number'){
+            $minLen = "1";
+            $maxLen = "";
+            $minLen .= str_repeat("0", intval($field->minLength) - 1);
+            $maxLen .= str_repeat("9", intval($field->maxLength));
+            $minLength = $minLen;
+            $maxLength = $maxLen;
+        }
+        $rules.= isset($field->minLength) ? '|min:'.$minLength : '';
+        $rules.= isset($field->maxLength) ? '|max:'.$maxLength : '';
         $validator = Validator::make([$field->label=>$validationType->formatedData], [
             $field->label => $rules
         ]);
@@ -361,7 +371,6 @@ class UploadController extends Controller
             $answer->Originalfield=$field;
         }
         return $answer;
-
     }
 
     /**
