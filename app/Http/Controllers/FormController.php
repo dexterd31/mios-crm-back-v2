@@ -475,7 +475,7 @@ class FormController extends Controller
                 return $x->id == $value;
             })->first()->name;
             return $field_name;
-        }elseif($field->controlType == 'datepicker'){
+        }elseif($field->controlType == 'datepicker' && strtotime($value)){
             return Carbon::parse($value)->setTimezone('America/Bogota')->format('Y-m-d');
         }elseif($field->controlType == 'file'){
             $attachmentController = new AttachmentController();
@@ -490,6 +490,8 @@ class FormController extends Controller
                 array_push($multiAnswer,$field_name);
             }
             return implode(",",$multiAnswer);
+        }elseif($field->controlType == 'currency'){
+            return str_replace(",","",$value);
         }else{
             return $value;
         }
