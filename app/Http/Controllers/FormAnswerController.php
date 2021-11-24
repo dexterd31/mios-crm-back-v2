@@ -71,6 +71,9 @@ class FormAnswerController extends Controller
                 $register=[];
                 $register['id'] = $field['id'];
                 $register['key'] = $field['key'];
+                if($field['controlType'] == "currency"){
+                    $field['value']=str_replace(",","",$field['value']);
+                }
                 $register['value'] = $field['value'];
                 $register['section_id'] = $section['id'];
                 $register['preloaded'] = $field['preloaded'];
