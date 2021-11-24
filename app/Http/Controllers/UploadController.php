@@ -305,18 +305,20 @@ class UploadController extends Controller
         $rules= isset($field->required) ? 'required' : '';
         $validationType = $this->kindOfValidationType($field->type,$data);
         $rules.= '|'.$validationType->type;
-        $minLength = $field->minLength;
-        $maxLength = $field->maxLength;
-        if($field->type == 'number'){
-            $minLen = "1";
-            $maxLen = "";
-            $minLen .= str_repeat("0", intval($field->minLength) - 1);
-            $maxLen .= str_repeat("9", intval($field->maxLength));
-            $minLength = $minLen;
-            $maxLength = $maxLen;
+        if(isset($field->minLength) && isset($field->maxLength)){
+            $minLength = $field->minLength;
+            $maxLength = $field->maxLength;
+            if($field->type == 'number'){
+                $minLen = "1";
+                $maxLen = "";
+                $minLen .= str_repeat("0", intval($field->minLength) - 1);
+                $maxLen .= str_repeat("9", intval($field->maxLength));
+                $minLength = $minLen;
+                $maxLength = $maxLen;
+            }
+            $rules.= '|min:'.$minLength;
+            $rules.= '|max:'.$maxLength;
         }
-        $rules.= isset($field->minLength) ? '|min:'.$minLength : '';
-        $rules.= isset($field->maxLength) ? '|max:'.$maxLength : '';
         $validator = Validator::make([$field->label=>$validationType->formatedData], [
             $field->label => $rules
         ]);
