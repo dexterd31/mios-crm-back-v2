@@ -10,7 +10,7 @@ deploy:
      - cd /var/www/mios/mios-backend/mios-crm-back-v2
      - git checkout .
      - git pull
-     - composer install
+     - composer dump-autoload
      - php artisan cache:clear
  
  tags:
