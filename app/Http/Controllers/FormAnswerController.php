@@ -22,6 +22,7 @@ use Carbon\Carbon;
 use App\Models\FormAnswersTray;
 use App\Models\RelTrayUser;
 use App\Http\Controllers\FormController;
+use Illuminate\Support\Facades\Log;
 
 
 class FormAnswerController extends Controller
@@ -40,7 +41,16 @@ class FormAnswerController extends Controller
 
     public function create($clientNewId, $formId, $structureAnswer, $formAnswerIndexData, $chronometer)
     {
-        $formsAnswer = new FormAnswer([
+        /*$formsAnswer = new FormAnswer([
+            'rrhh_id' => auth()->user()->rrhh_id,
+            'channel_id' => 1,
+            'form_id' => $formId,
+            'structure_answer' => json_encode($structureAnswer),
+            'client_new_id' => $clientNewId,
+            "form_answer_index_data" => json_encode($formAnswerIndexData),
+            'tipification_time' => $chronometer
+        ]);*/
+        $saveFormAnswer= FormAnswer::updateOrCreate([
             'rrhh_id' => auth()->user()->rrhh_id,
             'channel_id' => 1,
             'form_id' => $formId,
@@ -49,7 +59,7 @@ class FormAnswerController extends Controller
             "form_answer_index_data" => json_encode($formAnswerIndexData),
             'tipification_time' => $chronometer
         ]);
-        $saveFormAnswer=$this->saveModel($formsAnswer);
+        Log::info($saveFormAnswer);
         // Guarda en Log FormAnswer
         $this->logFormAnswer($saveFormAnswer);
         return $saveFormAnswer;
@@ -71,6 +81,9 @@ class FormAnswerController extends Controller
                 $register=[];
                 $register['id'] = $field['id'];
                 $register['key'] = $field['key'];
+                if($field['controlType'] == "currency"){
+                    $field['value']=str_replace(",","",$field['value']);
+                }
                 $register['value'] = $field['value'];
                 $register['section_id'] = $section['id'];
                 $register['preloaded'] = $field['preloaded'];
@@ -287,9 +300,9 @@ class FormAnswerController extends Controller
                 {
                     $formController = new FormController();
                     $select = $formController->findAndFormatValues($formId, $answer->id, $answer->value);
-                    if($select)
+                    if($select->valid)
                     {
-                        $answer->value = $select;
+                        $answer->value = $select->value;
                     }
                     $new_structure_answer[] = $answer;
                 }
@@ -356,14 +369,22 @@ class FormAnswerController extends Controller
 
                 $new_structure_answer = [];
                 foreach($form_answers->structure_answer as $field){
+                    $fieldSend=[];
                     $formController = new FormController();
                     if(isset($field['duplicated'])){
                         $select = $formController->findAndFormatValues($form_answers->form_id, $field['duplicated']['idOriginal'], $field['value']);
                     }else{
                         $select = $formController->findAndFormatValues($form_answers->form_id, $field['id'], $field['value']);
                     }
-                    if($select){
-                        $field['value'] = $select;
+                    $object= new \stdClass();
+                    $object->id=$field['id'];
+                    array_push($fieldSend,$object);
+                    $input=$formController->getSpecificFieldForSection($fieldSend,$form_answers->form_id);
+                    $field['type']=$input[$object->id]->type;
+                    $field['controlType']=$input[$object->id]->controlType;
+
+                    if($select->valid){
+                        $field['value'] = $select->value;
                         $new_structure_answer[] = $field;
                     } else {
                         $new_structure_answer[] = $field;

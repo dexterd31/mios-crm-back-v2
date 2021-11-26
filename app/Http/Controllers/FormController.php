@@ -356,8 +356,8 @@ class FormController extends Controller
                             if(in_array($field->id,$dependencies[$input->dependencies[0]->report])){
                                 if(isset($field->value)){
                                     $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
-                                    if($select){
-                                        $respuestas[$input->dependencies[0]->report] = $select;
+                                    if($select->valid){
+                                        $respuestas[$input->dependencies[0]->report] = $select->value;
                                     } else {
                                         $respuestas[$input->dependencies[0]->report] = $field->value;
                                     }
@@ -366,16 +366,16 @@ class FormController extends Controller
                             }
                         }else if($field->id==$input->id){
                             $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
-                            if($select){
-                                $respuestas[$input->id] = $select;
+                            if($select->valid){
+                                $respuestas[$input->id] = $select->value;
                             } else {
                                 $respuestas[$input->id] = $field->value;
                             }
                             break;
                         }else if($field->key==$input->key){
                             $select = $this->findAndFormatValues($request->formId, $input->id, $field->value);
-                            if($select){
-                                $respuestas[$input->id] = $select;
+                            if($select->valid){
+                                $respuestas[$input->id] = $select->value;
                             } else {
                                 $respuestas[$input->id] = $field->value;
                             }
@@ -461,28 +461,72 @@ class FormController extends Controller
         return response()->json($formsSections);
     }
 
+    /**
+     * Valida que el field exista en el formulario, valida el tipo de dato y lo formatea de ser necesario,
+     * @param $form_id : id del fomulario
+     * @param $field_id: id del field a consultar
+     * @param $value: valor del field que se está validando
+     * @return stdClass : objeto que puede contener los siguientes atributos:
+     *                      -   valid (boolean) : indica si la validación fue exitosa
+     *                      -   value : retorna el valor formateado en caso que el atributo valid sea verdadero
+     *                      -   message : retorna el mensaje de error en caso que el atributo valid sea falso
+     */
     public function findAndFormatValues($form_id, $field_id, $value)
     {
+        $response = new stdClass();
+        $response->valid = false;
+        $response->message = "";
         $fields = json_decode(Section::where('form_id', $form_id)
         ->whereJsonContains('fields', ['id' => $field_id])
         ->first()->fields);
+        if(count($fields) == 0){
+            $response->message = "field not found";
+            return $response;
+        }
         $field = collect($fields)->filter(function($x) use ($field_id){
             return $x->id == $field_id;
         })->first();
-
-        if($field->controlType == 'dropdown' || $field->controlType == 'autocomplete' || $field->controlType == 'radiobutton'){
+        if(empty($field)){
+            $response->message = "field not found";
+            return $response;
+        }
+        if(($field->controlType == 'dropdown' || $field->controlType == 'autocomplete' || $field->controlType == 'radiobutton')){
             $field_name = collect($field->options)->filter(function($x) use ($value){
+                if(intval($value) == 0){
+                    return $x->name == $value;
+                }
                 return $x->id == $value;
-            })->first()->name;
-            return $field_name;
+            })->first()->id;
+            if($field_name){
+                $response->valid = true;
+                $response->value = $field_name;
+                return $response;
+            }
+            $response->message = "value $value not match";
+            return $response;
         }elseif($field->controlType == 'datepicker'){
-            return Carbon::parse($value)->setTimezone('America/Bogota')->format('Y-m-d');
+            $date = "";
+            try {
+                if(is_int($value)){
+                    $unix_date = ($value - 25569) * 86400;
+                    $date = Carbon::createFromTimestamp($unix_date)->format('Y-m-d');
+                }else{
+                    $date = Carbon::parse(str_replace("/","-",$value))->format('Y-m-d');
+                }
+                $response->valid = true;
+                $response->value = $date;
+            }catch (\Exception $ex){
+                $response->valid = false;
+                $response->message = "date $value is not a valid format";
+            }
+            return $response;
         }elseif($field->controlType == 'file'){
             $attachmentController = new AttachmentController();
             $attachment = $attachmentController->show($value);
-            return url().'/api/attachment/downloadFile/'.$attachment->id;
+            $response->valid = true;
+            $response->value = url().'/api/attachment/downloadFile/'.$attachment->id;
+            return $response;
         }elseif($field->controlType == 'multiselect'){
-            \Log::info($value);
             $multiAnswer=[];
             foreach($value as $val){
                 $field_name = collect($field->options)->filter(function($x) use ($val){
@@ -490,9 +534,17 @@ class FormController extends Controller
                 })->first()->name;
                 array_push($multiAnswer,$field_name);
             }
-            return implode(",",$multiAnswer);
+            $response->valid = true;
+            $response->value = implode(",",$multiAnswer);
+            return $response;
+        }elseif($field->controlType == 'currency'){
+            $response->valid = true;
+            $response->value = str_replace(",","",$value);
+            return $response;
         }else{
-            return $value;
+            $response->valid = true;
+            $response->value = $value;
+            return $response;
         }
 
     }

@@ -84,7 +84,7 @@ class UploadController extends Controller
                     $prechargables = $FormController->searchPrechargeFields($request->form_id)->getData();
                     $answer['columnsFile'] = $form_import_validate[0][0];
                     $answer['prechargables']=[];
-                    $answer['rowsFile'] = count($form_import_validate) - 1;
+                    $answer['rowsFile'] = count($form_import_validate[0]) - 1;
                     foreach($prechargables->section as $section){
                         foreach($section->fields as $field){
                             if($field){
@@ -93,7 +93,6 @@ class UploadController extends Controller
                                 $prechargedField->label=$field->label;
                                 array_push($answer['prechargables'],$prechargedField);
                             }
-
                         }
                     }
                     $data = $miosHelper->jsonResponse(true,200,"data",$answer);
@@ -118,7 +117,6 @@ class UploadController extends Controller
      * @param integer ->form_id Id del formulario
      * @param array ->assigns Arreglo de Objetos con la assignación de idField a cada una de las columnas del campo [{"columnName":"Nombre","id":123456789890},{"columnName":"Apellido","id":12345678908787}]
      * @param string ->action Cadena de texto con dos posibles opciones update o none
-     *
      */
     public function excelClients(Request $request , MiosHelper $miosHelper, FormController $formController, ClientNewController $clientNewController, FormAnswerController $formAnswerController, KeyValueController $keyValuesController,GroupController $groupController,RelAdvisorClientNewController $relAdvisorClientNewController){
         //Primero Validamos que todos los parametros necesarios para el correcto funcionamiento esten
@@ -179,7 +177,6 @@ class UploadController extends Controller
                 $directories = [];
                 $dataLoad=0;
                 $dataNotLoad=[];
-
                 foreach($fileData as $c=>$client){
                     $answerFields = (Object)[];
                     $errorAnswers = [];
@@ -187,7 +184,7 @@ class UploadController extends Controller
                     $formAnswerClientIndexado=[];
                     $updateExisting = true;
                     foreach($client as $d=>$data){
-                        $dataValidate=$this->validateClientDataUpload($fieldsLoad[$d],$data);
+                        $dataValidate=$this->validateClientDataUpload($fieldsLoad[$d],$data,$request->form_id);
                         if($dataValidate->success){
                             foreach($dataValidate->in as $in){
                                 if (!isset($answerFields->$in)){
@@ -204,7 +201,6 @@ class UploadController extends Controller
                             array_push($errorAnswers,$dataValidate->message);
                         }
                     }
-
                     //array_push($dataToLoad,$answerFields);
                     if(count($errorAnswers)==0){
                         $newRequest = new Request();
@@ -252,10 +248,10 @@ class UploadController extends Controller
                                         if(!isset($keyValues)){
                                             array_push($errorAnswers,"No se han podido insertar keyValues para el cliente ".$client->id);
                                         }else{
-                                            $dataLoad=$dataLoad+1;
+                                            $dataLoad++;
                                         }
                                     }else{
-                                        $dataLoad=$dataLoad+1;
+                                        $dataLoad++;
                                     }
                                 } else {
                                     array_push($errorAnswers,"No se han podido insertar el form answer para el cliente ".$client->id);
@@ -268,12 +264,16 @@ class UploadController extends Controller
                         array_push($dataNotLoad,$errorAnswers);
                     }
                 }
-
                 $resume = new stdClass();
                 $resume->totalRegistros = $totalArchivos;
                 $resume->cargados = $dataLoad;
                 $resume->nocargados = count($dataNotLoad);
                 $resume->errores=$dataNotLoad;
+                $informe = new stdClass();
+                $informe->totalArchivo = $resume->totalRegistros;
+                $informe->cargados = $resume->cargados;
+                $informe->noCargados = $resume->nocargados;
+                $informe->resumenHtml = implode("<br>",["<b>Total Archivo</b>: $resume->totalRegistros " , "<b>Cargados</b>: $resume->cargados", "<b>No Cargados</b>: $resume->nocargados"]);
                 $saveUploadRequest = new Request();
                 $saveUploadRequest->replace([
                     "name" => $file->getClientOriginalName(),
@@ -286,7 +286,7 @@ class UploadController extends Controller
                 $uploadId = $this->saveUpload($saveUploadRequest);
                 $response = new stdClass();
                 $response->uploadId = $uploadId;
-                $response->informe = implode("<br>",["Total Archivo: ".$resume->totalRegistros , "Cargados: ".$resume->cargados, "No Cargados: ".$resume->nocargados]);
+                $response->informe = $informe;
                 $data = $miosHelper->jsonResponse(true,200,"data",$response);
             }else{
                 $data = $miosHelper->jsonResponse(false,400,"message","No se encuentra los campos en el formulario");
@@ -297,18 +297,40 @@ class UploadController extends Controller
         return response()->json($data,$data['code']);
     }
 
-    public function validateClientDataUpload($field,$data){
+    public function validateClientDataUpload($field,$data,$formId = null){
         $answer=new stdClass();
         $answer->success=false;
         $answer->message=[];
-
-        $rules= isset($field->required) ? 'required' : '';
+        if($formId != null){
+            $formController = new FormController();
+            $formatValue = $formController->findAndFormatValues($formId,$field->id,$data);
+            if($formatValue->valid){
+                $data = $formatValue->value;
+            }else{
+                array_push($answer->message,$formatValue->message." in ".$field->label);
+                return $answer;
+            }
+        }
+        $rules = (isset($field->required) && $field->required) ? 'required' : '';
         $validationType = $this->kindOfValidationType($field->type,$data);
         $rules.= '|'.$validationType->type;
-        $rules.= isset($field->minLength) ? '|min:'.$field->minLength : '';
-        $rules.= isset($field->maxLength) ? '|max:'.$field->maxLength : '';
-        $validator = Validator::make([$field->label=>$validationType->formatedData], [
-            $field->label => $rules
+        if(isset($field->minLength) && isset($field->maxLength)){
+            $minLength = $field->minLength;
+            $maxLength = $field->maxLength;
+            if($field->type == 'number'){
+                $minLen = "1";
+                $maxLen = "";
+                $minLen .= str_repeat("0", intval($field->minLength) - 1);
+                $maxLen .= str_repeat("9", intval($field->maxLength));
+                $minLength = $minLen;
+                $maxLength = $maxLen;
+            }
+            $rules.= '|min:'.$minLength;
+            $rules.= '|max:'.$maxLength;
+        }
+        $fieldValidator = str_replace(['.','-','*',','],'',$field->label);
+        $validator = Validator::make([$fieldValidator=>$validationType->formatedData], [
+            $fieldValidator => $rules
         ]);
         if ($validator->fails()){
             foreach ($validator->errors()->all() as $message) {
@@ -361,7 +383,6 @@ class UploadController extends Controller
             $answer->Originalfield=$field;
         }
         return $answer;
-
     }
 
     /**
@@ -383,7 +404,7 @@ class UploadController extends Controller
                 $answer->formatedData = intval(trim($data));
             break;
             case "date":
-                $answer->type = "date";
+                $answer->type = "date|date_format:Y-m-d";
             break;
             default:
                 $answer->type = "string";
@@ -416,12 +437,6 @@ class UploadController extends Controller
             'Content-Type' => 'text/plain',
             'Cache-Control' => 'no-store, no-cache',
         ]);
-        /* ->withHeaders([
-            'Content-Type' => 'text/plain',
-            'Cache-Control' => 'no-store, no-cache',
-            'Content-Disposition' => 'attachment; filename="management.txt',
-        ]);*/
-        //return (new UploadsExport)->setUploadId($request->uploadId)->download('manager.xlsx');
     }
 
     public function exportDatabase(Request $request)

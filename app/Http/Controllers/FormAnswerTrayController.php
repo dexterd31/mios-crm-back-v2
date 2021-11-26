@@ -39,8 +39,11 @@ class FormAnswerTrayController extends Controller
             foreach (json_decode($structureAnswer['structure_answer']) as $answer){
                 if(array_search($answer->id,json_decode($saveHistoric))!== false){
                     $formController = new FormController();
-                    $answer->value=$formController->findAndFormatValues($traysSaveHistoric->form_id,$answer->id,$answer->value);
-                    array_push($historicAnswer,$answer);
+                    $formatValue = $formController->findAndFormatValues($traysSaveHistoric->form_id,$answer->id,$answer->value);
+                    if($formatValue->valid){
+                        $answer->value= $formatValue->value;
+                        array_push($historicAnswer,$answer);
+                    }
                 }
             }
         }
