@@ -372,14 +372,6 @@ class FormController extends Controller
                                 $respuestas[$input->id] = $field->value;
                             }
                             break;
-                        }else if($field->key==$input->key){
-                            $select = $this->findAndFormatValues($request->formId, $input->id, $field->value);
-                            if($select){
-                                $respuestas[$input->id] = $select;
-                            } else {
-                                $respuestas[$input->id] = $field->value;
-                            }
-                            break;
                         }
                     }
                 }
