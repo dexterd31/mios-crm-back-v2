@@ -503,19 +503,24 @@ class FormController extends Controller
             $response->message = "value $value not match";
             return $response;
         }elseif($field->controlType == 'datepicker'){
-            $date = "";
-            try {
-                if(is_int($value)){
-                    $unix_date = ($value - 25569) * 86400;
-                    $date = Carbon::createFromTimestamp($unix_date)->addDay()->timezone('America/bogota')->format('Y-m-d');
-                }else{
-                    $date = Carbon::parse(str_replace("/","-",$value))->addDay()->timezone('America/bogota')->format('Y-m-d');
+            if($value !="Invalid date"){
+                $date = "";
+                try {
+                    if(is_int($value)){
+                        $unix_date = ($value - 25569) * 86400;
+                        $date = Carbon::createFromTimestamp($unix_date)->addDay()->timezone('America/bogota')->format('Y-m-d');
+                    }else{
+                        $date = Carbon::parse(str_replace("/","-",$value))->addDay()->timezone('America/bogota')->format('Y-m-d');
+                    }
+                    $response->valid = true;
+                    $response->value = $date;
+                }catch (\Exception $ex){
+                    $response->valid = false;
+                    $response->message = "date $value is not a valid format";
                 }
+            }else{
                 $response->valid = true;
-                $response->value = $date;
-            }catch (\Exception $ex){
-                $response->valid = false;
-                $response->message = "date $value is not a valid format";
+                $response->value = '-';
             }
             return $response;
         }elseif($field->controlType == 'file'){
