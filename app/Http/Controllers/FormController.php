@@ -9,15 +9,13 @@ use App\Models\FormLog;
 use App\Models\FormAnswer;
 use App\Models\FormType;
 use App\Models\Section;
-use App\Models\User;
 use App\Services\RrhhService;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use stdClass;
-use App\Models\Directory;
-use App\Http\Controllers\AttachmentController;
 
 class FormController extends Controller
 {
@@ -133,6 +131,9 @@ class FormController extends Controller
                                 $section['fields'][$i]['isClientInfo']=true;
                             }
                         }
+                        if($section['fields'][$i]['value']=='Invalid date' && $section['fields'][$i]['controlType']=='datepicker'){
+                            $section['fields'][$i]['value']="";
+                        }
                         foreach($filters_form as $filter){
                             if($section['fields'][$i]['id'] == $filter['id']){
                                 array_push($filters_form_new,$section['fields'][$i]);
@@ -202,6 +203,9 @@ class FormController extends Controller
                         $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
                        $section['fields'][$i]['key'] =  strtolower( str_replace(' ','-',$section['fields'][$i]['label']) );
                        $section['fields'][$i]['key'] = $section['fields'][$i]['key'].$cadena;
+                    }
+                    if($section['fields'][$i]['value']=='Invalid date' && $section['fields'][$i]['controlType']=='datepicker'){
+                        $section['fields'][$i]['value']="";
                     }
                 }
                 if($section['sectionName'] == 'Datos básicos de cliente'){
@@ -356,8 +360,8 @@ class FormController extends Controller
                             if(in_array($field->id,$dependencies[$input->dependencies[0]->report])){
                                 if(isset($field->value)){
                                     $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
-                                    if($select){
-                                        $respuestas[$input->dependencies[0]->report] = $select;
+                                    if($select->valid){
+                                        $respuestas[$input->dependencies[0]->report] = $select->value;
                                     } else {
                                         $respuestas[$input->dependencies[0]->report] = $field->value;
                                     }
@@ -366,16 +370,8 @@ class FormController extends Controller
                             }
                         }else if($field->id==$input->id){
                             $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
-                            if($select){
-                                $respuestas[$input->id] = $select;
-                            } else {
-                                $respuestas[$input->id] = $field->value;
-                            }
-                            break;
-                        }else if($field->key==$input->key){
-                            $select = $this->findAndFormatValues($request->formId, $input->id, $field->value);
-                            if($select){
-                                $respuestas[$input->id] = $select;
+                            if($select->valid){
+                                $respuestas[$input->id] = $select->value;
                             } else {
                                 $respuestas[$input->id] = $field->value;
                             }
@@ -461,26 +457,71 @@ class FormController extends Controller
         return response()->json($formsSections);
     }
 
+    /**
+     * Valida que el field exista en el formulario, valida el tipo de dato y lo formatea de ser necesario,
+     * @param $form_id : id del fomulario
+     * @param $field_id: id del field a consultar
+     * @param $value: valor del field que se está validando
+     * @return stdClass : objeto que puede contener los siguientes atributos:
+     *                      -   valid (boolean) : indica si la validación fue exitosa
+     *                      -   value : retorna el valor formateado en caso que el atributo valid sea verdadero
+     *                      -   message : retorna el mensaje de error en caso que el atributo valid sea falso
+     */
     public function findAndFormatValues($form_id, $field_id, $value)
     {
+        $response = new stdClass();
+        $response->valid = false;
+        $response->message = "";
         $fields = json_decode(Section::where('form_id', $form_id)
         ->whereJsonContains('fields', ['id' => $field_id])
         ->first()->fields);
+        if(count($fields) == 0){
+            $response->message = "field not found";
+            return $response;
+        }
         $field = collect($fields)->filter(function($x) use ($field_id){
             return $x->id == $field_id;
         })->first();
-        $valueInt=intval($value);
-        if(($field->controlType == 'dropdown' || $field->controlType == 'autocomplete' || $field->controlType == 'radiobutton') && $valueInt != 0){
+        if(empty($field)){
+            $response->message = "field not found";
+            return $response;
+        }
+        if(($field->controlType == 'dropdown' || $field->controlType == 'autocomplete' || $field->controlType == 'radiobutton')){
             $field_name = collect($field->options)->filter(function($x) use ($value){
+                if(intval($value) == 0){
+                    return $x->name == $value;
+                }
                 return $x->id == $value;
-            })->first()->name;
-            return $field_name;
-        }elseif($field->controlType == 'datepicker' && strtotime($value)){
-            return Carbon::parse($value)->setTimezone('America/Bogota')->format('Y-m-d');
+            })->first();
+            if($field_name){
+                $response->valid = true;
+                $response->value = $field_name->id;
+                return $response;
+            }
+            $response->message = "value $value not match";
+            return $response;
+        }elseif($field->controlType == 'datepicker'){
+            $date = "";
+            try {
+                if(is_int($value)){
+                    $unix_date = ($value - 25569) * 86400;
+                    $date = Carbon::createFromTimestamp($unix_date)->addDay()->timezone('America/bogota')->format('Y-m-d');
+                }else{
+                    $date = Carbon::parse(str_replace("/","-",$value))->addDay()->timezone('America/bogota')->format('Y-m-d');
+                }
+                $response->valid = true;
+                $response->value = $date;
+            }catch (\Exception $ex){
+                $response->valid = false;
+                $response->message = "date $value is not a valid format";
+            }
+            return $response;
         }elseif($field->controlType == 'file'){
             $attachmentController = new AttachmentController();
             $attachment = $attachmentController->show($value);
-            return url().'/api/attachment/downloadFile/'.$attachment->id;
+            $response->valid = true;
+            $response->value = url().'/api/attachment/downloadFile/'.$attachment->id;
+            return $response;
         }elseif($field->controlType == 'multiselect'){
             $multiAnswer=[];
             foreach($value as $val){
@@ -489,11 +530,17 @@ class FormController extends Controller
                 })->first()->name;
                 array_push($multiAnswer,$field_name);
             }
-            return implode(",",$multiAnswer);
+            $response->valid = true;
+            $response->value = implode(",",$multiAnswer);
+            return $response;
         }elseif($field->controlType == 'currency'){
-            return str_replace(",","",$value);
+            $response->valid = true;
+            $response->value = str_replace(",","",$value);
+            return $response;
         }else{
-            return $value;
+            $response->valid = true;
+            $response->value = $value;
+            return $response;
         }
 
     }
