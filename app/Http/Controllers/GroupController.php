@@ -35,7 +35,7 @@ class GroupController extends Controller
 	}
 
     /**
-     * Nicol Ramirez 
+     * Nicol Ramirez
      * 26-02-2021
      * Método para consultar el listado de los grupos en la BD
      */
@@ -130,7 +130,7 @@ class GroupController extends Controller
     {
         $group = Group::find($id);
         $formsActive = $group->forms()->where('state', 1)->get();
-        
+
         if(count($formsActive) > 0 && $request->state === 0)
         {
             return $this->errorResponse('El grupo no puede ser excluido por que existen formularios activos.', 500);
@@ -148,7 +148,7 @@ class GroupController extends Controller
      */
     public function searchGroup($id)
     {
-        //trae el id de la campanha del grupo
+        //trae el id de la campaña del grupo
         $group = Group::find($id);
 
         //trae los usuarios de la camapaña
@@ -162,6 +162,13 @@ class GroupController extends Controller
         return $this->getUserRrhhGroupMembers($idsRrhhMembersGroup, $usersRhh, $group->rrhh_id_creator);
     }
 
+    /**
+     *
+     * @param $idsRrhhMembersGroup
+     * @param $usersRhh
+     * @param $creator
+     * @return array[]
+     */
     private function getUserRrhhGroupMembers($idsRrhhMembersGroup, $usersRhh, $creator)
     {
         $available = [];
@@ -188,7 +195,7 @@ class GroupController extends Controller
     }
 
     /**
-     * Nicoll Ramirez 
+     * Nicoll Ramirez
      * 03-03-2021
      * Método para consultar los usarios existentes por campañas
      */
@@ -219,7 +226,7 @@ class GroupController extends Controller
      */
     public function listGroupsByUser(MiosHelper $miosHelper, $idUser)
     {
-        // Se obtiene los grupos por el usuario usuario 
+        // Se obtiene los grupos por el usuario usuario
         try {
             $rrhhId = auth()->user()->rrhh_id;
             $where = ['group_users.rrhh_id' => $rrhhId];

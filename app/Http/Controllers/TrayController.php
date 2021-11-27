@@ -79,7 +79,6 @@ class TrayController extends Controller
 
             $tray->count=json_decode($formAnswersTrays[0])->NumAnswers;
         }
-        \Log::info(json_encode($trays));
 
         //$trays = Tray::where('form_id', $id)->get();
         /*->leftJoin('form_answers_trays', 'trays.id', '=', 'form_answers_trays.tray_id');
