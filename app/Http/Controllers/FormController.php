@@ -9,15 +9,12 @@ use App\Models\FormLog;
 use App\Models\FormAnswer;
 use App\Models\FormType;
 use App\Models\Section;
-use App\Models\User;
 use App\Services\RrhhService;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use stdClass;
-use App\Models\Directory;
-use App\Http\Controllers\AttachmentController;
 
 class FormController extends Controller
 {
@@ -488,10 +485,10 @@ class FormController extends Controller
                     return $x->name == $value;
                 }
                 return $x->id == $value;
-            })->first()->id;
+            })->first();
             if($field_name){
                 $response->valid = true;
-                $response->value = $field_name;
+                $response->value = $field_name->id;
                 return $response;
             }
             $response->message = "value $value not match";

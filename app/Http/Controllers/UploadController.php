@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\UploadsExport;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Exports\FormExport;
 use App\Imports\UploadImport;
@@ -11,11 +12,13 @@ use App\Models\Upload;
 use App\Models\Directory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FormReportExport;
 use App\Services\CiuService;
 use App\Imports\ClientNewImport;
+use phpDocumentor\Reflection\Types\False_;
 use stdClass;
 use Throwable;
 
@@ -136,8 +139,12 @@ class UploadController extends Controller
             //se obtiene el group_id
             $groupId =  json_decode($formController->searchForm($request->form_id)->getContent())->group_id;
             $advisers = $groupController->searchGroup($groupId)['members'];
+            $advisersCount = count($advisers);
+            if($advisersCount == 0){
+                return $this->errorResponse("No se encuentran asesores para asignar los registros",400);
+            }
             //se valida si el resultado es exacto
-            $quantity = $totalArchivos / count($advisers);
+            $quantity = $totalArchivos / $advisersCount;
             if(is_float($quantity)){
                 //se aproxima el valor para repartirlo proporcionalmente
                 $equalRegisters = round($quantity,0,PHP_ROUND_HALF_DOWN);
@@ -178,6 +185,8 @@ class UploadController extends Controller
                 $dataLoad=0;
                 $dataNotLoad=[];
                 foreach($fileData as $c=>$client){
+                    Log::info('FILE DATA: ');
+                    Log::info(json_encode($client));
                     $answerFields = (Object)[];
                     $errorAnswers = [];
                     $formAnswerClient=[];
@@ -196,7 +205,8 @@ class UploadController extends Controller
                             array_push($formAnswerClient,$dataValidate->formAnswer);
                             array_push($formAnswerClientIndexado,$dataValidate->formAnswerIndex);
                         }else{
-                            $columnErrorMessage = "Error en la Fila $c ";
+                            $fila = strval(intval($c) + 1);
+                            $columnErrorMessage = "Error en la Fila $fila";
                             array_push($dataValidate->message,$columnErrorMessage);
                             array_push($errorAnswers,$dataValidate->message);
                         }
@@ -311,22 +321,25 @@ class UploadController extends Controller
                 return $answer;
             }
         }
-        $rules = (isset($field->required) && $field->required) ? 'required' : '';
+        $rules = '';
         $validationType = $this->kindOfValidationType($field->type,$data);
-        $rules.= '|'.$validationType->type;
-        if(isset($field->minLength) && isset($field->maxLength)){
-            $minLength = $field->minLength;
-            $maxLength = $field->maxLength;
-            if($field->type == 'number'){
-                $minLen = "1";
-                $maxLen = "";
-                $minLen .= str_repeat("0", intval($field->minLength) - 1);
-                $maxLen .= str_repeat("9", intval($field->maxLength));
-                $minLength = $minLen;
-                $maxLength = $maxLen;
+        if(isset($field->required) && $field->required){
+            $rules = 'required';
+            if(isset($field->minLength) && isset($field->maxLength)){
+                $minLength = $field->minLength;
+                $maxLength = $field->maxLength;
+                if($field->type == 'number'){
+                    $minLen = "1";
+                    $maxLen = "";
+                    $minLen .= str_repeat("0", intval($field->minLength) - 1);
+                    $maxLen .= str_repeat("9", intval($field->maxLength));
+                    $minLength = $minLen;
+                    $maxLength = $maxLen;
+                }
+                $rules.= '|min:'.$minLength;
+                $rules.= '|max:'.$maxLength;
             }
-            $rules.= '|min:'.$minLength;
-            $rules.= '|max:'.$maxLength;
+            $rules.= '|'.$validationType->type;
         }
         $fieldValidator = str_replace(['.','-','*',','],'',$field->label);
         $validator = Validator::make([$fieldValidator=>$validationType->formatedData], [
@@ -427,10 +440,23 @@ class UploadController extends Controller
         ]);
         $upload = Upload::where('id',$request->uploadId)->first();
         $objectUpload = json_decode($upload);
+        $resumen = json_decode($objectUpload->resume);
+        $listaErrores = [];
+        foreach ($resumen->errores as $errores){
+            foreach($errores as $erroresFila){
+                foreach($erroresFila as $error){
+                    array_push($listaErrores,$error);
+                }
+            }
+        }
         $response = [
-            $objectUpload->name,
-            $objectUpload->created_at,
-            $objectUpload->updated_at,
+            "Nombre archivo: $objectUpload->name ".PHP_EOL,
+            "Fecha de carga:  ".Carbon::parse($objectUpload->created_at)->timezone('America/Bogota')->format('Y-m-d')." ".PHP_EOL,
+            "total registros: $resumen->totalRegistros ".PHP_EOL,
+            "archivos cargados: {$resumen->cargados} ".PHP_EOL,
+            "archivos no cargados: {$resumen->nocargados} ".PHP_EOL,
+            'Errores: '.PHP_EOL,
+            implode(PHP_EOL,$listaErrores)
         ];
         File::put('../storage/app/temp.txt',$response);
         return response()->download('../storage/app/temp.txt','temp.txt',[
