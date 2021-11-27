@@ -487,33 +487,50 @@ class FormController extends Controller
             return $response;
         }
         if(($field->controlType == 'dropdown' || $field->controlType == 'autocomplete' || $field->controlType == 'radiobutton')){
-            $field_name = collect($field->options)->filter(function($x) use ($value){
+            $field_id = collect($field->options)->filter(function($x) use ($value){
                 if(intval($value) == 0){
-                    return $x->name == $value;
+                    return $x->id == $value;
                 }
                 return $x->id == $value;
             })->first();
-            if($field_name){
+            if($field_id){
                 $response->valid = true;
-                $response->value = $field_name->id;
+                $response->value = $field_id->name;
                 return $response;
+            }else{
+                $field_name = collect($field->options)->filter(function($x) use ($value){
+                    if(intval($value) == 0){
+                        return $x->name == $value;
+                    }
+                    return $x->id == $value;
+                })->first();
+                if($field_name){
+                    $response->valid = true;
+                    $response->value = $field_name->name;
+                    return $response;
+                }
             }
             $response->message = "value $value not match";
             return $response;
         }elseif($field->controlType == 'datepicker'){
-            $date = "";
-            try {
-                if(is_int($value)){
-                    $unix_date = ($value - 25569) * 86400;
-                    $date = Carbon::createFromTimestamp($unix_date)->addDay()->timezone('America/bogota')->format('Y-m-d');
-                }else{
-                    $date = Carbon::parse(str_replace("/","-",$value))->addDay()->timezone('America/bogota')->format('Y-m-d');
+            if($value !="Invalid date"){
+                $date = "";
+                try {
+                    if(is_int($value)){
+                        $unix_date = ($value - 25569) * 86400;
+                        $date = Carbon::createFromTimestamp($unix_date)->addDay()->timezone('America/bogota')->format('Y-m-d');
+                    }else{
+                        $date = Carbon::parse(str_replace("/","-",$value))->addDay()->timezone('America/bogota')->format('Y-m-d');
+                    }
+                    $response->valid = true;
+                    $response->value = $date;
+                }catch (\Exception $ex){
+                    $response->valid = false;
+                    $response->message = "date $value is not a valid format";
                 }
+            }else{
                 $response->valid = true;
-                $response->value = $date;
-            }catch (\Exception $ex){
-                $response->valid = false;
-                $response->message = "date $value is not a valid format";
+                $response->value = '-';
             }
             return $response;
         }elseif($field->controlType == 'file'){
