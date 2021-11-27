@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\UploadsExport;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Exports\FormExport;
 use App\Imports\UploadImport;
@@ -10,11 +11,14 @@ use Helpers\MiosHelper;
 use App\Models\Upload;
 use App\Models\Directory;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FormReportExport;
 use App\Services\CiuService;
 use App\Imports\ClientNewImport;
+use phpDocumentor\Reflection\Types\False_;
 use stdClass;
 use Throwable;
 
@@ -51,6 +55,11 @@ class UploadController extends Controller
      * Olme Marin
      * 10-03-2021
      * Método para descargar la plantilla de excel del formularios
+     * @param $parameters:
+     * @return array: retorna un arreglo con las siguientes claves:
+     *                - columnsFile: arreglo con los nombres de las columnas
+     *                - prechargables: arreglo con los datos precargables del formulario
+     *                - rowsFile: número de filas cargadas
      */
     public function exportExcel($parameters)
     {
@@ -78,6 +87,7 @@ class UploadController extends Controller
                     $prechargables = $FormController->searchPrechargeFields($request->form_id)->getData();
                     $answer['columnsFile'] = $form_import_validate[0][0];
                     $answer['prechargables']=[];
+                    $answer['rowsFile'] = count($form_import_validate[0]) - 1;
                     foreach($prechargables->section as $section){
                         foreach($section->fields as $field){
                             if($field){
@@ -86,7 +96,6 @@ class UploadController extends Controller
                                 $prechargedField->label=$field->label;
                                 array_push($answer['prechargables'],$prechargedField);
                             }
-
                         }
                     }
                     $data = $miosHelper->jsonResponse(true,200,"data",$answer);
@@ -111,20 +120,57 @@ class UploadController extends Controller
      * @param integer ->form_id Id del formulario
      * @param array ->assigns Arreglo de Objetos con la assignación de idField a cada una de las columnas del campo [{"columnName":"Nombre","id":123456789890},{"columnName":"Apellido","id":12345678908787}]
      * @param string ->action Cadena de texto con dos posibles opciones update o none
-     *
      */
-    public function excelClients(Request $request , MiosHelper $miosHelper, FormController $formController, ClientNewController $clientNewController, FormAnswerController $formAnswerController, KeyValueController $keyValuesController){
+    public function excelClients(Request $request , MiosHelper $miosHelper, FormController $formController, ClientNewController $clientNewController, FormAnswerController $formAnswerController, KeyValueController $keyValuesController,GroupController $groupController,RelAdvisorClientNewController $relAdvisorClientNewController){
         //Primero Validamos que todos los parametros necesarios para el correcto funcionamiento esten
         $this->validate($request,[
             'excel' => 'required',
             'form_id' => 'required',
             'assigns' => 'required',
-            'action' => 'required'
+            'action' => 'required',
+            'assignUsers' => 'required',
         ]);
         $userRrhhId=auth()->user()->rrhh_id;
         $file = $request->file('excel');
         $fileData = json_decode(Excel::toCollection(new ClientNewImport(), $file)[0]);
-        if(count($fileData)>0){
+        $totalArchivos = count($fileData);
+        $assignUsers = filter_var($request->assignUsers,FILTER_VALIDATE_BOOLEAN);
+        if($assignUsers){
+            //se obtiene el group_id
+            $groupId =  json_decode($formController->searchForm($request->form_id)->getContent())->group_id;
+            $advisers = $groupController->searchGroup($groupId)['members'];
+            $advisersCount = count($advisers);
+            if($advisersCount == 0){
+                return $this->errorResponse("No se encuentran asesores para asignar los registros",400);
+            }
+            //se valida si el resultado es exacto
+            $quantity = $totalArchivos / $advisersCount;
+            if(is_float($quantity)){
+                //se aproxima el valor para repartirlo proporcionalmente
+                $equalRegisters = round($quantity,0,PHP_ROUND_HALF_DOWN);
+                // se le asigna a cada asesor la cantidad correspondiente de datos
+                foreach ($advisers as $key=>$adviser){
+                    $advisers[$key]['quantity'] = $equalRegisters;
+                }
+                // se extrae el residuo de la división para asignarlo uno a uno entre los asesores hasta que qyede en 0
+                $moduleRegisters = $totalArchivos % count($advisers);
+                foreach ($advisers as $key=>$adviser){
+                    if($moduleRegisters > 0){
+                        $advisers[$key]['quantity']++;
+                        $moduleRegisters--;
+                    }
+                }
+            }else{
+                // se le asigna a cada asesor la cantidad correspondiente de datos
+                foreach ($advisers as $key=>$adviser){
+                    $advisers[$key]['quantity'] = $quantity;
+                }
+            }
+            //se generan las banderas para contar la cantidad y saber el indice del asesor
+            $quantity = 0;
+            $advisersIndex = 0;
+        }
+        if($totalArchivos>0){
             $fieldsLoad=$formController->getSpecificFieldForSection(json_decode($request->assigns),$request->form_id);
             foreach(json_decode($request->assigns) as $assign){
                 foreach($fieldsLoad as $key=>$field){
@@ -139,13 +185,15 @@ class UploadController extends Controller
                 $dataLoad=0;
                 $dataNotLoad=[];
                 foreach($fileData as $c=>$client){
+                    Log::info('FILE DATA: ');
+                    Log::info(json_encode($client));
                     $answerFields = (Object)[];
                     $errorAnswers = [];
                     $formAnswerClient=[];
                     $formAnswerClientIndexado=[];
                     $updateExisting = true;
                     foreach($client as $d=>$data){
-                        $dataValidate=$this->validateClientDataUpload($fieldsLoad[$d],$data);
+                        $dataValidate=$this->validateClientDataUpload($fieldsLoad[$d],$data,$request->form_id);
                         if($dataValidate->success){
                             foreach($dataValidate->in as $in){
                                 if (!isset($answerFields->$in)){
@@ -157,7 +205,8 @@ class UploadController extends Controller
                             array_push($formAnswerClient,$dataValidate->formAnswer);
                             array_push($formAnswerClientIndexado,$dataValidate->formAnswerIndex);
                         }else{
-                            $columnErrorMessage = "Error en la Fila $c ";
+                            $fila = strval(intval($c) + 1);
+                            $columnErrorMessage = "Error en la Fila $fila";
                             array_push($dataValidate->message,$columnErrorMessage);
                             array_push($errorAnswers,$dataValidate->message);
                         }
@@ -165,6 +214,10 @@ class UploadController extends Controller
                     //array_push($dataToLoad,$answerFields);
                     if(count($errorAnswers)==0){
                         $newRequest = new Request();
+                        $newRequest->replace([
+                            "form_id" => $request->form_id,
+                            "unique_indentificator" => json_encode($answerFields->uniqueIdentificator[0]),
+                        ]);
                         $existingClient = $clientNewController->index($newRequest);
                         if(!empty($existingClient) && !filter_var($request->action,FILTER_VALIDATE_BOOLEAN)){
                             $updateExisting = false;
@@ -177,6 +230,27 @@ class UploadController extends Controller
                             ]);
                             $client=$clientNewController->create($newRequest);
                             if(isset($client->id)){
+                                //insertar en rel_advisor_client_new
+                                if($assignUsers){
+                                    $existingRel = $relAdvisorClientNewController->show($client->id,$advisers[$advisersIndex]['id_rhh']);
+                                    if(!isset($existingRel->id)){
+                                        $relAdvisorRequest = new Request();
+                                        $relAdvisorRequest->replace([
+                                            'client_new_id'=>$client->id,
+                                            'rrhh_id'=>$advisers[$advisersIndex]['id_rhh']
+                                        ]);
+                                        $relAdvisorClient = $relAdvisorClientNewController->create($relAdvisorRequest);
+                                        if(!empty($relAdvisorClient)){
+                                            $quantity++;
+                                        }
+                                    }else{
+                                       $quantity++;
+                                    }
+                                    if($advisers[$advisersIndex]['quantity'] == $quantity){
+                                        $advisersIndex++;
+                                        $quantity = 0;
+                                    }
+                                }
                                 $formAnswerSave=$formAnswerController->create($client->id,$request->form_id,$formAnswerClient,$formAnswerClientIndexado,"upload");
                                 if(isset($formAnswerSave->id)){
                                     if(isset($answerFields->preload)){
@@ -184,10 +258,10 @@ class UploadController extends Controller
                                         if(!isset($keyValues)){
                                             array_push($errorAnswers,"No se han podido insertar keyValues para el cliente ".$client->id);
                                         }else{
-                                            $dataLoad=$dataLoad+1;
+                                            $dataLoad++;
                                         }
                                     }else{
-                                        $dataLoad=$dataLoad+1;
+                                        $dataLoad++;
                                     }
                                 } else {
                                     array_push($errorAnswers,"No se han podido insertar el form answer para el cliente ".$client->id);
@@ -200,12 +274,16 @@ class UploadController extends Controller
                         array_push($dataNotLoad,$errorAnswers);
                     }
                 }
-
                 $resume = new stdClass();
-                $resume->totalRegistros = count($fileData);
+                $resume->totalRegistros = $totalArchivos;
                 $resume->cargados = $dataLoad;
                 $resume->nocargados = count($dataNotLoad);
                 $resume->errores=$dataNotLoad;
+                $informe = new stdClass();
+                $informe->totalArchivo = $resume->totalRegistros;
+                $informe->cargados = $resume->cargados;
+                $informe->noCargados = $resume->nocargados;
+                $informe->resumenHtml = implode("<br>",["<b>Total Archivo</b>: $resume->totalRegistros " , "<b>Cargados</b>: $resume->cargados", "<b>No Cargados</b>: $resume->nocargados"]);
                 $saveUploadRequest = new Request();
                 $saveUploadRequest->replace([
                     "name" => $file->getClientOriginalName(),
@@ -218,7 +296,7 @@ class UploadController extends Controller
                 $uploadId = $this->saveUpload($saveUploadRequest);
                 $response = new stdClass();
                 $response->uploadId = $uploadId;
-                $response->informe = implode("<br>",["Total Archivo: ".$resume->totalRegistros , "Cargados: ".$resume->cargados, "No Cargados: ".$resume->nocargados]);
+                $response->informe = $informe;
                 $data = $miosHelper->jsonResponse(true,200,"data",$response);
             }else{
                 $data = $miosHelper->jsonResponse(false,400,"message","No se encuentra los campos en el formulario");
@@ -229,18 +307,43 @@ class UploadController extends Controller
         return response()->json($data,$data['code']);
     }
 
-    public function validateClientDataUpload($field,$data){
+    public function validateClientDataUpload($field,$data,$formId = null){
         $answer=new stdClass();
         $answer->success=false;
         $answer->message=[];
-
-        $rules= isset($field->required) ? 'required' : '';
+        if($formId != null){
+            $formController = new FormController();
+            $formatValue = $formController->findAndFormatValues($formId,$field->id,$data);
+            if($formatValue->valid){
+                $data = $formatValue->value;
+            }else{
+                array_push($answer->message,$formatValue->message." in ".$field->label);
+                return $answer;
+            }
+        }
+        $rules = '';
         $validationType = $this->kindOfValidationType($field->type,$data);
-        $rules.= '|'.$validationType->type;
-        $rules.= isset($field->minLength) ? '|min:'.$field->minLength : '';
-        $rules.= isset($field->maxLength) ? '|max:'.$field->maxLength : '';
-        $validator = Validator::make([$field->label=>$validationType->formatedData], [
-            $field->label => $rules
+        if(isset($field->required) && $field->required){
+            $rules = 'required';
+            if(isset($field->minLength) && isset($field->maxLength)){
+                $minLength = $field->minLength;
+                $maxLength = $field->maxLength;
+                if($field->type == 'number'){
+                    $minLen = "1";
+                    $maxLen = "";
+                    $minLen .= str_repeat("0", intval($field->minLength) - 1);
+                    $maxLen .= str_repeat("9", intval($field->maxLength));
+                    $minLength = $minLen;
+                    $maxLength = $maxLen;
+                }
+                $rules.= '|min:'.$minLength;
+                $rules.= '|max:'.$maxLength;
+            }
+            $rules.= '|'.$validationType->type;
+        }
+        $fieldValidator = str_replace(['.','-','*',','],'',$field->label);
+        $validator = Validator::make([$fieldValidator=>$validationType->formatedData], [
+            $fieldValidator => $rules
         ]);
         if ($validator->fails()){
             foreach ($validator->errors()->all() as $message) {
@@ -250,7 +353,7 @@ class UploadController extends Controller
             $field->value=$validationType->formatedData;
             $answer->in=[];
             if(isset($field->isClientInfo) && $field->isClientInfo){
-                $answer->informationClient=(object)[
+                $answer->informationClient= (object)[
                     "id" => $field->id,
                     "value" => $field->value
                 ];
@@ -293,10 +396,10 @@ class UploadController extends Controller
             $answer->Originalfield=$field;
         }
         return $answer;
-
     }
 
     /**
+     * crea las validaciones correspondientes a cada tipo de dato
      * @param $type
      * @param $data
      * @return object objeto con 2 valores: 1. type: tipo de validación, 2. formatedData: dato formateado según lo requiera el campo
@@ -314,7 +417,7 @@ class UploadController extends Controller
                 $answer->formatedData = intval(trim($data));
             break;
             case "date":
-                $answer->type = "date";
+                $answer->type = "date|date_format:Y-m-d";
             break;
             default:
                 $answer->type = "string";
@@ -335,19 +438,31 @@ class UploadController extends Controller
         $this->validate($request,[
             'uploadId' => 'required',
         ]);
-        /*$upload = Upload::where('id',$request->uploadId)->first();
+        $upload = Upload::where('id',$request->uploadId)->first();
         $objectUpload = json_decode($upload);
+        $resumen = json_decode($objectUpload->resume);
+        $listaErrores = [];
+        foreach ($resumen->errores as $errores){
+            foreach($errores as $erroresFila){
+                foreach($erroresFila as $error){
+                    array_push($listaErrores,$error);
+                }
+            }
+        }
         $response = [
-            $objectUpload->name,
-            $objectUpload->created_at,
-            $objectUpload->updated_at,
+            "Nombre archivo: $objectUpload->name ".PHP_EOL,
+            "Fecha de carga:  ".Carbon::parse($objectUpload->created_at)->timezone('America/Bogota')->format('Y-m-d')." ".PHP_EOL,
+            "total registros: $resumen->totalRegistros ".PHP_EOL,
+            "archivos cargados: {$resumen->cargados} ".PHP_EOL,
+            "archivos no cargados: {$resumen->nocargados} ".PHP_EOL,
+            'Errores: '.PHP_EOL,
+            implode(PHP_EOL,$listaErrores)
         ];
-        return response($response)->withHeaders([
+        File::put('../storage/app/temp.txt',$response);
+        return response()->download('../storage/app/temp.txt','temp.txt',[
             'Content-Type' => 'text/plain',
             'Cache-Control' => 'no-store, no-cache',
-            'Content-Disposition' => 'attachment; filename="management.txt',
-        ]);*/
-        return (new UploadsExport)->setUploadId($request->uploadId)->download('manager.xlsx');
+        ]);
     }
 
     public function exportDatabase(Request $request)
