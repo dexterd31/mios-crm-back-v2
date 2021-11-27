@@ -130,6 +130,9 @@ class FormController extends Controller
                                 $section['fields'][$i]['isClientInfo']=true;
                             }
                         }
+                        if($section['fields'][$i]['value']=='Invalid date' && $section['fields'][$i]['controlType']=='datepicker'){
+                            $section['fields'][$i]['value']="";
+                        }
                         foreach($filters_form as $filter){
                             if($section['fields'][$i]['id'] == $filter['id']){
                                 array_push($filters_form_new,$section['fields'][$i]);
@@ -199,6 +202,9 @@ class FormController extends Controller
                         $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
                        $section['fields'][$i]['key'] =  strtolower( str_replace(' ','-',$section['fields'][$i]['label']) );
                        $section['fields'][$i]['key'] = $section['fields'][$i]['key'].$cadena;
+                    }
+                    if($section['fields'][$i]['value']=='Invalid date' && $section['fields'][$i]['controlType']=='datepicker'){
+                        $section['fields'][$i]['value']="";
                     }
                 }
                 if($section['sectionName'] == 'Datos básicos de cliente'){
