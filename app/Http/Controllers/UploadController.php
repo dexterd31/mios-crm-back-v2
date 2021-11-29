@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\UploadsExport;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Exports\FormExport;
@@ -12,13 +11,11 @@ use App\Models\Upload;
 use App\Models\Directory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FormReportExport;
 use App\Services\CiuService;
 use App\Imports\ClientNewImport;
-use phpDocumentor\Reflection\Types\False_;
 use stdClass;
 use Throwable;
 
@@ -185,8 +182,6 @@ class UploadController extends Controller
                 $dataLoad=0;
                 $dataNotLoad=[];
                 foreach($fileData as $c=>$client){
-                    Log::info('FILE DATA: ');
-                    Log::info(json_encode($client));
                     $answerFields = (Object)[];
                     $errorAnswers = [];
                     $formAnswerClient=[];
