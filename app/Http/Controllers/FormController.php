@@ -12,7 +12,6 @@ use App\Models\Section;
 use App\Services\RrhhService;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use stdClass;
@@ -288,7 +287,6 @@ class FormController extends Controller
                             ->where('tipification_time','!=','upload')
                             ->whereBetween('form_answers.created_at', [$date1, $date2])
                             ->get();
-        Log::info(json_encode($formAnswers));
         if(count($formAnswers)==0){
             // 406 Not Acceptable
             // se envia este error ya que no esta mapeado en interceptor angular.
@@ -355,7 +353,6 @@ class FormController extends Controller
                             if(in_array($field->id,$dependencies[$input->dependencies[0]->report])){
                                 if(isset($field->value)){
                                     $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
-                                    Log::info(json_encode($select));
                                     if($select->valid && isset($select->name)){
                                         $respuestas[$input->dependencies[0]->report] = $select->name;
                                     } else {
