@@ -30,7 +30,8 @@ class TmkPymesController extends Controller
     {
         $this->formId = env('TMK_PYMES_WB_FORM_ID', 2);
         $this->idFieldsInFormLead=(Object)[
-            'nombre' => 1635436624162,
+            'nombres' => 1635436624162,
+            'apellidos' => 9935436624162,
             'razon_social' => 1635436930539,
             'telefono' => 1635436912538,
             'utm_campaign' => 1635518784366,
@@ -40,7 +41,8 @@ class TmkPymesController extends Controller
         $this->productVicidial="TMK";
         $this->tokenVicidial="TmK202111031233";
         $this->leadColumns=[
-            "nombre",
+            "nombres",
+            "apellidos",
             "razon_social",
             "nit",
             "ciudad",
@@ -80,8 +82,8 @@ class TmkPymesController extends Controller
             $this->leadTMKModify['numero_documento']="";
             if(isset($this->leadTMKModify['email'])){
                 $identification=explode("*",$this->leadTMKModify['email']);
-                $this->leadTMKModify['tipo_documento']=$identification[0];
-                $this->leadTMKModify['numero_documento']=$identification[1];
+                if(isset($identification[1]))$this->leadTMKModify['tipo_documento']=$identification[0];
+                if(isset($identification[1]))$this->leadTMKModify['numero_documento']=$identification[1];
             }
             unset($this->leadTMKModify['email']);
             if ($validator->fails()) return $this->responseTmk(implode(", ", $validator->errors()->all()), -1);
@@ -105,7 +107,6 @@ class TmkPymesController extends Controller
             $uploadController = new UploadController();
             foreach($this->leadTMKModify as $key=>$lead){
                 if(isset($fieldFillIn[$key])){
-                    \Log::info(json_encode($fieldFillIn[$key])." = ".$this->cleanString($lead));
                     $dataValidate=$uploadController->validateClientDataUpload($fieldFillIn[$key],$this->cleanString($lead));
                     if($dataValidate->success){
                         foreach($dataValidate->in as $in){
@@ -117,7 +118,6 @@ class TmkPymesController extends Controller
                         array_push($formAnswerClient,$dataValidate->formAnswer);
                         array_push($formAnswerClientIndexado,$dataValidate->formAnswerIndex);
                     }else{
-                        \Log::info($dataValidate->message);
                         array_push($errorAnswers,$dataValidate->message);
                     }
                 }
@@ -218,7 +218,6 @@ class TmkPymesController extends Controller
                 }
             }
         }
-        \Log::info(json_encode($fullField));
         return $fullField;
     }
 
