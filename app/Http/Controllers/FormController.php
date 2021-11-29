@@ -12,7 +12,6 @@ use App\Models\Section;
 use App\Services\RrhhService;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use stdClass;
@@ -361,9 +360,9 @@ class FormController extends Controller
                                 if(isset($field->value)){
                                     $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
                                     if($select->valid){
-                                        $respuestas[$input->dependencies[0]->report] = $select->value;
+                                        $respuestas[$input->dependencies[0]->report] = $select->name;
                                     } else {
-                                        $respuestas[$input->dependencies[0]->report] = $field->value;
+                                        $respuestas[$input->dependencies[0]->report] = $field->name;
                                     }
                                 }
                                 break;
@@ -495,7 +494,8 @@ class FormController extends Controller
             })->first();
             if($field_id){
                 $response->valid = true;
-                $response->value = $field_id->name;
+                $response->value = $field_name->id;
+                $response->name = $field_name->name;
                 return $response;
             }else{
                 $field_name = collect($field->options)->filter(function($x) use ($value){
