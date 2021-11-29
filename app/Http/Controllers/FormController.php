@@ -12,7 +12,6 @@ use App\Models\Section;
 use App\Services\RrhhService;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use stdClass;
@@ -131,9 +130,6 @@ class FormController extends Controller
                                 $section['fields'][$i]['isClientInfo']=true;
                             }
                         }
-                        if($section['fields'][$i]['value']=='Invalid date' && $section['fields'][$i]['controlType']=='datepicker'){
-                            $section['fields'][$i]['value']="";
-                        }
                         foreach($filters_form as $filter){
                             if($section['fields'][$i]['id'] == $filter['id']){
                                 array_push($filters_form_new,$section['fields'][$i]);
@@ -203,9 +199,6 @@ class FormController extends Controller
                         $section['fields'][$i]['key'] = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'],$section['fields'][$i]['label']);
                        $section['fields'][$i]['key'] =  strtolower( str_replace(' ','-',$section['fields'][$i]['label']) );
                        $section['fields'][$i]['key'] = $section['fields'][$i]['key'].$cadena;
-                    }
-                    if($section['fields'][$i]['value']=='Invalid date' && $section['fields'][$i]['controlType']=='datepicker'){
-                        $section['fields'][$i]['value']="";
                     }
                 }
                 if($section['sectionName'] == 'Datos básicos de cliente'){
@@ -360,8 +353,8 @@ class FormController extends Controller
                             if(in_array($field->id,$dependencies[$input->dependencies[0]->report])){
                                 if(isset($field->value)){
                                     $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
-                                    if($select->valid){
-                                        $respuestas[$input->dependencies[0]->report] = $select->value;
+                                    if($select->valid && isset($select->name)){
+                                        $respuestas[$input->dependencies[0]->report] = $select->name;
                                     } else {
                                         $respuestas[$input->dependencies[0]->report] = $field->value;
                                     }
@@ -370,6 +363,14 @@ class FormController extends Controller
                             }
                         }else if($field->id==$input->id){
                             $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
+                            if($select->valid){
+                                $respuestas[$input->id] = $select->value;
+                            } else {
+                                $respuestas[$input->id] = $field->value;
+                            }
+                            break;
+                        }else if($field->key==$input->key){
+                            $select = $this->findAndFormatValues($request->formId, $input->id, $field->value);
                             if($select->valid){
                                 $respuestas[$input->id] = $select->value;
                             } else {
@@ -487,50 +488,34 @@ class FormController extends Controller
             return $response;
         }
         if(($field->controlType == 'dropdown' || $field->controlType == 'autocomplete' || $field->controlType == 'radiobutton')){
-            $field_id = collect($field->options)->filter(function($x) use ($value){
+            $field_name = collect($field->options)->filter(function($x) use ($value){
                 if(intval($value) == 0){
-                    return $x->id == $value;
+                    return $x->name == $value;
                 }
                 return $x->id == $value;
             })->first();
-            if($field_id){
+            if($field_name){
                 $response->valid = true;
-                $response->value = $field_id->name;
+                $response->value = $field_name->id;
+                $response->name = $field_name->name;
                 return $response;
-            }else{
-                $field_name = collect($field->options)->filter(function($x) use ($value){
-                    if(intval($value) == 0){
-                        return $x->name == $value;
-                    }
-                    return $x->id == $value;
-                })->first();
-                if($field_name){
-                    $response->valid = true;
-                    $response->value = $field_name->name;
-                    return $response;
-                }
             }
             $response->message = "value $value not match";
             return $response;
         }elseif($field->controlType == 'datepicker'){
-            if($value !="Invalid date"){
-                $date = "";
-                try {
-                    if(is_int($value)){
-                        $unix_date = ($value - 25569) * 86400;
-                        $date = Carbon::createFromTimestamp($unix_date)->addDay()->timezone('America/bogota')->format('Y-m-d');
-                    }else{
-                        $date = Carbon::parse(str_replace("/","-",$value))->addDay()->timezone('America/bogota')->format('Y-m-d');
-                    }
-                    $response->valid = true;
-                    $response->value = $date;
-                }catch (\Exception $ex){
-                    $response->valid = false;
-                    $response->message = "date $value is not a valid format";
+            $date = "";
+            try {
+                if(is_int($value)){
+                    $unix_date = ($value - 25569) * 86400;
+                    $date = Carbon::createFromTimestamp($unix_date)->addDay()->timezone('America/bogota')->format('Y-m-d');
+                }else{
+                    $date = Carbon::parse(str_replace("/","-",$value))->addDay()->timezone('America/bogota')->format('Y-m-d');
                 }
-            }else{
                 $response->valid = true;
-                $response->value = '-';
+                $response->value = $date;
+            }catch (\Exception $ex){
+                $response->valid = false;
+                $response->message = "date $value is not a valid format";
             }
             return $response;
         }elseif($field->controlType == 'file'){
