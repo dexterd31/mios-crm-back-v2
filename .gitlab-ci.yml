@@ -6,6 +6,7 @@ deploy:
      - merge request
  
  stage: quality
+ 
  script:
      - cd /var/www/mios/mios-backend/mios-crm-back-v2
      - git checkout .

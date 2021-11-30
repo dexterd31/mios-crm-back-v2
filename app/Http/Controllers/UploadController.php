@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\UploadsExport;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Exports\FormExport;
@@ -18,7 +17,6 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FormReportExport;
 use App\Services\CiuService;
 use App\Imports\ClientNewImport;
-use phpDocumentor\Reflection\Types\False_;
 use stdClass;
 use Throwable;
 
@@ -185,8 +183,6 @@ class UploadController extends Controller
                 $dataLoad=0;
                 $dataNotLoad=[];
                 foreach($fileData as $c=>$client){
-                    Log::info('FILE DATA: ');
-                    Log::info(json_encode($client));
                     $answerFields = (Object)[];
                     $errorAnswers = [];
                     $formAnswerClient=[];
@@ -255,6 +251,7 @@ class UploadController extends Controller
                                 if(isset($formAnswerSave->id)){
                                     if(isset($answerFields->preload)){
                                         $keyValues=$keyValuesController->createKeysValue($answerFields->preload,$request->form_id,$client->id);
+                                        Log::info("Key values created, fila $c");
                                         if(!isset($keyValues)){
                                             array_push($errorAnswers,"No se han podido insertar keyValues para el cliente ".$client->id);
                                         }else{
@@ -329,7 +326,7 @@ class UploadController extends Controller
                 $minLength = $field->minLength;
                 $maxLength = $field->maxLength;
                 if($field->type == 'number'){
-                    $minLen = "1";
+                    $minLen = "0";
                     $maxLen = "";
                     $minLen .= str_repeat("0", intval($field->minLength) - 1);
                     $maxLen .= str_repeat("9", intval($field->maxLength));
