@@ -384,7 +384,11 @@ class FormAnswerController extends Controller
                     $field['controlType']=$input[$object->id]->controlType;
 
                     if($select->valid){
-                        $field['value'] = $select->value;
+                        if(isset($select->name)){
+                            $field['value'] = $select->name;
+                        }else{
+                            $field['value'] = $select->value;
+                        }
                         $new_structure_answer[] = $field;
                     } else {
                         $new_structure_answer[] = $field;
