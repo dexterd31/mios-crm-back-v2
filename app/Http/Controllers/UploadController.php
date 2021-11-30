@@ -11,6 +11,7 @@ use App\Models\Upload;
 use App\Models\Directory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FormReportExport;
@@ -250,6 +251,7 @@ class UploadController extends Controller
                                 if(isset($formAnswerSave->id)){
                                     if(isset($answerFields->preload)){
                                         $keyValues=$keyValuesController->createKeysValue($answerFields->preload,$request->form_id,$client->id);
+                                        Log::info("Key values created, fila $c");
                                         if(!isset($keyValues)){
                                             array_push($errorAnswers,"No se han podido insertar keyValues para el cliente ".$client->id);
                                         }else{
@@ -324,7 +326,7 @@ class UploadController extends Controller
                 $minLength = $field->minLength;
                 $maxLength = $field->maxLength;
                 if($field->type == 'number'){
-                    $minLen = "1";
+                    $minLen = "0";
                     $maxLen = "";
                     $minLen .= str_repeat("0", intval($field->minLength) - 1);
                     $maxLen .= str_repeat("9", intval($field->maxLength));
