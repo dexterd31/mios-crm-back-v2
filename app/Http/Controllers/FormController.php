@@ -363,8 +363,8 @@ class FormController extends Controller
                             }
                         }else if($field->id==$input->id){
                             $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
-                            if($select->valid){
-                                $respuestas[$input->id] = $select->value;
+                            if($select->valid && isset($select->name)){
+                                $respuestas[$input->id] = $select->name;
                             } else {
                                 $respuestas[$input->id] = $field->value;
                             }
