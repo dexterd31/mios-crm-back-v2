@@ -45,6 +45,8 @@ class FormAnswerController extends Controller
             'rrhh_id' => auth()->user()->rrhh_id,
             'channel_id' => 1,
             'form_id' => $formId,
+        ],[
+            'channel_id' => 1,
             'structure_answer' => json_encode($structureAnswer),
             'client_new_id' => $clientNewId,
             "form_answer_index_data" => json_encode($formAnswerIndexData),
@@ -52,8 +54,9 @@ class FormAnswerController extends Controller
         ]);*/
         $saveFormAnswer= FormAnswer::updateOrCreate([
             'rrhh_id' => auth()->user()->rrhh_id,
-            'channel_id' => 1,
             'form_id' => $formId,
+        ],[
+            'channel_id' => 1,
             'structure_answer' => json_encode($structureAnswer),
             'client_new_id' => $clientNewId,
             "form_answer_index_data" => json_encode($formAnswerIndexData),
