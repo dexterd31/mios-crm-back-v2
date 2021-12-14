@@ -44,8 +44,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
     //Nuevas rutas para importar Base de Clientes
     $router->post('/form/upload/extractColumnsNames', 'UploadController@extractColumnsNames');
-    //$router->post('/form/upload/excelClients', 'UploadController@excelClients');
-    $router->post('/form/upload/excelClients', 'UploadController@excelClientsETL');
+    $router->post('/form/upload/excelClients', 'UploadController@excelClients');
+    //$router->post('/form/upload/excelClients', 'UploadController@excelClientsETL');
     $router->post('/form/upload/downloadManagement','UploadController@downloadManagement');
 
     //Rutas para la información del formulario
