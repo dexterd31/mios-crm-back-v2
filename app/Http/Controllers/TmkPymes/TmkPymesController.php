@@ -81,7 +81,7 @@ class TmkPymesController extends Controller
             $this->leadTMKModify=$request->all();
             $this->leadTMKModify['tipo_documento']="";
             $this->leadTMKModify['numero_documento']="";
-            if(isset($this->leadTMKModify['email'])){
+            if(isset($this->leadTMKModify['email']) && $this->leadTMKModify['email'] != ''){
                 $identification=explode("*",$this->leadTMKModify['email']);
                 if(isset($identification[1]))$this->leadTMKModify['tipo_documento']=$identification[0];
                 if(isset($identification[1]))$this->leadTMKModify['numero_documento']=$identification[1];

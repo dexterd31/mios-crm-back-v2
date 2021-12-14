@@ -359,16 +359,24 @@ class FormController extends Controller
                             if(in_array($field->id,$dependencies[$input->dependencies[0]->report])){
                                 if(isset($field->value)){
                                     $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
-                                    if($select->valid){
+                                    if($select->valid && isset($select->name)){
                                         $respuestas[$input->dependencies[0]->report] = $select->name;
                                     } else {
-                                        $respuestas[$input->dependencies[0]->report] = $field->name;
+                                        $respuestas[$input->dependencies[0]->report] = $field->value;
                                     }
                                 }
                                 break;
                             }
                         }else if($field->id==$input->id){
                             $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
+                            if($select->valid && isset($select->name)){
+                                $respuestas[$input->id] = $select->name;
+                            } else {
+                                $respuestas[$input->id] = $field->value;
+                            }
+                            break;
+                        }else if($field->key==$input->key){
+                            $select = $this->findAndFormatValues($request->formId, $input->id, $field->value);
                             if($select->valid){
                                 $respuestas[$input->id] = $select->value;
                             } else {
@@ -486,29 +494,17 @@ class FormController extends Controller
             return $response;
         }
         if(($field->controlType == 'dropdown' || $field->controlType == 'autocomplete' || $field->controlType == 'radiobutton')){
-            $field_id = collect($field->options)->filter(function($x) use ($value){
+            $field_name = collect($field->options)->filter(function($x) use ($value){
                 if(intval($value) == 0){
-                    return $x->id == $value;
+                    return $x->name == $value;
                 }
                 return $x->id == $value;
             })->first();
-            if($field_id){
+            if($field_name){
                 $response->valid = true;
                 $response->value = $field_name->id;
                 $response->name = $field_name->name;
                 return $response;
-            }else{
-                $field_name = collect($field->options)->filter(function($x) use ($value){
-                    if(intval($value) == 0){
-                        return $x->name == $value;
-                    }
-                    return $x->id == $value;
-                })->first();
-                if($field_name){
-                    $response->valid = true;
-                    $response->value = $field_name->name;
-                    return $response;
-                }
             }
             $response->message = "value $value not match";
             return $response;
