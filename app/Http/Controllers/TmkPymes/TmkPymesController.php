@@ -30,7 +30,7 @@ class TmkPymesController extends Controller
     {
         $this->formId = env('TMK_PYMES_WB_FORM_ID', 2);
         $this->idFieldsInFormLead=(Object)[
-            'nombres' => 1635436624162,
+            'nombre' => 1635436624162,
             'apellidos' => 9935436624162,
             'razon_social' => 1635437152258,
             'telefono' => 1635436912538,
@@ -42,7 +42,7 @@ class TmkPymesController extends Controller
         $this->productVicidial="TMK";
         $this->tokenVicidial="TmK202111031233";
         $this->leadColumns=[
-            "nombres",
+            "nombre",
             "apellidos",
             "razon_social",
             "nit",
