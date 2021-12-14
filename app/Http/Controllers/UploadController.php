@@ -133,6 +133,7 @@ class UploadController extends Controller
         $fileData = json_decode(Excel::toCollection(new ClientNewImport(), $file)[0]);
         $totalArchivos = count($fileData);
         $assignUsers = filter_var($request->assignUsers,FILTER_VALIDATE_BOOLEAN);
+        DB::connection()->enableQueryLog();
         if($assignUsers){
             //se obtiene el group_id
             $groupId =  json_decode($formController->searchForm($request->form_id)->getContent())->group_id;
@@ -301,6 +302,7 @@ class UploadController extends Controller
         }else{
             $data = $miosHelper->jsonResponse(false,400,"message","El archivo que intenta cargar no tiene datos.");
         }
+        Log::info(DB::connection()->getQueryLog());
         return response()->json($data,$data['code']);
     }
 
