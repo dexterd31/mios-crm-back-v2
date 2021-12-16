@@ -55,15 +55,13 @@ class FormAnswerController extends Controller
         $saveFormAnswer= FormAnswer::updateOrCreate([
             'rrhh_id' => auth()->user()->rrhh_id,
             'form_id' => $formId,
+            'client_new_id' => $clientNewId
         ],[
             'channel_id' => 1,
             'structure_answer' => json_encode($structureAnswer),
-            'client_new_id' => $clientNewId,
             "form_answer_index_data" => json_encode($formAnswerIndexData),
             'tipification_time' => $chronometer
         ]);
-        Log::info($saveFormAnswer);
-        // Guarda en Log FormAnswer
         $this->logFormAnswer($saveFormAnswer);
         return $saveFormAnswer;
     }
@@ -227,6 +225,7 @@ class FormAnswerController extends Controller
         $clientNewData->replace($replace);
         $clientNew = [];
         $clientNew = $clientNewController->index($clientNewData);
+        Log::info($clientNew);
 
 
         if(!isset($clientNew["error"]))
@@ -234,6 +233,7 @@ class FormAnswerController extends Controller
             $clientNewId = $clientNew ? $clientNew->id : null;
             $formAnswers = $this->filterFormAnswer($request->form_id, $requestJson['filter'], $clientNewId);
             $formAnswersData = $formAnswers->getCollection();
+            Log::info(json_encode($formAnswersData));
             if(count($formAnswersData) == 0)
             {
                 $formAnswers = $filterHelper->filterByDataBase($request->form_id, $clientNewId, $requestJson['filter']);
@@ -326,6 +326,7 @@ class FormAnswerController extends Controller
 
     private function filterFormAnswer($formId, $filters, $clientNewId)
     {
+        DB::connection()->enableQueryLog();
         $formAnswersQuery = FormAnswer::where('form_id', $formId);
         foreach ($filters as $filter) {
             $filterData = [
@@ -339,7 +340,9 @@ class FormAnswerController extends Controller
         {
             $formAnswersQuery = $formAnswersQuery->where("client_new_id", $clientNewId);
         }
-        return $formAnswersQuery->paginate(5);
+        $response = $formAnswersQuery->paginate(5);
+        Log::info(DB::connection()->getQueryLog());
+        return $response;
     }
 
     /**
