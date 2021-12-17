@@ -41,17 +41,16 @@ class FormAnswerController extends Controller
 
     public function create($clientNewId, $formId, $structureAnswer, $formAnswerIndexData, $chronometer)
     {
-        $saveFormAnswer = new FormAnswer([
-            'rrhh_id' => auth()->user()->rrhh_id,
-            'channel_id' => 1,
-            'form_id' => $formId,
-        ],[
-            'channel_id' => 1,
-            'structure_answer' => json_encode($structureAnswer),
-            'client_new_id' => $clientNewId,
-            "form_answer_index_data" => json_encode($formAnswerIndexData),
-            'tipification_time' => $chronometer
-        ]);
+        $saveFormAnswer = new FormAnswer();
+        $saveFormAnswer->rrhh_id = auth()->user()->rrhh_id;
+        $saveFormAnswer->channel_id = 1;
+        $saveFormAnswer->form_id = $formId;
+        $saveFormAnswer->structure_answer = json_encode($structureAnswer);
+        $saveFormAnswer->client_new_id = $clientNewId;
+        $saveFormAnswer->form_answer_index_data = json_encode($formAnswerIndexData);
+        $saveFormAnswer->tipification_time = $chronometer;
+        $saveFormAnswer->save();
+        \Log::info($saveFormAnswer);
         /*$saveFormAnswer= FormAnswer::updateOrCreate([
             'rrhh_id' => auth()->user()->rrhh_id,
             'form_id' => $formId,
