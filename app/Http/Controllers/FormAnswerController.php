@@ -41,19 +41,9 @@ class FormAnswerController extends Controller
 
     public function create($clientNewId, $formId, $structureAnswer, $formAnswerIndexData, $chronometer)
     {
-        /*$formsAnswer = new FormAnswer([
+        $saveFormAnswer = new FormAnswer([
             'rrhh_id' => auth()->user()->rrhh_id,
             'channel_id' => 1,
-            'form_id' => $formId,
-        ],[
-            'channel_id' => 1,
-            'structure_answer' => json_encode($structureAnswer),
-            'client_new_id' => $clientNewId,
-            "form_answer_index_data" => json_encode($formAnswerIndexData),
-            'tipification_time' => $chronometer
-        ]);*/
-        $saveFormAnswer= FormAnswer::updateOrCreate([
-            'rrhh_id' => auth()->user()->rrhh_id,
             'form_id' => $formId,
         ],[
             'channel_id' => 1,
@@ -62,7 +52,16 @@ class FormAnswerController extends Controller
             "form_answer_index_data" => json_encode($formAnswerIndexData),
             'tipification_time' => $chronometer
         ]);
-        Log::info($saveFormAnswer);
+        /*$saveFormAnswer= FormAnswer::updateOrCreate([
+            'rrhh_id' => auth()->user()->rrhh_id,
+            'form_id' => $formId,
+        ],[
+            'channel_id' => 1,
+            'structure_answer' => json_encode($structureAnswer),
+            'client_new_id' => $clientNewId,
+            "form_answer_index_data" => json_encode($formAnswerIndexData),
+            'tipification_time' => $chronometer
+        ]);*/
         // Guarda en Log FormAnswer
         $this->logFormAnswer($saveFormAnswer);
         return $saveFormAnswer;
@@ -204,10 +203,13 @@ class FormAnswerController extends Controller
 
     public function filterForm(Request $request)
     {
+        \Log::info($request->all());
         $miosHelper = new MiosHelper();
         $filterHelper = new FilterHelper();
         $requestJson = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
+        \Log::info($requestJson);
         $dataFilters = $this->getDataFilters($requestJson['filter']);
+        \Log::info($dataFilters);
         $data = [];
         $files = [];
 
@@ -224,11 +226,15 @@ class FormAnswerController extends Controller
         }
         $replace["form_id"] = $request->form_id;
 
-        $clientNewData->replace($replace);
-        $clientNew = [];
-        $clientNew = $clientNewController->index($clientNewData);
+        if(isset($replace["form_id"]) && (isset($replace["information_data"]) || isset($replace["unique_indentificator"]))){
+            $clientNewData->replace($replace);
+            $clientNew = [];
+            $clientNew = $clientNewController->index($clientNewData);
+        }else{
+            $clientNew = [];
+        }
 
-
+        \Log::info($clientNew);
         if(!isset($clientNew["error"]))
         {
             $clientNewId = $clientNew ? $clientNew->id : null;
@@ -339,6 +345,8 @@ class FormAnswerController extends Controller
         {
             $formAnswersQuery = $formAnswersQuery->where("client_new_id", $clientNewId);
         }
+        \Log::info($formAnswersQuery->toSql());
+        \Log::info($formAnswersQuery->getBindings());
         return $formAnswersQuery->paginate(5);
     }
 
