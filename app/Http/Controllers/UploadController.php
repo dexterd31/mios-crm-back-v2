@@ -20,6 +20,8 @@ use App\Imports\ClientNewImport;
 use stdClass;
 use Throwable;
 
+use function GuzzleHttp\json_encode;
+
 class UploadController extends Controller
 {
 
@@ -80,7 +82,7 @@ class UploadController extends Controller
             $answer = [];
             if(isset($file)){
                 $form_import_validate = Excel::toArray(new UploadImport, $file);
-                if(count($form_import_validate[0])>1 && count($form_import_validate[0][0])>0 && $form_import_validate[0][0]<>NULL && count($form_import_validate[0])<5001){
+                if(count($form_import_validate[0])>1 && count($form_import_validate[0][0])>0 && $form_import_validate[0][0]<>NULL){
                     $FormController = new FormController();
                     $prechargables = $FormController->searchPrechargeFields($request->form_id)->getData();
                     $answer['columnsFile'] = $form_import_validate[0][0];
@@ -97,8 +99,6 @@ class UploadController extends Controller
                         }
                     }
                     $data = $miosHelper->jsonResponse(true,200,"data",$answer);
-                }elseif(count($form_import_validate[0])>5000){
-                    $data = $miosHelper->jsonResponse(false,406,"message","El archivo cargado tiene mas de 5000 registros. Recuerde que solo se pueden hacer cargas de 5000 registros.");
                 }else{
                     $data = $miosHelper->jsonResponse(false,406,"message","El archivo cargado no tiene datos para cargar, recuerde que en la primera fila se debe utilizar para identificar los datos asignados a cada columna.");
                 }
@@ -133,6 +133,7 @@ class UploadController extends Controller
         $fileData = json_decode(Excel::toCollection(new ClientNewImport(), $file)[0]);
         $totalArchivos = count($fileData);
         $assignUsers = filter_var($request->assignUsers,FILTER_VALIDATE_BOOLEAN);
+        DB::connection()->enableQueryLog();
         if($assignUsers){
             //se obtiene el group_id
             $groupId =  json_decode($formController->searchForm($request->form_id)->getContent())->group_id;
@@ -301,8 +302,133 @@ class UploadController extends Controller
         }else{
             $data = $miosHelper->jsonResponse(false,400,"message","El archivo que intenta cargar no tiene datos.");
         }
+        Log::info(DB::connection()->getQueryLog());
         return response()->json($data,$data['code']);
     }
+
+
+    /**
+     * ETL
+     *
+     */
+    public function excelClientsETL(Request $request , MiosHelper $miosHelper, FormController $formController, ClientNewController $clientNewController, FormAnswerController $formAnswerController, KeyValueController $keyValuesController,GroupController $groupController,RelAdvisorClientNewController $relAdvisorClientNewController){
+        //Primero Validamos que todos los parametros necesarios para el correcto funcionamiento esten
+        $this->validate($request,[
+            'excel' => 'required',
+            'form_id' => 'required',
+            'assigns' => 'required',
+            'action' => 'required',
+            'assignUsers' => 'required',
+        ]);
+        $file = $request->file('excel');
+        $fileData = json_decode(Excel::toCollection(new ClientNewImport(), $file)[0]);
+        $totalArchivos = count($fileData);
+        $clientsNewExcel=[];
+        $formAnswersExcel=[];
+        $keysValueExcel=[];
+        $errorAnswers=[];
+        \Log::info($request->form_id);
+        if($totalArchivos>0){
+            $fieldsLoad=$formController->getSpecificFieldForSection(json_decode($request->assigns),$request->form_id);
+            foreach(json_decode($request->assigns) as $assign){
+                foreach($fieldsLoad as $key=>$field){
+                    if($field->id == $assign->id){
+                        $fieldsLoad[$assign->columnName]=$field;
+                        unset($fieldsLoad[$key]);
+                    }
+                }
+            }
+            if(count($fieldsLoad)>0){
+                $directories = [];
+                $dataLoad=0;
+                $dataNotLoad=[];
+                foreach($fileData as $c=>$client){
+                    $idRef=$c+1;
+                    $answerFields = (Object)[];
+                    $errorAnswers = [];
+                    $formAnswerClient=[];
+                    $formAnswerClientIndexado=[];
+                    $updateExisting = true;
+                    foreach($client as $d=>$data){
+                        $dataValidate=$this->validateClientDataUpload($fieldsLoad[$d],$data,$request->form_id);
+                        if($dataValidate->success){
+                            foreach($dataValidate->in as $in){
+                                if (!isset($answerFields->$in)){
+                                    $answerFields->$in=[];
+                                }
+                                array_push($answerFields->$in,$dataValidate->$in);
+                                array_push($directories,$dataValidate->$in);
+                            }
+                            array_push($formAnswerClient,$dataValidate->formAnswer);
+                            array_push($formAnswerClientIndexado,$dataValidate->formAnswerIndex);
+                        }else{
+                            $fila = strval(intval($c) + 1);
+                            $columnErrorMessage = "Error en la Fila $fila";
+                            array_push($dataValidate->message,$columnErrorMessage);
+                            \Log::info($dataValidate->message);
+                            array_push($errorAnswers,$dataValidate->message);
+                        }
+                    }
+                    //array_push($dataToLoad,$answerFields);
+                    if(count($errorAnswers)==0){
+                            $client=[];
+                            $client["llave"] = $idRef;
+                            $client["form_id"] = $request->form_id;
+                            $client["information_data"] = json_encode($answerFields->informationClient);
+                            $client["unique_indentificator"] = json_encode($answerFields->uniqueIdentificator[0]);
+                            $client['created_at'] = Carbon::now()->format('Y-m-d H:i:s');
+                            $client['updated_at'] = Carbon::now()->format('Y-m-d H:i:s');
+                            array_push($clientsNewExcel,$client);
+
+                            $formAnswer=[];
+                            $formAnswer["structure_answer"] = $formAnswerClient;
+                            $formAnswer["created_at"] = Carbon::now()->format('Y-m-d H:i:s');
+                            $formAnswer["updated_at"] = Carbon::now()->format('Y-m-d H:i:s');
+                            $formAnswer["form_id"] = $request->form_id;
+                            $formAnswer["chanel_id"] = 1;
+                            $formAnswer["client_id"] = '';
+                            $formAnswer["rrhh_id"] = 1;
+                            $formAnswer["client_new_id"] = $idRef;
+                            $formAnswer["form_answer_index_data"] = $formAnswerClientIndexado;
+                            $formAnswer["tipification_time"] = "upload";
+                            array_push($formAnswersExcel,$formAnswer);
+
+                            foreach ($answerFields->preload as $keyValueData){
+                                if(isset($keyValueData["value"])){
+                                    if(is_array($keyValueData["value"])){
+                                        $keyValueData["value"] = implode(",",$keyValueData["value"]);
+                                    }
+                                    $keyValue = [];
+                                    $keyValue['key'] = $keyValueData["key"];
+                                    $keyValue['value'] = $keyValueData["value"];
+                                    $keyValue['description'] = 'etl';
+                                    $keyValue['created_at'] = Carbon::now()->format('Y-m-d H:i:s');
+                                    $keyValue['updated_at'] = Carbon::now()->format('Y-m-d H:i:s');
+                                    $keyValue['client_id'] = '';
+                                    $keyValue['form_id'] = $request->form_id;
+                                    $keyValue['field_id'] = $keyValueData["id"];
+                                    $keyValue['client_new_id'] = $idRef;
+                                    array_push($keysValueExcel, $keyValue);
+                                }
+                            }
+                        }
+                }
+                Excel::store(new FormReportExport($clientsNewExcel, ["Llave","form_id","information_data","unique_indentificator","created_at","updated_at"]), 'ClientNews'.$request->form_id.'.xlsx');
+                Excel::store(new FormReportExport($formAnswersExcel, ["structure_answer","created_at","updated_at","form_id","chanel_id","client_id","rrhh_id","client_new_id","form_answer_index_data","tipification_time"]), 'FormAnswers'.$request->form_id.'.xlsx');
+                Excel::store(new FormReportExport($keysValueExcel, ['key','value','description','created_at','updated_at','client_id','form_id','field_id','7client_new_id']), 'KeyValues'.$request->form_id.'.xlsx');
+                Excel::store(new FormReportExport($errorAnswers, ['error']), 'Errores'.$request->form_id.'.xlsx');
+                $data = $miosHelper->jsonResponse(true,200,"data","Ok");
+            }else{
+                $data = $miosHelper->jsonResponse(false,400,"message","No se encuentra los campos en el formulario");
+            }
+        }else{
+            $data = $miosHelper->jsonResponse(false,400,"message","El archivo que intenta cargar no tiene datos.");
+        }
+        return response()->json($data,$data['code']);
+    }
+
+
+
 
     public function validateClientDataUpload($field,$data,$formId = null){
         $answer=new stdClass();

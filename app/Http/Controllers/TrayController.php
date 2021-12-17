@@ -272,7 +272,7 @@ class TrayController extends Controller
             return $x->id == $field_id;
         })->first();
 
-        if($field->controlType == 'dropdown'){
+        if(($field->controlType == 'dropdown' || $field->controlType == 'autocomplete' || $field->controlType == 'radiobutton')){
             $field_name = collect($field->options)->filter(function($x) use ($value){
                 return $x->id == $value;
             })->first()->name;
