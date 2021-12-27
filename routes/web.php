@@ -177,6 +177,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
           $router->post('sync','integrations\ReaderSyncController@syncForms');
 
       });
+
       //tipo de documento
       $router->get('documentType/list','DocumentTypeController@list');
       $router->post('documentType/create','DocumentTypeController@create');
@@ -187,6 +188,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       // requerimiento tmk-pymes
       $router->post("v1/tmkPymes/ingresaSolicitud", "TmkPymes\TmkPymesController@store");
 
+      //notificacionesCrm
+      $router->get('notifications/prepareNotifications/{formId}','NotificationsController@PrepareNotifications');
 });
 
 

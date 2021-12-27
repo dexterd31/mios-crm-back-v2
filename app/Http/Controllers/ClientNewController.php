@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Helper\MiosHelper;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Log;
+use Illuminate\Support\Facades\Log;
 use PhpParser\Node\Expr\Cast\Object_;
 
 class ClientNewController extends Controller
@@ -71,6 +71,7 @@ class ClientNewController extends Controller
      */
     public function index(Request $request)
     {
+        DB::connection()->enableQueryLog();
         $validator = Validator::make($request->all(),[
             'form_id' => 'required|integer',
             'unique_indentificator' => 'json',
@@ -114,6 +115,7 @@ class ClientNewController extends Controller
                 ->whereJsonContains("unique_indentificator",["value"=>$unique_indentificator->value]);
         }
         return $clientNewQuery->first();
+        Log::info(DB::connection()->getQueryLog());
     }
 
     //TODO: crear método para consultar el indice con la relación

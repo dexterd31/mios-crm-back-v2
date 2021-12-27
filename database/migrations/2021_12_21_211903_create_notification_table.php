@@ -31,6 +31,9 @@ class CreateNotificationTable extends Migration
                   ->nullable(false)
                   ->comment('Json con los ids valores que activan el envio de la notificacion');
 
+            $table->string('subject',255)
+                  ->comment('asunto del correo');
+
             $table->longText('template_to_send')
                   ->nullable(false)
                   ->comment('Html o plantilla de texto para ser enviado');
