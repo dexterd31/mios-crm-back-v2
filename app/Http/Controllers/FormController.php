@@ -334,7 +334,7 @@ class FormController extends Controller
                                 $dependencies[$input->label]=[$input->id];
                                 array_push($titleHeaders,$input->label);
                                 array_push($inputReport,$input);
-                                $plantillaRespuestas[$input->label]="-";
+                                $plantillaRespuestas[$input->label]=$char;
                             }
                             $input->dependencies[0]->report=$input->label;
                         }else{

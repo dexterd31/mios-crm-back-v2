@@ -103,6 +103,12 @@ class FormAnswerController extends Controller
                 if(isset($field['duplicated'])){
                     $register['duplicated']=$field['duplicated'];
                 }
+                /**
+                 * se agrega la validacion del elemento conversation_id para almacenar el id de la conversacion por la que se relaiza la encuesta de o nicanalidad
+                 */
+                if(isset($field['conversation_id'])){
+                    $register['conversation_id']=$field['conversation_id'];
+                }
                 if(json_decode($request->client_unique)[0]->id == $field['id'])
                 {
                     if(!$field['value'])
