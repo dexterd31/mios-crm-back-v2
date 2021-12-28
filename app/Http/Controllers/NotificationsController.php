@@ -17,6 +17,11 @@ use PHPUnit\Framework\MockObject\Api;
 class NotificationsController extends Controller
 {
     use ApiResponse;
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     /**
      * @author Juan Pablo Camargo Vanegas
      * @desc Muestra todos los registros almacenados en notifications.
@@ -120,13 +125,24 @@ class NotificationsController extends Controller
      */
     public function prepareNotifications(int $formId){
         $response = new \stdClass();
-        $form = Form::where('id', $formId)->first();
+
+        $form = Form::where('id', $formId)
+                    ->with(["section" => function($q){
+                            $q->where('state', '!=', 1);
+                        }])
+                    ->first();
         if(!$form){
             return $this->errorResponse('form not found',404);
         }
         $form->filters = json_decode($form->filters);
         $form->fields_client_unique_identificator = json_decode($form->fields_client_unique_identificator);
         $form->seeRoles = json_decode($form->seeRoles);
+        for ($i = 0; $i < count($form->section); $i++) {
+            unset($form->section[$i]['created_at']);
+            unset($form->section[$i]['updated_at']);
+            unset($form->section[$i]['form_id']);
+            $form->section[$i]['fields'] = json_decode($form->section[$i]['fields']);
+        }
         $notification_types = NotificationsType::all();
         if(count($notification_types) === 0){
             return $this->errorResponse('notifications type not found',404);
@@ -136,6 +152,7 @@ class NotificationsController extends Controller
             return $this->errorResponse('notifications not found',404);
         }
         foreach ($notifications as $notification) {
+            $notification->to = json_decode($notification->to);
             $notification->activators = json_decode($notification->activators);
         }
         $response->form = $form;
