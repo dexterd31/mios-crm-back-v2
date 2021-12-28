@@ -34,6 +34,9 @@ class CreateNotificationTable extends Migration
             $table->string('subject',255)
                   ->comment('asunto del correo');
 
+            $table->json('to')
+                ->comment('número o correos a los que serán enviados');
+
             $table->longText('template_to_send')
                   ->nullable(false)
                   ->comment('Html o plantilla de texto para ser enviado');

@@ -21,11 +21,9 @@ class CreateNotificationAttatchmentTable extends Migration
                   ->constrained('notifications');
 
             $table->longText('static_atachment')
-                  ->nullable(false)
                   ->comment('Nombre del archivo que se va a enviar siempre');
 
             $table->json('dinamic_atachment')
-                  ->nullable(false)
                   ->comment('Objeto donde se almacenan los campos que conforman el nombre del archivo a enviar en el adjunto.');
 
             $table->longText('route_atachment');

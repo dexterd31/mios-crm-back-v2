@@ -12,6 +12,8 @@ class Notifications extends Model
                            'notification_type',
                            'name',
                            'activators',
+                           'subject',
+                           'to',
                            'template_to_send',
                            'rrhh_id',
                            'state',
