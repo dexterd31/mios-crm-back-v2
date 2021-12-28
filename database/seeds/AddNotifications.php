@@ -44,7 +44,7 @@ class AddNotifications extends Seeder
             'notification_type' => 1,
             'name' => 'test',
             'activators' => $activators,
-            'to' => $to,
+            'to' => json_encode($to),
             'subject' => 'test@test.com',
             'template_to_send' => 'señor $nombre: esto es una prueba',
             'rrhh_id' => 1,
