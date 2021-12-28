@@ -285,6 +285,7 @@ class FormController extends Controller
      * Se cambia la funcion reportes evalua primero los campos que se deben reportar y despues compara con las respuestas
      */
     public function report(Request $request, MiosHelper $miosHelper){
+        $char="";
         $date1=Carbon::parse($request->date1)->setTimezone('America/Bogota');
         $date2=Carbon::parse($request->date2)->setTimezone('America/Bogota');
         $rrhhService = new RrhhService();
@@ -322,7 +323,7 @@ class FormController extends Controller
             }
             //Verificamos cuales son los campos que deben ir en el reporte o que su elemento inReport sea true
             $sections=Section::select('fields')->where("form_id",$request->formId)->get();
-            $plantillaRespuestas['id']="-";
+            $plantillaRespuestas['id']=$char;
             foreach($sections as $section){
                 foreach(json_decode($section->fields) as $input){
                     if($input->inReport){
@@ -339,15 +340,15 @@ class FormController extends Controller
                         }else{
                             array_push($titleHeaders,$input->label);
                             array_push($inputReport,$input);
-                            $plantillaRespuestas[$input->id]="-";
+                            $plantillaRespuestas[$input->id]=$char;
                         }
                     }
                 }
             }
-            $plantillaRespuestas['user']="-";
-            $plantillaRespuestas['docuser']="-";
-            $plantillaRespuestas['created_at'] ="-";
-            $plantillaRespuestas['updated_at'] ="-";
+            $plantillaRespuestas['user']=$char;
+            $plantillaRespuestas['docuser']=$char;
+            $plantillaRespuestas['created_at'] =$char;
+            $plantillaRespuestas['updated_at'] =$char;
 
             foreach($formAnswers as $answer){
                 $respuestas=$plantillaRespuestas;
@@ -386,8 +387,8 @@ class FormController extends Controller
                         }
                     }
                 }
-                $respuestas['user']="-";
-                $respuestas['docuser']="-";
+                $respuestas['user']=$char;
+                $respuestas['docuser']=$char;
                 if(isset($adviserInfo[$answer->id_rhh]->name)){
                     $respuestas['user']=$adviserInfo[$answer->id_rhh]->name;
                     $respuestas['docuser']=$adviserInfo[$answer->id_rhh]->id_number;
@@ -526,7 +527,7 @@ class FormController extends Controller
                 }
             }else{
                 $response->valid = true;
-                $response->value = '-';
+                $response->value = '';
             }
             return $response;
         }elseif($field->controlType == 'file'){
