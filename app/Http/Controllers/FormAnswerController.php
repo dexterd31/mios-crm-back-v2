@@ -21,8 +21,6 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\FormAnswersTray;
 use App\Models\RelTrayUser;
-use App\Http\Controllers\FormController;
-use Illuminate\Support\Facades\Log;
 
 
 class FormAnswerController extends Controller
@@ -166,8 +164,12 @@ class FormAnswerController extends Controller
 
             // Manejar bandejas
             $this->matchTrayFields($form_answer->form_id, $form_answer);
-
             $this->updateDataCrm($clientNew->id, $form_answer);
+
+            //validarNotificaciones
+            $notificationsController = new NotificationsController();
+            $notificationsController->sendNotifications($request->form_id,$formAnswerData);
+
             return $this->successResponse(['message'=>"Información guardada correctamente",'formAsnwerId'=>$form_answer->id]);
         }
         return $this->errorResponse($data["message"], 500);
