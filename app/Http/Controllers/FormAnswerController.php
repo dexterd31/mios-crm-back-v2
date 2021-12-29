@@ -21,8 +21,6 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\FormAnswersTray;
 use App\Models\RelTrayUser;
-use App\Http\Controllers\FormController;
-use Illuminate\Support\Facades\Log;
 
 
 class FormAnswerController extends Controller
@@ -160,8 +158,12 @@ class FormAnswerController extends Controller
 
             // Manejar bandejas
             $this->matchTrayFields($form_answer->form_id, $form_answer);
-
             $this->updateDataCrm($clientNew->id, $form_answer);
+
+            //validarNotificaciones
+            $notificationsController = new NotificationsController();
+            $notificationsController->sendNotifications($request->form_id,$formAnswerData);
+
             return $this->successResponse(['message'=>"Información guardada correctamente",'formAsnwerId'=>$form_answer->id]);
         }
         return $this->errorResponse($data["message"], 500);
@@ -225,7 +227,6 @@ class FormAnswerController extends Controller
         $clientNewData->replace($replace);
         $clientNew = [];
         $clientNew = $clientNewController->index($clientNewData);
-        Log::info($clientNew);
 
 
         if(!isset($clientNew["error"]))
@@ -233,7 +234,6 @@ class FormAnswerController extends Controller
             $clientNewId = $clientNew ? $clientNew->id : null;
             $formAnswers = $this->filterFormAnswer($request->form_id, $requestJson['filter'], $clientNewId);
             $formAnswersData = $formAnswers->getCollection();
-            Log::info(json_encode($formAnswersData));
             if(count($formAnswersData) == 0)
             {
                 $formAnswers = $filterHelper->filterByDataBase($request->form_id, $clientNewId, $requestJson['filter']);
@@ -326,7 +326,6 @@ class FormAnswerController extends Controller
 
     private function filterFormAnswer($formId, $filters, $clientNewId)
     {
-        DB::connection()->enableQueryLog();
         $formAnswersQuery = FormAnswer::where('form_id', $formId);
         foreach ($filters as $filter) {
             $filterData = [
@@ -341,7 +340,6 @@ class FormAnswerController extends Controller
             $formAnswersQuery = $formAnswersQuery->where("client_new_id", $clientNewId);
         }
         $response = $formAnswersQuery->paginate(5);
-        Log::info(DB::connection()->getQueryLog());
         return $response;
     }
 

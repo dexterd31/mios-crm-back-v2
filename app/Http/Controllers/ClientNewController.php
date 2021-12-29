@@ -71,7 +71,6 @@ class ClientNewController extends Controller
      */
     public function index(Request $request)
     {
-        DB::connection()->enableQueryLog();
         $validator = Validator::make($request->all(),[
             'form_id' => 'required|integer',
             'unique_indentificator' => 'json',
@@ -109,13 +108,10 @@ class ClientNewController extends Controller
         if($request->unique_indentificator)
         {
             $unique_indentificator = json_decode($request->unique_indentificator);
-            Log::info("UNIQUE IDENTIFICATOR");
-            Log::info($request->unique_indentificator);
             $clientNewQuery = $clientNewQuery->whereJsonContains("unique_indentificator",["id"=>$unique_indentificator->id])
                 ->whereJsonContains("unique_indentificator",["value"=>$unique_indentificator->value]);
         }
         return $clientNewQuery->first();
-        Log::info(DB::connection()->getQueryLog());
     }
 
     //TODO: crear método para consultar el indice con la relación

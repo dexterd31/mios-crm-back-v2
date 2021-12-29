@@ -6,13 +6,11 @@ use App\Models\Form;
 use App\Models\Notifications;
 use App\Models\NotificationsAttatchment;
 use App\Models\NotificationsType;
+use App\Services\NotificationsService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use PHPUnit\Framework\MockObject\Api;
 
 class NotificationsController extends Controller
 {
@@ -52,6 +50,7 @@ class NotificationsController extends Controller
             'form_id' => 'required|numeric',
             'notification_type' => 'required|numeric',
             'name' => 'required|string',
+            'to' => 'required|array',
             'template_to_send' => 'required|string',
             'activators' => 'required|array',
             'activators.*.id' => 'required|int',
@@ -64,6 +63,7 @@ class NotificationsController extends Controller
             'activators' => json_encode($request->activators),
             'name' => $request->name,
             'subject' => (isset($request->subject))?$request->subject:'',
+            'to' => $request->to,
             'template_to_send' => $request->template_to_send,
             'rrhh_id' => Auth::user()->rrhh_id
         ]);
@@ -182,6 +182,7 @@ class NotificationsController extends Controller
             'notification_type' => 'required|numeric',
             'name' => 'required|string',
             'body_notifications' => 'required|string',
+            'to' => 'required|array',
             'activators' => 'required|array',
             'activators.*.id' => 'required|numeric',
             'activators.*.type' => 'required',
@@ -238,13 +239,100 @@ class NotificationsController extends Controller
         return response()->json($response);
     }
 
-
+    /**
+     * @desc método para el envío de notificaciones según la respuesta del formulario
+     * @author Juan Pablo Camargo Vanegas
+     * @param int $formId
+     * @param $formAnswerData
+     * @return void
+     */
     public function sendNotifications(int $formId,$formAnswerData){
-        $notifications = $this->showByFormId($formId);
+        $notifications = $this->showByFormId($formId,false);
+        if(count($notifications) == 0){
+            return;
+        }
         foreach ($notifications as $notification){
-            $activators = array_filter($formAnswerData,function ($data){
-                Log::info($data);
-            });
+            foreach ($notification->activators as $activator){
+                $existingActivator = $this->activatorsInResponse($formAnswerData,$activator);
+                if(!$existingActivator){
+                    return;
+                }
+            }
+            //envío de notificación
+            switch($notification->notification_type){
+                case 1: //email
+                    $this->sendEmailNotification($notification,$formAnswerData);
+                    break;
+                case 2: //sms
+                    break;
+            }
         }
     }
+
+    /**
+     * @desc valida que el activador de la notificación se encuentre en las respuestas del formulario
+     * @author Juan Pablo Camargo Vanegas
+     * @param $formAnswerData
+     * @param $activator
+     * @return array|false
+     */
+    private function activatorsInResponse($formAnswerData,$activator){
+        $activators = array_filter($formAnswerData,function ($data) use ($activator){
+           return ($data['id'] == $activator->id) && strtolower($data['value']) == strtolower($activator->value);
+        });
+        if(count($activators) > 0){
+            return $activators;
+        }
+        return false;
+    }
+
+    /**
+     * @param $notification
+     * @return void
+     */
+    private function sendEmailNotification($notification,$formAnswerData){
+        $notificationService = new NotificationsService();
+        $nAttatchments = NotificationsAttatchment::where('notifications_id',$notification->id)->get();
+        if(count($nAttatchments) > 0){
+            $dinamicAttatchments = [];
+            $staticAttatchments = [];
+            foreach ($nAttatchments as $attatchment){
+                if(!is_null($attatchment->dinamic_atachment)){
+                    array_push($dinamicAttatchments,['name' => json_decode($attatchment->dinamic_atachment),'route' => $attatchment->route_atachment]);
+                }
+                if(!is_null($attatchment->static_atachment)){
+                    array_push($staticAttatchments,['name' => $attatchment->static_atachment,'route' => $attatchment->route_atachment]);
+                }
+            }
+        }
+        $emailBody = $notification->template_to_send;
+        $to = (isset($notification->to))? json_decode($notification->to) : null;
+        foreach ($formAnswerData as $data){
+            $emailBody = str_replace("[[{$data['key']}]]",$data['value'],$emailBody);
+            if(!is_null($to)) $to = str_replace($data['id'],$data['value'],$to);
+            if(isset($dinamicAttatchments)){
+                array_walk_recursive($dinamicAttatchments,function (&$attatchment) use ($data){
+                    $attatchment = str_replace($data['id'],$data['value'],$attatchment);
+                });
+            }
+        }
+        if(isset($dinamicAttatchments) || isset($staticAttatchments)){
+            $attatchments = [];
+            foreach ($dinamicAttatchments as $attatchment){
+                $attatchment['name'] = implode("",$attatchment['name']);
+                $content = Storage::get($attatchment['route'].$attatchment['name']);
+                $attatchment['file'] = $content;
+                array_push($attatchments,$attatchment);
+            }
+            foreach ($staticAttatchments as $attatchment){
+                $content = Storage::get($attatchment['route'].$attatchment['name']);
+                $attatchment['file'] = $content;
+                array_push($attatchments,$attatchment);
+            }
+        }
+        $notificationService->sendEmail($emailBody,$notification->subject,$to,$attatchments);
+
+    }
+
+
 }
