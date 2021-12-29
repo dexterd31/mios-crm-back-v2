@@ -63,7 +63,7 @@ class NotificationsController extends Controller
             'activators' => json_encode($request->activators),
             'name' => $request->name,
             'subject' => (isset($request->subject))?$request->subject:'',
-            'to' => $request->to,
+            'to' => json_encode($request->to),
             'template_to_send' => $request->template_to_send,
             'rrhh_id' => Auth::user()->rrhh_id
         ]);

@@ -15,7 +15,6 @@ class AddIndexformRow extends Migration
     {
         Schema::table('directories', function (Blueprint $table) {
             $table->dropColumn('client_id');
-            $table->dropIndex('directories_client_id_foreign');
             $table->longText('form_index')->nullable(false);
         });
     }

@@ -21,8 +21,7 @@ class CreateNotificationTable extends Migration
                   ->constrained('forms');
 
             $table->foreignId('notification_type')
-                  ->nullable(false)
-                  ->constrained('notifications_type');
+                  ->nullable(false);
 
             $table->text('name')
                   ->nullable(false);
