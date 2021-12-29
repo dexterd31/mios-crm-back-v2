@@ -29,7 +29,7 @@ class NotificationsService{
 
         $params = array(
             'idType' => 2,
-            'origin'=>'BPMS',
+            'origin'=>'CRM',
             'request'=>$request
         );
 
