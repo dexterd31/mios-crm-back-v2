@@ -21,8 +21,6 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\FormAnswersTray;
 use App\Models\RelTrayUser;
-use App\Http\Controllers\FormController;
-use Illuminate\Support\Facades\Log;
 
 
 class FormAnswerController extends Controller
@@ -103,6 +101,12 @@ class FormAnswerController extends Controller
                 if(isset($field['duplicated'])){
                     $register['duplicated']=$field['duplicated'];
                 }
+                /**
+                 * se agrega la validacion del elemento conversation_id para almacenar el id de la conversacion por la que se relaiza la encuesta de o nicanalidad
+                 */
+                if(isset($field['conversation_id'])){
+                    $register['conversation_id']=$field['conversation_id'];
+                }
                 if(json_decode($request->client_unique)[0]->id == $field['id'])
                 {
                     if(!$field['value'])
@@ -160,8 +164,12 @@ class FormAnswerController extends Controller
 
             // Manejar bandejas
             $this->matchTrayFields($form_answer->form_id, $form_answer);
-
             $this->updateDataCrm($clientNew->id, $form_answer);
+
+            //validarNotificaciones
+            $notificationsController = new NotificationsController();
+            $notificationsController->sendNotifications($request->form_id,$formAnswerData);
+
             return $this->successResponse(['message'=>"Información guardada correctamente",'formAsnwerId'=>$form_answer->id]);
         }
         return $this->errorResponse($data["message"], 500);
