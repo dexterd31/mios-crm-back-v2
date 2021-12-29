@@ -30,18 +30,19 @@ class TmkPymesController extends Controller
     {
         $this->formId = env('TMK_PYMES_WB_FORM_ID', 2);
         $this->idFieldsInFormLead=(Object)[
-            'nombres' => 1635436624162,
+            'nombre' => 1635436624162,
             'apellidos' => 9935436624162,
-            'razon_social' => 1635436930539,
+            'razon_social' => 1635437152258,
             'telefono' => 1635436912538,
             'utm_campaign' => 1635518784366,
             'tipo_documento' => 1637160407586,
-            'numero_documento' => 1635549672268
+            'numero_documento' => 1635549672268,
+            'id' => 1635436930539
         ];
         $this->productVicidial="TMK";
         $this->tokenVicidial="TmK202111031233";
         $this->leadColumns=[
-            "nombres",
+            "nombre",
             "apellidos",
             "razon_social",
             "nit",
@@ -80,12 +81,20 @@ class TmkPymesController extends Controller
             $this->leadTMKModify=$request->all();
             $this->leadTMKModify['tipo_documento']="";
             $this->leadTMKModify['numero_documento']="";
-            if(isset($this->leadTMKModify['email'])){
+            if(isset($this->leadTMKModify['email']) && $this->leadTMKModify['email'] != ''){
                 $identification=explode("*",$this->leadTMKModify['email']);
                 if(isset($identification[1]))$this->leadTMKModify['tipo_documento']=$identification[0];
                 if(isset($identification[1]))$this->leadTMKModify['numero_documento']=$identification[1];
             }
-            unset($this->leadTMKModify['email']);
+            if(isset($this->leadTMKModify['razon_social'])){
+                $idRazonSocial=explode("*",$this->leadTMKModify['razon_social']);
+                if(isset($idRazonSocial[1])){
+                    $this->leadTMKModify['razon_social']=$idRazonSocial[1];
+                    $this->leadTMKModify['id']=$idRazonSocial[0];
+                }else{
+                    $this->leadTMKModify['id']=$this->leadTMKModify['razon_social'];
+                }
+            }
             if ($validator->fails()) return $this->responseTmk(implode(", ", $validator->errors()->all()), -1);
             $acount=(Object)[];
             $acount=$this->setAccount($this->formId,$this->setFieldToFillIn());
