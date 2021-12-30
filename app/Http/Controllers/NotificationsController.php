@@ -11,6 +11,7 @@ use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class NotificationsController extends Controller
 {
@@ -46,6 +47,7 @@ class NotificationsController extends Controller
      */
     public function store(Request $request,$external = true)
     {
+        \Log::info($request->all());  
         $this->validate($request,[
             'form_id' => 'required|numeric',
             'notification_type' => 'required|numeric',
@@ -168,6 +170,7 @@ class NotificationsController extends Controller
      * @return \Illuminate\Http\Response|\Laravel\Lumen\Http\ResponseFactory|void
      */
     public function saveNotifications(Request $request){
+        Log::info($request->all());
         // descomentar para fase 2
         /*if(str_contains($request->header('content-type'),'multipart/form-data')){
             $multipartRequest = [
@@ -197,9 +200,9 @@ class NotificationsController extends Controller
         ]);
         $savedNotification = $this->store($request,false);
         //validación de archivos adjuntos
-        if(isset($request->atatchments) && !empty($request->atatchments)){
+        if(isset($request->attachments) && !empty($request->attachments)){
             $validAtachment = false;
-            foreach ($request->atatchments as $key=>$atatchment){
+            foreach ($request->attachments as $key=>$attachment){
                 $attatchments = [];
                  // descomentar para fase 2
                 /*if(Storage::exists($atatchment['route'].$atatchment['file_name'])){
@@ -207,23 +210,25 @@ class NotificationsController extends Controller
                 }*/
                 if($key == 'static'){
                     $this->validate($request,[
-                        "atatchments.static.file_name" => 'required|string',
-                        "atatchments.static.route" => 'required|string'
+                        "attachments.static.file_name" => 'required|string',
+                        "attachments.static.route" => 'string'
                     ]);
-                    $attatchments['static_atachment'] = $atatchment['file_name'];
-                    $attatchments['route_atachment'] = $atatchment['route'];
+                    $attatchments['static_atachment'] = $attachment['file_name'];
+                    $attatchments['route_atachment'] = $attachment['route'];
                     $validAtachment = true;
                 }
-                if($key == 'dinamic'){
+                if($key == 'dynamic'){
                     $this->validate($request,[
-                        "atatchments.dinamic.file_name" => 'required|array',
-                        "atatchments.dinamic.route" => 'required|string'
+                        "attachments.dynamic.file_name" => 'required|array',
+                        "attachments.dynamic.route" => 'string'
                     ]);
-                    $attatchments['dinamic_atachment'] = json_encode($atatchment['file_name']);
-                    $attatchments['route_atachment'] = $atatchment['route'];
+                    $attatchments['dinamic_atachment'] = json_encode($attachment['file_name']);
+                    $attatchments['route_atachment'] = $attachment['route'];
                     $validAtachment = true;
                 }
+                Log::info($validAtachment);
                 if($validAtachment){
+                    Log::info($attatchments);
                     $attatchments['notifications_id'] = $savedNotification;
                     NotificationsAttatchment::create($attatchments);
                 }
