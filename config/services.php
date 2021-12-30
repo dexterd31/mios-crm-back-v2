@@ -13,5 +13,8 @@ return [
     ],
     'pqrs' => [
         'base_uri' => env('PQRS_SERVICES_BASE_URI'),
+    ],
+    'notifications' => [
+        'base_uri' => env('NOTIFICATION_SERVICES_BASE_URI'),
     ]
 ];

@@ -31,6 +31,8 @@ class UploadController extends Controller
     //Constante para limitar la carga de filas
     static $LIMIT_CHARACTERS_CELL = 2000;
 
+    protected $formController;
+
     public function __construct()
     {
         $this->middleware('auth');
@@ -79,6 +81,7 @@ class UploadController extends Controller
     public function extractColumnsNames(Request $request, MiosHelper $miosHelper){
         try {
             $file = $request->file('excel');
+            Log::info($request->hasFile('excel'));
             $answer = [];
             if(isset($file)){
                 $form_import_validate = Excel::toArray(new UploadImport, $file);
@@ -119,7 +122,7 @@ class UploadController extends Controller
      * @param array ->assigns Arreglo de Objetos con la assignación de idField a cada una de las columnas del campo [{"columnName":"Nombre","id":123456789890},{"columnName":"Apellido","id":12345678908787}]
      * @param string ->action Cadena de texto con dos posibles opciones update o none
      */
-    public function excelClients(Request $request , MiosHelper $miosHelper, FormController $formController, ClientNewController $clientNewController, FormAnswerController $formAnswerController, KeyValueController $keyValuesController,GroupController $groupController,RelAdvisorClientNewController $relAdvisorClientNewController){
+    public function excelClients(Request $request , MiosHelper $miosHelper, FormController $formController, ClientNewController $clientNewController, FormAnswerController $formAnswerController, KeyValueController $keyValuesController){
         //Primero Validamos que todos los parametros necesarios para el correcto funcionamiento esten
         $this->validate($request,[
             'excel' => 'required',
@@ -133,41 +136,8 @@ class UploadController extends Controller
         $fileData = json_decode(Excel::toCollection(new ClientNewImport(), $file)[0]);
         $totalArchivos = count($fileData);
         $assignUsers = filter_var($request->assignUsers,FILTER_VALIDATE_BOOLEAN);
-        DB::connection()->enableQueryLog();
         if($assignUsers){
-            //se obtiene el group_id
-            $groupId =  json_decode($formController->searchForm($request->form_id)->getContent())->group_id;
-            $advisers = $groupController->searchGroup($groupId)['members'];
-            $advisersCount = count($advisers);
-            if($advisersCount == 0){
-                return $this->errorResponse("No se encuentran asesores para asignar los registros",400);
-            }
-            //se valida si el resultado es exacto
-            $quantity = $totalArchivos / $advisersCount;
-            if(is_float($quantity)){
-                //se aproxima el valor para repartirlo proporcionalmente
-                $equalRegisters = round($quantity,0,PHP_ROUND_HALF_DOWN);
-                // se le asigna a cada asesor la cantidad correspondiente de datos
-                foreach ($advisers as $key=>$adviser){
-                    $advisers[$key]['quantity'] = $equalRegisters;
-                }
-                // se extrae el residuo de la división para asignarlo uno a uno entre los asesores hasta que qyede en 0
-                $moduleRegisters = $totalArchivos % count($advisers);
-                foreach ($advisers as $key=>$adviser){
-                    if($moduleRegisters > 0){
-                        $advisers[$key]['quantity']++;
-                        $moduleRegisters--;
-                    }
-                }
-            }else{
-                // se le asigna a cada asesor la cantidad correspondiente de datos
-                foreach ($advisers as $key=>$adviser){
-                    $advisers[$key]['quantity'] = $quantity;
-                }
-            }
-            //se generan las banderas para contar la cantidad y saber el indice del asesor
-            $quantity = 0;
-            $advisersIndex = 0;
+            $assignUsersObject = $this->getAdvisers($request,$totalArchivos);
         }
         if($totalArchivos>0){
             $fieldsLoad=$formController->getSpecificFieldForSection(json_decode($request->assigns),$request->form_id);
@@ -208,6 +178,8 @@ class UploadController extends Controller
                             array_push($errorAnswers,$dataValidate->message);
                         }
                     }
+                    Log::info('ANSWER FIELDS');
+                    Log::info(json_encode($answerFields));
                     //array_push($dataToLoad,$answerFields);
                     if(count($errorAnswers)==0){
                         $newRequest = new Request();
@@ -215,7 +187,11 @@ class UploadController extends Controller
                             "form_id" => $request->form_id,
                             "unique_indentificator" => json_encode($answerFields->uniqueIdentificator[0]),
                         ]);
+                        DB::connection()->enableQueryLog();
                         $existingClient = $clientNewController->index($newRequest);
+                        Log::info(json_encode($existingClient));
+                        Log::info('QUERIES');
+                        Log::info(DB::connection()->getQueryLog());
                         if(!empty($existingClient) && !filter_var($request->action,FILTER_VALIDATE_BOOLEAN)){
                             $updateExisting = false;
                         }
@@ -229,27 +205,13 @@ class UploadController extends Controller
                             if(isset($client->id)){
                                 //insertar en rel_advisor_client_new
                                 if($assignUsers){
-                                    $existingRel = $relAdvisorClientNewController->show($client->id,$advisers[$advisersIndex]['id_rhh']);
-                                    if(!isset($existingRel->id)){
-                                        $relAdvisorRequest = new Request();
-                                        $relAdvisorRequest->replace([
-                                            'client_new_id'=>$client->id,
-                                            'rrhh_id'=>$advisers[$advisersIndex]['id_rhh']
-                                        ]);
-                                        $relAdvisorClient = $relAdvisorClientNewController->create($relAdvisorRequest);
-                                        if(!empty($relAdvisorClient)){
-                                            $quantity++;
-                                        }
-                                    }else{
-                                       $quantity++;
-                                    }
-                                    if($advisers[$advisersIndex]['quantity'] == $quantity){
-                                        $advisersIndex++;
-                                        $quantity = 0;
-                                    }
+                                    $assignUsersObject = $this->assignUsers($assignUsersObject,$client->id);
                                 }
-                                $formAnswerSave=$formAnswerController->create($client->id,$request->form_id,$formAnswerClient,$formAnswerClientIndexado,"upload");
-                                if(isset($formAnswerSave->id)){
+                                //TODO: insertar en directories, crear columna index data e insertar la variable $formAnswerClientIndexado en la tabla
+                                /*$formAnswerSave=$formAnswerController->create($client->id,$request->form_id,$formAnswerClient,$formAnswerClientIndexado,"upload");*/
+                                $saveDirectories = $this->addToDirectories($formAnswerClient,$request->form_id,$client->id,$formAnswerClientIndexado);
+                                $dataLoad++;
+                                /*if(isset($formAnswerSave->id)){
                                     if(isset($answerFields->preload)){
                                         $keyValues=$keyValuesController->createKeysValue($answerFields->preload,$request->form_id,$client->id);
                                         Log::info("Key values created, fila $c");
@@ -263,7 +225,7 @@ class UploadController extends Controller
                                     }
                                 } else {
                                     array_push($errorAnswers,"No se han podido insertar el form answer para el cliente ".$client->id);
-                                }
+                                }*/
                             }else{
                                 array_push($errorAnswers,"No se han podido insertar el cliente ubicado en la fila ".$c." del archivo cargado.");
                             }
@@ -302,7 +264,6 @@ class UploadController extends Controller
         }else{
             $data = $miosHelper->jsonResponse(false,400,"message","El archivo que intenta cargar no tiene datos.");
         }
-        Log::info(DB::connection()->getQueryLog());
         return response()->json($data,$data['code']);
     }
 
@@ -522,37 +483,6 @@ class UploadController extends Controller
     }
 
     /**
-     * crea las validaciones correspondientes a cada tipo de dato
-     * @param $type
-     * @param $data
-     * @return object objeto con 2 valores: 1. type: tipo de validación, 2. formatedData: dato formateado según lo requiera el campo
-     */
-    private function kindOfValidationType($type,$data){
-        $answer = new stdClass();
-        $answer->formatedData = $data;
-        switch($type){
-            case "email":
-                $answer->type = "email";
-            break;
-            case "options":
-            case "number":
-                $answer->type = "numeric";
-                $answer->formatedData = intval(trim($data));
-            break;
-            case "date":
-                $answer->type = "date|date_format:Y-m-d";
-            break;
-            default:
-                $answer->type = "string";
-                $answer->formatedData = strval($data);
-            break;
-
-        }
-        return $answer;
-    }
-
-
-    /**
      * @desc Función para la generación del documento de gestion de clientes
      * @param Integer id de la gestión a consultar
      * @return File Archivo de excel con los datos de gestion
@@ -646,5 +576,139 @@ class UploadController extends Controller
         return DB::getPdo()->lastInsertId();
     }
 
+    /**
+     * @desc retorna los asesores junto con las cantidades que se deben cargar de cada uno
+     * @param Request $request
+     * @param int $totalArchivos
+     * @return stdClass : objeto que contiene los datos de los asesores
+     */
+    private function getAdvisers(Request $request, int $totalArchivos):stdClass{
+        $groupController = new GroupController();
+        $formController = new FormController();
+        $response = new stdClass();
+
+        //se obtiene el group_id
+        $groupId =  json_decode($formController->searchForm($request->form_id)->getContent())->group_id;
+        $advisers = $groupController->searchGroup($groupId)['members'];
+        $advisersCount = count($advisers);
+        if($advisersCount == 0){
+            return $this->errorResponse("No se encuentran asesores para asignar los registros",400);
+        }
+        //se valida si el resultado es exacto
+        $quantity = $totalArchivos / $advisersCount;
+        if(is_float($quantity)){
+            //se aproxima el valor para repartirlo proporcionalmente
+            $equalRegisters = round($quantity,0,PHP_ROUND_HALF_DOWN);
+            // se le asigna a cada asesor la cantidad correspondiente de datos
+            foreach ($advisers as $key=>$adviser){
+                $advisers[$key]['quantity'] = $equalRegisters;
+            }
+            // se extrae el residuo de la división para asignarlo uno a uno entre los asesores hasta que quede en 0
+            $moduleRegisters = $totalArchivos % count($advisers);
+            foreach ($advisers as $key=>$adviser){
+                if($moduleRegisters > 0){
+                    $advisers[$key]['quantity']++;
+                    $moduleRegisters--;
+                }
+            }
+        }else{
+            // se le asigna a cada asesor la cantidad correspondiente de datos
+            foreach ($advisers as $key=>$adviser){
+                $advisers[$key]['quantity'] = $quantity;
+            }
+        }
+        //se generan las banderas para contar la cantidad y saber el indice del asesor
+        $response->quantity = 0;
+        $response->advisersIndex = 0;
+        $response->advisers = $advisers;
+        return $response;
+    }
+
+    /**
+     * @desc Asigna los registros a los usuarios insertando en la tabla rel_advisor_client_new
+     * @param $assignUsersObject
+     * @param $clienId
+     * @return mixed
+     */
+    private function assignUsers($assignUsersObject,$clienId){
+        $relAdvisorClientNewController = new RelAdvisorClientNewController();
+
+        $advisers = $assignUsersObject->advisers;
+        $advisersIndex = $assignUsersObject->advisersIndex;
+        $quantity = $assignUsersObject->quantity;
+        $existingRel = $relAdvisorClientNewController->show($clienId,$advisers[$advisersIndex]['id_rhh']);
+        if(!isset($existingRel->id)){
+            $relAdvisorRequest = new Request();
+            $relAdvisorRequest->replace([
+                'client_new_id'=>$clienId,
+                'rrhh_id'=>$advisers[$advisersIndex]['id_rhh']
+            ]);
+            $relAdvisorClient = $relAdvisorClientNewController->create($relAdvisorRequest);
+            if(!empty($relAdvisorClient)){
+                $assignUsersObject->quantity++;
+            }
+        }else{
+            $assignUsersObject->quantity++;
+        }
+        if($advisers[$advisersIndex]['quantity'] == $quantity){
+            $assignUsersObject->advisersIndex++;
+            $assignUsersObject->quantity = 0;
+        }
+        return $assignUsersObject;
+    }
+
+    /**
+     * crea las validaciones correspondientes a cada tipo de dato
+     * @param $type
+     * @param $data
+     * @return object objeto con 2 valores: 1. type: tipo de validación, 2. formatedData: dato formateado según lo requiera el campo
+     */
+    private function kindOfValidationType($type,$data){
+        $answer = new stdClass();
+        $answer->formatedData = $data;
+        switch($type){
+            case "email":
+                $answer->type = "email";
+                break;
+            case "options":
+            case "number":
+                $answer->type = "numeric";
+                $answer->formatedData = intval(trim($data));
+                break;
+            case "date":
+                $answer->type = "date|date_format:Y-m-d";
+                break;
+            default:
+                $answer->type = "string";
+                $answer->formatedData = strval($data);
+                break;
+
+        }
+        return $answer;
+    }
+
+    /**
+     * @desc crea o actualiza un registro en la tabla directories
+     * @param array $data
+     * @param int $formId
+     * @param int $clientId
+     * @param int $clientNewId
+     * @param array $indexForm
+     * @return mixed
+     */
+    private function addToDirectories(array $data,int $formId,int $clientNewId, array $indexForm){
+        Log::info($indexForm);
+        $newDirectory = Directory::updateOrCreate([
+            'form_id' => $formId,
+            'client_new_id' => $clientNewId
+
+        ],[
+            'rrhh_id' => auth()->user()->rrhh_id,
+            'data' => json_encode($data),
+            'form_index' => json_encode($indexForm)
+        ]);
+
+        return $newDirectory;
+    }
 
 }
