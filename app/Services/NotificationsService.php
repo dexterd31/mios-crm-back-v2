@@ -25,7 +25,7 @@ class NotificationsService{
         $request->body = $body;
         $request->cc = $cc;
         $request->cco = $cco;
-        $request->attatchment = $attatchment;
+        $request->attachment = $attatchment;
 
         $params = array(
             'idType' => 2,
@@ -33,7 +33,7 @@ class NotificationsService{
             'request'=>$request
         );
 
-        $this->request('POST','/api/notifications/send', $params);
+        $this->request('POST','/api/notification/send', $params);
     }
 
 
