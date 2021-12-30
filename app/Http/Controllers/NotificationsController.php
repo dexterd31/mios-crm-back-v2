@@ -197,9 +197,9 @@ class NotificationsController extends Controller
         ]);
         $savedNotification = $this->store($request,false);
         //validación de archivos adjuntos
-        if(isset($request->atatchments) && !empty($request->atatchments)){
+        if(isset($request->attachments) && !empty($request->attachments)){
             $validAtachment = false;
-            foreach ($request->atatchments as $key=>$atatchment){
+            foreach ($request->attachments as $key=>$atatchment){
                 $attatchments = [];
                  // descomentar para fase 2
                 /*if(Storage::exists($atatchment['route'].$atatchment['file_name'])){
@@ -207,7 +207,7 @@ class NotificationsController extends Controller
                 }*/
                 if($key == 'static'){
                     $this->validate($request,[
-                        "atatchments.static.file_name" => 'required|string',
+                        "attachments.static.file_name" => 'required|string',
                         "atatchments.static.route" => 'required|string'
                     ]);
                     $attatchments['static_atachment'] = $atatchment['file_name'];
@@ -216,8 +216,8 @@ class NotificationsController extends Controller
                 }
                 if($key == 'dinamic'){
                     $this->validate($request,[
-                        "atatchments.dinamic.file_name" => 'required|array',
-                        "atatchments.dinamic.route" => 'required|string'
+                        "attachments.dinamic.file_name" => 'required|array',
+                        "attachments.dinamic.route" => 'required|string'
                     ]);
                     $attatchments['dinamic_atachment'] = json_encode($atatchment['file_name']);
                     $attatchments['route_atachment'] = $atatchment['route'];
