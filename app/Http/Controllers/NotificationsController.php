@@ -308,7 +308,7 @@ class NotificationsController extends Controller
         $emailBody = $notification->template_to_send;
         $to = (isset($notification->to))? json_decode($notification->to) : null;
         foreach ($formAnswerData as $data){
-            $emailBody = str_replace("[[{$data['key']}]]",$data['value'],$emailBody);
+            $emailBody =  str_replace("[[{$data['key']}]]",$data['value'],$emailBody);
             if(!is_null($to)) $to = str_replace($data['id'],$data['value'],$to);
             if(isset($dinamicAttatchments)){
                 array_walk_recursive($dinamicAttatchments,function (&$attatchment) use ($data){
@@ -330,7 +330,8 @@ class NotificationsController extends Controller
                 array_push($attatchments,$attatchment);
             }
         }
-        $notificationService->sendEmail($emailBody,$notification->subject,$to,$attatchments);
+        $emailTemplate = view('email_templates.axaFalabella',['emailBody' => $emailBody])->render();
+        $notificationService->sendEmail($emailTemplate,$notification->subject,$to,$attatchments);
 
     }
 
