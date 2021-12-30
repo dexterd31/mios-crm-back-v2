@@ -149,10 +149,10 @@ class NotificationsController extends Controller
         if(count($notification_types) === 0){
             return $this->errorResponse('notifications type not found',404);
         }
-        $notifications = Notifications::all();
-        if(count($notifications) === 0){
+        $notifications = Notifications::where('form_id',$formId)->get();
+        /*if(count($notifications) === 0){
             return $this->errorResponse('notifications not found',404);
-        }
+        }*/
         foreach ($notifications as $notification) {
             $notification->to = json_decode($notification->to);
             $notification->activators = json_decode($notification->activators);
@@ -210,8 +210,7 @@ class NotificationsController extends Controller
                 }*/
                 if($key == 'static'){
                     $this->validate($request,[
-                        "attachments.static.file_name" => 'required|string',
-                        "attachments.static.route" => 'string'
+                        "attachments.static.file_name" => 'required|string'
                     ]);
                     $attatchments['static_atachment'] = $attachment['file_name'];
                     $attatchments['route_atachment'] = $attachment['route'];
@@ -219,8 +218,7 @@ class NotificationsController extends Controller
                 }
                 if($key == 'dynamic'){
                     $this->validate($request,[
-                        "attachments.dynamic.file_name" => 'required|array',
-                        "attachments.dynamic.route" => 'string'
+                        "attachments.dynamic.file_name" => 'required|array'
                     ]);
                     $attatchments['dinamic_atachment'] = json_encode($attachment['file_name']);
                     $attatchments['route_atachment'] = $attachment['route'];

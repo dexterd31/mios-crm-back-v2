@@ -190,8 +190,6 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->post("v1/tmkPymes/ingresaSolicitud", "TmkPymes\TmkPymesController@store");
 
       //notificacionesCrm
-      $router->get('notifications/prepareNotifications/{formId}','NotificationsController@PrepareNotifications');
+      $router->get('notifications/prepareNotifications/{formId}','NotificationsController@prepareNotifications');
       $router->post('notifications/saveNotifications','NotificationsController@saveNotifications');
 });
-
-
