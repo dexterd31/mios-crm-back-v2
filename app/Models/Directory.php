@@ -10,7 +10,7 @@ class Directory extends Model
 {
     protected $table = 'directories';
     protected $PrimaryKey = 'id';
-    protected $fillable = ['form_id','rrhh_id', 'client_id','data', 'client_new_id'];
+    protected $fillable = ['form_id','rrhh_id', 'client_id','data', 'client_new_id','form_index'];
 
     public function form(){
        return $this->belongsTo(Form::class,'form_id');
