@@ -167,6 +167,13 @@ class FormAnswerController extends Controller
 
             //validarNotificaciones
             $notificationsController = new NotificationsController();
+            $formController = new FormController();
+            foreach ($formAnswerData as $answerData){
+                $formatedAnswer = $formController->findAndFormatValues($request->form_id,$answerData['id'],$answerData['value']);
+                if(isset($formatedAnswer->name)){
+                    $answerData['value'] = $formatedAnswer->name;
+                }
+            }
             $notificationsController->sendNotifications($request->form_id,$formAnswerData);
 
             return $this->successResponse(['message'=>"Información guardada correctamente",'formAsnwerId'=>$form_answer->id]);
