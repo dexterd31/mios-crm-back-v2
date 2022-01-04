@@ -11,7 +11,6 @@ use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
 
 class NotificationsController extends Controller
 {
@@ -47,7 +46,6 @@ class NotificationsController extends Controller
      */
     public function store(Request $request,$external = true)
     {
-        \Log::info($request->all());  
         $this->validate($request,[
             'form_id' => 'required|numeric',
             'notification_type' => 'required|numeric',
@@ -170,7 +168,6 @@ class NotificationsController extends Controller
      * @return \Illuminate\Http\Response|\Laravel\Lumen\Http\ResponseFactory|void
      */
     public function saveNotifications(Request $request){
-        Log::info($request->all());
         // descomentar para fase 2
         /*if(str_contains($request->header('content-type'),'multipart/form-data')){
             $multipartRequest = [
@@ -213,7 +210,7 @@ class NotificationsController extends Controller
                         "attachments.static.file_name" => 'required|string'
                     ]);
                     $attatchments['static_atachment'] = $attachment['file_name'];
-                    $attatchments['route_atachment'] = $attachment['route'];
+                    $attatchments['route_atachment'] = $attachment['route'].'/';
                     $validAtachment = true;
                 }
                 if($key == 'dynamic'){
@@ -221,12 +218,10 @@ class NotificationsController extends Controller
                         "attachments.dynamic.file_name" => 'required|array'
                     ]);
                     $attatchments['dinamic_atachment'] = json_encode($attachment['file_name']);
-                    $attatchments['route_atachment'] = $attachment['route'];
+                    $attatchments['route_atachment'] = $attachment['route'].'/';
                     $validAtachment = true;
                 }
-                Log::info($validAtachment);
                 if($validAtachment){
-                    Log::info($attatchments);
                     $attatchments['notifications_id'] = $savedNotification;
                     NotificationsAttatchment::create($attatchments);
                 }
@@ -294,6 +289,7 @@ class NotificationsController extends Controller
      * @return void
      */
     private function sendEmailNotification($notification,$formAnswerData){
+        $attatchments = [];
         $notificationService = new NotificationsService();
         $nAttatchments = NotificationsAttatchment::where('notifications_id',$notification->id)->get();
         if(count($nAttatchments) > 0){
@@ -312,6 +308,8 @@ class NotificationsController extends Controller
         $to = (isset($notification->to))? json_decode($notification->to) : null;
         foreach ($formAnswerData as $data){
             $emailBody =  str_replace("[[{$data['key']}]]",$data['value'],$emailBody);
+            $signature = auth()->user()->rrhh->name;
+            $emailBody =  str_replace("[[signature_crm_2022]]",$signature,$emailBody);
             if(!is_null($to)) $to = str_replace($data['id'],$data['value'],$to);
             if(isset($dinamicAttatchments)){
                 array_walk_recursive($dinamicAttatchments,function (&$attatchment) use ($data){
@@ -320,20 +318,19 @@ class NotificationsController extends Controller
             }
         }
         if(isset($dinamicAttatchments) || isset($staticAttatchments)){
-            $attatchments = [];
             foreach ($dinamicAttatchments as $attatchment){
                 $attatchment['name'] = implode("",$attatchment['name']);
-                $content = Storage::get($attatchment['route'].$attatchment['name']);
+                $content = Storage::get($attatchment['route'].'/'.$attatchment['name']);
                 $attatchment['file'] = $content;
                 array_push($attatchments,$attatchment);
             }
             foreach ($staticAttatchments as $attatchment){
-                $content = Storage::get($attatchment['route'].$attatchment['name']);
+                $content = Storage::get($attatchment['route'].'/'.$attatchment['name']);
                 $attatchment['file'] = $content;
                 array_push($attatchments,$attatchment);
             }
         }
-        $emailTemplate = view('email_templates.axaFalabella',['emailBody' => $emailBody])->render();
+        $emailTemplate = view('email_templates.axaFalabellaMail',['emailBody' => $emailBody])->render();
         $notificationService->sendEmail($emailTemplate,$notification->subject,$to,$attatchments);
 
     }
