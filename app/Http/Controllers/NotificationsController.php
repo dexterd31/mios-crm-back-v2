@@ -10,6 +10,7 @@ use App\Services\NotificationsService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class NotificationsController extends Controller
@@ -245,6 +246,7 @@ class NotificationsController extends Controller
      * @return void
      */
     public function sendNotifications(int $formId,$formAnswerData){
+        $sendEmail = true;
         $notifications = $this->showByFormId($formId,false);
         if(count($notifications) == 0){
             return;
@@ -253,16 +255,18 @@ class NotificationsController extends Controller
             foreach ($notification->activators as $activator){
                 $existingActivator = $this->activatorsInResponse($formAnswerData,$activator);
                 if(!$existingActivator){
-                    return;
+                    $sendEmail = false;
                 }
             }
             //envío de notificación
-            switch($notification->notification_type){
-                case 1: //email
-                    $this->sendEmailNotification($notification,$formAnswerData);
-                    break;
-                case 2: //sms
-                    break;
+            if($sendEmail){
+                switch($notification->notification_type){
+                    case 1: //email
+                        $this->sendEmailNotification($formId,$notification,$formAnswerData);
+                        break;
+                    case 2: //sms
+                        break;
+                }
             }
         }
     }
@@ -288,7 +292,7 @@ class NotificationsController extends Controller
      * @param $notification
      * @return void
      */
-    private function sendEmailNotification($notification,$formAnswerData){
+    private function sendEmailNotification($formId,$notification,$formAnswerData){
         $attatchments = [];
         $notificationService = new NotificationsService();
         $nAttatchments = NotificationsAttatchment::where('notifications_id',$notification->id)->get();
@@ -306,7 +310,14 @@ class NotificationsController extends Controller
         }
         $emailBody = $notification->template_to_send;
         $to = (isset($notification->to))? json_decode($notification->to) : null;
+        $formController = new FormController();
         foreach ($formAnswerData as $data){
+            $formatedAnswer = $formController->findAndFormatValues($formId,$data['id'],$data['value'],true);
+            if(isset($formatedAnswer->name)){
+                $data['value'] = $formatedAnswer->name;
+            }else{
+                $data['value'] = $formatedAnswer->value;
+            }
             $emailBody =  str_replace("[[{$data['key']}]]",$data['value'],$emailBody);
             $signature = auth()->user()->rrhh->name;
             $emailBody =  str_replace("[[signature_crm_2022]]",$signature,$emailBody);

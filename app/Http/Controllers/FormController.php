@@ -12,6 +12,7 @@ use App\Models\Section;
 use App\Services\RrhhService;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use stdClass;
@@ -475,7 +476,7 @@ class FormController extends Controller
      *                      -   value : retorna el valor formateado en caso que el atributo valid sea verdadero
      *                      -   message : retorna el mensaje de error en caso que el atributo valid sea falso
      */
-    public function findAndFormatValues($form_id, $field_id, $value)
+    public function findAndFormatValues($form_id, $field_id, $value, $moneyConvert = false)
     {
         $response = new stdClass();
         $response->valid = false;
@@ -549,6 +550,11 @@ class FormController extends Controller
             return $response;
         }elseif($field->controlType == 'currency'){
             $response->valid = true;
+            if($moneyConvert){
+                $response->value = number_format(intval($value));
+                Log::info(number_format(intval($value)));
+                return $response;
+            }
             $response->value = str_replace(",","",$value);
             return $response;
         }else{
