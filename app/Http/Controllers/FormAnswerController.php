@@ -172,6 +172,8 @@ class FormAnswerController extends Controller
                 $formatedAnswer = $formController->findAndFormatValues($request->form_id,$answerData['id'],$answerData['value']);
                 if(isset($formatedAnswer->name)){
                     $answerData['value'] = $formatedAnswer->name;
+                }else{
+                    $answerData['value'] = $formatedAnswer->value;
                 }
             }
             $notificationsController->sendNotifications($request->form_id,$formAnswerData);
