@@ -516,9 +516,9 @@ class FormController extends Controller
                 try {
                     if(is_int($value)){
                         $unix_date = ($value - 25569) * 86400;
-                        $date = Carbon::createFromTimestamp($unix_date)->addDay()->timezone('America/bogota')->format('Y-m-d');
+                        $date = Carbon::createFromTimestamp($unix_date)->timezone('America/bogota')->format('Y-m-d');
                     }else{
-                        $date = Carbon::parse(str_replace("/","-",$value))->addDay()->timezone('America/bogota')->format('Y-m-d');
+                        $date = Carbon::parse(str_replace("/","-",$value))->timezone('America/bogota')->format('Y-m-d');
                     }
                     $response->valid = true;
                     $response->value = $date;
