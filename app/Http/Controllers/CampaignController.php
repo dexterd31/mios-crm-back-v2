@@ -53,11 +53,11 @@ class CampaignController extends Controller
         //Litar todas las campañas de los grupos a los que pertenece el usuarioi
         //Si el usuario es administrador o supervisor, puede ver las campanas inactivas
         try {
-            $this->getCiuService();
+            //$this->getCiuService();
             $this->getNominaService();
-            $user = $this->ciuService->fetchUser($this->authUser()->id)->data;
+            //$user = $this->ciuService->fetchUser($this->authUser()->id)->data;
             //Se traen las campañas por el id de campaña
-            $campaign = $this->nominaService->fetchSpecificCampaigns([$user->rrhh->campaign_id]);
+            $campaign = $this->nominaService->fetchSpecificCampaigns([$this->authUser()->rrhh->campaign_id]);
             /**
              * @author: Leogiraldoq
              * Se quitan los elementos inecesarios en para el front,
