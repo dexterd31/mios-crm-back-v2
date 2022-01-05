@@ -328,6 +328,8 @@ class NotificationsController extends Controller
                 });
             }
         }
+        $expresion = '/(\[\[\w+\]\])|(\[\[[a-z0-9-]+\]\])/m';
+        $emailBody = preg_replace($expresion,'',$emailBody);
         if(isset($dinamicAttatchments) || isset($staticAttatchments)){
             foreach ($dinamicAttatchments as $attatchment){
                 $attatchment['name'] = implode("",$attatchment['name']);
