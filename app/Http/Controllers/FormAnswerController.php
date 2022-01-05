@@ -21,8 +21,6 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\FormAnswersTray;
 use App\Models\RelTrayUser;
-use App\Http\Controllers\FormController;
-use Illuminate\Support\Facades\Log;
 
 
 class FormAnswerController extends Controller
@@ -50,7 +48,6 @@ class FormAnswerController extends Controller
         $saveFormAnswer->form_answer_index_data = json_encode($formAnswerIndexData);
         $saveFormAnswer->tipification_time = $chronometer;
         $saveFormAnswer->save();
-        \Log::info($saveFormAnswer);
         /*$saveFormAnswer= FormAnswer::updateOrCreate([
             'rrhh_id' => auth()->user()->rrhh_id,
             'form_id' => $formId,
@@ -102,6 +99,12 @@ class FormAnswerController extends Controller
 
                 if(isset($field['duplicated'])){
                     $register['duplicated']=$field['duplicated'];
+                }
+                /**
+                 * se agrega la validacion del elemento conversation_id para almacenar el id de la conversacion por la que se relaiza la encuesta de o nicanalidad
+                 */
+                if(isset($field['conversation_id'])){
+                    $register['conversation_id']=$field['conversation_id'];
                 }
                 if(json_decode($request->client_unique)[0]->id == $field['id'])
                 {
@@ -160,8 +163,12 @@ class FormAnswerController extends Controller
 
             // Manejar bandejas
             $this->matchTrayFields($form_answer->form_id, $form_answer);
-
             $this->updateDataCrm($clientNew->id, $form_answer);
+
+            //validarNotificaciones
+            $notificationsController = new NotificationsController();
+            $notificationsController->sendNotifications($request->form_id,$formAnswerData);
+
             return $this->successResponse(['message'=>"Información guardada correctamente",'formAsnwerId'=>$form_answer->id]);
         }
         return $this->errorResponse($data["message"], 500);
@@ -202,13 +209,10 @@ class FormAnswerController extends Controller
 
     public function filterForm(Request $request)
     {
-        \Log::info($request->all());
         $miosHelper = new MiosHelper();
         $filterHelper = new FilterHelper();
         $requestJson = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
-        \Log::info($requestJson);
         $dataFilters = $this->getDataFilters($requestJson['filter']);
-        \Log::info($dataFilters);
         $data = [];
         $files = [];
 
@@ -232,8 +236,6 @@ class FormAnswerController extends Controller
         }else{
             $clientNew = [];
         }
-
-        \Log::info($clientNew);
         if(!isset($clientNew["error"]))
         {
             $clientNewId = $clientNew ? $clientNew->id : null;
@@ -344,8 +346,6 @@ class FormAnswerController extends Controller
         {
             $formAnswersQuery = $formAnswersQuery->where("client_new_id", $clientNewId);
         }
-        \Log::info($formAnswersQuery->toSql());
-        \Log::info($formAnswersQuery->getBindings());
         return $formAnswersQuery->paginate(5);
     }
 

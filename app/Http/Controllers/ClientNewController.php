@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Helper\MiosHelper;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Log;
+use Illuminate\Support\Facades\Log;
 use PhpParser\Node\Expr\Cast\Object_;
 
 class ClientNewController extends Controller
@@ -158,9 +158,9 @@ class ClientNewController extends Controller
         $informationDataClient = [];
         $informationData = json_decode($clientNewData->information_data);
         foreach($informationData as $data){
-            if(gettype($data->value)!=="string"){
+            /*if(gettype($data->value)!=="string"){
                 $data->value=strval($data->value);
-            }
+            }*/
             array_push($informationDataClient, (Object)
             [
                 "id"=> $data->id,
@@ -169,9 +169,9 @@ class ClientNewController extends Controller
         }
 
         $uniqueIdentificator=json_decode($clientNewData->unique_indentificator);
-        if(gettype($uniqueIdentificator->value) !== "string"){
+        /*if(gettype($uniqueIdentificator->value) !== "string"){
             $uniqueIdentificator->value=strval($uniqueIdentificator->value);
-        }
+        }*/
 
         $clientNew = new ClientNew([
             "form_id" => $clientNewData->form_id,
@@ -227,9 +227,9 @@ class ClientNewController extends Controller
         $informationDataClient=[];
         $informationData = json_decode($request->information_data);
         foreach($informationData as $data){
-            if(gettype($data->value)!=="string"){
+            /*if(gettype($data->value)!=="string"){
                 $data->value=strval($data->value);
-            }
+            }*/
             array_push($informationDataClient, (Object)
             [
                 "id"=> $data->id,
