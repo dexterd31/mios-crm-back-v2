@@ -319,8 +319,8 @@ class NotificationsController extends Controller
                 $data['value'] = $formatedAnswer->value;
             }
             $emailBody =  str_replace("[[{$data['key']}]]",$data['value'],$emailBody);
-            $signature = auth()->user()->rrhh->name;
-            $emailBody =  str_replace("[[signature_crm_2022]]",$signature,$emailBody);
+            $notification->subject =  str_replace("[[{$data['key']}]]",$data['value'],$notification->subject);
+            $emailBody = $this->getSignature($notification->id, $emailBody);
             if(!is_null($to)) $to = str_replace($data['id'],$data['value'],$to);
             if(isset($dinamicAttatchments)){
                 array_walk_recursive($dinamicAttatchments,function (&$attatchment) use ($data){
@@ -348,5 +348,23 @@ class NotificationsController extends Controller
 
     }
 
+    /**
+     * Retorna el cuerpo del mensaje con los datos de creacion, actualizacion y firma del agente
+     *@author Edwin David Sanchez Balbin
+     * 
+     * @param int $notificationId
+     * @param string $emailBody
+     * @return string
+     */
+    private function getSignature(int $notificationId, string $emailBody) : string
+    {
+        $signature = auth()->user()->rrhh->name;
+        $notification = Notifications::first($notificationId);
 
+        $emailBody =  str_replace("[[signature_crm_2022]]",$signature,$emailBody);
+        $emailBody =  str_replace("[[created_at]]",$notification->created_at, $emailBody);
+        $emailBody =  str_replace("[[updated_at]]",$notification->update_at,$emailBody);
+
+        return $emailBody;
+    }
 }
