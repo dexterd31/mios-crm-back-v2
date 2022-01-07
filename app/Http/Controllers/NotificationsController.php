@@ -10,7 +10,6 @@ use App\Services\NotificationsService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class NotificationsController extends Controller
@@ -246,12 +245,12 @@ class NotificationsController extends Controller
      * @return void
      */
     public function sendNotifications(int $formId,$formAnswerData){
-        $sendEmail = true;
         $notifications = $this->showByFormId($formId,false);
         if(count($notifications) == 0){
             return;
         }
         foreach ($notifications as $notification){
+            $sendEmail = true;
             foreach ($notification->activators as $activator){
                 $existingActivator = $this->activatorsInResponse($formAnswerData,$activator);
                 if(!$existingActivator){
@@ -321,6 +320,7 @@ class NotificationsController extends Controller
             $emailBody =  str_replace("[[{$data['key']}]]",$data['value'],$emailBody);
             $notification->subject =  str_replace("[[{$data['key']}]]",$data['value'],$notification->subject);
             $emailBody = $this->getSignature($notification->id, $emailBody);
+            $notification->subject = $this->getSignature($notification->id,$notification->subject);
             if(!is_null($to)) $to = str_replace($data['id'],$data['value'],$to);
             if(isset($dinamicAttatchments)){
                 array_walk_recursive($dinamicAttatchments,function (&$attatchment) use ($data){
@@ -333,12 +333,16 @@ class NotificationsController extends Controller
         if(isset($dinamicAttatchments) || isset($staticAttatchments)){
             foreach ($dinamicAttatchments as $attatchment){
                 $attatchment['name'] = implode("",$attatchment['name']);
-                $content = Storage::get($attatchment['route'].'/'.$attatchment['name']);
+                $existAttachment = $this->existAttachment($attatchment['name'],$attatchment['route']);
+                if(!$existAttachment) break;
+                $content = Storage::get($attatchment['route'].'/'.$existAttachment);
                 $attatchment['file'] = $content;
                 array_push($attatchments,$attatchment);
             }
             foreach ($staticAttatchments as $attatchment){
-                $content = Storage::get($attatchment['route'].'/'.$attatchment['name']);
+                $existAttachment = $this->existAttachment($attatchment['name'],$attatchment['route']);
+                if(!$existAttachment) break;
+                $content = Storage::get($attatchment['route'].'/'.$existAttachment);
                 $attatchment['file'] = $content;
                 array_push($attatchments,$attatchment);
             }
@@ -349,22 +353,37 @@ class NotificationsController extends Controller
     }
 
     /**
-     * Retorna el cuerpo del mensaje con los datos de creacion, actualizacion y firma del agente
+     * Retorna el texto enviado con los datos de creacion, actualizacion y firma del agente
      * @author Edwin David Sanchez Balbin
      *
      * @param int $notificationId
      * @param string $emailBody
      * @return string
      */
-    private function getSignature(int $notificationId, string $emailBody) : string
+    private function getSignature(int $notificationId, string $text) : string
     {
         $signature = auth()->user()->rrhh->name;
         $notification = Notifications::where('id',$notificationId)->first();
+        $text =  str_replace("[[signature_crm_2022]]",$signature,$text);
+        $text =  str_replace("[[created_at]]",$notification->created_at, $text);
+        $text =  str_replace("[[updated_at]]",$notification->update_at,$text);
 
-        $emailBody =  str_replace("[[signature_crm_2022]]",$signature,$emailBody);
-        $emailBody =  str_replace("[[created_at]]",$notification->created_at, $emailBody);
-        $emailBody =  str_replace("[[updated_at]]",$notification->update_at,$emailBody);
+        return $text;
+    }
 
-        return $emailBody;
+
+    /**
+     * @desc valida la existencia del archivo según su nombre y ruta (opcional)
+     * @author Juan Pablo Camargo Vanegas
+     * @param string $fileName: nombre del archivo con su extensión
+     * @param string|null $path: rúta del archivo (en caso de que tenga más carpetas en el storage)
+     * @return false|mixed|string
+     */
+    private function existAttachment(string $fileName, string $path = null){
+            $fileName = !empty($path) ? $path.'/'.$fileName : $fileName;
+            $fileData = explode('.',$fileName);
+            $fileExist = glob("../storage/app/$fileData[0]*.$fileData[1]");
+            $fileExistData = explode('/',$fileExist[0]);
+            return count($fileExist) > 0 ? end($fileExistData) : false ;
     }
 }
