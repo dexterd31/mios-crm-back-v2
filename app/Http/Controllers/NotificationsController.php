@@ -351,7 +351,7 @@ class NotificationsController extends Controller
     /**
      * Retorna el cuerpo del mensaje con los datos de creacion, actualizacion y firma del agente
      * @author Edwin David Sanchez Balbin
-     * 
+     *
      * @param int $notificationId
      * @param string $emailBody
      * @return string
@@ -359,7 +359,7 @@ class NotificationsController extends Controller
     private function getSignature(int $notificationId, string $emailBody) : string
     {
         $signature = auth()->user()->rrhh->name;
-        $notification = Notifications::find($notificationId);
+        $notification = Notifications::where('id',$notificationId)->find();
 
         $emailBody =  str_replace("[[signature_crm_2022]]",$signature,$emailBody);
         $emailBody =  str_replace("[[created_at]]",$notification->created_at, $emailBody);
