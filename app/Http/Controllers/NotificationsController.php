@@ -359,7 +359,7 @@ class NotificationsController extends Controller
     private function getSignature(int $notificationId, string $emailBody) : string
     {
         $signature = auth()->user()->rrhh->name;
-        $notification = Notifications::where('id',$notificationId)->find();
+        $notification = Notifications::where('id',$notificationId)->first();
 
         $emailBody =  str_replace("[[signature_crm_2022]]",$signature,$emailBody);
         $emailBody =  str_replace("[[created_at]]",$notification->created_at, $emailBody);
