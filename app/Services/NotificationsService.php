@@ -29,7 +29,7 @@ class NotificationsService{
 
         $params = array(
             'idType' => 2,
-            'origin'=>'CRM',
+            'origin'=>'CRM_AXA_FALABELLA',
             'request'=>$request
         );
 
