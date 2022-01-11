@@ -8,6 +8,7 @@ use App\Models\NotificationsAttatchment;
 use App\Models\NotificationsType;
 use App\Services\NotificationsService;
 use App\Traits\ApiResponse;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -278,7 +279,8 @@ class NotificationsController extends Controller
      * @return array|false
      */
     private function activatorsInResponse($formAnswerData,$activator){
-        $activators = array_filter($formAnswerData,function ($data) use ($activator){
+        $structureAnswer = json_decode($formAnswerData->structure_answer,true);
+        $activators = array_filter($structureAnswer,function ($data) use ($activator){
            return ($data['id'] == $activator->id) && strtolower($data['value']) == strtolower($activator->value);
         });
         if(count($activators) > 0){
@@ -310,7 +312,7 @@ class NotificationsController extends Controller
         $emailBody = $notification->template_to_send;
         $to = (isset($notification->to))? json_decode($notification->to) : null;
         $formController = new FormController();
-        foreach ($formAnswerData as $data){
+        foreach (json_decode($formAnswerData->structure_answer,true) as $data){
             $formatedAnswer = $formController->findAndFormatValues($formId,$data['id'],$data['value'],true);
             if(isset($formatedAnswer->name)){
                 $data['value'] = $formatedAnswer->name;
@@ -319,8 +321,8 @@ class NotificationsController extends Controller
             }
             $emailBody =  str_replace("[[{$data['key']}]]",$data['value'],$emailBody);
             $notification->subject =  str_replace("[[{$data['key']}]]",$data['value'],$notification->subject);
-            $emailBody = $this->getSignature($notification->id, $emailBody);
-            $notification->subject = $this->getSignature($notification->id,$notification->subject);
+            $emailBody = $this->getSignature($formAnswerData, $emailBody);
+            $notification->subject = $this->getSignature($formAnswerData,$notification->subject);
             if(!is_null($to)) $to = str_replace($data['id'],$data['value'],$to);
             if(isset($dinamicAttatchments)){
                 array_walk_recursive($dinamicAttatchments,function (&$attatchment) use ($data){
@@ -360,15 +362,19 @@ class NotificationsController extends Controller
      * @param string $emailBody
      * @return string
      */
-    private function getSignature(int $notificationId, string $text) : string
+    private function getSignature(object $formAnswer, string $text) : string
     {
         $signature = auth()->user()->rrhh->name;
-        $notification = Notifications::where('id',$notificationId)->first();
+        $createdAt = $this->formatedDate($formAnswer->created_at);
+        $updatedAt = $this->formatedDate($formAnswer->updated_at);
         $text =  str_replace("[[signature_crm_2022]]",$signature,$text);
-        $text =  str_replace("[[created_at]]",$notification->created_at, $text);
-        $text =  str_replace("[[updated_at]]",$notification->update_at,$text);
-
+        $text =  str_replace("[[created_at]]",$createdAt, $text);
+        $text =  str_replace("[[updated_at]]",$updatedAt,$text);
         return $text;
+    }
+
+    private function formatedDate(string $date){
+        return Carbon::parse($date)->timezone('America/bogota')->format('Y-m-d H:i:s');
     }
 
 
