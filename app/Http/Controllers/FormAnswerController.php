@@ -168,7 +168,7 @@ class FormAnswerController extends Controller
 
             //validarNotificaciones
             $notificationsController = new NotificationsController();
-            $notificationsController->sendNotifications($request->form_id,$formAnswerData);
+            $notificationsController->sendNotifications($request->form_id,$form_answer);
 
             return $this->successResponse(['message'=>"Información guardada correctamente",'formAsnwerId'=>$form_answer->id]);
         }
@@ -306,6 +306,7 @@ class FormAnswerController extends Controller
             $files = [];
             $formAnswer['userdata'] = $this->ciuService->fetchUserByRrhhId($formAnswer['rrhh_id']);
             $structureAnswer = $formAnswer['structure_answer'] ? json_decode($formAnswer['structure_answer']) : json_decode($formAnswer['data']);
+            $new_structure_answer = array();
             foreach ($structureAnswer as $answer) {
                 if(!isset($answer->duplicated))
                 {
@@ -315,7 +316,7 @@ class FormAnswerController extends Controller
                     {
                         $answer->value = $select->value;
                     }
-                    $new_structure_answer[] = $answer;
+                    array_push($new_structure_answer,$answer);
                 }
                 if(isset($answer->nameFile) && $answer->nameFile && $answer->preloaded)
                 {
