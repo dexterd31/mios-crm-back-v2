@@ -258,6 +258,6 @@ class TemplateController extends Controller
      * @return mixed
      */
     public function showByFormId(int $formId){
-        return $this->getTemplateModel()->where('formId',$formId)->get();
+        return $this->getTemplateModel()->where('form_id',$formId)->get();
     }
 }
