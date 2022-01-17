@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Escalation;
 use App\Models\Client;
 use App\Models\ClientNew;
+use App\Models\Tray;
 use Illuminate\Http\Request;
 use App\Services\PqrsService;
 use Log;
@@ -14,10 +15,9 @@ class EscalationController extends Controller
 {
     private $pqrsService;
 
-    public function __construct(PqrsService $pqrsService){
+    public function __construct(){
         $this->middleware('auth');
-
-        $this->pqrsService = $pqrsService;
+        $this->pqrsService = new PqrsService();
     }
 
     /**
