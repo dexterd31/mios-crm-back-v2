@@ -8,10 +8,10 @@ use App\Models\NotificationsAttatchment;
 use App\Models\NotificationsType;
 use App\Services\NotificationsService;
 use App\Traits\ApiResponse;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
 
 class NotificationsController extends Controller
 {
@@ -47,7 +47,6 @@ class NotificationsController extends Controller
      */
     public function store(Request $request,$external = true)
     {
-        \Log::info($request->all());  
         $this->validate($request,[
             'form_id' => 'required|numeric',
             'notification_type' => 'required|numeric',
@@ -170,7 +169,6 @@ class NotificationsController extends Controller
      * @return \Illuminate\Http\Response|\Laravel\Lumen\Http\ResponseFactory|void
      */
     public function saveNotifications(Request $request){
-        Log::info($request->all());
         // descomentar para fase 2
         /*if(str_contains($request->header('content-type'),'multipart/form-data')){
             $multipartRequest = [
@@ -213,7 +211,7 @@ class NotificationsController extends Controller
                         "attachments.static.file_name" => 'required|string'
                     ]);
                     $attatchments['static_atachment'] = $attachment['file_name'];
-                    $attatchments['route_atachment'] = $attachment['route'];
+                    $attatchments['route_atachment'] = $attachment['route'].'/';
                     $validAtachment = true;
                 }
                 if($key == 'dynamic'){
@@ -221,12 +219,10 @@ class NotificationsController extends Controller
                         "attachments.dynamic.file_name" => 'required|array'
                     ]);
                     $attatchments['dinamic_atachment'] = json_encode($attachment['file_name']);
-                    $attatchments['route_atachment'] = $attachment['route'];
+                    $attatchments['route_atachment'] = $attachment['route'].'/';
                     $validAtachment = true;
                 }
-                Log::info($validAtachment);
                 if($validAtachment){
-                    Log::info($attatchments);
                     $attatchments['notifications_id'] = $savedNotification;
                     NotificationsAttatchment::create($attatchments);
                 }
@@ -255,19 +251,22 @@ class NotificationsController extends Controller
             return;
         }
         foreach ($notifications as $notification){
+            $sendEmail = true;
             foreach ($notification->activators as $activator){
                 $existingActivator = $this->activatorsInResponse($formAnswerData,$activator);
                 if(!$existingActivator){
-                    return;
+                    $sendEmail = false;
                 }
             }
             //envío de notificación
-            switch($notification->notification_type){
-                case 1: //email
-                    $this->sendEmailNotification($notification,$formAnswerData);
-                    break;
-                case 2: //sms
-                    break;
+            if($sendEmail){
+                switch($notification->notification_type){
+                    case 1: //email
+                        $this->sendEmailNotification($formId,$notification,$formAnswerData);
+                        break;
+                    case 2: //sms
+                        break;
+                }
             }
         }
     }
@@ -280,7 +279,8 @@ class NotificationsController extends Controller
      * @return array|false
      */
     private function activatorsInResponse($formAnswerData,$activator){
-        $activators = array_filter($formAnswerData,function ($data) use ($activator){
+        $structureAnswer = json_decode($formAnswerData->structure_answer,true);
+        $activators = array_filter($structureAnswer,function ($data) use ($activator){
            return ($data['id'] == $activator->id) && strtolower($data['value']) == strtolower($activator->value);
         });
         if(count($activators) > 0){
@@ -293,7 +293,8 @@ class NotificationsController extends Controller
      * @param $notification
      * @return void
      */
-    private function sendEmailNotification($notification,$formAnswerData){
+    private function sendEmailNotification($formId,$notification,$formAnswerData){
+        $attatchments = [];
         $notificationService = new NotificationsService();
         $nAttatchments = NotificationsAttatchment::where('notifications_id',$notification->id)->get();
         if(count($nAttatchments) > 0){
@@ -310,8 +311,18 @@ class NotificationsController extends Controller
         }
         $emailBody = $notification->template_to_send;
         $to = (isset($notification->to))? json_decode($notification->to) : null;
-        foreach ($formAnswerData as $data){
+        $formController = new FormController();
+        foreach (json_decode($formAnswerData->structure_answer,true) as $data){
+            $formatedAnswer = $formController->findAndFormatValues($formId,$data['id'],$data['value'],true);
+            if(isset($formatedAnswer->name)){
+                $data['value'] = $formatedAnswer->name;
+            }else{
+                $data['value'] = $formatedAnswer->value;
+            }
             $emailBody =  str_replace("[[{$data['key']}]]",$data['value'],$emailBody);
+            $notification->subject =  str_replace("[[{$data['key']}]]",$data['value'],$notification->subject);
+            $emailBody = $this->getSignature($formAnswerData, $emailBody);
+            $notification->subject = $this->getSignature($formAnswerData,$notification->subject);
             if(!is_null($to)) $to = str_replace($data['id'],$data['value'],$to);
             if(isset($dinamicAttatchments)){
                 array_walk_recursive($dinamicAttatchments,function (&$attatchment) use ($data){
@@ -319,24 +330,66 @@ class NotificationsController extends Controller
                 });
             }
         }
+        $expresion = '/(\[\[\w+\]\])|(\[\[[a-z0-9-]+\]\])/m';
+        $emailBody = preg_replace($expresion,'',$emailBody);
         if(isset($dinamicAttatchments) || isset($staticAttatchments)){
-            $attatchments = [];
             foreach ($dinamicAttatchments as $attatchment){
                 $attatchment['name'] = implode("",$attatchment['name']);
-                $content = Storage::get($attatchment['route'].$attatchment['name']);
+                $existAttachment = $this->existAttachment($attatchment['name'],$attatchment['route']);
+                if(!$existAttachment) break;
+                $content = Storage::get($attatchment['route'].'/'.$existAttachment);
                 $attatchment['file'] = $content;
                 array_push($attatchments,$attatchment);
             }
             foreach ($staticAttatchments as $attatchment){
-                $content = Storage::get($attatchment['route'].$attatchment['name']);
+                $existAttachment = $this->existAttachment($attatchment['name'],$attatchment['route']);
+                if(!$existAttachment) break;
+                $content = Storage::get($attatchment['route'].'/'.$existAttachment);
                 $attatchment['file'] = $content;
                 array_push($attatchments,$attatchment);
             }
         }
-        $emailTemplate = view('email_templates.axaFalabella',['emailBody' => $emailBody])->render();
+        $emailTemplate = view('email_templates.axaFalabellaMail',['emailBody' => $emailBody])->render();
         $notificationService->sendEmail($emailTemplate,$notification->subject,$to,$attatchments);
 
     }
 
+    /**
+     * Retorna el texto enviado con los datos de creacion, actualizacion y firma del agente
+     * @author Edwin David Sanchez Balbin
+     *
+     * @param int $notificationId
+     * @param string $emailBody
+     * @return string
+     */
+    private function getSignature(object $formAnswer, string $text) : string
+    {
+        $signature = auth()->user()->rrhh->name;
+        $createdAt = $this->formatedDate($formAnswer->created_at);
+        $updatedAt = $this->formatedDate($formAnswer->updated_at);
+        $text =  str_replace("[[signature_crm_2022]]",$signature,$text);
+        $text =  str_replace("[[created_at]]",$createdAt, $text);
+        $text =  str_replace("[[updated_at]]",$updatedAt,$text);
+        return $text;
+    }
 
+    private function formatedDate(string $date){
+        return Carbon::parse($date)->timezone('America/bogota')->format('Y-m-d H:i:s');
+    }
+
+
+    /**
+     * @desc valida la existencia del archivo según su nombre y ruta (opcional)
+     * @author Juan Pablo Camargo Vanegas
+     * @param string $fileName: nombre del archivo con su extensión
+     * @param string|null $path: rúta del archivo (en caso de que tenga más carpetas en el storage)
+     * @return false|mixed|string
+     */
+    private function existAttachment(string $fileName, string $path = null){
+            $fileName = !empty($path) ? $path.'/'.$fileName : $fileName;
+            $fileData = explode('.',$fileName);
+            $fileExist = glob("../storage/app/$fileData[0]*.$fileData[1]");
+            $fileExistData = explode('/',$fileExist[0]);
+            return count($fileExist) > 0 ? end($fileExistData) : false ;
+    }
 }
