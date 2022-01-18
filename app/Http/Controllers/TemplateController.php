@@ -208,7 +208,7 @@ class TemplateController extends Controller
      * @param Request La tipificacion del formulario en $request->sections.
      * @return String Retorna una string que es el codigo html de la plantilla
      * @author Daniel Martinez Vargas
-     * @exemple 
+     * @exemple
      * @createdate 28/09/2021
      */
     public function buildTemplateHtml(Request $request)
@@ -237,7 +237,7 @@ class TemplateController extends Controller
                         }
                     }
 
-                } else if ($field->type == "date" && $field->value != "" && $field->value != 'Invalid date') { 
+                } else if ($field->type == "date" && $field->value != "" && $field->value != 'Invalid date') {
                     $templateHtml = str_replace("{{".$field->id."}}", date_format(date_create($field->value), "Y-m-d"), $templateHtml);
                 }
                   else {
@@ -245,9 +245,19 @@ class TemplateController extends Controller
                 }
             }
         }
-        
+
         $templateHtml = preg_replace("{{ASESORMIOS}}", $user_name, $templateHtml);
         $templateHtml = preg_replace('/\{{(.*?)\}}/', '', $templateHtml);
         return json_encode($templateHtml);
+    }
+
+    /**
+     * @desc funcion para traer los templates según el id del formulario
+     * @author Juan Pablo Camargo Vanegas
+     * @param int $formId
+     * @return mixed
+     */
+    public function showByFormId(int $formId){
+        return $this->getTemplateModel()->where('form_id',$formId)->get();
     }
 }
