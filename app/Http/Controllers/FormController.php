@@ -291,8 +291,10 @@ class FormController extends Controller
      */
     public function report(Request $request, MiosHelper $miosHelper){
         $char="";
-        $date1=Carbon::parse($request->date1)->setTimezone('America/Bogota');
-        $date2=Carbon::parse($request->date2)->setTimezone('America/Bogota');
+        $date1=Carbon::parse($request->date1)->setTimezone('America/Bogota')->setHour(00)->setMinute(00)->setSecond(00)->format('Y-m-d H:i:s');
+        $date2=Carbon::parse($request->date2)->setTimezone('America/Bogota')->format('Y-m-d H:i:s');
+        Log::info($date1);
+        Log::info($date2);
         $rrhhService = new RrhhService();
         $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','form_answers.rrhh_id as id_rhh','tipification_time')
                             ->where('form_answers.form_id',$request->formId)
