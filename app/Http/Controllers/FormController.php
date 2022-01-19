@@ -86,6 +86,8 @@ class FormController extends Controller
         $templateController = new TemplateController();
         $templateExist = (count($templateController->showByFormId($id)) > 0);
         $formsSections->template = $templateExist;
+        $formsSections->view_chronometer = (boolean)$formsSections->tipification_time;
+        unset($formsSections->tipification_time);
         return response()->json($formsSections);
     }
 
@@ -292,7 +294,7 @@ class FormController extends Controller
         $date1=Carbon::parse($request->date1)->setTimezone('America/Bogota');
         $date2=Carbon::parse($request->date2)->setTimezone('America/Bogota');
         $rrhhService = new RrhhService();
-        $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','form_answers.rrhh_id as id_rhh','tipification_time as view_chronometer')
+        $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','form_answers.rrhh_id as id_rhh','tipification_time')
                             ->where('form_answers.form_id',$request->formId)
                             ->where('tipification_time','!=','upload')
                             ->whereBetween('form_answers.created_at', [$date1, $date2])
