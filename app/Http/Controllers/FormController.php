@@ -292,7 +292,7 @@ class FormController extends Controller
         $date1=Carbon::parse($request->date1)->setTimezone('America/Bogota');
         $date2=Carbon::parse($request->date2)->setTimezone('America/Bogota');
         $rrhhService = new RrhhService();
-        $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','form_answers.rrhh_id as id_rhh')
+        $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','form_answers.rrhh_id as id_rhh','tipification_time')
                             ->where('form_answers.form_id',$request->formId)
                             ->where('tipification_time','!=','upload')
                             ->whereBetween('form_answers.created_at', [$date1, $date2])
@@ -310,6 +310,7 @@ class FormController extends Controller
             $r=0;
             $rows=[];
             $plantillaRespuestas=[];
+            $tipificationTime = isset($request->include_tipification_time);
             //Agrupamos los id_rrhh del usuario en un arreglo
             $userIds=$miosHelper->getArrayValues('id_rhh',$formAnswers);
             $useString=implode(',',array_values(array_unique($userIds)));
@@ -398,10 +399,16 @@ class FormController extends Controller
                 }
                 $respuestas['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
                 $respuestas['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
+                if($tipificationTime){
+                    $respuestas['tipification_time'] = $answer->tipification_time;
+                }
                 $rows[$r]=$respuestas;
                 $r++;
             }
             array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización');
+            if($tipificationTime){
+                array_push($titleHeaders,'Tiempo de tipificación');
+            }
         }
         return Excel::download(new FormReportExport($rows, $titleHeaders), 'ReporteFormulario.xlsx');
     }
