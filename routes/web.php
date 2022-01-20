@@ -192,4 +192,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       //notificacionesCrm
       $router->get('notifications/prepareNotifications/{formId}','NotificationsController@prepareNotifications');
       $router->post('notifications/saveNotifications','NotificationsController@saveNotifications');
-});
+      $router->put('notifications/update/{id}', 'NotificationsController@update');
+      $router->get('notifications/index/{id}','NotificationsController@index');
+    });
+    $router->post('notifications/edit/{id}', 'NotificationsController@edit');

@@ -28,4 +28,39 @@ class Notifications extends Model
     public function notification_type(){
         return $this->hasMany(NotificationsType::class);
     }
+
+    /**
+     * Retorna los archivos que tiene la notificación.
+     * @author Edwin David Sanchez Balbin
+     *
+     * @return App\Models\NotificationsAttatchment
+     */
+    public function notificationAttachments()
+    {
+        return $this->hasMany(NotificationsAttatchment::class);
+    }
+
+    /**
+     * Retorna los archivos estaticos de la notificación.
+     * @author Edwin David Sanchez Balbin
+     *
+     * @param array $columns
+     * @return App\Models\NotificationsAttatchment
+     */
+    public function getStaticAttachments(array $columns = ['*'])
+    {
+        return $this->notificationAttachments()->where('type_attachment', 'static')->get($columns);
+    }
+
+    /**
+     * Retorna los archivos dinamicos de la notificación.
+     * @author Edwin David Sanchez Balbin
+     *
+     * @param array $columns
+     * @return App\Models\NotificationsAttatchment
+     */
+    public function getDynamicAttachments(array $columns = ['*'])
+    {
+        return $this->notificationAttachments()->where('type_attachment', 'dynamic')->get($columns);
+    }
 }

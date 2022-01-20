@@ -4,31 +4,47 @@ namespace App\Http\Controllers;
 
 use App\Models\Form;
 use App\Models\Notifications;
-use App\Models\NotificationsAttatchment;
 use App\Models\NotificationsType;
+use App\Repositories\NotificationRepository;
+use App\Repositories\NotificationsTypeRepository;
+use App\Repositories\NotificationsAttachmentRepository;
 use App\Services\NotificationsService;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use stdClass;
 
 class NotificationsController extends Controller
 {
     use ApiResponse;
+
+    private $notificationRepository;
+    private $notificationsTypeRepository;
+    private $notificationsAttachmentRepository;
+
     public function __construct()
     {
-        $this->middleware('auth');
+        // $this->middleware('auth');
+        $this->notificationRepository = new NotificationRepository;
+        $this->notificationsTypeRepository = new NotificationsTypeRepository;
+        $this->notificationsAttachmentRepository = new NotificationsAttachmentRepository;
     }
 
     /**
      * @author Juan Pablo Camargo Vanegas
      * @desc Muestra todos los registros almacenados en notifications.
+     * @param int $notificationId
+     * @param bool $external    
      * @return \Illuminate\Http\Response
      */
-    private function index($external = true)
+    public function index(int $notificationId = null, $external = true)
     {
-        $notifications = Notifications::all();
+        if (!is_null($notificationId)) {
+            $this->edit($notificationId);
+        }
+        $notifications = $this->notificationRepository->all();
         foreach ($notifications as $notification){
             $notification->activators = json_decode($notification->activators);
         }
@@ -47,27 +63,10 @@ class NotificationsController extends Controller
      */
     public function store(Request $request,$external = true)
     {
-        $this->validate($request,[
-            'form_id' => 'required|numeric',
-            'notification_type' => 'required|numeric',
-            'name' => 'required|string',
-            'to' => 'required|array',
-            'template_to_send' => 'required|string',
-            'activators' => 'required|array',
-            'activators.*.id' => 'required|int',
-            'activators.*.type' => 'required',
-            'activators.*.value' => 'required',
-        ]);
-        $newNotification = Notifications::create([
-            'form_id' => $request->form_id,
-            'notification_type' => $request->notification_type,
-            'activators' => json_encode($request->activators),
-            'name' => $request->name,
-            'subject' => (isset($request->subject))?$request->subject:'',
-            'to' => json_encode($request->to),
-            'template_to_send' => $request->template_to_send,
-            'rrhh_id' => Auth::user()->rrhh_id
-        ]);
+        $this->requestValidator($request);
+
+        $newNotification = $this->notificationRepository->create($this->mapNotificationData($request));
+        
         if(!isset($newNotification->id)){
             return $this->errorResponse('No se creó la notificación',204);
         }
@@ -85,7 +84,7 @@ class NotificationsController extends Controller
      */
     public function showByFormId(int $formId,$external = true)
     {
-        $notifications = Notifications::where('form_id',$formId)->get();
+        $notifications = $this->notificationRepository->allByForm($formId);
         foreach ($notifications as $notification){
             $notification->activators = json_decode($notification->activators);
         }
@@ -96,15 +95,42 @@ class NotificationsController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Busca y retorna la notificacion a editar.
+     * @author Edwin David Sanchez Balbin
      *
+     * @param Notifications $notification
+     * @return \Illuminate\Http\Response  
+     */
+    public function edit(int $id)
+    {
+        $notification = $this->notificationRepository->find($id);
+        $notification->activators = json_decode($notification->activators);
+
+        $notification->attachments = new stdClass;
+        $notificationsAttachmentsColums = ['file_attachment', 'route_atachment'];
+        $notification->attachments->static = $notification->getStaticAttachments($notificationsAttachmentsColums);
+        $notification->attachments->dynamic = $notification->getDynamicAttachments($notificationsAttachmentsColums);
+
+        return $this->successResponse($notification, 200);
+    }
+
+    /**
+     * Actualia la notificacion y la retorna actualizada.
+     * @author Edwin David Sanchez Balbin
+     * 
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
     {
-        //
+        $this->requestValidator($request);
+
+        $notification = $this->notificationRepository->update($this->mapNotificationData($request), $id);
+
+        //! colocar la actualizacion de archivos.
+
+        return $this->successResponse($notification, 200);
     }
 
     /**
@@ -144,11 +170,11 @@ class NotificationsController extends Controller
             unset($form->section[$i]['form_id']);
             $form->section[$i]['fields'] = json_decode($form->section[$i]['fields']);
         }
-        $notification_types = NotificationsType::all();
+        $notification_types = $this->notificationsTypeRepository->all();
         if(count($notification_types) === 0){
             return $this->errorResponse('notifications type not found',404);
         }
-        $notifications = Notifications::where('form_id',$formId)->get();
+        $notifications = $this->notificationRepository->allByForm($formId);
         /*if(count($notifications) === 0){
             return $this->errorResponse('notifications not found',404);
         }*/
@@ -178,17 +204,8 @@ class NotificationsController extends Controller
             if(isset($request->to)) $multipartRequest['to'] = json_decode($request->to);
             $request->merge($multipartRequest);
         }*/
-        $this->validate($request,[
-            'form_id' => 'required|numeric',
-            'notification_type' => 'required|numeric',
-            'name' => 'required|string',
-            'body_notifications' => 'required|string',
-            'to' => 'required|array',
-            'activators' => 'required|array',
-            'activators.*.id' => 'required|numeric',
-            'activators.*.type' => 'required',
-            'activators.*.value' => 'required',
-        ]);
+        $this->requestValidator($request);
+
         $notificationType = NotificationsType::where('id',$request->notification_type)->get();
         if(count($notificationType) == 0){
             return $this->errorResponse('Notification type not found',404);
@@ -199,37 +216,7 @@ class NotificationsController extends Controller
         $savedNotification = $this->store($request,false);
         //validación de archivos adjuntos
         if(isset($request->attachments) && !empty($request->attachments)){
-            $validAtachment = false;
-            foreach ($request->attachments as $key=>$attachment){
-                $attatchments = [];
-                 // descomentar para fase 2
-                /*if(Storage::exists($atatchment['route'].$atatchment['file_name'])){
-                    return $this->errorResponse("route {$atatchment['route']} is invalid",400);
-                }*/
-                if($key == 'static'){
-                    $this->validate($request,[
-                        "attachments.static.file_name" => 'required|string'
-                    ]);
-                    $attatchments['static_atachment'] = $attachment['file_name'];
-                    $attatchments['route_atachment'] = $attachment['route'].'/';
-                    $validAtachment = true;
-                }
-                if($key == 'dynamic'){
-                    $this->validate($request,[
-                        "attachments.dynamic.file_name" => 'required|array'
-                    ]);
-                    $attatchments['dinamic_atachment'] = json_encode($attachment['file_name']);
-                    $attatchments['route_atachment'] = $attachment['route'].'/';
-                    $validAtachment = true;
-                }
-                if($validAtachment){
-                    $attatchments['notifications_id'] = $savedNotification;
-                    NotificationsAttatchment::create($attatchments);
-                }
-            }
-            if(!$validAtachment){
-                return $this->errorResponse('atatchments has one or more invalid arguments',400);
-            }
+            $this->saveNotificationAttachments($request, (int) $savedNotification);
         }
         $response = new \stdClass();
         $response->message = "notificación creada exitosamente";
@@ -296,16 +283,16 @@ class NotificationsController extends Controller
     private function sendEmailNotification($formId,$notification,$formAnswerData){
         $attatchments = [];
         $notificationService = new NotificationsService();
-        $nAttatchments = NotificationsAttatchment::where('notifications_id',$notification->id)->get();
+        $nAttatchments = $this->notificationsAttachmentRepository->allByNotification('notifications_id',$notification->id);
         if(count($nAttatchments) > 0){
             $dinamicAttatchments = [];
             $staticAttatchments = [];
             foreach ($nAttatchments as $attatchment){
-                if(!is_null($attatchment->dinamic_atachment)){
-                    array_push($dinamicAttatchments,['name' => json_decode($attatchment->dinamic_atachment),'route' => $attatchment->route_atachment]);
+                if($attatchment->type_attachment == 'dynamic'){
+                    array_push($dinamicAttatchments,['name' => json_decode($attatchment->file_attachment),'route' => $attatchment->route_atachment]);
                 }
-                if(!is_null($attatchment->static_atachment)){
-                    array_push($staticAttatchments,['name' => $attatchment->static_atachment,'route' => $attatchment->route_atachment]);
+                if($attatchment->type_attachment == 'static'){
+                    array_push($staticAttatchments,['name' => $attatchment->file_attachment,'route' => $attatchment->route_atachment]);
                 }
             }
         }
@@ -332,6 +319,7 @@ class NotificationsController extends Controller
         }
         $expresion = '/(\[\[\w+\]\])|(\[\[[a-z0-9-]+\]\])/m';
         $emailBody = preg_replace($expresion,'',$emailBody);
+
         if(isset($dinamicAttatchments) || isset($staticAttatchments)){
             foreach ($dinamicAttatchments as $attatchment){
                 $attatchment['name'] = implode("",$attatchment['name']);
@@ -342,9 +330,10 @@ class NotificationsController extends Controller
                 array_push($attatchments,$attatchment);
             }
             foreach ($staticAttatchments as $attatchment){
-                $existAttachment = $this->existAttachment($attatchment['name'],$attatchment['route']);
-                if(!$existAttachment) break;
-                $content = Storage::get($attatchment['route'].'/'.$existAttachment);
+                // $existAttachment = $this->existAttachment($attatchment['name'],$attatchment['route']);
+                // if(!$existAttachment) break;
+                // $content = Storage::get($attatchment['route'].'/'.$existAttachment);
+                $content = Storage::get($attatchment['route']);
                 $attatchment['file'] = $content;
                 array_push($attatchments,$attatchment);
             }
@@ -392,4 +381,105 @@ class NotificationsController extends Controller
             $fileExistData = explode('/',$fileExist[0]);
             return count($fileExist) > 0 ? end($fileExistData) : false ;
     }
+
+    /**
+     * Valida los datos que vienen por el request
+     *
+     * @param Request $request
+     * @return void
+     */
+    private function requestValidator(Request $request)
+    {
+        $this->validate($request,[
+            'form_id' => 'required|numeric',
+            'notification_type' => 'required|numeric',
+            'name' => 'required|string',
+            'body_notifications' => 'required|string',
+            'to' => 'required|array',
+            'activators' => 'required|array',
+            'activators.*.id' => 'required|numeric',
+            'activators.*.type' => 'required',
+            'activators.*.value' => 'required',
+        ]);
+    }
+
+    /**
+     * Mapea los datos en un array.
+     * @author Edwin David Sanchez Balbin 
+     *
+     * @param Request $request
+     * @return array
+     */
+    private function mapNotificationData(Request $request) : array
+    {
+        $data = [
+            'form_id' => $request->form_id,
+            'notification_type' => $request->notification_type,
+            'activators' => json_encode($request->activators),
+            'name' => $request->name,
+            'subject' => (isset($request->subject)) ? $request->subject : '',
+            'to' => json_encode($request->to),
+            'template_to_send' => $request->template_to_send,
+            'rrhh_id' => Auth::user()->rrhh_id
+        ];
+
+        return $data;
+    }
+
+   /**
+    * Guarda los datos de los archivos adjuntos de la notificación.
+    * @author Edwin David Sanchez Balbin
+    *
+    * @param Request $request
+    * @param integer $notificationId
+    * @return void
+    */ 
+   private function saveNotificationAttachments(Request $request, int $notificationId)
+   {
+        foreach ($request->attachments as $key => $attachment){
+            if ($key == 'static') {
+                $typeValue = 'string';
+                $fileName = $attachment['file_name'];
+                if (null != $file = $request->file($attachment['field_name'])) {
+                    $path = $this->saveFileAttachment($file, $notificationId, $fileName);
+                } else {
+                    return $this->errorResponse('No file to save.', 400);
+                }
+            } else if ($key == 'dynamic') {
+                $typeValue = 'array';
+                $fileName = json_encode($attachment['file_name']);
+                $path = $attachment['route'];
+            }
+            $validAtachment = $this->validate($request,[
+                "attachments.$key.file_name" => "required|$typeValue"
+            ]);
+
+            if($validAtachment){
+                $this->notificationsAttachmentRepository->create([
+                    'notifications_id' => $notificationId,
+                    'type_attachment' => $key,
+                    'file_attachment' => $fileName,
+                    'route_atachment' => $path,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now()
+                ]);
+            } else {
+                return $this->errorResponse("Atatchments has one or more invalid arguments on $key files.",400);
+            }
+        }
+   }
+
+   /**
+    * Guarda el archivo y retorna la ruta relativa mismo.
+    * @author Edwin David Sanchez Balbin
+    *
+    * @param mixed $file
+    * @param integer $notificationId
+    * @param string $fileName
+    * @return string
+    */
+   private function saveFileAttachment($file, int $notificationId, string $fileName) :string
+   {
+       return $file->storeAS("notifications/$notificationId", $fileName);
+   }
 }
