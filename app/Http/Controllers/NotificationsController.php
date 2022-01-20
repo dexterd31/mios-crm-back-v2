@@ -446,9 +446,7 @@ class NotificationsController extends Controller
 						return $this->errorResponse('No file to save.', 400);
 					}
 
-					$validAtachment = $this->validateTypeAttachment($request, $typeAttachment);
-
-					$this->saveAttachments($notificationId, $typeAttachment, $fileName, $path, $validAtachment);
+					$this->saveAttachments($notificationId, $typeAttachment, $fileName, $path, true);
 				}
             } else if ($typeAttachment == 'dynamic') {
                 $fileName = json_encode($attachment['file_name']);
@@ -481,7 +479,7 @@ class NotificationsController extends Controller
 				'updated_at' => Carbon::now()
 			]);
 		} else {
-			return $this->errorResponse("Atatchments has one or more invalid arguments on $key files.",400);
+			return $this->errorResponse("Atatchments has one or more invalid arguments on $typeAttachment files.",400);
 		}
    }
 
