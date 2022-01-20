@@ -393,7 +393,7 @@ class NotificationsController extends Controller
         $this->validate($request,[
             'form_id' => 'required|numeric',
             'notification_type' => 'required|numeric',
-            // 'name' => 'required|string',
+            'name' => 'required|string',
             'body_notifications' => 'required|string',
             'to' => 'required|string',
             'activators' => 'required|string',
