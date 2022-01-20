@@ -436,37 +436,53 @@ class NotificationsController extends Controller
     */ 
    private function saveNotificationAttachments(Request $request, int $notificationId)
    {
-        foreach ($request->attachments as $key => $attachment){
-            if ($key == 'static') {
-                $typeValue = 'string';
-                $fileName = $attachment['file_name'];
-                if (null != $file = $request->file($attachment['field_name'])) {
-                    $path = $this->saveFileAttachment($file, $notificationId, $fileName);
-                } else {
-                    return $this->errorResponse('No file to save.', 400);
-                }
-            } else if ($key == 'dynamic') {
-                $typeValue = 'array';
+        foreach ($request->attachments as $typeAttachment => $attachment){
+            if ($typeAttachment == 'static') {
+				foreach ($attachment as $fieldName) {
+					if (null != $file = $request->file($fieldName)) {
+						$fileName = $file->getClientOriginalName();
+						$path = $this->saveFileAttachment($file, $notificationId, $fileName);
+					} else {
+						return $this->errorResponse('No file to save.', 400);
+					}
+
+					$validAtachment = $this->validateTypeAttachment($request, $typeAttachment);
+
+					$this->saveAttachments($notificationId, $typeAttachment, $fileName, $path, $validAtachment);
+				}
+            } else if ($typeAttachment == 'dynamic') {
                 $fileName = json_encode($attachment['file_name']);
                 $path = $attachment['route'];
-            }
-            $validAtachment = $this->validate($request,[
-                "attachments.$key.file_name" => "required|$typeValue"
-            ]);
+				$validAtachment = $this->validateTypeAttachment($request, $typeAttachment);
 
-            if($validAtachment){
-                $this->notificationsAttachmentRepository->create([
-                    'notifications_id' => $notificationId,
-                    'type_attachment' => $key,
-                    'file_attachment' => $fileName,
-                    'route_atachment' => $path,
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now()
-                ]);
-            } else {
-                return $this->errorResponse("Atatchments has one or more invalid arguments on $key files.",400);
+				$this->saveAttachments($notificationId, "$typeAttachment.file_name", $fileName, $path, $validAtachment);
             }
         }
+   }
+
+   private function validateTypeAttachment(Request $request, string $typeAttachment) : bool
+   {
+		$this->validate($request,[
+			"attachments.$typeAttachment" => "required|array"
+		]);
+
+		return true;
+   } 
+
+   private function saveAttachments(int $notificationId, string $typeAttachment, string $fileName, string $path, bool $validAtachment)
+   {
+		if($validAtachment){
+			$this->notificationsAttachmentRepository->create([
+				'notifications_id' => $notificationId,
+				'type_attachment' => $typeAttachment,
+				'file_attachment' => $fileName,
+				'route_atachment' => $path,
+				'created_at' => Carbon::now(),
+				'updated_at' => Carbon::now()
+			]);
+		} else {
+			return $this->errorResponse("Atatchments has one or more invalid arguments on $key files.",400);
+		}
    }
 
    /**
