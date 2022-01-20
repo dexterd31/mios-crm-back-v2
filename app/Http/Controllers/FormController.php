@@ -83,7 +83,9 @@ class FormController extends Controller
         $formsSections->externalNotifications = false;
         $apiConnection = ApiConnection::where('form_id',$id)->where('api_type',10)->where('status',1)->first();
         if($apiConnection) $formsSections->externalNotifications = true;
-
+        $templateController = new TemplateController();
+        $templateExist = (count($templateController->showByFormId($id)) > 0);
+        $formsSections->template = $templateExist;
         return response()->json($formsSections);
     }
 

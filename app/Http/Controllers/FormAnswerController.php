@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\FormAnswersTray;
 use App\Models\RelTrayUser;
+use Illuminate\Support\Facades\Log;
+use phpDocumentor\Reflection\Types\Array_;
 
 
 class FormAnswerController extends Controller
@@ -165,6 +167,17 @@ class FormAnswerController extends Controller
             // Manejar bandejas
             $this->matchTrayFields($form_answer->form_id, $form_answer);
             $this->updateDataCrm($clientNew->id, $form_answer);
+
+            //Manejar Escalamientos
+            //Evita otro llamado a el back para saber si la tipificación realizada debe escalarse o no.
+            $scalationController = new EscalationController();
+            $scalationRequest = new Request();
+            $scalationRequest->replace([
+                "form" => $request['sections'],
+                "form_id" => $request->form_id,
+                "client_id" => $clientNew->id
+            ]);
+            $scalationController->validateScalation($scalationRequest);
 
             //validarNotificaciones
             $notificationsController = new NotificationsController();
