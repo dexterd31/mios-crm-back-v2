@@ -393,10 +393,10 @@ class NotificationsController extends Controller
         $this->validate($request,[
             'form_id' => 'required|numeric',
             'notification_type' => 'required|numeric',
-            'name' => 'required|string',
+            // 'name' => 'required|string',
             'body_notifications' => 'required|string',
-            'to' => 'required|array',
-            'activators' => 'required|array',
+            'to' => 'required|string',
+            'activators' => 'required|string',
             'activators.*.id' => 'required|numeric',
             'activators.*.type' => 'required',
             'activators.*.value' => 'required',
@@ -415,10 +415,10 @@ class NotificationsController extends Controller
         $data = [
             'form_id' => $request->form_id,
             'notification_type' => $request->notification_type,
-            'activators' => json_encode($request->activators),
+            'activators' => $request->activators,
             'name' => $request->name,
             'subject' => (isset($request->subject)) ? $request->subject : '',
-            'to' => json_encode($request->to),
+            'to' => $request->to,
             'template_to_send' => $request->template_to_send,
             'rrhh_id' => Auth::user()->rrhh_id
         ];
