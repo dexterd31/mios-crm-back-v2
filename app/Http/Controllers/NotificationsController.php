@@ -436,7 +436,7 @@ class NotificationsController extends Controller
     */ 
    private function saveNotificationAttachments(Request $request, int $notificationId)
    {
-        foreach ($request->attachments as $typeAttachment => $attachment){
+        foreach (json_decode($request->attachments, true) as $typeAttachment => $attachment){
             if ($typeAttachment == 'static') {
 				foreach ($attachment as $fieldName) {
 					if (null != $file = $request->file($fieldName)) {
