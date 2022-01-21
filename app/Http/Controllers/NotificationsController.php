@@ -292,7 +292,7 @@ class NotificationsController extends Controller
     private function sendEmailNotification($formId,$notification,$formAnswerData){
         $attatchments = [];
         $notificationService = new NotificationsService();
-        $nAttatchments = $this->notificationsAttachmentRepository->allByNotification('notifications_id',$notification->id);
+        $nAttatchments = $this->notificationsAttachmentRepository->allByNotification('notifications_id',(int)$notification->id);
         if(count($nAttatchments) > 0){
             $dinamicAttatchments = [];
             $staticAttatchments = [];
