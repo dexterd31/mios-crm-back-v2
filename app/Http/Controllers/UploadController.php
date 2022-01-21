@@ -81,7 +81,6 @@ class UploadController extends Controller
     public function extractColumnsNames(Request $request, MiosHelper $miosHelper){
         try {
             $file = $request->file('excel');
-            Log::info($request->hasFile('excel'));
             $answer = [];
             if(isset($file)){
                 $form_import_validate = Excel::toArray(new UploadImport, $file);
@@ -178,8 +177,6 @@ class UploadController extends Controller
                             array_push($errorAnswers,$dataValidate->message);
                         }
                     }
-                    Log::info('ANSWER FIELDS');
-                    Log::info(json_encode($answerFields));
                     //array_push($dataToLoad,$answerFields);
                     if(count($errorAnswers)==0){
                         $newRequest = new Request();
@@ -189,9 +186,6 @@ class UploadController extends Controller
                         ]);
                         DB::connection()->enableQueryLog();
                         $existingClient = $clientNewController->index($newRequest);
-                        Log::info(json_encode($existingClient));
-                        Log::info('QUERIES');
-                        Log::info(DB::connection()->getQueryLog());
                         if(!empty($existingClient) && !filter_var($request->action,FILTER_VALIDATE_BOOLEAN)){
                             $updateExisting = false;
                         }
@@ -288,7 +282,6 @@ class UploadController extends Controller
         $formAnswersExcel=[];
         $keysValueExcel=[];
         $errorAnswers=[];
-        \Log::info($request->form_id);
         if($totalArchivos>0){
             $fieldsLoad=$formController->getSpecificFieldForSection(json_decode($request->assigns),$request->form_id);
             foreach(json_decode($request->assigns) as $assign){
@@ -326,7 +319,6 @@ class UploadController extends Controller
                             $fila = strval(intval($c) + 1);
                             $columnErrorMessage = "Error en la Fila $fila";
                             array_push($dataValidate->message,$columnErrorMessage);
-                            \Log::info($dataValidate->message);
                             array_push($errorAnswers,$dataValidate->message);
                         }
                     }
@@ -697,7 +689,6 @@ class UploadController extends Controller
      * @return mixed
      */
     private function addToDirectories(array $data,int $formId,int $clientNewId, array $indexForm){
-        Log::info($indexForm);
         $newDirectory = Directory::updateOrCreate([
             'form_id' => $formId,
             'client_new_id' => $clientNewId
