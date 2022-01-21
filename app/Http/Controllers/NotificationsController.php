@@ -13,6 +13,7 @@ use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use stdClass;
 
@@ -39,19 +40,23 @@ class NotificationsController extends Controller
      * @param bool $external    
      * @return \Illuminate\Http\Response
      */
-    public function index(int $notificationId = null, $external = true)
+    public function index(int $id = 0, $external = true)
     {
-        if (!is_null($notificationId)) {
-            $this->edit($notificationId);
-        }
-        $notifications = $this->notificationRepository->all();
-        foreach ($notifications as $notification){
-            $notification->activators = json_decode($notification->activators);
-        }
-        if(!$external){
-            return $notifications;
-        }
-        return $this->successResponse($notifications);
+		try {
+			if ($id != 0) {
+				$this->edit($id);
+			}
+			$notifications = $this->notificationRepository->all();
+			foreach ($notifications as $notification){
+				$notification->activators = json_decode($notification->activators);
+			}
+			if(!$external){
+				return $notifications;
+			}
+			return $this->successResponse($notifications);
+		} catch (\Throwable $th) {
+			Log::error($th);
+		}
     }
 
     /**
@@ -233,29 +238,33 @@ class NotificationsController extends Controller
      * @return void
      */
     public function sendNotifications(int $formId,$formAnswerData){
-        $notifications = $this->showByFormId($formId,false);
-        if(count($notifications) == 0){
-            return;
-        }
-        foreach ($notifications as $notification){
-            $sendEmail = true;
-            foreach ($notification->activators as $activator){
-                $existingActivator = $this->activatorsInResponse($formAnswerData,$activator);
-                if(!$existingActivator){
-                    $sendEmail = false;
-                }
-            }
-            //envío de notificación
-            if($sendEmail){
-                switch($notification->notification_type){
-                    case 1: //email
-                        $this->sendEmailNotification($formId,$notification,$formAnswerData);
-                        break;
-                    case 2: //sms
-                        break;
-                }
-            }
-        }
+		try {
+			$notifications = $this->showByFormId($formId,false);
+			if(count($notifications) == 0){
+				return;
+			}
+			foreach ($notifications as $notification){
+				$sendEmail = true;
+				foreach ($notification->activators as $activator){
+					$existingActivator = $this->activatorsInResponse($formAnswerData,$activator);
+					if(!$existingActivator){
+						$sendEmail = false;
+					}
+				}
+				//envío de notificación
+				if($sendEmail){
+					switch($notification->notification_type){
+						case 1: //email
+							$this->sendEmailNotification($formId,$notification,$formAnswerData);
+							break;
+						case 2: //sms
+							break;
+					}
+				}
+			}
+		} catch (\Throwable $th) {
+			Log::error($th);
+		}
     }
 
     /**
