@@ -436,26 +436,30 @@ class NotificationsController extends Controller
     */ 
    private function saveNotificationAttachments(Request $request, int $notificationId)
    {
-        foreach (json_decode($request->attachments) as $typeAttachment => $attachment){
-            if ($typeAttachment == 'static') {
-				foreach ($attachment as $fieldName) {
-					if (null != $file = $request->file($fieldName)) {
-						$fileName = $file->getClientOriginalName();
-						$path = $this->saveFileAttachment($file, $notificationId, $fileName);
-					} else {
-						return $this->errorResponse('No file to save.', 400);
-					}
-
-					$this->saveAttachments($notificationId, $typeAttachment, $fileName, $path, true);
-				}
-            } else if ($typeAttachment == 'dynamic') {
-                $fileName = json_encode($attachment['file_name']);
-                $path = $attachment['route'];
-				$validAtachment = $this->validateTypeAttachment($request, $typeAttachment);
-
-				$this->saveAttachments($notificationId, "$typeAttachment.file_name", $fileName, $path, $validAtachment);
-            }
-        }
+	   try {
+		   foreach (json_decode($request->attachments) as $typeAttachment => $attachment){
+			   if ($typeAttachment == 'static') {
+				   foreach ($attachment as $fieldName) {
+					   if (null != $file = $request->file($fieldName)) {
+						   $fileName = $file->getClientOriginalName();
+						   $path = $this->saveFileAttachment($file, $notificationId, $fileName);
+					   } else {
+						   return $this->errorResponse('No file to save.', 400);
+					   }
+   
+					   $this->saveAttachments($notificationId, $typeAttachment, $fileName, $path, true);
+				   }
+			   } else if ($typeAttachment == 'dynamic') {
+				   $fileName = json_encode($attachment['file_name']);
+				   $path = $attachment['route'];
+				   $validAtachment = $this->validateTypeAttachment($request, $typeAttachment);
+   
+				   $this->saveAttachments($notificationId, "$typeAttachment.file_name", $fileName, $path, $validAtachment);
+			   }
+		   }
+	   } catch (\Throwable $th) {
+		   error_log($th);
+	   }
    }
 
    private function validateTypeAttachment(Request $request, string $typeAttachment) : bool
