@@ -23,17 +23,19 @@ class ChangeNotificationsAttachmentTable extends Migration
             $table->renameColumn('dinamic_atachment', 'file_attachment');
         });
 
-        foreach ($notificationsAttachments as $notificationsAttachment)
-        {
-            $saved = DB::table('notifications_attatchment')->where('id', $notificationsAttachment['id'])->update([
-                'notifications_id' => $notificationsAttachment['notifications_id'],
-                'type_attachment' => !is_null($notificationsAttachment['static_atachment']) ? 'static' : 'dynamic',
-                'file_attachment' => $notificationsAttachment['static_atachment'] ?? $notificationsAttachment['dinamic_atachment'],
-                'route_atachment' => $notificationsAttachment['route_atachment'],
-                'created_at' => $notificationsAttachment['created_at'],
-                'updated_at' => Carbon::now(),
-            ]);
-        }
+        if (count($notificationsAttachments)) {
+            foreach ($notificationsAttachments as $notificationsAttachment)
+            {
+                $saved = DB::table('notifications_attatchment')->where('id', $notificationsAttachment['id'])->update([
+                    'notifications_id' => $notificationsAttachment['notifications_id'],
+                    'type_attachment' => !is_null($notificationsAttachment['static_atachment']) ? 'static' : 'dynamic',
+                    'file_attachment' => $notificationsAttachment['static_atachment'] ?? $notificationsAttachment['dinamic_atachment'],
+                    'route_atachment' => $notificationsAttachment['route_atachment'],
+                    'created_at' => Carbon::createFromTimeString($notificationsAttachment['created_at']),
+                    'updated_at' => Carbon::now(),
+                ]);
+            }
+        } 
     }
 
     /**
