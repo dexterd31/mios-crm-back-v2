@@ -10,8 +10,8 @@ class NotificationsAttatchment extends Model
     protected $primaryKey = 'id';
     protected $fillable = [
                             'notifications_id',
-                            'static_atachment',
-                            'dinamic_atachment',
+                            'type_attachment',
+                            'file_attachment',
                             'route_atachment',
                             'created_at',
                             'updated_at',
