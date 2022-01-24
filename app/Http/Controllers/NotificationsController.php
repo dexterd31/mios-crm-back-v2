@@ -58,6 +58,7 @@ class NotificationsController extends Controller
             'activators.*.type' => 'required',
             'activators.*.value' => 'required',
         ]);
+
         $newNotification = Notifications::create([
             'form_id' => $request->form_id,
             'notification_type' => $request->notification_type,
@@ -68,6 +69,16 @@ class NotificationsController extends Controller
             'template_to_send' => $request->template_to_send,
             'rrhh_id' => Auth::user()->rrhh_id
         ]);
+
+        if (trim($request->signature) != '') {
+            if($request->signature == 'file') {
+                $newNotification->signature = $request->file('signature')->storeAs("notifications/$newNotification->id/signature", "signature.{$request->file('signature')->getClientOriginalExtension()}");
+            } else {
+                $newNotification->signature = $request->signature;
+            }
+            $$newNotification->save();
+        }
+
         if(!isset($newNotification->id)){
             return $this->errorResponse('No se creó la notificación',204);
         }
@@ -349,7 +360,14 @@ class NotificationsController extends Controller
                 array_push($attatchments,$attatchment);
             }
         }
-        $emailTemplate = view('email_templates.axaFalabellaMail',['emailBody' => $emailBody])->render();
+        if(Storage::exists($notification->signature)) {
+            $signature = Storage::get($notification->signature);
+            $signatureIsAText = false;
+        } else {
+            $signature = $notification->signature;
+            $signatureIsAText = true;
+        }
+        $emailTemplate = view('email_templates.axaFalabellaMail',compact('emailBody', 'signature', 'signatureIsAText'))->render();
         $notificationService->sendEmail($emailTemplate,$notification->subject,$to,$attatchments);
 
     }
