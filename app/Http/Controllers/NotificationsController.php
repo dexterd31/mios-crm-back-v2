@@ -356,7 +356,10 @@ class NotificationsController extends Controller
                 array_push($attatchments,$attatchment);
             }
         }
-        $signature = $this->getSignature($formAnswerData, $notification->signature);
+        $signature=null;
+        if(!is_null($notification->signature)){
+            $signature = $this->getSignature($formAnswerData, $notification->signature);
+        }
         $emailTemplate = view('email_templates.genericMail',['emailBody' => $emailBody, 'signature' => $signature])->render();
         $notificationService->sendEmail($emailTemplate,$notification->subject,$to,$attatchments);
 
@@ -366,7 +369,7 @@ class NotificationsController extends Controller
      * Retorna el texto enviado con los datos de creacion, actualizacion y firma del agente
      * @author Edwin David Sanchez Balbin
      *
-     * @param int $notificationId
+         * @param int $notificationId
      * @param string $emailBody
      * @return string
      */
