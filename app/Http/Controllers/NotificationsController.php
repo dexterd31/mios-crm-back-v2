@@ -362,7 +362,7 @@ class NotificationsController extends Controller
             $signature = $this->getSignature($formAnswerData, $notification->signature);
         }
         $emailTemplate = view('email_templates.genericMail',['emailBody' => $emailBody, 'signature' => $signature])->render();
-        $notificationService->sendEmail($emailTemplate,$notification->subject,$to,$attatchments, $notification->origin);
+        $notificationService->sendEmail($emailTemplate,$notification->subject,$to,$attatchments,[],[],$notification->origin);
 
     }
 
