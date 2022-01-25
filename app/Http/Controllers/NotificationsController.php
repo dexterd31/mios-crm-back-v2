@@ -67,7 +67,8 @@ class NotificationsController extends Controller
             'subject' => (isset($request->subject))?$request->subject:'',
             'to' => json_encode($request->to),
             'template_to_send' => $request->template_to_send,
-            'rrhh_id' => Auth::user()->rrhh_id
+            'rrhh_id' => Auth::user()->rrhh_id,
+            'origin' => $request->origin
         ]);
 
         if (isset($request->signature)) {
@@ -361,7 +362,7 @@ class NotificationsController extends Controller
             $signature = $this->getSignature($formAnswerData, $notification->signature);
         }
         $emailTemplate = view('email_templates.genericMail',['emailBody' => $emailBody, 'signature' => $signature])->render();
-        $notificationService->sendEmail($emailTemplate,$notification->subject,$to,$attatchments);
+        $notificationService->sendEmail($emailTemplate,$notification->subject,$to,$attatchments,[],[],$notification->origin);
 
     }
 
