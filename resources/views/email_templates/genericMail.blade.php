@@ -44,7 +44,7 @@
             <td height="10" style="font-size:10px; line-height:10px;">&nbsp;</td>
         </tr>
        @if(!is_null($signature))
-            {{ $signature }}
+            {{ html_entity_decode($signature) }}
        @endif 
         <tr>
             <td height="10" style="font-size:10px; line-height:10px;">&nbsp;</td>
