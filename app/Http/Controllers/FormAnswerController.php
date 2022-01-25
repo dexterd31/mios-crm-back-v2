@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\FormAnswersTray;
 use App\Models\RelTrayUser;
+use Illuminate\Support\Facades\Log;
+use phpDocumentor\Reflection\Types\Array_;
 
 
 class FormAnswerController extends Controller
