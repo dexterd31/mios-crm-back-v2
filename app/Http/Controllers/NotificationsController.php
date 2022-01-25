@@ -356,9 +356,7 @@ class NotificationsController extends Controller
                 array_push($attatchments,$attatchment);
             }
         }
-        if(!is_null($notification->signature)) {
-            $signature = $notification->signature;
-        }
+        $signature = $notification->signature;
         $emailTemplate = view('email_templates.genericMail',compact('emailBody', 'signature'))->render();
         $notificationService->sendEmail($emailTemplate,$notification->subject,$to,$attatchments);
 
