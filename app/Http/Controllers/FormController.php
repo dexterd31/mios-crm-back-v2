@@ -552,7 +552,6 @@ class FormController extends Controller
             $response->valid = true;
             if($moneyConvert){
                 $response->value = number_format(intval($value));
-                Log::info(number_format(intval($value)));
                 return $response;
             }
             $response->value = str_replace(",","",$value);
