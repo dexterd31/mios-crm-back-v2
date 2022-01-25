@@ -58,6 +58,7 @@ class NotificationsController extends Controller
             'activators.*.type' => 'required',
             'activators.*.value' => 'required',
         ]);
+
         $newNotification = Notifications::create([
             'form_id' => $request->form_id,
             'notification_type' => $request->notification_type,
@@ -68,6 +69,12 @@ class NotificationsController extends Controller
             'template_to_send' => $request->template_to_send,
             'rrhh_id' => Auth::user()->rrhh_id
         ]);
+
+        if (isset($request->signature)) {
+            $newNotification->signature = $request->signature;
+            $$newNotification->save();
+        }
+
         if(!isset($newNotification->id)){
             return $this->errorResponse('No se creó la notificación',204);
         }
@@ -310,6 +317,7 @@ class NotificationsController extends Controller
             }
         }
         $emailBody = $notification->template_to_send;
+        //SEGUNDA FASE MATAR SI NO EXISTE DESTINATARIO
         $to = (isset($notification->to))? json_decode($notification->to) : null;
         $formController = new FormController();
         foreach (json_decode($formAnswerData->structure_answer,true) as $data){
@@ -321,7 +329,6 @@ class NotificationsController extends Controller
             }
             $emailBody =  str_replace("[[{$data['key']}]]",$data['value'],$emailBody);
             $notification->subject =  str_replace("[[{$data['key']}]]",$data['value'],$notification->subject);
-            $emailBody = $this->getSignature($formAnswerData, $emailBody);
             $notification->subject = $this->getSignature($formAnswerData,$notification->subject);
             if(!is_null($to)) $to = str_replace($data['id'],$data['value'],$to);
             if(isset($dinamicAttatchments)){
@@ -349,7 +356,8 @@ class NotificationsController extends Controller
                 array_push($attatchments,$attatchment);
             }
         }
-        $emailTemplate = view('email_templates.axaFalabellaMail',['emailBody' => $emailBody])->render();
+        $signature = $this->getSignature($formAnswerData, $notification->signature);
+        $emailTemplate = view('email_templates.genericMail',['emailBody' => $emailBody, 'signature' => $signature])->render();
         $notificationService->sendEmail($emailTemplate,$notification->subject,$to,$attatchments);
 
     }
@@ -392,4 +400,5 @@ class NotificationsController extends Controller
             $fileExistData = explode('/',$fileExist[0]);
             return count($fileExist) > 0 ? end($fileExistData) : false ;
     }
+
 }
