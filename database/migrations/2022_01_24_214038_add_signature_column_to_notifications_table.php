@@ -14,7 +14,7 @@ class AddSignatureColumnToNotificationsTable extends Migration
     public function up()
     {
         Schema::table('notifications', function (Blueprint $table) {
-            $table->string('signature')->nullable()->comment('Firma de la notificación.');
+            $table->longText('signature')->nullable()->comment('Firma de la notificación.');
         });
     }
 
