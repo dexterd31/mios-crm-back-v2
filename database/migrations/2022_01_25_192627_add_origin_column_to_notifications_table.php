@@ -14,7 +14,7 @@ class AddOriginColumnToNotificationsTable extends Migration
     public function up()
     {
         Schema::table('notifications', function (Blueprint $table) {
-            $table->string('origin', 100)->nullable()->comment('Origen de donde sera enviada la notificación.');
+            $table->string('origin', 100)->nullable()->default('DEFAULT_EMAIL')->comment('Origen de donde sera enviada la notificación.');
         });
     }
 
