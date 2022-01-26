@@ -310,7 +310,6 @@ class FormController extends Controller
             $r=0;
             $rows=[];
             $plantillaRespuestas=[];
-            $tipificationTime = isset($request->include_tipification_time);
             //Agrupamos los id_rrhh del usuario en un arreglo
             $userIds=$miosHelper->getArrayValues('id_rhh',$formAnswers);
             $useString=implode(',',array_values(array_unique($userIds)));
@@ -399,7 +398,7 @@ class FormController extends Controller
                 }
                 $respuestas['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
                 $respuestas['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
-                if($tipificationTime){
+                if($request->include_tipification_time){
                     $respuestas['tipification_time'] = $answer->tipification_time;
                 }
                 $rows[$r]=$respuestas;
