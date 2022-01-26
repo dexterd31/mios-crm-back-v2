@@ -19,6 +19,8 @@ class Notifications extends Model
                            'state',
                            'created_at',
                            'updated_at',
+                           'signature',
+                           'origin'
                           ];
 
     public function forms(){

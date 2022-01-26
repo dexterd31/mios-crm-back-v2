@@ -18,7 +18,7 @@ class NotificationsService{
         $this->secret = JWTAuth::getToken();
     }
 
-    public function sendEmail(string $body, string $subject, array $to, array $attatchment = [],array $cc =[], array $cco = []){
+    public function sendEmail(string $body, string $subject, array $to, array $attatchment = [],array $cc =[], array $cco = [], string $origin){
         $request = new \stdClass();
         $request->to = $to;
         $request->subject = $subject;
@@ -29,7 +29,7 @@ class NotificationsService{
 
         $params = array(
             'idType' => 2,
-            'origin'=>'CRM_AXA_FALABELLA',
+            'origin'=>$origin,
             'request'=>$request
         );
 
