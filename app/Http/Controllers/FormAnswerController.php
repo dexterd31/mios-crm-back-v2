@@ -523,8 +523,6 @@ class FormAnswerController extends Controller
                 }
             }
         }
-        Log::info($formAnswerData);
-        Log::info($formAnswerIndexData);
         $form_answer = FormAnswer::where('id', $id)->first();
         $form_answer->structure_answer = json_encode($formAnswerData);
         $form_answer->form_answer_index_data = json_encode($formAnswerIndexData);
@@ -716,16 +714,9 @@ class FormAnswerController extends Controller
     private function existingFile($file,$idValue):bool{
         $attachment = new Attachment();
         $fileExisting = $attachment->find($idValue);
-        //todo:validar como colocar la excepción cuando no se encuentre el archivo
-        Log::info("file");
-        Log::info($file);
-        Log::info("fileExisting");
-        Log::info(Storage::get($fileExisting->source));
         if(Storage::get($fileExisting->source) === $file ){
-            Log::info("true");
             return true;
         }
-        Log::info("false");
         return false;
     }
 }
