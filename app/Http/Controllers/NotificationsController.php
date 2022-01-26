@@ -401,8 +401,11 @@ class NotificationsController extends Controller
             $fileName = !empty($path) ? $path.'/'.$fileName : $fileName;
             $fileData = explode('.',$fileName);
             $fileExist = glob("../storage/app/$fileData[0]*.$fileData[1]");
-            $fileExistData = explode('/',$fileExist[0]);
-            return count($fileExist) > 0 ? end($fileExistData) : false ;
+            if(count($fileExist) > 0){
+                $fileExistData = explode('/',$fileExist[0]);
+                return end($fileExistData);
+            }
+            return false;
     }
 
 }

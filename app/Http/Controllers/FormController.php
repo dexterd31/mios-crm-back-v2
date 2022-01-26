@@ -86,6 +86,8 @@ class FormController extends Controller
         $templateController = new TemplateController();
         $templateExist = (count($templateController->showByFormId($id)) > 0);
         $formsSections->template = $templateExist;
+        $formsSections->view_chronometer = (boolean)$formsSections->tipification_time;
+        unset($formsSections->tipification_time);
         return response()->json($formsSections);
     }
 
@@ -289,13 +291,11 @@ class FormController extends Controller
      */
     public function report(Request $request, MiosHelper $miosHelper){
         $char="";
-        $date1=Carbon::parse($request->date1)->setTimezone('America/Bogota');
-        $date2=Carbon::parse($request->date2)->setTimezone('America/Bogota');
         $rrhhService = new RrhhService();
-        $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','form_answers.rrhh_id as id_rhh')
+        $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','form_answers.rrhh_id as id_rhh','tipification_time')
                             ->where('form_answers.form_id',$request->formId)
                             ->where('tipification_time','!=','upload')
-                            ->whereBetween('form_answers.created_at', [$date1, $date2])
+                            ->whereBetween('form_answers.created_at', ["$request->date1 00:00:00", "$request->date2 00:00:00"])
                             ->get();
         if(count($formAnswers)==0){
             // 406 Not Acceptable
@@ -398,10 +398,18 @@ class FormController extends Controller
                 }
                 $respuestas['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
                 $respuestas['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
+                if(isset($request->include_tipification_time) && $request->include_tipification_time){
+                    $respuestas['tipification_time'] = $answer->tipification_time;
+                }
                 $rows[$r]=$respuestas;
                 $r++;
             }
             array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización');
+            if(isset($request->include_tipification_time) && $request->include_tipification_time){
+                array_push($titleHeaders,'Tiempo de tipificación');
+            }else{
+                \Log::warning("Parametro include_tipification_time $request->include_tipification_time para generar el reporte");
+            }
         }
         return Excel::download(new FormReportExport($rows, $titleHeaders), 'ReporteFormulario.xlsx');
     }
@@ -554,7 +562,6 @@ class FormController extends Controller
             $response->valid = true;
             if($moneyConvert){
                 $response->value = number_format(intval($value));
-                Log::info(number_format(intval($value)));
                 return $response;
             }
             $response->value = str_replace(",","",$value);
