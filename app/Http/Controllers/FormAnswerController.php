@@ -506,6 +506,7 @@ class FormAnswerController extends Controller
                     }
                     if (!empty($field['idValue'])){
                         $register['value'] = $field['idValue'];
+                        $register['nameFile'] = $field['nameFile'];
                     }
                 }
 
