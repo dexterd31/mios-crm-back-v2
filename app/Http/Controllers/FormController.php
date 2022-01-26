@@ -398,15 +398,17 @@ class FormController extends Controller
                 }
                 $respuestas['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
                 $respuestas['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
-                if($request->include_tipification_time){
+                if(isset($request->include_tipification_time) && $request->include_tipification_time){
                     $respuestas['tipification_time'] = $answer->tipification_time;
                 }
                 $rows[$r]=$respuestas;
                 $r++;
             }
             array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización');
-            if($tipificationTime){
+            if(isset($request->include_tipification_time) && $request->include_tipification_time){
                 array_push($titleHeaders,'Tiempo de tipificación');
+            }else{
+                \Log::warning("Parametro include_tipification_time $request->include_tipification_time para generar el reporte");
             }
         }
         return Excel::download(new FormReportExport($rows, $titleHeaders), 'ReporteFormulario.xlsx');
