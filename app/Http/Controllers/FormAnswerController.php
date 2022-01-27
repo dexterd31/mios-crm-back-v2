@@ -666,10 +666,10 @@ class FormAnswerController extends Controller
         $structure_data = [];
         $formAnswer = FormAnswer::where('form_id',$form_id)
             ->where('client_new_id', $client_new_id)
-            ->latest()->first()->structure_answer;
+            ->latest()->first();
         $directory = Directory::where('form_id',$form_id)
             ->where('client_new_id', $client_new_id)
-            ->latest()->first()->data;
+            ->latest()->first();
         if($formAnswer && $directory) {
             $clientData = $formAnswer->structure_answer;
             if($directory->created_at > $formAnswer->created_at){
