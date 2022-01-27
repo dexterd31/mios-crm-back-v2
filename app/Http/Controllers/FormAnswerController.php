@@ -676,10 +676,10 @@ class FormAnswerController extends Controller
                 $clientData = $directory->data;
             }
         }
-        elseif(!$formAnswer){
+        elseif(!$formAnswer && $directory){
             $clientData = $directory->data;
         }
-        elseif (!$directory){
+        elseif (!$directory && $formAnswer){
             $clientData = $formAnswer->structure_answer;
         }
         foreach (json_decode($clientData) as $data){
