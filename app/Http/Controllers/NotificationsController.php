@@ -335,7 +335,7 @@ class NotificationsController extends Controller
 
             if(isset($dinamicAttatchments)){
                 array_walk_recursive($dinamicAttatchments,function (&$attatchment) use ($data){
-                    [$attatchment] = $this->replaceStructureFlagsForValues([$attatchment], $data);
+                    [$attatchment] = $this->replaceStructureFlagsForValues([$attatchment], $data, false);
                 });
             }
         }
