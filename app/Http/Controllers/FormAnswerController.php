@@ -663,14 +663,24 @@ class FormAnswerController extends Controller
      */
     private function preloaded($form_id, $client_new_id, $files)
     {
-        $clientData = FormAnswer::where('form_id',$form_id)
-            ->where('client_new_id', $client_new_id)
-            ->latest()->first('structure_answer')->structure_answer;
         $structure_data = [];
-        if(!$clientData) {
-            $clientData = Directory::where('form_id',$form_id)
-                ->where('client_new_id', $client_new_id)
-                ->latest()->first('data')->data;
+        $formAnswer = FormAnswer::where('form_id',$form_id)
+            ->where('client_new_id', $client_new_id)
+            ->latest()->first()->structure_answer;
+        $directory = Directory::where('form_id',$form_id)
+            ->where('client_new_id', $client_new_id)
+            ->latest()->first()->data;
+        if($formAnswer && $directory) {
+            $clientData = $formAnswer->structure_answer;
+            if($directory->created_at > $formAnswer->created_at){
+                $clientData = $directory->data;
+            }
+        }
+        elseif(!$formAnswer){
+            $clientData = $directory->data;
+        }
+        elseif (!$directory){
+            $clientData = $formAnswer->structure_answer;
         }
         foreach (json_decode($clientData) as $data){
             if($data->preloaded){
