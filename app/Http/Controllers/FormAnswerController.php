@@ -672,7 +672,7 @@ class FormAnswerController extends Controller
             ->latest()->first();
         if($formAnswer && $directory) {
             $clientData = $formAnswer->structure_answer;
-            if($directory->created_at > $formAnswer->created_at){
+            if(strtotime($directory->updated_at) > strtotime($formAnswer->created_at)){
                 $clientData = $directory->data;
             }
         }
