@@ -462,7 +462,9 @@ class UploadController extends Controller
                 "label" => $field->label,
                 "isClientInfo" => $field->isClientInfo,
                 "client_unique" => isset($field->client_unique) ? $field->client_unique : false,
-                "value" => gettype($field->value) !=="string" ?  strval($field->value) : $field->value
+                "value" => gettype($field->value) !=="string" ?  strval($field->value) : $field->value,
+                "controlType" => $field->controlType,
+                "type" => $field->type
             ];
             $answer->formAnswerIndex = (Object)[
                 "id" => $field->id,

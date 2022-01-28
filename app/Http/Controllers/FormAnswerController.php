@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ApiConnection;
+use App\Models\Directory;
 use App\Models\FormAnswer;
 use App\Models\Form;
 use App\Models\KeyValue;
@@ -653,25 +654,40 @@ class FormAnswerController extends Controller
         return response()->download(storage_path("app/" . $attachment->source), $attachment->name);
     }
 
+    /**
+     * @desc Valida los campos precargables de la última respuesta del formulario
+     * @param $form_id
+     * @param $client_new_id
+     * @param $files
+     * @return array
+     */
     private function preloaded($form_id, $client_new_id, $files)
     {
-        $form = Form::find($form_id);
         $structure_data = [];
-        foreach($form->section as $section){
-            $section->fields =json_decode($section->fields);
-            foreach ( $section->fields as $field) {
-                if($field->preloaded == true && $field->controlType != "file"){
-                    //Traemos descripcion pues alli se guarda el nombre del archivo
-                    $key_value = KeyValue::where('form_id', $form_id)->where('client_new_id', $client_new_id)->where('field_id', $field->id)->select('field_id', 'value', 'key', 'description')->latest()->first();
-                    if($key_value){
-                        $key_value->id = $key_value->field_id;
-                        unset($key_value->field_id);
-                        $structure_data[] = $key_value;
-                    }
-                }
+        $formAnswer = FormAnswer::where('form_id',$form_id)
+            ->where('client_new_id', $client_new_id)
+            ->latest()->first();
+        $directory = Directory::where('form_id',$form_id)
+            ->where('client_new_id', $client_new_id)
+            ->latest()->first();
+        if($formAnswer && $directory) {
+            $clientData = $formAnswer->structure_answer;
+            if(strtotime($directory->updated_at) > strtotime($formAnswer->created_at)){
+                $clientData = $directory->data;
             }
         }
-        $answer['data'] = array_merge($structure_data, $files);
+        elseif(!$formAnswer && $directory){
+            $clientData = $directory->data;
+        }
+        elseif (!$directory && $formAnswer){
+            $clientData = $formAnswer->structure_answer;
+        }
+        foreach (json_decode($clientData) as $data){
+            if($data->preloaded){
+                $structure_data[] = $data;
+            }
+        }
+        $answer['data'] = array_merge($structure_data,$files);
         $answer['client_id']=$client_new_id;
         return $answer;
 
