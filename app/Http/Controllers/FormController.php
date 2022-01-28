@@ -291,15 +291,11 @@ class FormController extends Controller
      */
     public function report(Request $request, MiosHelper $miosHelper){
         $char="";
-        $date1=Carbon::parse($request->date1)->setTimezone('America/Bogota')->setHour(00)->setMinute(00)->setSecond(00)->format('Y-m-d H:i:s');
-        $date2=Carbon::parse($request->date2)->setTimezone('America/Bogota')->format('Y-m-d H:i:s');
-        Log::info($date1);
-        Log::info($date2);
         $rrhhService = new RrhhService();
         $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','form_answers.rrhh_id as id_rhh','tipification_time')
                             ->where('form_answers.form_id',$request->formId)
                             ->where('tipification_time','!=','upload')
-                            ->whereBetween('form_answers.created_at', [$date1, $date2])
+                            ->whereBetween('form_answers.created_at', ["$request->date1 00:00:00", "$request->date2 00:00:00"])
                             ->get();
         if(count($formAnswers)==0){
             // 406 Not Acceptable
@@ -314,7 +310,6 @@ class FormController extends Controller
             $r=0;
             $rows=[];
             $plantillaRespuestas=[];
-            $tipificationTime = isset($request->include_tipification_time);
             //Agrupamos los id_rrhh del usuario en un arreglo
             $userIds=$miosHelper->getArrayValues('id_rhh',$formAnswers);
             $useString=implode(',',array_values(array_unique($userIds)));
@@ -386,8 +381,8 @@ class FormController extends Controller
                             break;
                         }else if($field->key==$input->key){
                             $select = $this->findAndFormatValues($request->formId, $input->id, $field->value);
-                            if($select->valid){
-                                $respuestas[$input->id] = $select->value;
+                            if($select->valid && isset($select->name)){
+                                $respuestas[$input->id] = $select->name;
                             } else {
                                 $respuestas[$input->id] = $field->value;
                             }
@@ -403,15 +398,17 @@ class FormController extends Controller
                 }
                 $respuestas['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
                 $respuestas['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
-                if($tipificationTime){
+                if(isset($request->include_tipification_time) && $request->include_tipification_time){
                     $respuestas['tipification_time'] = $answer->tipification_time;
                 }
                 $rows[$r]=$respuestas;
                 $r++;
             }
             array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización');
-            if($tipificationTime){
+            if(isset($request->include_tipification_time) && $request->include_tipification_time){
                 array_push($titleHeaders,'Tiempo de tipificación');
+            }else{
+                \Log::warning("Parametro include_tipification_time $request->include_tipification_time para generar el reporte");
             }
         }
         return Excel::download(new FormReportExport($rows, $titleHeaders), 'ReporteFormulario.xlsx');
@@ -565,7 +562,6 @@ class FormController extends Controller
             $response->valid = true;
             if($moneyConvert){
                 $response->value = number_format(intval($value));
-                Log::info(number_format(intval($value)));
                 return $response;
             }
             $response->value = str_replace(",","",$value);

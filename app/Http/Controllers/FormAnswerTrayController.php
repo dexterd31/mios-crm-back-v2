@@ -28,7 +28,6 @@ class FormAnswerTrayController extends Controller
         $formAnswerLogs = FormAnswerLog::where('form_answer_id',$formAnswerId)->get('structure_answer')->toArray();
         $traysSaveHistoric = Tray::where('id',$trayId)->first();
 
-        \Log::info($traysSaveHistoric->form_id);
         $saveHistoric = json_decode($traysSaveHistoric)->save_historic;
         if($saveHistoric === null){
             $response = new \stdClass();
