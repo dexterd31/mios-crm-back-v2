@@ -36,6 +36,14 @@ class NotificationsService{
         $this->request('POST','/api/notification/send', $params);
     }
 
+    public function listNotificationType()
+    {
+        return $this->request('GET', "/api/notificatonsType/show/{appName}");
+    }
 
+    public function listOrigins(int $idNotificationType)
+    {
+        return $this->request('GET', "/api/$idNotificationType");
+    }
 
 }

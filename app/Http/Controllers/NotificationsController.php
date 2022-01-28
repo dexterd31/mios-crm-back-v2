@@ -180,9 +180,10 @@ class NotificationsController extends Controller
             unset($form->section[$i]['form_id']);
             $form->section[$i]['fields'] = json_decode($form->section[$i]['fields']);
         }
-        $notification_types = $this->notificationsTypeRepository->all();
-        if(count($notification_types) === 0){
-            return $this->errorResponse('notifications type not found',404);
+        // $notification_types = $this->notificationsTypeRepository->all();
+        $notification_types = (new NotificationsService())->listNotificationType();
+        if(!count($notification_types)){
+            return $this->errorResponse('notifications type not found', 404);
         }
         $notifications = $this->notificationRepository->allByForm($formId);
         /*if(count($notifications) === 0){
@@ -610,5 +611,10 @@ class NotificationsController extends Controller
    private function replaceExpression(string $text) : string
    {
        return preg_replace('/(\[\[\w+\]\])|(\[\[[a-z0-9-]+\]\])/m','',$text);
+   }
+
+   public function listAccounts(int $idNotificationType)
+   {
+        return $this->successResponse((new NotificationsService())->listOrigins($idNotificationType), 200);
    }
 }

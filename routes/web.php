@@ -195,4 +195,5 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->get('notifications/edit/{id}', 'NotificationsController@edit');
       $router->put('notifications/update/{id}', 'NotificationsController@update');
       $router->get('notifications/index/{id}','NotificationsController@index');
+      $router->get('notifications/listAccounts/{idNotificationType}','NotificationsController@listAccounts ');
     });
