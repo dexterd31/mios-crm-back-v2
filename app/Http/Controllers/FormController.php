@@ -379,7 +379,7 @@ class FormController extends Controller
                                 $respuestas[$input->id] = $field->value;
                             }
                             break;
-                        }else if($field->key==$input->key){
+                        }/*else if($field->key==$input->key){
                             $select = $this->findAndFormatValues($request->formId, $input->id, $field->value);
                             if($select->valid && isset($select->name)){
                                 $respuestas[$input->id] = $select->name;
@@ -387,7 +387,7 @@ class FormController extends Controller
                                 $respuestas[$input->id] = $field->value;
                             }
                             break;
-                        }
+                        }*/
                     }
                 }
                 $respuestas['user']=$char;
