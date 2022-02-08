@@ -43,8 +43,21 @@ class UploadController extends Controller
      */
     public function index(Request $request, $form_id)
     {
+        // Todo Pasar a repositorio
+        //$form = Form::find($form_id);
+        //$uploads = json_decode((new UploadService())->getUploads($form->uploads()->pluck('id')));
+        //$menu = [];
+        //foreach($uploads as (Object) $upload) {
+        //  $ciuService = new CiuService();
+        //  $user_info = $ciuService->fetchUserByRrhhId($upload->rrhh_id);
+        //  $upload->form_id = $form->id;
+        //  $upload->name_form = $form->name_form;
+        //  $upload->created_by = $user_info->rrhh->first_name.' '.$user_info->rrhh->last_name;
+        //  $menu[] = $upload;
+        //}
         $menu= Upload::with('form:id,name_form')->where('form_id', $form_id)->orderBy('created_at', 'desc')->paginate($request->query('n', 5))->withQueryString();
         foreach ($menu as $value) {
+            // Todo crear servicio CiuService
             $ciuService = new CiuService();
             $user_info = $ciuService->fetchUserByRrhhId($value->rrhh_id);
             $value->created_by = $user_info->rrhh->first_name.' '.$user_info->rrhh->last_name;
@@ -253,6 +266,7 @@ class UploadController extends Controller
                     "method" => $request->action,
                     "resume"=> json_encode($resume)
                 ]);
+                //$uploadId = (new UploadService)->saveUpload($saveUploadRequest);
                 $uploadId = $this->saveUpload($saveUploadRequest);
                 $response = new stdClass();
                 $response->uploadId = $uploadId;
@@ -374,6 +388,7 @@ class UploadController extends Controller
                             }
                         }
                 }
+                //(new UploadService)->storeExcel($clientsNewExcel, ["Llave","form_id","information_data","unique_indentificator","created_at","updated_at"]);
                 Excel::store(new FormReportExport($clientsNewExcel, ["Llave","form_id","information_data","unique_indentificator","created_at","updated_at"]), 'ClientNews'.$request->form_id.'.xlsx');
                 Excel::store(new FormReportExport($formAnswersExcel, ["structure_answer","created_at","updated_at","form_id","chanel_id","client_id","rrhh_id","client_new_id","form_answer_index_data","tipification_time"]), 'FormAnswers'.$request->form_id.'.xlsx');
                 Excel::store(new FormReportExport($keysValueExcel, ['key','value','description','created_at','updated_at','client_id','form_id','field_id','7client_new_id']), 'KeyValues'.$request->form_id.'.xlsx');
@@ -491,6 +506,7 @@ class UploadController extends Controller
         $this->validate($request,[
             'uploadId' => 'required',
         ]);
+        // $upload = (new UploadService)->find($request->uploadId);
         $upload = Upload::where('id',$request->uploadId)->first();
         $objectUpload = json_decode($upload);
         $resumen = json_decode($objectUpload->resume);
@@ -556,6 +572,7 @@ class UploadController extends Controller
           $i++;
         }
       }
+      //return (new UploadService)->storeExcel('FormReportExport', $ids, $headers2, 'base_de_datos.xlsx');
       return Excel::download(new FormReportExport($ids, $headers2), 'base_de_datos.xlsx');
     }
 
@@ -565,6 +582,7 @@ class UploadController extends Controller
      * @return bool
      */
     public function saveUpload(Request $request){
+        // (new Upload)->saveUpload($request);
         $uploadModel = new Upload();
         $uploadModel->name = $request['name'];
         $uploadModel->rrhh_id = $request['rrhh_id'];
