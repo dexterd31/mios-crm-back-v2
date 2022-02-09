@@ -525,7 +525,8 @@ class FormController extends Controller
                 $date = "";
                 try {
                     if(is_int($value)){
-                        $unix_date = ($value - 25569) * 86400;
+                       //Se suma un dia pues producción le resta un dia a las fechas formato date de excel
+                        $unix_date = (($value+1) - 25569) * 86400;
                         $date = Carbon::createFromTimestamp($unix_date)->format('Y-m-d');
                     }else{
                         $date = Carbon::parse(str_replace("/","-",$value))->format('Y-m-d');
