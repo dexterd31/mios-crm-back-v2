@@ -13,7 +13,8 @@ trait RequestService
     {
         try{
             $client = new Client([
-            'base_uri' => $this->baseUri
+                'verify' => false,
+                'base_uri' => $this->baseUri
             ]);
             if (isset($this->secret)) {
                 $headers['Authorization'] = 'Bearer '.$this->secret;
@@ -45,7 +46,8 @@ trait RequestService
         try{
             Log::info($this->baseUri);
             $client = new Client([
-            'base_uri' => $this->baseUri
+                'verify' => false,
+                'base_uri' => $this->baseUri
             ]);
 
             // Esto solo aplica para ciu, ya que en el login no hay token en las cabeceras.
