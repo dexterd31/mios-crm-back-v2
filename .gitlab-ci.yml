@@ -1,11 +1,11 @@
 stages:
-    - quality
+    - develop
 deploy:
  only:
-     - Quality
+     - develop
      - merge request
  
- stage: quality
+ stage: develop
  
  script:
      - cd /var/www/mios/mios-backend/mios-crm-back-v2
