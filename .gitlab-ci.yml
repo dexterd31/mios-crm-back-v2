@@ -15,4 +15,4 @@ deploy:
      - php artisan cache:clear
  
  tags:
-     - crm-back-quality
+     - crm-back-develop
