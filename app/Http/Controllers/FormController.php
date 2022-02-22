@@ -303,8 +303,8 @@ class FormController extends Controller
                            ->where('form_answers.form_id','=',$request->formId)
                            ->where('form_answers.tipification_time', '!=', 'upload')
                            ->whereBetween('form_answers.created_at', ["$request->date1 00:00:00", "$request->date2 00:00:00"])
-                           ->select('form_answer_logs.form_answer_id as id', 'form_answer_logs.structure_answer', 'form_answer_logs.created_at', 'form_answer_logs.updated_at','form_answer_logs.rrhh_id as id_rhh', 'form_answers.tipification_time')
-                           ->get();
+                        ->select('form_answer_logs.form_answer_id as id', 'form_answer_logs.structure_answer', 'form_answer_logs.created_at', 'form_answer_logs.updated_at','form_answer_logs.rrhh_id as id_rhh', 'form_answers.tipification_time')
+                        ->get();
         }else{
             $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','form_answers.rrhh_id as id_rhh','tipification_time')
                             ->where('form_answers.form_id',$request->formId)
@@ -378,11 +378,11 @@ class FormController extends Controller
                             if(in_array($field->id,$dependencies[$input->dependencies[0]->report])){
                                 if(isset($field->value)){
                                     $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
-                                    if($select->valid && isset($select->name)){
-                                        $respuestas[$input->dependencies[0]->report] = $select->name;
-                                    } else {
-                                        $respuestas[$input->dependencies[0]->report] = $field->value;
-                                    }
+                                        if($select->valid && isset($select->name)){
+                                            $respuestas[$input->dependencies[0]->report] = $select->name;
+                                        } else {
+                                            $respuestas[$input->dependencies[0]->report] = $select->value;
+                                        }
                                 }
                                 break;
                             }
@@ -391,7 +391,7 @@ class FormController extends Controller
                             if($select->valid && isset($select->name)){
                                 $respuestas[$input->id] = $select->name;
                             } else {
-                                $respuestas[$input->id] = $field->value;
+                                $respuestas[$input->id] = $select->value;
                             }
                             break;
                         }else if($field->key==$input->key){
@@ -399,7 +399,7 @@ class FormController extends Controller
                             if($select->valid){
                                 $respuestas[$input->id] = $select->value;
                             } else {
-                                $respuestas[$input->id] = $field->value;
+                                $respuestas[$input->id] = $select->value;
                             }
                             break;
                         }
@@ -542,8 +542,7 @@ class FormController extends Controller
             $response->message = "value $value not match";
             return $response;
         }elseif($field->controlType == 'datepicker'){
-            if($value !="Invalid date" && $value != ''){
-                \Log::info($value);
+            if($value !="Invalid date"){
                 $date = "";
                 try {
                     if(is_int($value)){
