@@ -256,7 +256,7 @@ class GroupController extends Controller
 
     public function getGroupsByRrhhId($rrhhId)
     {
-        $groups = GroupUser::where('rrhh_id', $rrhhId)->group()->get();
+        $groups = GroupUser::where('rrhh_id', $rrhhId)->with('group')->get();
         return $this->successResponse($groups);
     }
 
