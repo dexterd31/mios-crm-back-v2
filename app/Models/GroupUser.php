@@ -11,6 +11,6 @@ class GroupUser extends Model
     protected $fillable = ['group_id', 'rrhh_id'];
 
     public function group(){
-        return $this->hasMany('App\Models\Group','id');
+        return $this->hasMany('App\Models\Group','id','group_id');
     }
 }
