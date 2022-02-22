@@ -153,6 +153,17 @@ class GroupController extends Controller
     }
 
     /**
+     * @desc retorna los datos del grupo según su id
+     * @author Juan Pablo Camargo Vanegas
+     * @param $id: id del grupo a consultar
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function findGroup($id){
+        $group = Group::find($id);
+        return $this->successResponse($group);
+    }
+
+    /**
      *
      * @param $idsRrhhMembersGroup
      * @param $usersRhh
@@ -189,7 +200,6 @@ class GroupController extends Controller
      * 03-03-2021
      * Método para consultar los usarios existentes por campañas
      */
-
     public function searchUser($id)
     {
         $idCampaign = auth()->user()->rrhh->campaign_id;
