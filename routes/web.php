@@ -68,6 +68,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
     //Rutas de grupos
     $router->get('/searchgroup/{id}', 'GroupController@searchGroup');
+    $router->get('/findGroup/{id}', 'GroupController@findGroup');
     $router->post('/savegroup','GroupController@saveGroup');
     $router->get('/searchselectgroup/{id}','GroupController@searchSelectGroup');
     $router->get('/groupslist','GroupController@groupslist');
