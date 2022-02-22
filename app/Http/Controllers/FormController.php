@@ -514,6 +514,7 @@ class FormController extends Controller
         $fields = json_decode(Section::where('form_id', $form_id)
         ->whereJsonContains('fields', ['id' => $field_id])
         ->first()->fields);
+
         if(count($fields) == 0){
             $response->message = "field not found";
             return $response;
@@ -526,9 +527,6 @@ class FormController extends Controller
             return $response;
         }
         if(($field->controlType == 'dropdown' || $field->controlType == 'autocomplete' || $field->controlType == 'radiobutton')){
-           \Log::info(json_encode($field->options));
-           \Log::info($field->id);
-           \Log::info($value);
             $field_name = collect($field->options)->filter(function($x) use ($value){
                 if(intval($value) == 0){
                     return $x->name == $value;
@@ -545,6 +543,7 @@ class FormController extends Controller
             return $response;
         }elseif($field->controlType == 'datepicker'){
             if($value !="Invalid date" && $value != ''){
+                \Log::info($value);
                 $date = "";
                 try {
                     if(is_int($value)){
