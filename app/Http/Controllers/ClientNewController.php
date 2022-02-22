@@ -108,8 +108,16 @@ class ClientNewController extends Controller
         if($request->unique_indentificator)
         {
             $unique_indentificator = json_decode($request->unique_indentificator);
-            $clientNewQuery = $clientNewQuery->whereJsonContains("unique_indentificator",["id"=>$unique_indentificator->id])
-                ->whereJsonContains("unique_indentificator",["value"=>$unique_indentificator->value]);
+            $clientNewQuery = $clientNewQuery->whereJsonContains("unique_indentificator",["id"=>$unique_indentificator->id]);
+            $uniqueValueInt=intval($unique_indentificator->value);
+            if(gettype($uniqueValueInt) == 'integer'){
+                $clientNewQuery->where(function ($query) use ($uniqueValueInt,$unique_indentificator){
+                    $query->whereJsonContains("unique_indentificator",["value"=>$unique_indentificator->value])
+                    ->orWhereJsonContains("unique_indentificator",["value"=>$uniqueValueInt]);
+                });
+            }else{
+                $clientNewQuery->whereJsonContains("unique_indentificator",["value"=>$unique_indentificator->value]);
+            }
         }
         return $clientNewQuery->first();
     }

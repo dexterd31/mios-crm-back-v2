@@ -24,7 +24,9 @@ use Carbon\Carbon;
 use App\Models\FormAnswersTray;
 use App\Models\RelTrayUser;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use phpDocumentor\Reflection\Types\Array_;
+use Svg\Tag\Stop;
 
 
 class FormAnswerController extends Controller
@@ -460,14 +462,15 @@ class FormAnswerController extends Controller
         $formAnswerIndexData = [];
         $trayFilds = [];
         $data = [];
-        foreach ($request->sections as $section) {
+        $request['sections'] = (gettype($request['sections']) == "string") ? json_decode($request->sections,true):$request->sections;
+        foreach ($request['sections'] as $section) {
             foreach ($section['fields'] as $field) {
                 if(isset($field["tray"])) {
-                    if(isset($request->trayId))
+                    if(isset($request['trayId']))
                     {
                         foreach ($field["tray"] as $tray)
                         {
-                            if($tray['id'] == $request->trayId)
+                            if($tray['id'] == $request['trayId'])
                             {
                                 array_push($trayFilds, (Object)[
                                     "id"=>$field['id'],
@@ -492,13 +495,30 @@ class FormAnswerController extends Controller
                 $register['client_unique'] = false;//Campo necesario para procesos de sincronizacion con DataCRM
                 //manejo de adjuntos
                 if($field['controlType'] == 'file'){
-                    if ($request->file($field['id']) !== null) {
-                    $attachment = new Attachment();
-                    $attachment->name = $request->file($field['id'])->getClientOriginalName();
-                    $attachment->source = $request->file($field['id'])->store($date_string);
-                    $attachment->save();
-                    $register['value'] = $attachment->id;
-                    $register['nameFile']=$attachment->name; //Agregamos el nombre del archivo para que en el momento de ver las respuestas en el formulario se visualice el nombre.
+                    if (!empty($request->file($field['id']))) {
+                        $createFile = false;
+                        //valido que el archivo que se va a cargar no sea igual al que esta almacenado
+                        if(!empty($field['value'])){
+                            $createFile = true;
+                            if(!empty($field['idValue'])){
+                                $attachmentExist = $this->existingFile($request->file($field['id'])->get(),$field['idValue']);
+                                if($attachmentExist){
+                                    $createFile = false;
+                                }
+                            }
+                        }
+                        if($createFile){
+                            $attachment = new Attachment();
+                            $attachment->name = $request->file($field['id'])->getClientOriginalName();
+                            $attachment->source = $request->file($field['id'])->store($date_string);
+                            $attachment->save();
+                            $register['value'] = $attachment->id;
+                            $register['nameFile']=$attachment->name; //Agregamos el nombre del archivo para que en el momento de ver las respuestas en el formulario se visualice el nombre.
+                        }
+                    }
+                    if (!empty($field['idValue'])){
+                        $register['value'] = $field['idValue'];
+                        $register['nameFile'] = $field['nameFile'];
                     }
                 }
 
@@ -717,5 +737,14 @@ class FormAnswerController extends Controller
             return null;
         }
 
+    }
+
+    private function existingFile($file,$idValue):bool{
+        $attachment = new Attachment();
+        $fileExisting = $attachment->find($idValue);
+        if(Storage::get($fileExisting->source) === $file ){
+            return true;
+        }
+        return false;
     }
 }

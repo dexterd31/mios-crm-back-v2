@@ -41,18 +41,8 @@ class GroupController extends Controller
      */
     public function groupslist(Request $request)
     {
-        $rrhh_id = auth()->user()->rrhh_id;
-        $groups =  Group::select('groups.id', 'groups.name_group', 'groups.description', 'groups.state')
-            ->join('group_users', 'group_users.group_id', 'groups.id')
-            ->where('group_users.rrhh_id', $rrhh_id);
-
-        if(!is_null($request->campaign_id) && $request->campaign_id != "null")
-        {
-            $groups = $groups->where('groups.campaign_id', $request->campaign_id);
-        }
-
-        $groups = $groups->get();
-        return $groups;
+        $groups = Group::select('id', 'name_group', 'description', 'state')->get();
+        return $this->successResponse($groups);
     }
 
     /**
@@ -163,6 +153,17 @@ class GroupController extends Controller
     }
 
     /**
+     * @desc retorna los datos del grupo según su id
+     * @author Juan Pablo Camargo Vanegas
+     * @param $id: id del grupo a consultar
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function findGroup($id){
+        $group = Group::find($id);
+        return $this->successResponse($group);
+    }
+
+    /**
      *
      * @param $idsRrhhMembersGroup
      * @param $usersRhh
@@ -199,7 +200,6 @@ class GroupController extends Controller
      * 03-03-2021
      * Método para consultar los usarios existentes por campañas
      */
-
     public function searchUser($id)
     {
         $idCampaign = auth()->user()->rrhh->campaign_id;
@@ -266,7 +266,8 @@ class GroupController extends Controller
 
     public function getGroupsByRrhhId($rrhhId)
     {
-        return GroupUser::where('rrhh_id', $rrhhId)->get();
+        $groups = GroupUser::where('rrhh_id', $rrhhId)->with('group')->get();
+        return $this->successResponse($groups);
     }
 
     public function search()

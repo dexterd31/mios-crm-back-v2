@@ -55,7 +55,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
     $router->post('/formanswer/filterform', 'FormAnswerController@filterForm');
     $router->get('/formanswer/historic/{id}', 'FormAnswerController@formAnswerHistoric');
-    $router->put('/formanswer/update/{id}', 'FormAnswerController@updateInfo');
+    $router->post('/formanswer/update/{id}', 'FormAnswerController@updateInfo');
     $router->post('formanswer/download', 'FormAnswerController@downloadFile');
 
     //consultar tipo de documento de los clientes
@@ -68,6 +68,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
     //Rutas de grupos
     $router->get('/searchgroup/{id}', 'GroupController@searchGroup');
+    $router->get('/findGroup/{id}', 'GroupController@findGroup');
     $router->post('/savegroup','GroupController@saveGroup');
     $router->get('/searchselectgroup/{id}','GroupController@searchSelectGroup');
     $router->get('/groupslist','GroupController@groupslist');
