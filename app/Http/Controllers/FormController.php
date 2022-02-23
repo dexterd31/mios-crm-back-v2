@@ -7,15 +7,19 @@ use App\Models\ApiConnection;
 use App\Models\Form;
 use App\Models\FormLog;
 use App\Models\FormAnswer;
+use App\Models\FormAnswerLog;
 use App\Models\FormType;
 use App\Models\Section;
+use App\Models\Tray;
 use App\Services\RrhhService;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use stdClass;
+
 
 class FormController extends Controller
 {
@@ -292,11 +296,22 @@ class FormController extends Controller
     public function report(Request $request, MiosHelper $miosHelper){
         $char="";
         $rrhhService = new RrhhService();
-        $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','form_answers.rrhh_id as id_rhh','tipification_time')
+        $trayHistoric = Tray::select('id')->where('form_id',$request->formId)->whereNotNull('save_historic')->get();
+        if(count($trayHistoric)>0){
+            $formAnswers = DB::table('form_answer_logs')
+                           ->join('form_answers','form_answer_logs.form_answer_id','=','form_answers.id')
+                           ->where('form_answers.form_id','=',$request->formId)
+                           ->where('form_answers.tipification_time', '!=', 'upload')
+                           ->whereBetween('form_answers.created_at', ["$request->date1 00:00:00", "$request->date2 00:00:00"])
+                        ->select('form_answer_logs.form_answer_id as id', 'form_answer_logs.structure_answer', 'form_answer_logs.created_at', 'form_answer_logs.updated_at','form_answer_logs.rrhh_id as id_rhh', 'form_answers.tipification_time')
+                        ->get();
+        }else{
+            $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','form_answers.rrhh_id as id_rhh','tipification_time')
                             ->where('form_answers.form_id',$request->formId)
                             ->where('tipification_time','!=','upload')
                             ->whereBetween('form_answers.created_at', ["$request->date1 00:00:00", "$request->date2 00:00:00"])
                             ->get();
+        }
         if(count($formAnswers)==0){
             // 406 Not Acceptable
             // se envia este error ya que no esta mapeado en interceptor angular.
@@ -363,11 +378,11 @@ class FormController extends Controller
                             if(in_array($field->id,$dependencies[$input->dependencies[0]->report])){
                                 if(isset($field->value)){
                                     $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
-                                    if($select->valid && isset($select->name)){
-                                        $respuestas[$input->dependencies[0]->report] = $select->name;
-                                    } else {
-                                        $respuestas[$input->dependencies[0]->report] = $field->value;
-                                    }
+                                        if($select->valid && isset($select->name)){
+                                            $respuestas[$input->dependencies[0]->report] = $select->name;
+                                        } else {
+                                            $respuestas[$input->dependencies[0]->report] = $select->value;
+                                        }
                                 }
                                 break;
                             }
@@ -376,7 +391,7 @@ class FormController extends Controller
                             if($select->valid && isset($select->name)){
                                 $respuestas[$input->id] = $select->name;
                             } else {
-                                $respuestas[$input->id] = $field->value;
+                                $respuestas[$input->id] = $select->value;
                             }
                             break;
                         }else if($field->key==$input->key){
@@ -384,7 +399,7 @@ class FormController extends Controller
                             if($select->valid){
                                 $respuestas[$input->id] = $select->value;
                             } else {
-                                $respuestas[$input->id] = $field->value;
+                                $respuestas[$input->id] = $select->value;
                             }
                             break;
                         }
@@ -396,8 +411,13 @@ class FormController extends Controller
                     $respuestas['user']=$adviserInfo[$answer->id_rhh]->name;
                     $respuestas['docuser']=$adviserInfo[$answer->id_rhh]->id_number;
                 }
-                $respuestas['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
-                $respuestas['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
+                if(gettype($answer->created_at)=='object'){
+                    $respuestas['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
+                    $respuestas['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
+                }else{
+                    $respuestas['created_at'] = $answer->created_at;
+                    $respuestas['updated_at'] = $answer->updated_at;
+                }
                 if(isset($request->include_tipification_time) && $request->include_tipification_time){
                     $respuestas['tipification_time'] = $answer->tipification_time;
                 }
@@ -408,7 +428,7 @@ class FormController extends Controller
             if(isset($request->include_tipification_time) && $request->include_tipification_time){
                 array_push($titleHeaders,'Tiempo de tipificación');
             }else{
-                \Log::warning("Parametro include_tipification_time $request->include_tipification_time para generar el reporte");
+                \Log::warning("Parametro include_tipification_time ".isset($request->include_tipification_time)."para generar el reporte");
             }
         }
         return Excel::download(new FormReportExport($rows, $titleHeaders), 'ReporteFormulario.xlsx');
@@ -494,6 +514,7 @@ class FormController extends Controller
         $fields = json_decode(Section::where('form_id', $form_id)
         ->whereJsonContains('fields', ['id' => $field_id])
         ->first()->fields);
+
         if(count($fields) == 0){
             $response->message = "field not found";
             return $response;

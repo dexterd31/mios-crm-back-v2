@@ -40,7 +40,11 @@ class FormAnswerTrayController extends Controller
                     $formController = new FormController();
                     $formatValue = $formController->findAndFormatValues($traysSaveHistoric->form_id,$answer->id,$answer->value);
                     if($formatValue->valid){
-                        $answer->value= $formatValue->value;
+                        if($formatValue->valid && isset($formatValue->name)){
+                            $answer->value = $formatValue->name;
+                        } else {
+                            $answer->value = $formatValue->value;
+                        }
                         array_push($historicAnswer,$answer);
                     }
                 }
