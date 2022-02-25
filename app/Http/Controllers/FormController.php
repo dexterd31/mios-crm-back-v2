@@ -396,15 +396,10 @@ class FormController extends Controller
                             break;
                         }else if($field->key==$input->key){
                             $select = $this->findAndFormatValues($request->formId, $input->id, $field->value);
-                            if($select->valid){
-                                $respuestas[$input->id] = $select->value;
+                            if($select->valid && isset($select->name)){
+                                $respuestas[$input->id] = $select->name;
                             } else {
-                                if(isset($select->value)){
-                                    $respuestas[$input->id] = $select->value;
-                                }else{
-                                    $respuestas[$input->id] = json_encode($select);
-                                }
-
+                                $respuestas[$input->id] = json_encode($select);
                             }
                             break;
                         }
