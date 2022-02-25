@@ -399,7 +399,12 @@ class FormController extends Controller
                             if($select->valid){
                                 $respuestas[$input->id] = $select->value;
                             } else {
-                                $respuestas[$input->id] = $select->value;
+                                if(isset($select->value)){
+                                    $respuestas[$input->id] = $select->value;
+                                }else{
+                                    $respuestas[$input->id] = json_encode($select);
+                                }
+
                             }
                             break;
                         }
