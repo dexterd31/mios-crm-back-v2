@@ -79,6 +79,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/searchUser/{id}','GroupController@searchUser');
     $router->get('/groupsbyuser/{idUser}', 'GroupController@listGroupsByUser');
     $router->get('/getGroupsByRrhhId/{rrhhId}', 'GroupController@getGroupsByRrhhId');
+    $router->get('/listGroupsByRrhhId/{rrhhId}', 'GroupController@groupListByRrhhId');
     $router->get('/searchGroups', 'GroupController@search');
 
     // rutas de campañas
