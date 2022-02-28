@@ -60,6 +60,10 @@ class GroupController extends Controller
         return $this->successResponse($groups);
     }
 
+    public function groupListByRrhhId($rrhhId){
+        return $this->successResponse($this->getGroupsByRrhhId);
+    }
+
     /**
      * Nicol Ramirez
      * 17-02-2020
@@ -282,7 +286,7 @@ class GroupController extends Controller
     public function getGroupsByRrhhId($rrhhId)
     {
         $groups = GroupUser::where('rrhh_id', $rrhhId)->with('group')->get();
-        return $this->successResponse($groups);
+        return $groups;
     }
 
     public function search()
