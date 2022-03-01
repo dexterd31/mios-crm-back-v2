@@ -61,7 +61,7 @@ class GroupController extends Controller
     }
 
     public function groupListByRrhhId($rrhhId){
-        return $this->successResponse($this->getGroupsByRrhhId);
+        return $this->successResponse($this->getGroupsByRrhhId());
     }
 
     /**
