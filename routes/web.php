@@ -72,12 +72,14 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/savegroup','GroupController@saveGroup');
     $router->get('/searchselectgroup/{id}','GroupController@searchSelectGroup');
     $router->get('/groupslist','GroupController@groupslist');
+    $router->get('/groups','GroupController@getGroups');
     $router->put('/deletegroup/{id}','GroupController@deleteGroup');
     $router->put('/updategroup/{id}','GroupController@updateGroup');
     //consultar usuarios existentes para asignar al grupo
     $router->get('/searchUser/{id}','GroupController@searchUser');
     $router->get('/groupsbyuser/{idUser}', 'GroupController@listGroupsByUser');
     $router->get('/getGroupsByRrhhId/{rrhhId}', 'GroupController@getGroupsByRrhhId');
+    $router->get('/listGroupsByRrhhId/{rrhhId}', 'GroupController@groupListByRrhhId');
     $router->get('/searchGroups', 'GroupController@search');
 
     // rutas de campañas

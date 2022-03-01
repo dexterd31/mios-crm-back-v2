@@ -41,8 +41,27 @@ class GroupController extends Controller
      */
     public function groupslist(Request $request)
     {
+        $rrhh_id = auth()->user()->rrhh_id;
+        $groups =  Group::select('groups.id', 'groups.name_group', 'groups.description', 'groups.state')
+            ->join('group_users', 'group_users.group_id', 'groups.id')
+            ->where('group_users.rrhh_id', $rrhh_id);
+
+        if(!is_null($request->campaign_id) && $request->campaign_id != "null")
+        {
+            $groups = $groups->where('groups.campaign_id', $request->campaign_id);
+        }
+
+        $groups = $groups->get();
+        return $groups;
+    }
+
+    public function getGroups(){
         $groups = Group::select('id', 'name_group', 'description', 'state')->get();
         return $this->successResponse($groups);
+    }
+
+    public function groupListByRrhhId($rrhhId){
+        return $this->successResponse($this->getGroupsByRrhhId($rrhhId));
     }
 
     /**
@@ -267,7 +286,7 @@ class GroupController extends Controller
     public function getGroupsByRrhhId($rrhhId)
     {
         $groups = GroupUser::where('rrhh_id', $rrhhId)->with('group')->get();
-        return $this->successResponse($groups);
+        return $groups;
     }
 
     public function search()
