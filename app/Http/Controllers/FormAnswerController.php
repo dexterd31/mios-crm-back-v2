@@ -324,6 +324,15 @@ class FormAnswerController extends Controller
             $structureAnswer = $formAnswer['structure_answer'] ? json_decode($formAnswer['structure_answer']) : json_decode($formAnswer['data']);
             $new_structure_answer = array();
             foreach ($structureAnswer as $answer) {
+
+                $field = json_decode(Section::where('form_id', $formId)
+                    ->whereJsonContains('fields', ['id' => $answer->id])
+                    ->first());
+
+                if (is_null($field) || $field->is_delete) {
+                    continue;
+                }
+                
                 if(!isset($answer->duplicated))
                 {
                     $formController = new FormController();
