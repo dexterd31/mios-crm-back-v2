@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\FormAnswersTray;
 use App\Models\RelTrayUser;
+use App\Traits\deletedFieldChecker;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use phpDocumentor\Reflection\Types\Array_;
@@ -31,6 +32,8 @@ use Svg\Tag\Stop;
 
 class FormAnswerController extends Controller
 {
+    use deletedFieldChecker;
+    
     private $ciuService;
     private $nominaService;
     private $dataCRMServices;
@@ -324,15 +327,10 @@ class FormAnswerController extends Controller
             $structureAnswer = $formAnswer['structure_answer'] ? json_decode($formAnswer['structure_answer']) : json_decode($formAnswer['data']);
             $new_structure_answer = array();
             foreach ($structureAnswer as $answer) {
-
-                $field = json_decode(Section::where('form_id', $formId)
-                    ->whereJsonContains('fields', ['id' => $answer->id])
-                    ->first());
-
-                if (is_null($field) || $field->is_delete) {
+                if ($this->deletedFieldChecker($formId, $answer->id)){
                     continue;
                 }
-                
+
                 if(!isset($answer->duplicated))
                 {
                     $formController = new FormController();
@@ -712,6 +710,9 @@ class FormAnswerController extends Controller
             $clientData = $formAnswer->structure_answer;
         }
         foreach (json_decode($clientData) as $data){
+            if ($this->deletedFieldChecker($form_id, $data->id)){
+                continue;
+            }
             if($data->preloaded){
                 $structure_data[] = $data;
             }
