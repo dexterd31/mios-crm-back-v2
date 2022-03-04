@@ -700,7 +700,7 @@ class FormAnswerController extends Controller
 
         if($formAnswer && $directory) {
             $clientData = $formAnswer->structure_answer;
-            
+
             if(strtotime($directory->updated_at) > strtotime($formAnswer->created_at)){
                 $clientData = $directory->data;
             }
@@ -710,9 +710,9 @@ class FormAnswerController extends Controller
             $clientData = $formAnswer->structure_answer;
         }
 
-        $structure_data = array_filter(json_decode($clientData), function (&$field) use ($form_id){
+        $structure_data = collect(json_decode($clientData))->filter(function (&$field) use ($form_id){
             return !$this->deletedFieldChecker($form_id, $field->id) && $field->preloaded;
-        });
+        })->toArray();
 
         $answer['data'] = array_merge($structure_data,$files);
         $answer['client_id']=$client_new_id;

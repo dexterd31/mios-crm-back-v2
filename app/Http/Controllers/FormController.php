@@ -79,12 +79,13 @@ class FormController extends Controller
             unset($formsSections->section[$i]['created_at']);
             unset($formsSections->section[$i]['updated_at']);
             $formId = $formsSections->section[$i]['form_id'];
+            $fields = json_decode($formsSections->section[$i]['fields']);
 
-            $formsSections->section[$i]['fields'] = array_filter(json_decode($formsSections->section[$i]['fields']), function (&$field) use ($formId){
+            $formsSections->section[$i]['fields'] = collect($fields)->filter(function ($field) use ($formId){
                 return !$this->deletedFieldChecker($formId, $field->id);
             });
-            
-            unset($formId);
+
+            unset($formId, $fields);
             unset($formsSections->section[$i]['form_id']);
         }
         $formsSections->client_unique = json_decode($formsSections->fields_client_unique_identificator);
