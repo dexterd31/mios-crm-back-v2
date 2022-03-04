@@ -83,6 +83,7 @@ class FormController extends Controller
             $formsSections->section[$i]['fields'] = array_filter(json_decode($formsSections->section[$i]['fields']), function (&$field) use ($formId){
                 return !$this->deletedFieldChecker($formId, $field->id);
             });
+            
             unset($formId);
             unset($formsSections->section[$i]['form_id']);
         }
