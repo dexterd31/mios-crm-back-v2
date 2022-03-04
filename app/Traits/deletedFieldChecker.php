@@ -6,7 +6,15 @@ use App\Models\Section;
 
 trait deletedFieldChecker
 {
-    private function deletedFieldChecker($formId, $field_id)
+    /**
+     * Valida si el campo existe en la sección y si se encuentra eliminado.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co> 
+     *
+     * @param integer $formId
+     * @param integer $field_id
+     * @return boolean
+     */
+    private function deletedFieldChecker(int $formId, int $field_id) : bool
     {
         $isDeleted = false;
 
