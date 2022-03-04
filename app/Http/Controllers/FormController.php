@@ -12,6 +12,7 @@ use App\Models\FormType;
 use App\Models\Section;
 use App\Models\Tray;
 use App\Services\RrhhService;
+use App\Traits\deletedFieldChecker;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -23,6 +24,7 @@ use stdClass;
 
 class FormController extends Controller
 {
+    use deletedFieldChecker;
 
     public function __construct()
     {
@@ -76,8 +78,15 @@ class FormController extends Controller
         for ($i = 0; $i < count($formsSections->section); $i++) {
             unset($formsSections->section[$i]['created_at']);
             unset($formsSections->section[$i]['updated_at']);
+            $formId = $formsSections->section[$i]['form_id'];
+            $fields = json_decode($formsSections->section[$i]['fields']);
+
+            $formsSections->section[$i]['fields'] = collect($fields)->filter(function ($field) use ($formId){
+                return !$this->deletedFieldChecker($formId, $field->id);
+            });
+
+            unset($formId, $fields);
             unset($formsSections->section[$i]['form_id']);
-            $formsSections->section[$i]['fields'] = json_decode($formsSections->section[$i]['fields']);
         }
         $formsSections->client_unique = json_decode($formsSections->fields_client_unique_identificator);
         $formsSections->campaign_id = auth()->user()->rrhh->campaign_id;
