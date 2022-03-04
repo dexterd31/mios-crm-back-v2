@@ -690,37 +690,34 @@ class FormAnswerController extends Controller
      */
     private function preloaded($form_id, $client_new_id, $files)
     {
-        $structure_data = [];
         $formAnswer = FormAnswer::where('form_id',$form_id)
             ->where('client_new_id', $client_new_id)
             ->latest()->first();
+
         $directory = Directory::where('form_id',$form_id)
             ->where('client_new_id', $client_new_id)
             ->latest()->first();
+
         if($formAnswer && $directory) {
             $clientData = $formAnswer->structure_answer;
+            
             if(strtotime($directory->updated_at) > strtotime($formAnswer->created_at)){
                 $clientData = $directory->data;
             }
-        }
-        elseif(!$formAnswer && $directory){
+        } elseif(!$formAnswer && $directory){
             $clientData = $directory->data;
-        }
-        elseif (!$directory && $formAnswer){
+        } elseif (!$directory && $formAnswer){
             $clientData = $formAnswer->structure_answer;
         }
-        foreach (json_decode($clientData) as $data){
-            if ($this->deletedFieldChecker($form_id, $data->id)){
-                continue;
-            }
-            if($data->preloaded){
-                $structure_data[] = $data;
-            }
-        }
+
+        $structure_data = array_filter(json_decode($clientData), function (&$field) use ($form_id){
+            return !$this->deletedFieldChecker($form_id, $field->id) && $field->preloaded;
+        });
+
         $answer['data'] = array_merge($structure_data,$files);
         $answer['client_id']=$client_new_id;
-        return $answer;
 
+        return $answer;
     }
 
     private function findSelect($form_id, $field_id, $value)
