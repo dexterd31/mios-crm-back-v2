@@ -642,6 +642,32 @@ class FormController extends Controller
     }
 
     /**
+     * Consulta los formularios que contengan un campo tipo 'Agendamiento'
+     *
+     * @param  mixed $request
+     * @return void
+     */
+    public function sectionCrmAgenda( Request $request ){
+        $sections = Section::join("forms" , 'sections.form_id','=','forms.id' )
+            ->select("name_form","fields","forms.id")
+            ->get()
+            ->filter( function($item){
+                $fields = json_decode($item->fields);
+                foreach ($fields as $field) {
+                    if($field->type == "agendamiento"){
+                        return true;
+                    }
+                }
+                return false;
+            } )->map( function($item){
+                return $item->only(["id","name_form"]);
+            } )->values();
+
+
+        return $sections;
+    }
+
+    /**
      * @desc Función para devolver las secciones de un formulario
      * @param Integer $formId id del formulario que se necesitan traer las secciones
      * @return Array Arreglo de objetos en donde se encuntran todas las secciones del formulario
