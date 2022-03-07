@@ -29,6 +29,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/report','FormController@report');
     $router->get('/formsbyuser/{idUser}', 'FormController@formsByUser');
     $router->post('/addSection', 'FormController@addSection');
+    $router->get('/sectionCrmAgenda', 'FormController@sectionCrmAgenda');
     $router->get('/getDataClientInForm/{idForm}', 'FormController@getDataClientInForm');
 
     $router->get('/getSpecificFieldForSection/{idForm}','FormController@getIdAndKeyFormFields');
