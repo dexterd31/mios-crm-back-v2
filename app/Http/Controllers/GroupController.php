@@ -303,7 +303,7 @@ class GroupController extends Controller
      * 09-03-2022
      * Funcion para obtener las campaign que pertenecen a los grupos.
      */
-    public function getIdCampaig()
+    public function getAllCampaig()
     {
         $groups = Group::select('campaign_id')
             ->distinct()
