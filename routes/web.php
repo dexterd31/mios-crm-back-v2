@@ -29,6 +29,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/report','FormController@report');
     $router->get('/formsbyuser/{idUser}', 'FormController@formsByUser');
     $router->post('/addSection', 'FormController@addSection');
+    $router->get('/sectionCrmAgenda', 'FormController@sectionCrmAgenda');
     $router->get('/getDataClientInForm/{idForm}', 'FormController@getDataClientInForm');
 
     $router->get('/getSpecificFieldForSection/{idForm}','FormController@getIdAndKeyFormFields');
@@ -81,6 +82,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/getGroupsByRrhhId/{rrhhId}', 'GroupController@getGroupsByRrhhId');
     $router->get('/listGroupsByRrhhId/{rrhhId}', 'GroupController@groupListByRrhhId');
     $router->get('/searchGroups', 'GroupController@search');
+    $router->get('/getIdCampaignByRrhhId/{rrhhId}','GroupController@getIdCampaignByRrhhId');
+    $router->get('/getAllCampaig','GroupController@getAllCampaig');
+
 
     // rutas de campañas
     $router->get('/campaigns', 'CampaignController@index');
