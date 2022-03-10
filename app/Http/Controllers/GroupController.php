@@ -8,16 +8,19 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Services\RrhhService;
+use App\Services\NominaService;
 use Helpers\MiosHelper;
 use Log;
 
 class GroupController extends Controller
 {
     private $rrhhService;
+    private $nominaService;
 
-    public function __construct()
+    public function __construct(NominaService $nominaServices)
     {
         $this->getRrhhService();
+        $this->nominaServices = $nominaServices;
     }
 
     public function getRrhhService()
@@ -280,7 +283,8 @@ class GroupController extends Controller
         foreach ($groups as $group) {
             array_push($groupsIds, $group['campaign_id']);
         }
-        return $groupsIds;
+        $campingUser=$this->nominaServices->fetchSpecificCampaigns($groupsIds);
+        return $campingUser;
     }
 
     public function getGroupsByRrhhId($rrhhId)
@@ -292,5 +296,23 @@ class GroupController extends Controller
     public function search()
     {
         return Group::where("state", 1)->select("id", "campaign_id", "name_group", "description")->get();
+    }
+
+        /**
+     * Ana Huertas
+     * 09-03-2022
+     * Funcion para obtener las campaign que pertenecen a los grupos.
+     */
+    public function getIdCampaig()
+    {
+        $groups = Group::select('campaign_id')
+            ->distinct()
+            ->orderby('campaign_id', 'ASC')->get();
+        $groupsIds = [];
+        foreach ($groups as $group) {
+            array_push($groupsIds, $group['campaign_id']);
+        }
+        $campingUser=$this->nominaServices->fetchSpecificCampaigns($groupsIds);
+        return $campingUser;
     }
 }
