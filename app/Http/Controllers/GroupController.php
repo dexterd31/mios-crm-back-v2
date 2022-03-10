@@ -284,7 +284,7 @@ class GroupController extends Controller
             array_push($groupsIds, $group['campaign_id']);
         }
         $campingUser=$this->nominaServices->fetchSpecificCampaigns($groupsIds);
-        return $campingUser;
+        return $this->successResponse($campingUser);
     }
 
     public function getGroupsByRrhhId($rrhhId)
@@ -313,6 +313,6 @@ class GroupController extends Controller
             array_push($groupsIds, $group['campaign_id']);
         }
         $campingUser=$this->nominaServices->fetchSpecificCampaigns($groupsIds);
-        return $campingUser;
+        return $this->successResponse($campingUser);
     }
 }
