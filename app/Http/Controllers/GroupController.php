@@ -296,8 +296,12 @@ class GroupController extends Controller
         foreach ($groups as $group) {
             array_push($groupsIds, $group['campaign_id']);
         }
-        $campingUser=$this->nominaService->fetchSpecificCampaigns($groupsIds);
-        return $this->successResponse($campingUser);
+        if(!empty($groupsIds)){
+            $campingUser=$this->nominaService->fetchSpecificCampaigns($groupsIds);
+            return $this->successResponse($campingUser);
+        }else{
+            return $this->successResponse([]);
+        }
     }
 
     public function getGroupsByRrhhId($rrhhId)
