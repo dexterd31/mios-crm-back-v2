@@ -17,10 +17,10 @@ class GroupController extends Controller
     private $rrhhService;
     private $nominaService;
 
-    public function __construct(NominaService $nominaServices)
+    public function __construct()
     {
         $this->getRrhhService();
-        $this->nominaServices = $nominaServices;
+        $this->getNominaService();
     }
 
     public function getRrhhService()
@@ -35,6 +35,19 @@ class GroupController extends Controller
 	public function setRrhhService($rrhhService)
 	{
 		$this->rrhhService = $rrhhService;
+	}
+    public function getNominaService()
+	{
+		if($this->nominaService == null)
+		{
+			$this->setNominaService(new NominaService());
+		}
+		return $this->nominaService;
+	}
+
+	public function setNominaService($nominaService)
+	{
+		$this->nominaService = $nominaService;
 	}
 
     /**
@@ -283,7 +296,7 @@ class GroupController extends Controller
         foreach ($groups as $group) {
             array_push($groupsIds, $group['campaign_id']);
         }
-        $campingUser=$this->nominaServices->fetchSpecificCampaigns($groupsIds);
+        $campingUser=$this->nominaService->fetchSpecificCampaigns($groupsIds);
         return $this->successResponse($campingUser);
     }
 
@@ -312,7 +325,7 @@ class GroupController extends Controller
         foreach ($groups as $group) {
             array_push($groupsIds, $group['campaign_id']);
         }
-        $campingUser=$this->nominaServices->fetchSpecificCampaigns($groupsIds);
+        $campingUser=$this->nominaService->fetchSpecificCampaigns($groupsIds);
         return $this->successResponse($campingUser);
     }
 }
