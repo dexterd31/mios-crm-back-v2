@@ -390,7 +390,7 @@ class FormController extends Controller
                                         if($select->valid && isset($select->name)){
                                             $respuestas[$input->dependencies[0]->report] = $select->name;
                                         } else {
-                                            $respuestas[$input->dependencies[0]->report] = $select->value;
+                                            $respuestas[$input->dependencies[0]->report] = json_encode($select);
                                         }
                                 }
                                 break;
@@ -400,7 +400,7 @@ class FormController extends Controller
                             if($select->valid && isset($select->name)){
                                 $respuestas[$input->id] = $select->name;
                             } else {
-                                $respuestas[$input->id] = $select->value;
+                                $respuestas[$input->id] = json_encode($select);
                             }
                             break;
                         }else if($field->key==$input->key){

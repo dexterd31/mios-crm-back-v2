@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Storage;
 
 class LaikaChileSeeder extends Seeder
 {
-    const LAIKA_CHILE_FORM_ID = 1;
+    protected $LAIKA_CHILE_FORM_ID;
     protected $formAnswerModel;
     protected $structureCollection;
 
@@ -24,7 +24,12 @@ class LaikaChileSeeder extends Seeder
      */
     public function run()
     {
-        $answers = $this->formAnswerModel->where('form_id',self::LAIKA_CHILE_FORM_ID)->get(['id','structure_answer']);
+        $this->LAIKA_CHILE_FORM_ID = readline('Ingrese el id del formulario: ');
+        if(intval(trim($this->LAIKA_CHILE_FORM_ID)) < 1){
+            print 'ingrese un dato numérico '.PHP_EOL;
+            $this->run();
+        }
+        $answers = $this->formAnswerModel->where('form_id',$this->LAIKA_CHILE_FORM_ID)->get(['id','structure_answer']);
         if(count($answers) > 0){
             $answers->each(function ($answer){
                 $newAnswer = $this->replaceAnswerInStructure($answer->structure_answer,$answer->id);
