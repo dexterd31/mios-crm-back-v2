@@ -369,6 +369,7 @@ class FormController extends Controller
             $plantillaRespuestas['updated_at'] =$char;
 
             foreach($formAnswers as $answer){
+                Log::info($answer);
                 $respuestas=$plantillaRespuestas;
                 $respuestas['id'] = $answer->id;
                 //Evaluamos los campos que deben ir en el reporte contra las respuestas
@@ -380,7 +381,7 @@ class FormController extends Controller
                                     $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
                                         if($select->valid && isset($select->name)){
                                             $respuestas[$input->dependencies[0]->report] = $select->name;
-                                        } else {
+                                        }else{
                                             $respuestas[$input->dependencies[0]->report] = json_encode($select);
                                         }
                                 }
@@ -390,7 +391,10 @@ class FormController extends Controller
                             $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
                             if($select->valid && isset($select->name)){
                                 $respuestas[$input->id] = $select->name;
-                            } else {
+                            }
+                            else if($select->valid && isset($select->value)){
+                                $respuestas[$input->id] = $select->value;
+                            }else{
                                 $respuestas[$input->id] = json_encode($select);
                             }
                             break;
