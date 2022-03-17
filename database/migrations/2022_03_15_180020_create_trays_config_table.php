@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreatedTableFormAnswersTraysHistoric extends Migration
+class CreateTraysConfigTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,10 @@ class CreatedTableFormAnswersTraysHistoric extends Migration
      */
     public function up()
     {
-        Schema::create('form_answer_trays_historic', function (Blueprint $table) {
+        Schema::create('traffic_trays_config', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('trays_id')->constrained('trays');
-            $table->foreignId('form_answers_trays_id')->constrained('form_answers_trays');
-            $table->json('structure_answer');
+            $table->foreignId('tray_id')->references('id')->on('trays');
+            $table->json('config')->comment('contiene el objeto de la configuración');
             $table->timestamps();
         });
     }
@@ -29,6 +28,6 @@ class CreatedTableFormAnswersTraysHistoric extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('form_answer_trays_historic');
+        Schema::dropIfExists('traffic_trays_config');
     }
 }

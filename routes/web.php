@@ -123,15 +123,31 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
 
     //Rutas Bandejas
-    $router->post('/trays/save','TrayController@store');
-    $router->get('/trays','TrayController@index');
-    $router->get('/trays/delete/{id}','TrayController@delete');
-    $router->get('/trays/form/{id}','TrayController@show');
-    $router->get('/tray/{id}','TrayController@getTray');
-    $router->put('/tray/{id}','TrayController@update');
-    $router->get('/tray/formAnswersByTray/{id}','TrayController@formAnswersByTray');
-    $router->get('/tray/changeState/{id}','TrayController@changeState');
-    $router->get('/tray/duplicatedSection/{idFormAnswer}','TrayController@sectionsDuplicated');
+    $router->group(['prefix' => 'trays'], function () use ($router){
+        $router->post('/save','TrayController@store');
+        $router->get('','TrayController@index');
+        $router->get('/delete/{id}','TrayController@delete');
+        $router->get('/form/{id}','TrayController@show');
+    });
+
+    $router->group(['prefix' => 'tray'], function () use ($router){
+        $router->get('/{id}','TrayController@getTray');
+        $router->get('/formAnswersByTray/{id}','TrayController@formAnswersByTray');
+        $router->get('/changeState/{id}','TrayController@changeState');
+        $router->get('/duplicatedSection/{idFormAnswer}','TrayController@sectionsDuplicated');
+        $router->put('/{id}','TrayController@update');
+
+        //semaforización de bandejas
+        $router->group(['prefix' => 'traffic'], function() use ($router){
+            $router->get('/{id}','TrafficTraysController@getConfig');
+            $router->get('/trayId/{id}','TrafficTraysController@getConfigByTrayId');
+            $router->post('/create','TrafficTraysController@createConfig');
+            $router->put('/update/{id}','TrafficTraysController@updateConfig');
+
+            $router->put('/updateLog/{id}','TrafficTraysController@updat');
+        });
+
+    });
 
     //Rutas escalamientos
     $router->post('/escalations', 'EscalationController@validateScalation');

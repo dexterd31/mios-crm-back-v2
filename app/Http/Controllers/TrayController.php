@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Managers\TrafficTrayManager;
 use App\Models\FormAnswer;
 use App\Models\Tray;
 use App\Models\Section;
+use App\Services\TrafficTrayService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use App\Models\FormAnswersTray;
 use stdClass;
 
@@ -34,7 +35,7 @@ class TrayController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(Request $request, TrafficTrayManager $trafficTrayManager)
     {
         $data = $request['entries'];
 
@@ -51,9 +52,12 @@ class TrayController extends Controller
         $tray->rols = json_encode($data['rols']);
         $tray->state = 1;
         $tray->save();
-
+        if(isset($data['traffic'])){
+            //creación de semaforización
+            $data['tray_id'] = $tray->id;
+            $trafficTrayManager->newTrafficTray($data);
+        }
         $this->matchTrayFields($tray, FormAnswer::all());
-
         return $this->successResponse('Bandeja creada con exito');
     }
 
