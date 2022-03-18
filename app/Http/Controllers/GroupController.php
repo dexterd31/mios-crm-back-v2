@@ -297,7 +297,7 @@ class GroupController extends Controller
             array_push($groupsIds, $group['campaign_id']);
         }
         if(!empty($groupsIds)){
-            $campingUser=$this->nominaService->fetchSpecificCampaigns($groupsIds);
+            $campingUser=$this->nominaService->fetchSpecificCampaigns($groupsIds)->data;
             return $this->successResponse($campingUser);
         }else{
             return $this->successResponse([]);
@@ -329,7 +329,7 @@ class GroupController extends Controller
         foreach ($groups as $group) {
             array_push($groupsIds, $group['campaign_id']);
         }
-        $campingUser=$this->nominaService->fetchSpecificCampaigns($groupsIds);
+        $campingUser=$this->nominaService->fetchSpecificCampaigns($groupsIds)->data;
         return $this->successResponse($campingUser);
     }
 }
