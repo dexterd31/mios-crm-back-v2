@@ -2,17 +2,16 @@
 
 namespace App\Repositories;
 
-use App\Models\TrafficTraysConfig;
 use App\Models\TrafficTraysLog;
-use App\Repositories\interfaces\ITrafficTrayConfigRepository;
+use App\Repositories\interfaces\ITrafficTrayLogRepository;
 
-class TrafficTrayConfigRepository implements ITrafficTrayConfigRepository
+class TrafficTrayLogRepository implements ITrafficTrayLogRepository
 {
     private $model;
 
-    public function __construct(TrafficTraysConfig $traysConfigModel)
+    public function __construct(TrafficTraysLog $trafficTraysLog)
     {
-        $this->model = $traysConfigModel;
+        $this->model = $trafficTraysLog;
     }
 
     /**
@@ -28,7 +27,7 @@ class TrafficTrayConfigRepository implements ITrafficTrayConfigRepository
      */
     public function find(int $id)
     {
-        return $this->model->whereId($id)->get();
+        // TODO: Implement find() method.
     }
 
     /**
@@ -36,7 +35,7 @@ class TrafficTrayConfigRepository implements ITrafficTrayConfigRepository
      */
     public function create(array $data)
     {
-        return $this->model->create($data);
+        // TODO: Implement create() method.
     }
 
     /**
@@ -44,7 +43,7 @@ class TrafficTrayConfigRepository implements ITrafficTrayConfigRepository
      */
     public function update(int $id, array $data)
     {
-        return $this->model->whereId($id)->update($data);
+        // TODO: Implement update() method.
     }
 
     /**
@@ -58,8 +57,7 @@ class TrafficTrayConfigRepository implements ITrafficTrayConfigRepository
     /**
      * @inheritDoc
      */
-    public function findByTrayId(int $trayId)
-    {
-        return $this->model->where('tray_id',$trayId)->get();
+    public function getTrafficLog(int $trafficTrayId,int $formAnswerId){
+        return $this->model->where('id',$trafficTrayId)->where('form_answer_id',$formAnswerId)->get()->last();
     }
 }

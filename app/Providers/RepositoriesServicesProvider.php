@@ -24,5 +24,6 @@ class RepositoriesServicesProvider extends ServiceProvider
     public function register()
     {
         $this->app->bind('App\Repositories\interfaces\ITrafficTrayConfigRepository', 'App\Repositories\TrafficTrayConfigRepository');
+        $this->app->bind('App\Repositories\interfaces\ITrafficTrayLogRepository', 'App\Repositories\TrafficTrayLogRepository');
     }
 }

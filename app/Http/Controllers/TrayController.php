@@ -9,6 +9,7 @@ use App\Models\Section;
 use App\Services\TrafficTrayService;
 use Illuminate\Http\Request;
 use App\Models\FormAnswersTray;
+use Illuminate\Support\Facades\Log;
 use stdClass;
 
 class TrayController extends Controller
@@ -147,7 +148,7 @@ class TrayController extends Controller
     }
 
     public function formAnswersByTray(Request $request, $id) {
-        $tray = Tray::where('id',$id)->firstOrFail();
+        $tray = Tray::where('id',$id)->with('trafficConfig')->firstOrFail();
         $fieldsTable = json_decode($tray->fields_table);
         if($tray->advisor_manage==1){
             $formsAnswers = FormAnswer::join('form_answers_trays', "form_answers.id", 'form_answers_trays.form_answer_id')
@@ -171,6 +172,11 @@ class TrayController extends Controller
             $tableValues = [];
             foreach($fieldsTable as $field)
             {
+                //TODO: consultar método para traer la semaforización
+                if(isset($tray->trafficConfig)){
+                    $trafficTrayManager = app(TrafficTrayManager::class);
+                    $trafficTrayManager->validateTrafficTrayStatus($form->id,$tray->trafficConfig);
+                }
                 $structureAnswer = json_decode($form->structure_answer);
                 $new_structure_answer = [];
                 foreach($structureAnswer as $field2){

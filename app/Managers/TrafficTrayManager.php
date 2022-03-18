@@ -3,13 +3,20 @@
 namespace App\Managers;
 
 use App\Repositories\interfaces\ITrafficTrayConfigRepository;
+use App\Repositories\interfaces\ITrafficTrayLogRepository;
+use Illuminate\Support\Facades\Log;
 
 class TrafficTrayManager
 {
-    private $repository;
+    private $configRepository;
+    private $logRepository;
 
-    public function __construct(ITrafficTrayConfigRepository $repository){
-        $this->repository = $repository;
+    public function __construct(
+        ITrafficTrayConfigRepository $configRepository,
+        ITrafficTrayLogRepository $logRepository
+    ){
+        $this->configRepository = $configRepository;
+        $this->logRepository = $logRepository;
     }
 
     /**
@@ -23,14 +30,18 @@ class TrafficTrayManager
             'tray_id' => $request['tray_id'],
             'config' => json_encode($request['traffic']),
         ];
-        return $this->repository->create($configTrayArray);
+        return $this->configRepository->create($configTrayArray);
     }
 
-    public function validateTrafficStatus(){
-
+    public function validateTrafficTrayStatus(int $formAnswerId,$trafficTrayConfig){
+        $trafficTrayLog = $this->logRepository->getTrafficLog($trafficTrayConfig->id,$formAnswerId);
+        if($trafficTrayLog){
+            $currenState = $trafficTrayLog->data
+            $this->updateTrafficStatusInAnswer();
+        }
     }
 
-    public function updateTrafficStatusInAnswer(){
+    public function updateTrafficStatusInAnswer($trayConfigData){
         //TODO: crear lógica para actualizar que se pueda usar en job y mediante request
     }
 }

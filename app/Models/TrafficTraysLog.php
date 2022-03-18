@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class TrafficTraysLog extends Model
 {
-    protected $table = 'traffic_trays_config';
+    protected $table = 'traffic_trays_log';
     protected $fillable = [
         'tray_id','config'
     ];
