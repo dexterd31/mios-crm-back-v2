@@ -43,6 +43,6 @@ class NominaService
         $requestBody =array(
             "campaignIds" => $ids
         );
-        return $this->request('Post', '/api/campaigns/specificCampaigns', $requestBody)->data;
+        return $this->request('Post', '/api/campaigns/specificCampaigns', $requestBody);
     }
 }
