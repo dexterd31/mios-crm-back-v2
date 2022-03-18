@@ -62,7 +62,7 @@ class CampaignController extends Controller
         //$user = $this->ciuService->fetchUser($this->authUser()->id)->data;
         //Se traen las campañas por el id de campaña
         $campaign = $this->nominaService->fetchSpecificCampaigns([$this->authUser()->rrhh->campaign_id]);
-        \Log::info($campaign);
+        \Log::info(json_encode($campaign));
         /**
          * @author: Leogiraldoq
          * Se quitan los elementos inecesarios en para el front,
