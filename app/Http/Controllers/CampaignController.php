@@ -52,27 +52,28 @@ class CampaignController extends Controller
     {
         //Litar todas las campañas de los grupos a los que pertenece el usuarioi
         //Si el usuario es administrador o supervisor, puede ver las campanas inactivas
-        try {
-            //$this->getCiuService();
-            $this->getNominaService();
-            //$user = $this->ciuService->fetchUser($this->authUser()->id)->data;
-            //Se traen las campañas por el id de campaña
-            $campaign = $this->nominaService->fetchSpecificCampaigns([$this->authUser()->rrhh->campaign_id]);
-            /**
-             * @author: Leogiraldoq
-             * Se quitan los elementos inecesarios en para el front,
-             * ? se realiza for para tener en cuenta el momento que se listen mas de una campaña (SuperAdministrador)
-            */
-            for($c=0;$c<count($campaign->data);$c++){
-                unset($campaign->data[$c]->rrhh_id);
-                unset($campaign->data[$c]->code);
-                unset($campaign->data[$c]->created_at);
-                unset($campaign->data[$c]->updated_at);
-            }
-            return $this->successResponse($campaign->data);
+        /*try {
+
         } catch (\Throwable $th) {
             return $this->errorResponse('Ocurrio un error al intentar mostrar las campañas.', 500);
+        }*/
+        //$this->getCiuService();
+        $this->getNominaService();
+        //$user = $this->ciuService->fetchUser($this->authUser()->id)->data;
+        //Se traen las campañas por el id de campaña
+        $campaign = $this->nominaService->fetchSpecificCampaigns([$this->authUser()->rrhh->campaign_id]);
+        /**
+         * @author: Leogiraldoq
+         * Se quitan los elementos inecesarios en para el front,
+         * ? se realiza for para tener en cuenta el momento que se listen mas de una campaña (SuperAdministrador)
+         */
+        for($c=0;$c<count($campaign->data);$c++){
+            unset($campaign->data[$c]->rrhh_id);
+            unset($campaign->data[$c]->code);
+            unset($campaign->data[$c]->created_at);
+            unset($campaign->data[$c]->updated_at);
         }
+        return $this->successResponse($campaign->data);
     }
 
 
