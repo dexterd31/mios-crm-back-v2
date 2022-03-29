@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use App\Managers\TrafficTrayManager;
-use App\Repositories\interfaces\ITrafficTrayConfigRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider

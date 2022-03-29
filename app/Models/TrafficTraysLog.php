@@ -8,7 +8,7 @@ class TrafficTraysLog extends Model
 {
     protected $table = 'traffic_trays_log';
     protected $fillable = [
-        'tray_id','config'
+        'traffic_tray_id','form_answer_id','data'
     ];
 
     public function trayConfig(){

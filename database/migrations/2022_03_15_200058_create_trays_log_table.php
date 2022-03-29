@@ -18,6 +18,7 @@ class CreateTraysLogTable extends Migration
             $table->foreignId('traffic_tray_id')->references('id')->on('traffic_trays_config');
             $table->foreignId('form_answer_id')->references('id')->on('form_answers');
             $table->json('data')->comment('contiene los datos que se almacenan en el log');
+            $table->boolean('enabled')->default(1)->comment('indica la semaforización actual del registro');
             $table->timestamps();
         });
     }

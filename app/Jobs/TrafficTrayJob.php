@@ -3,16 +3,19 @@
 namespace App\Jobs;
 
 use App\Managers\TrafficTrayManager;
+use Illuminate\Support\Facades\Log;
 
 class TrafficTrayJob extends Job
 {
-    private $trafficTrayManager;
-    private $formAnswerId;
-    private $trafficTrayConfig;
+    protected $trafficTrayManager;
+    protected $formAnswerId;
+    protected $trafficTrayConfig;
 
     /**
-     * Create a new job instance.
-     *
+     * @desc Create a new job instance.
+     * @author Juan Pablo Camargo Vanegas (juan.cv@montechelo.com.co)
+     * @param $formAnswerId: id de la respuesta del formulario
+     * @param $trafficTrayConfig: configuración de semaforización de la bandeja
      * @return void
      */
     public function __construct($formAnswerId, $trafficTrayConfig)
@@ -23,8 +26,8 @@ class TrafficTrayJob extends Job
     }
 
     /**
-     * Execute the job.
-     *
+     * @desc Execute the job.
+     * @author Juan Pablo Camargo Vanegas (juan.cv@montechelo.com.co)
      * @return void
      */
     public function handle()

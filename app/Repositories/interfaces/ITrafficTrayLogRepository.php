@@ -5,7 +5,7 @@ namespace App\Repositories\interfaces;
 interface ITrafficTrayLogRepository extends IBaseRepository
 {
     /**
-     * @desc: obtiene el ultimo registro de la trabla traffic_trays_log
+     * @desc: obtiene el ultimo registro de la trabla traffic_trays_log según su estado
      * @author: Juan Pablo Camargo Vanegas (juan.cv@montechelo.com.co)
      * @param int $trafficTrayId
      * @param int $formAnswerId

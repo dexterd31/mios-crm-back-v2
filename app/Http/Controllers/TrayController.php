@@ -169,6 +169,14 @@ class TrayController extends Controller
 
         foreach($formsAnswers as $form)
         {
+            //semaforización
+            if(isset($tray->trafficConfig)){
+                $trafficTrayManager = app(TrafficTrayManager::class);
+                $trafficTrayState = $trafficTrayManager->getTrafficTrayLog($tray->trafficConfig->id,$form->id);
+                if($trafficTrayState){
+                    $form->trafficTray = json_decode($trafficTrayState->data);
+                }
+            }
             $tableValues = [];
             foreach($fieldsTable as $field)
             {

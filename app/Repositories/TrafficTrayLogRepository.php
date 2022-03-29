@@ -35,7 +35,7 @@ class TrafficTrayLogRepository implements ITrafficTrayLogRepository
      */
     public function create(array $data)
     {
-        // TODO: Implement create() method.
+        return $this->model->create($data);
     }
 
     /**
@@ -43,7 +43,8 @@ class TrafficTrayLogRepository implements ITrafficTrayLogRepository
      */
     public function update(int $id, array $data)
     {
-        // TODO: Implement update() method.
+        return $this->model->whereId($id)
+                            ->update($data);
     }
 
     /**
@@ -57,7 +58,10 @@ class TrafficTrayLogRepository implements ITrafficTrayLogRepository
     /**
      * @inheritDoc
      */
-    public function getTrafficLog(int $trafficTrayId,int $formAnswerId){
-        return $this->model->where('id',$trafficTrayId)->where('form_answer_id',$formAnswerId)->get()->last();
+    public function getTrafficLog(int $trafficTrayId,int $formAnswerId,$enabled = 1){
+        return $this->model->where('traffic_tray_id',$trafficTrayId)
+            ->where('form_answer_id',$formAnswerId)
+            ->where('enabled',$enabled)
+            ->get()->last();
     }
 }

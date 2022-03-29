@@ -22,3 +22,10 @@ If you discover a security vulnerability within Lumen, please send an e-mail to 
 ## License
 
 The Lumen framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Configuración semaforización de bandejas
+#### por Juan Pablo Camargo Vanegas [juan.cv@montechelo.com.co](mailto:juan.cv@montechelo.com.co)
+
+1. ejecutar el comando `composer install` y validar que no presenten errores de dependencias o paquetes, de ser asi resolverlos.
+2. ejecutar el comando `composer update` y validar que no presenten errores de dependencias o paquetes, de ser asi resolverlos.
+3. ejecutar migraciones `php artisan migrate` y validar que las tablas `traffic_trays_config`y `traffic_trays_log`
