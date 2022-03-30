@@ -16,16 +16,37 @@ class OnlineUserStatusController extends Controller
         $this->onlineUserRepository = $onlineUserRepository;    
     }
 
+    /**
+     * Crea el registro del usuario que esta en línea.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param array $data
+     * @return Illuminate\Http\Response
+     */
     public function registerUserOnline(array $data)
     {
         $this->onlineUserRepository->create($data);
     }
 
+    /**
+     * Elimina registro del usuario que se desconecta.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param integer $rrhh_id
+     * @return Illuminate\Http\Response
+     */
     public function removeUserRegistrationOnline(int $rrhh_id)
     {
         $this->onlineUserRepository->delete($rrhh_id);
     }
 
+    /**
+     * Verifica si el usuario se va a registrar o se va a eliminar.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param Request $request
+     * @return Illuminate\Http\Response
+     */
     public function validateCIUUserStatus(Request $request)
     {
         $this->validate($request,[
@@ -57,6 +78,14 @@ class OnlineUserStatusController extends Controller
 
     }
 
+    /**
+     * Reporta los usuarios que estan en linea por formulario y por rol.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param integer $formId
+     * @param integer $roleId
+     * @return Illuminate\Http\Response
+     */
     public function onlineUserReportByForm(int $formId, int $roleId)
     {
         $onlineUsers = $this->onlineUserRepository->allByFormAndRole($formId, $roleId)->get();
@@ -68,6 +97,13 @@ class OnlineUserStatusController extends Controller
         ], 200);
     }
 
+    /**
+     * Cambia el estado de pausa del usuario que esta en línea.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param Request $request
+     * @return Illuminate\Http\Response
+     */
     public function changePauseUserStatus(Request $request)
     {
         $this->validate($request, [
