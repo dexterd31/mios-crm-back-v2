@@ -108,10 +108,11 @@ class OnlineUserStatusController extends Controller
     {
         $this->validate($request, [
             'rrhh_id' => 'required|exists:online_users,rrhh_id',
-            'is_paused' => 'required|boolean'
+            'is_paused' => 'boolean',
+            'ciu_status' => 'string'
         ]);
 
-        $this->onlineUserRepository->updateByRRHHId($request->rrhh_id, $request->only('is_paused'));
+        $this->onlineUserRepository->updateByRRHHId($request->rrhh_id, $request->except('rrhh_id'));
 
         return response()->json([
             'status_code' => 200,
