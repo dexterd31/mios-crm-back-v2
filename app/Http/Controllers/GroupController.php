@@ -8,16 +8,19 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Services\RrhhService;
+use App\Services\NominaService;
 use Helpers\MiosHelper;
 use Log;
 
 class GroupController extends Controller
 {
     private $rrhhService;
+    private $nominaService;
 
     public function __construct()
     {
         $this->getRrhhService();
+        $this->getNominaService();
     }
 
     public function getRrhhService()
@@ -32,6 +35,19 @@ class GroupController extends Controller
 	public function setRrhhService($rrhhService)
 	{
 		$this->rrhhService = $rrhhService;
+	}
+    public function getNominaService()
+	{
+		if($this->nominaService == null)
+		{
+			$this->setNominaService(new NominaService());
+		}
+		return $this->nominaService;
+	}
+
+	public function setNominaService($nominaService)
+	{
+		$this->nominaService = $nominaService;
 	}
 
     /**
@@ -280,7 +296,12 @@ class GroupController extends Controller
         foreach ($groups as $group) {
             array_push($groupsIds, $group['campaign_id']);
         }
-        return $groupsIds;
+        if(!empty($groupsIds)){
+            $campingUser=$this->nominaService->fetchSpecificCampaigns($groupsIds)->data;
+            return $this->successResponse($campingUser);
+        }else{
+            return $this->successResponse([]);
+        }
     }
 
     public function getGroupsByRrhhId($rrhhId)
@@ -292,5 +313,23 @@ class GroupController extends Controller
     public function search()
     {
         return Group::where("state", 1)->select("id", "campaign_id", "name_group", "description")->get();
+    }
+
+        /**
+     * Ana Huertas
+     * 09-03-2022
+     * Funcion para obtener las campaign que pertenecen a los grupos.
+     */
+    public function getAllCampaig()
+    {
+        $groups = Group::select('campaign_id')
+            ->distinct()
+            ->orderby('campaign_id', 'ASC')->get();
+        $groupsIds = [];
+        foreach ($groups as $group) {
+            array_push($groupsIds, $group['campaign_id']);
+        }
+        $campingUser=$this->nominaService->fetchSpecificCampaigns($groupsIds)->data;
+        return $this->successResponse($campingUser);
     }
 }

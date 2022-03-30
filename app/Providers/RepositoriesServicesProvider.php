@@ -13,7 +13,10 @@ class RepositoriesServicesProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        $contracts = 'App\Repositories\Contracts';
+        $repositories = 'App\Repositories';
+
+        $this->app->bind("$contracts\OnlineUserRepository", "$repositories\OnlineUserRepository");
     }
 
     /**

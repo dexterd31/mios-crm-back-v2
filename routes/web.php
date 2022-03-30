@@ -82,6 +82,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/getGroupsByRrhhId/{rrhhId}', 'GroupController@getGroupsByRrhhId');
     $router->get('/listGroupsByRrhhId/{rrhhId}', 'GroupController@groupListByRrhhId');
     $router->get('/searchGroups', 'GroupController@search');
+    $router->get('/getIdCampaignByRrhhId/{rrhhId}','GroupController@getIdCampaignByRrhhId');
+    $router->get('/getAllCampaig','GroupController@getAllCampaig');
+
 
     // rutas de campañas
     $router->get('/campaigns', 'CampaignController@index');
@@ -212,4 +215,11 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       //notificacionesCrm
       $router->get('notifications/prepareNotifications/{formId}','NotificationsController@prepareNotifications');
       $router->post('notifications/saveNotifications','NotificationsController@saveNotifications');
+      
+      //Ruta para registro usuarios en línea
+      $router->post('online-user','OnlineUserStatusController@validateCIUUserStatus');
+      //Ruta para cambiar el estado de pausa del usuario
+      $router->post('online-user/change-status','OnlineUserStatusController@changePauseUserStatus');
+      //Ruta para reporte de usuarios en línea
+      $router->get('online-users/report/{formId}/role/{roleId}','OnlineUserStatusController@onlineUserReportByForm');
 });

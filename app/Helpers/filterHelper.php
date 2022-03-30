@@ -85,7 +85,12 @@ class FilterHelper
             $formAnswersQuery = $formAnswersQuery->where('form_id', $formId);
             foreach ($filters as $filter)
             {
-                $formAnswersQuery = $formAnswersQuery->where('data', 'like', '%' . $filter["value"] . '%');
+                $filterData = [
+                    'id' => $filter['id'],
+                    'value' => $filter['value']
+                ];
+                $filterData = json_encode($filterData);
+                $formAnswersQuery = $formAnswersQuery->whereRaw("json_contains(data, lower('$filterData'))");
             }
         }
         return $formAnswersQuery->paginate(5);
