@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Managers\TrafficTrayManager;
 use App\Models\ApiConnection;
 use App\Models\Directory;
 use App\Models\FormAnswer;
@@ -19,6 +20,7 @@ use Doctrine\DBAL\LockMode;
 use Helpers\FilterHelper;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\FormAnswersTray;
@@ -564,7 +566,7 @@ class FormAnswerController extends Controller
      */
     public function matchTrayFields($formId, $formAnswer){
 
-        $trays = Tray::where('form_id',$formId)
+        $trays = Tray::where('form_id',$formId)->with('trafficConfig')
                         ->get();
         foreach ($trays as $tray) {
 
@@ -622,13 +624,17 @@ class FormAnswerController extends Controller
                         'form_answers_trays_id' =>$formAnswerTrays->id
                     ]);
                     $relUsersTraysModel->save();
+                    //semaforización
+                    if(isset($tray->trafficConfig)){
+                        $trafficTrayManager = app(TrafficTrayManager::class);
+                        $trafficTrayManager->validateTrafficTrayStatus($formAnswer->id,$tray->trafficConfig);
+                    }
                 }
             }
 
             /* salida a bandeja */
             $exit_fields_matched = 0;
             foreach(json_decode($tray->fields_exit) as $field_exit){
-
                 $estructura = json_decode($formAnswer->structure_answer);
                 // Filtrar que contenga el id del field buscado
                 $tray_out = collect($estructura)->filter( function ($value, $key) use ($field_exit) {
@@ -661,8 +667,18 @@ class FormAnswerController extends Controller
                 }
             }
             if((count(json_decode($tray->fields_exit)) >0 ) && ($exit_fields_matched == count(json_decode($tray->fields_exit)))){
+                if($tray->FormAnswers->contains($formAnswer->id)){
+                    //semaforización
+                    if(isset($tray->trafficConfig)){
+                        $trafficTrayManager = app(TrafficTrayManager::class);
+                        $trafficTrayManager->disableTrafficTrayLog($formAnswer->id,$tray->trafficConfig->id);
+                    }
+                }
                 $tray->FormAnswers()->detach($formAnswer->id);
             }
+
+
+
         }
     }
 
