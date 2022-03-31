@@ -19,10 +19,12 @@
    * `jobs`
    * `failed_jobs`
 5. Validar que se encuentren las variables de entorno para el funcionamiento de pusher:
-   * `PUSHER_APP_ID=`
-   * `PUSHER_APP_KEY=`
-   * `PUSHER_APP_SECRET=`
-   * `PUSHER_APP_CLUSTER=us2`  
+* `QUEUE_CONNECTION=database`
+* `BROADCAST_DRIVER=pusher`
+* `PUSHER_APP_ID=`
+* `PUSHER_APP_KEY=`
+* `PUSHER_APP_SECRET=`
+* `PUSHER_APP_CLUSTER=us2`  
 
 ## Colas de Trabajo
 
