@@ -77,6 +77,7 @@ class TrafficTrayManager
         $this->logRepository->create([
             "traffic_tray_id" => $trafficTrayConfig->id,
             "form_answer_id" => $formAnswerId,
+            "tray_id" => $trafficTrayConfig->tray_id,
             "data" => json_encode($currentTray)
         ]);
         $this->emitCurrentTrayInPusher($currentTray);
