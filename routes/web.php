@@ -203,7 +203,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       //Ruta para registro usuarios en línea
       $router->post('online-user','OnlineUserStatusController@validateCIUUserStatus');
       //Ruta para actualiar el registro del usuario en línea
-      $router->post('online-user/update','OnlineUserStatusController@changePauseUserStatus');
+      $router->post('online-user/update','OnlineUserStatusController@updateOnlineUserStatus');
       //Ruta para reporte de usuarios en línea
       $router->get('online-users/report/{formId}/role/{roleId}','OnlineUserStatusController@onlineUserReportByForm');
 });
