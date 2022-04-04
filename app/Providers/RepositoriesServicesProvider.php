@@ -11,13 +11,7 @@ class RepositoriesServicesProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot()
-    {
-        $contracts = 'App\Repositories\Contracts';
-        $repositories = 'App\Repositories';
-
-        $this->app->bind("$contracts\OnlineUserRepository", "$repositories\OnlineUserRepository");
-    }
+    public function boot(){}
 
     /**
      * Register the application services.
@@ -26,7 +20,11 @@ class RepositoriesServicesProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->bind('App\Repositories\interfaces\ITrafficTrayConfigRepository', 'App\Repositories\TrafficTrayConfigRepository');
-        $this->app->bind('App\Repositories\interfaces\ITrafficTrayLogRepository', 'App\Repositories\TrafficTrayLogRepository');
+        $interfaces = 'App\Repositories\interfaces';
+        $repositories = 'App\Repositories';
+
+        $this->app->bind("$interfaces\ITrafficTrayConfigRepository", "$repositories\TrafficTrayConfigRepository");
+        $this->app->bind("$interfaces\ITrafficTrayLogRepository", "$repositories\TrafficTrayLogRepository");
+        $this->app->bind("$interfaces\OnlineUserRepository", "$repositories\OnlineUserRepository");
     }
 }

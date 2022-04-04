@@ -693,11 +693,11 @@ class UploadController extends Controller
     private function addToDirectories(array $data,int $formId,int $clientNewId, array $indexForm){
         $newDirectory = Directory::updateOrCreate([
             'form_id' => $formId,
-            'client_new_id' => $clientNewId
+            'client_new_id' => $clientNewId,
+            'data' => json_encode($data)
 
         ],[
             'rrhh_id' => auth()->user()->rrhh_id,
-            'data' => json_encode($data),
             'form_index' => json_encode($indexForm)
         ]);
 

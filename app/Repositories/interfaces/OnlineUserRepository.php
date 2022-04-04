@@ -2,7 +2,9 @@
 
 namespace App\Repositories\Contracts;
 
-interface OnlineUserRepository extends RepositoryInterface
+use App\Repositories\interfaces\IBaseRepository;
+
+interface OnlineUserRepository extends IBaseRepository
 {
     public function allByFormAndRole(int $formId, int $roleId) : object;
 
