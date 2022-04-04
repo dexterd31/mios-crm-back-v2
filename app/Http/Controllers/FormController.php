@@ -305,13 +305,18 @@ class FormController extends Controller
     public function report(Request $request, MiosHelper $miosHelper){
         $char="";
         $rrhhService = new RrhhService();
-        $trayHistoric = Tray::select('id')->where('form_id',$request->formId)->whereNotNull('save_historic')->get();
+        $trayHistoric = Tray::select('id')->where('form_id',$request->formId)->get();
         if(count($trayHistoric)>0){
             $formAnswers = DB::table('form_answer_logs')
                            ->join('form_answers','form_answer_logs.form_answer_id','=','form_answers.id')
+                           ->join('form_answers_trays', 'form_answers.id','=','form_answers_trays.form_answer_id')
                            ->where('form_answers.form_id','=',$request->formId)
                            ->where('form_answers.tipification_time', '!=', 'upload')
-                           ->whereBetween('form_answers.created_at', ["$request->date1 00:00:00", "$request->date2 00:00:00"])
+                           ->where(function($query) use ($request){
+                               $query->whereBetween('form_answers.created_at', ["$request->date1 00:00:00", "$request->date2 00:00:00"])
+                                   ->orWhereBetween('form_answers_trays.created_at',["$request->date1 00:00:00", "$request->date2 00:00:00"]);
+                           })
+                            //->orWhereBetween('form_answers_trays.created_at',["$request->date1 00:00:00", "$request->date2 00:00:00"])
                         ->select('form_answer_logs.form_answer_id as id', 'form_answer_logs.structure_answer', 'form_answer_logs.created_at', 'form_answer_logs.updated_at','form_answer_logs.rrhh_id as id_rhh', 'form_answers.tipification_time')
                         ->get();
         }else{

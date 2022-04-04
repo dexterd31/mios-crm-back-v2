@@ -7,6 +7,7 @@ use App\Models\ApiConnection;
 use App\Models\Directory;
 use App\Models\FormAnswer;
 use App\Models\Form;
+use App\Models\FormAnswersTrayHistoric;
 use App\Models\KeyValue;
 use App\Models\Section;
 use App\Models\Tray;
@@ -16,11 +17,9 @@ use App\Models\FormAnswerMiosPhone;
 use App\Services\CiuService;
 use App\Services\DataCRMService;
 use App\Services\NominaService;
-use Doctrine\DBAL\LockMode;
 use Helpers\FilterHelper;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\FormAnswersTray;
@@ -28,8 +27,6 @@ use App\Models\RelTrayUser;
 use App\Traits\deletedFieldChecker;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use phpDocumentor\Reflection\Types\Array_;
-use Svg\Tag\Stop;
 
 
 class FormAnswerController extends Controller
@@ -81,6 +78,7 @@ class FormAnswerController extends Controller
         $dataPreloaded = [];
         $formAnswerData = [];
         $formAnswerIndexData = [];
+        $formAnswerTrayHistoric =[];
         $data = [];
         $date_string = Carbon::now()->format('YmdHis');
         foreach($sections as $section)
@@ -144,7 +142,12 @@ class FormAnswerController extends Controller
                     {
                         array_push($dataPreloaded, $register);
                     }
-                    array_push($formAnswerData, $register);
+                    if(isset($field['tray'])){
+                        $register['tray'] = $field['tray'];
+                        array_push($formAnswerTrayHistoric, $register);
+                    }else{
+                        array_push($formAnswerData, $register);
+                    }
                     array_push($formAnswerIndexData, [
                         "id" =>$register["id"],
                         "value" =>$register["value"],
@@ -475,18 +478,19 @@ class FormAnswerController extends Controller
         foreach ($request['sections'] as $section) {
             foreach ($section['fields'] as $field) {
                 if(isset($field["tray"])) {
-                    if(isset($request['trayId']))
+                    foreach ($field["tray"] as $tray)
                     {
-                        foreach ($field["tray"] as $tray)
+                        $trayExists = $this->validateTrayInSections($tray['id'],$request['form_id']);
+                        if($trayExists)
                         {
-                            if($tray['id'] == $request['trayId'])
-                            {
+                            if(trim($field['value']) != ''){
                                 array_push($trayFilds, (Object)[
                                     "id"=>$field['id'],
                                     "key"=>$field['key'],
                                     "value"=>$field['value'],
                                     "preloaded"=>$field['preloaded'],
-                                    "label"=>$field['label']
+                                    "label"=>$field['label'],
+                                    "tray"=>$field['tray']
                                 ]);
                                 continue;
                             }
@@ -554,6 +558,18 @@ class FormAnswerController extends Controller
 
         // Manejar bandejas
         $this->matchTrayFields($form_answer->form_id, $form_answer);
+
+        //creando el histórico de bandejas
+        if(count($trayFilds) > 0){
+            $trayHistoricCollection =  collect($trayFilds);
+            $trayHistoricCollection->each(function ($item, $key) use ($form_answer){
+                collect($item->tray)->each(function ($tray, $key) use ($form_answer,$item){
+                    $trayId = $tray['id'];
+                    unset($item->tray);
+                    $this->createTrayHistoric($trayId,$form_answer->id,$item);
+                });
+            });
+        }
 
         // Log FormAnswer
         $this->logFormAnswer($form_answer);
@@ -769,5 +785,47 @@ class FormAnswerController extends Controller
             return true;
         }
         return false;
+    }
+
+    /**
+     * @desc Crea un registro en la tabla form_answer_trays_historic
+     * @author Juan Pablo Camargo Vanegas (juan.cv@montechelo.com.co)
+     * @param int $trayId
+     * @param int $formAnswerId
+     * @param $structureAnswer
+     * @return void
+     */
+    private function createTrayHistoric(int $trayId,int $formAnswerId,$structureAnswer):void{
+        $trayHistoricModel = new FormAnswersTrayHistoric();
+        $trayHistoricModel->tray_id = $trayId;
+        $trayHistoricModel->form_answer_id = $formAnswerId;
+        $trayHistoricModel->structure_answer = json_encode($structureAnswer);
+        $trayHistoricModel->save();
+    }
+
+    /**
+     * @desc Valida si una sección cuenta con el objeto de bandeja.
+     * @author Juan Pablo Camargo Vanegas (juan.cv@montechelo.com.co)
+     * @param int $trayId: id de la bandeja
+     * @param int $formId: id del formulario
+     * @return bool
+     */
+    private function validateTrayInSections(int $trayId,int $formId):bool{
+        $exists = false;
+        $sections = Section::where('form_id',$formId)->get();
+        if($sections){
+            foreach ($sections as $section){
+                foreach (json_decode($section->fields) as $field){
+                    if(isset($field->tray)){
+                        foreach ($field->tray as $tray){
+                            if($tray->id == $trayId){
+                                $exists = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $exists;
     }
 }
