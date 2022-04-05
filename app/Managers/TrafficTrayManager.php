@@ -56,6 +56,7 @@ class TrafficTrayManager
         $currentTray = $trafficConfigCollection->where('priority', 1)->first();
         if($trafficTrayLog){
             $currentState = json_decode($trafficTrayLog->data);
+            $currentState->tray_id = $trafficTrayConfig->tray_id;
             $maxPriority = $trafficConfigCollection->max('priority');
             if($currentState->priority >= $maxPriority){
                 return $currentState;
