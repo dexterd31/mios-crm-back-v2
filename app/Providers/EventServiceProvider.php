@@ -14,6 +14,7 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         \App\Events\ExampleEvent::class => [
             \App\Listeners\ExampleListener::class,
+            \App\Events\TrafficTrayEvent::class
         ],
     ];
 }

@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Managers\TrafficTrayManager;
 use App\Models\FormAnswer;
 use App\Models\Tray;
 use App\Models\Section;
+use App\Services\TrafficTrayService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use App\Models\FormAnswersTray;
+use Illuminate\Support\Facades\Log;
 use stdClass;
 
 class TrayController extends Controller
@@ -34,7 +36,7 @@ class TrayController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(Request $request, TrafficTrayManager $trafficTrayManager)
     {
         $data = $request['entries'];
 
@@ -51,9 +53,12 @@ class TrayController extends Controller
         $tray->rols = json_encode($data['rols']);
         $tray->state = 1;
         $tray->save();
-
+        if(isset($data['traffic'])){
+            //creación de semaforización
+            $data['tray_id'] = $tray->id;
+            $trafficTrayManager->newTrafficTray($data);
+        }
         $this->matchTrayFields($tray, FormAnswer::all());
-
         return $this->successResponse('Bandeja creada con exito');
     }
 
@@ -143,7 +148,7 @@ class TrayController extends Controller
     }
 
     public function formAnswersByTray(Request $request, $id) {
-        $tray = Tray::where('id',$id)->firstOrFail();
+        $tray = Tray::where('id',$id)->with('trafficConfig')->firstOrFail();
         $fieldsTable = json_decode($tray->fields_table);
         if($tray->advisor_manage==1){
             $formsAnswers = FormAnswer::join('form_answers_trays', "form_answers.id", 'form_answers_trays.form_answer_id')
@@ -164,9 +169,22 @@ class TrayController extends Controller
 
         foreach($formsAnswers as $form)
         {
+            //semaforización
+            if(isset($tray->trafficConfig)){
+                $trafficTrayManager = app(TrafficTrayManager::class);
+                $trafficTrayState = $trafficTrayManager->getTrafficTrayLog($tray->trafficConfig->id,$form->id);
+                if($trafficTrayState){
+                    $form->trafficTray = json_decode($trafficTrayState->data);
+                }
+            }
             $tableValues = [];
             foreach($fieldsTable as $field)
             {
+                //TODO: consultar método para traer la semaforización
+                if(isset($tray->trafficConfig)){
+                    $trafficTrayManager = app(TrafficTrayManager::class);
+                    $trafficTrayManager->validateTrafficTrayStatus($form->id,$tray->trafficConfig);
+                }
                 $structureAnswer = json_decode($form->structure_answer);
                 $new_structure_answer = [];
                 foreach($structureAnswer as $field2){

@@ -7,6 +7,7 @@ use App\Models\Tray;
 use App\Models\FormAnswersTray;
 use App\Models\Section;
 use App\Http\Controllers\FormController;
+use Illuminate\Support\Facades\Log;
 
 class FormAnswerTrayController extends Controller
 {
@@ -32,7 +33,7 @@ class FormAnswerTrayController extends Controller
         if($saveHistoric === null){
             $response = new \stdClass();
             $response->data = "no se encontraron historicos asociados";
-            return response()->json($response,204);
+            return response()->json($response,200);
         }
         foreach ($formAnswerLogs as $structureAnswer){
             foreach (json_decode($structureAnswer['structure_answer']) as $answer){
