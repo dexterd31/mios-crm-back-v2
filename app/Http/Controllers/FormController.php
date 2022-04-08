@@ -306,14 +306,13 @@ class FormController extends Controller
         $char="";
         $rrhhService = new RrhhService();
         $trayHistoric = Tray::select('id')->where('form_id',$request->formId)->whereNotNull('save_historic')->get();
-        
-        $formAnswers = DB::table('form_answer_logs')
-            ->join('form_answers','form_answer_logs.form_answer_id','=','form_answers.id')
-            ->where('form_answers.form_id','=',$request->formId)
-            ->where('form_answers.tipification_time', '!=', 'upload')
-            ->whereBetween('form_answer_logs.updated_at', ["$request->date1 00:00:00", "$request->date2 00:00:00"])
-            ->get(['form_answer_logs.form_answer_id as id', 'form_answer_logs.structure_answer', 'form_answers.created_at', 'form_answer_logs.updated_at','form_answer_logs.rrhh_id as id_rhh', 'form_answers.tipification_time']);
-
+            $formAnswers = DB::table('form_answer_logs')
+                ->join('form_answers','form_answer_logs.form_answer_id','=','form_answers.id')
+                ->where('form_answers.form_id','=',$request->formId)
+                ->where('form_answers.tipification_time', '!=', 'upload')
+                ->whereBetween('form_answer_logs.updated_at', ["$request->date1 00:00:00", "$request->date2 00:00:00"])
+                ->select('form_answer_logs.form_answer_id as id', 'form_answer_logs.structure_answer', 'form_answers.created_at', 'form_answer_logs.updated_at','form_answer_logs.rrhh_id as id_rhh', 'form_answers.tipification_time')
+                ->get();
         if(count($formAnswers)==0){
             // 406 Not Acceptable
             // se envia este error ya que no esta mapeado en interceptor angular.
@@ -371,7 +370,6 @@ class FormController extends Controller
             $plantillaRespuestas['updated_at'] =$char;
 
             foreach($formAnswers as $answer){
-                Log::info($answer);
                 $respuestas=$plantillaRespuestas;
                 $respuestas['id'] = $answer->id;
                 //Evaluamos los campos que deben ir en el reporte contra las respuestas
