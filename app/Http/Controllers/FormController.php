@@ -370,7 +370,6 @@ class FormController extends Controller
             $plantillaRespuestas['updated_at'] =$char;
 
             foreach($formAnswers as $answer){
-                Log::info($answer);
                 $respuestas=$plantillaRespuestas;
                 $respuestas['id'] = $answer->id;
                 //Evaluamos los campos que deben ir en el reporte contra las respuestas
