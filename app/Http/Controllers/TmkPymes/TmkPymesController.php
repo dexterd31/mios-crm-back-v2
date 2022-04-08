@@ -43,7 +43,7 @@ class TmkPymesController extends Controller
             "utm_medium"          => 1648574598013,
             "glid"                => 1648574626207,
             "resumen_plan"        => 1648574655164,
-            "queu_promo"          => 1648574655164,
+            "queu_promo"          => 1648574684730,
             "referencia_producto" => 1648574727543,
             "canal_trafico"       => 1648574784299,
             "fecha"               => 1648574812677,
