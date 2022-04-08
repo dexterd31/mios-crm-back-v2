@@ -37,7 +37,17 @@ class TmkPymesController extends Controller
             'utm_campaign' => 1635518784366,
             'tipo_documento' => 1637160407586,
             'numero_documento' => 1635549672268,
-            'id' => 1635436930539
+            'id' => 1635436930539,
+            "email"               => 1648581145938,
+            "utm_source"          => 1648574563386,
+            "utm_medium"          => 1648574598013,
+            "glid"                => 1648574626207,
+            "resumen_plan"        => 1648574655164,
+            "queu_promo"          => 1648574655164,
+            "referencia_producto" => 1648574727543,
+            "canal_trafico"       => 1648574784299,
+            "fecha"               => 1648574812677,
+            "hora"                => 1648574843546
         ];
         $this->productVicidial="TMK";
         $this->tokenVicidial="TmK202111031233";
