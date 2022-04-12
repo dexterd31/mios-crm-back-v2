@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers\TmkPymes;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use App\Http\Controllers\FormController;
 use stdClass;
-use App\Models\NotificationLeads;
-use App\Http\Controllers\ClientNewController;
-use App\Http\Controllers\KeyValueController;
-use App\Http\Controllers\UploadController;
 use Carbon\Carbon;
 use App\Models\FormAnswer;
+use Illuminate\Http\Request;
 use App\Models\FormAnswerLog;
+use App\Models\NotificationLeads;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Http;
+use App\Http\Controllers\FormController;
+use App\Http\Controllers\UploadController;
+use App\Http\Controllers\KeyValueController;
+use App\Http\Controllers\ClientNewController;
 
 class TmkPymesController extends Controller
 {
@@ -254,6 +255,7 @@ class TmkPymesController extends Controller
     }
 
     private function newLeadVicidial($params){
+        Log::info($params);
         Http::post(env('SERVICE_SYNC_VICIDIAL').'/cos/services',$params);
     }
 }
