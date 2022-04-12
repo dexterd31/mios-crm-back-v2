@@ -136,6 +136,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/tray/changeState/{id}','TrayController@changeState');
     $router->get('/tray/duplicatedSection/{idFormAnswer}','TrayController@sectionsDuplicated');
 
+    //Bandeja Asignados
+    $router->get('/tray/assignedClients/{formId}', 'RelAdvisorClientNewController@showAssignedClients');
+
     //Rutas escalamientos
     $router->post('/escalations', 'EscalationController@validateScalation');
     //Rutas Permisos

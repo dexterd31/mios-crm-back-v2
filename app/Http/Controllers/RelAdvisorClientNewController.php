@@ -59,48 +59,12 @@ class RelAdvisorClientNewController extends Controller
         }
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
+    public function showAssignedClients(int $formId)
     {
+        $assignedClients = RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)
+        ->join('client_news', 'client_news.id', 'rel_advisor_client_new.client_new_id')
+        ->where('client_news.form_id', $formId)->get(['client_news.created_at', 'client_news.unique_indentificator']);
 
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\RelAdvisorClientNew  $relAdvisorClientNew
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(RelAdvisorClientNew $relAdvisorClientNew)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\RelAdvisorClientNew  $relAdvisorClientNew
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, RelAdvisorClientNew $relAdvisorClientNew)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\RelAdvisorClientNew  $relAdvisorClientNew
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(RelAdvisorClientNew $relAdvisorClientNew)
-    {
-        //
+        return response()->json(['assigned_clients' => $assignedClients], 200);
     }
 }

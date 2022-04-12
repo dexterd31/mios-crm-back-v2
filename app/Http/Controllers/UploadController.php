@@ -128,18 +128,18 @@ class UploadController extends Controller
             'form_id' => 'required',
             'assigns' => 'required',
             'action' => 'required',
-            'assignUsers' => 'required',
+            // 'assign_users' => 'required',
         ]);
-        $userRrhhId=auth()->user()->rrhh_id;
+        $userRrhhId = auth()->user()->rrhh_id;
         $file = $request->file('excel');
-        $fileData = json_decode(Excel::toCollection(new ClientNewImport(), $file)[0]);
-        $totalArchivos = count($fileData);
-        $assignUsers = filter_var($request->assignUsers,FILTER_VALIDATE_BOOLEAN);
+        $rows = json_decode(Excel::toCollection(new ClientNewImport(), $file)[0]);
+        $totalRows = count($rows);
+        $assignUsers = filter_var($request->assign_users,FILTER_VALIDATE_BOOLEAN);
         if($assignUsers){
-            $assignUsersObject = $this->getAdvisers($request,$totalArchivos);
+            $assignUsersObject = $this->getAdvisers($request,$totalRows);
         }
-        if($totalArchivos>0){
-            $fieldsLoad=$formController->getSpecificFieldForSection(json_decode($request->assigns),$request->form_id);
+        if($totalRows){
+            $fieldsLoad = $formController->getSpecificFieldForSection(json_decode($request->assigns),$request->form_id);
             foreach(json_decode($request->assigns) as $assign){
                 foreach($fieldsLoad as $key=>$field){
                     if($field->id == $assign->id){
@@ -148,37 +148,36 @@ class UploadController extends Controller
                     }
                 }
             }
-            if(count($fieldsLoad)>0){
+            if(count($fieldsLoad)){
                 $directories = [];
                 $dataLoad=0;
                 $dataNotLoad=[];
-                foreach($fileData as $c=>$client){
+                foreach($rows as $index => $row){
                     $answerFields = (Object)[];
                     $errorAnswers = [];
                     $formAnswerClient=[];
                     $formAnswerClientIndexado=[];
                     $updateExisting = true;
-                    foreach($client as $d=>$data){
-                        $dataValidate=$this->validateClientDataUpload($fieldsLoad[$d],$data,$request->form_id);
+                    foreach($row as $dataIndex => $data){
+                        $dataValidate = $this->validateClientDataUpload($fieldsLoad[$dataIndex], $data, $request->form_id);
                         if($dataValidate->success){
                             foreach($dataValidate->in as $in){
                                 if (!isset($answerFields->$in)){
-                                    $answerFields->$in=[];
+                                    $answerFields->$in = [];
                                 }
-                                array_push($answerFields->$in,$dataValidate->$in);
-                                array_push($directories,$dataValidate->$in);
+                                array_push($answerFields->$in, $dataValidate->$in);
+                                array_push($directories, $dataValidate->$in);
                             }
-                            array_push($formAnswerClient,$dataValidate->formAnswer);
-                            array_push($formAnswerClientIndexado,$dataValidate->formAnswerIndex);
+                            array_push($formAnswerClient, $dataValidate->formAnswer);
+                            array_push($formAnswerClientIndexado, $dataValidate->formAnswerIndex);
                         }else{
-                            $fila = strval(intval($c) + 1);
+                            $fila = strval(intval($index) + 1);
                             $columnErrorMessage = "Error en la Fila $fila";
-                            array_push($dataValidate->message,$columnErrorMessage);
-                            array_push($errorAnswers,$dataValidate->message);
+                            array_push($dataValidate->message, $columnErrorMessage);
+                            array_push($errorAnswers, $dataValidate->message);
                         }
                     }
-                    //array_push($dataToLoad,$answerFields);
-                    if(count($errorAnswers)==0){
+                    if(!count($errorAnswers)){
                         $newRequest = new Request();
                         $newRequest->replace([
                             "form_id" => $request->form_id,
@@ -195,22 +194,22 @@ class UploadController extends Controller
                                 "information_data" => json_encode($answerFields->informationClient),
                                 "unique_indentificator" => json_encode($answerFields->uniqueIdentificator[0]),
                             ]);
-                            $client=$clientNewController->create($newRequest);
-                            if(isset($client->id)){
+                            $row = $clientNewController->create($newRequest);
+                            if(isset($row->id)){
                                 //insertar en rel_advisor_client_new
                                 if($assignUsers){
-                                    $assignUsersObject = $this->assignUsers($assignUsersObject,$client->id);
+                                    $assignUsersObject = $this->assignUsers($assignUsersObject,$row->id);
                                 }
                                 //TODO: insertar en directories, crear columna index data e insertar la variable $formAnswerClientIndexado en la tabla
-                                /*$formAnswerSave=$formAnswerController->create($client->id,$request->form_id,$formAnswerClient,$formAnswerClientIndexado,"upload");*/
-                                $saveDirectories = $this->addToDirectories($formAnswerClient,$request->form_id,$client->id,$formAnswerClientIndexado);
+                                /*$formAnswerSave=$formAnswerController->create($row->id,$request->form_id,$formAnswerClient,$formAnswerClientIndexado,"upload");*/
+                                $saveDirectories = $this->addToDirectories($formAnswerClient,$request->form_id,$row->id,$formAnswerClientIndexado);
                                 $dataLoad++;
                                 /*if(isset($formAnswerSave->id)){
                                     if(isset($answerFields->preload)){
-                                        $keyValues=$keyValuesController->createKeysValue($answerFields->preload,$request->form_id,$client->id);
-                                        Log::info("Key values created, fila $c");
+                                        $keyValues=$keyValuesController->createKeysValue($answerFields->preload,$request->form_id,$row->id);
+                                        Log::info("Key values created, fila $index");
                                         if(!isset($keyValues)){
-                                            array_push($errorAnswers,"No se han podido insertar keyValues para el cliente ".$client->id);
+                                            array_push($errorAnswers,"No se han podido insertar keyValues para el cliente ".$row->id);
                                         }else{
                                             $dataLoad++;
                                         }
@@ -218,18 +217,18 @@ class UploadController extends Controller
                                         $dataLoad++;
                                     }
                                 } else {
-                                    array_push($errorAnswers,"No se han podido insertar el form answer para el cliente ".$client->id);
+                                    array_push($errorAnswers,"No se han podido insertar el form answer para el cliente ".$row->id);
                                 }*/
                             }else{
-                                array_push($errorAnswers,"No se han podido insertar el cliente ubicado en la fila ".$c." del archivo cargado.");
+                                array_push($errorAnswers,"No se han podido insertar el cliente ubicado en la fila ".$index." del archivo cargado.");
                             }
                         }
                     }else{
-                        array_push($dataNotLoad,$errorAnswers);
+                        array_push($dataNotLoad, $errorAnswers);
                     }
                 }
                 $resume = new stdClass();
-                $resume->totalRegistros = $totalArchivos;
+                $resume->totalRegistros = $totalRows;
                 $resume->cargados = $dataLoad;
                 $resume->nocargados = count($dataNotLoad);
                 $resume->errores=$dataNotLoad;
