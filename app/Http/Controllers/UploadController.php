@@ -619,7 +619,7 @@ class UploadController extends Controller
             }, $advisers);
         }
         //se generan las banderas para contar la cantidad y saber el indice del asesor
-        $response->quantity = 0;
+        $response->quantity = 1;
         $response->advisersIndex = 0;
         $response->advisers = $advisers;
         return $response;
@@ -631,13 +631,13 @@ class UploadController extends Controller
      * @param $clienId
      * @return mixed
      */
-    private function assignUsers($assignUsersObject,$clienId){
+    private function assignUsers($assignUsersObject, $clienId){
         $relAdvisorClientNewController = new RelAdvisorClientNewController();
 
         $advisers = $assignUsersObject->advisers;
         $advisersIndex = $assignUsersObject->advisersIndex;
         $quantity = $assignUsersObject->quantity;
-        $existingRel = $relAdvisorClientNewController->show($clienId,$advisers[$advisersIndex]['id_rhh']);
+        $existingRel = $relAdvisorClientNewController->show($clienId, $advisers[$advisersIndex]['id_rhh']);
         if(!isset($existingRel->id)){
             $relAdvisorRequest = new Request();
             $relAdvisorRequest->replace([
@@ -653,7 +653,7 @@ class UploadController extends Controller
         }
         if($advisers[$advisersIndex]['quantity'] == $quantity){
             $assignUsersObject->advisersIndex++;
-            $assignUsersObject->quantity = 0;
+            $assignUsersObject->quantity = 1;
         }
         return $assignUsersObject;
     }
