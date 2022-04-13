@@ -152,6 +152,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
     });
 
+    //Bandeja Asignados
+    $router->get('/tray/assignedClients/{formId}', 'RelAdvisorClientNewController@showAssignedClients');
+
     //Rutas escalamientos
     $router->post('/escalations', 'EscalationController@validateScalation');
     //Rutas Permisos

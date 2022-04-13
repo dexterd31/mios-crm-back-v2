@@ -23,6 +23,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\FormAnswersTray;
+use App\Models\RelAdvisorClientNew;
 use App\Models\RelTrayUser;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -198,6 +199,15 @@ class FormAnswerController extends Controller
             //validarNotificaciones
             $notificationsController = new NotificationsController();
             $notificationsController->sendNotifications($request->form_id,$form_answer);
+
+            if(!is_null($request->client_id)){
+                $relAdvisorClientNew = RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)->where('client_new_id', $request->client_id)->first();
+    
+                if (!is_null($relAdvisorClientNew)) {
+                    $relAdvisorClientNew->managed = true;
+                    $relAdvisorClientNew->save();
+                }
+            }
 
             return $this->successResponse(['message'=>"Información guardada correctamente",'formAsnwerId'=>$form_answer->id]);
         }
