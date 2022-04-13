@@ -82,7 +82,7 @@ class TrayController extends Controller
                 $formAnswersTrays= FormAnswersTray::selectRaw('count(form_answers_trays.id) as NumAnswers')->where('form_answers_trays.tray_id',$tray->id)->get();
             }
 
-            $tray->count=json_decode($formAnswersTrays[0])->NumAnswers;
+            $tray->count = json_decode($formAnswersTrays[0])->NumAnswers;
         }
 
         //$trays = Tray::where('form_id', $id)->get();
@@ -93,7 +93,7 @@ class TrayController extends Controller
         }
         $trays = $trays->selectRaw('trays.*, count(tray_id) as count')
             ->groupBy('trays.id', 'trays.name', "trays.form_id", "trays.fields", "trays.rols", "trays.state", "trays.created_at", "trays.updated_at", "trays.fields_exit", "trays.fields_table", "trays.advisor_manage", "trays.save_historic")->get();*/
-        if(count($trays)==0) {
+        if(count($trays) == 0) {
             return $this->successResponse([]);
         }
 

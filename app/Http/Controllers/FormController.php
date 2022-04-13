@@ -9,6 +9,7 @@ use App\Models\FormLog;
 use App\Models\FormAnswer;
 use App\Models\FormAnswerLog;
 use App\Models\FormType;
+use App\Models\RelAdvisorClientNew;
 use App\Models\Section;
 use App\Models\Tray;
 use App\Services\RrhhService;
@@ -100,6 +101,9 @@ class FormController extends Controller
         $templateExist = (count($templateController->showByFormId($id)) > 0);
         $formsSections->template = $templateExist;
         $formsSections->view_chronometer = (boolean)$formsSections->tipification_time;
+        $formsSections->count_assigned_clients = RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)
+        ->join('client_news', 'client_news.id', 'rel_advisor_client_new.client_new_id')
+        ->where('client_news.form_id', $id)->where('rel_advisor_client_new.managed', false)->get()->count();
         unset($formsSections->tipification_time);
         return response()->json($formsSections);
     }
