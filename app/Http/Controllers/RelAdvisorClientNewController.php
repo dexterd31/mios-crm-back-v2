@@ -52,7 +52,8 @@ class RelAdvisorClientNewController extends Controller
         try {
             return $this->relAdvisorModel->create([
                 'client_new_id' => $request->client_new_id,
-                'rrhh_id' => $request->rrhh_id
+                'rrhh_id' => $request->rrhh_id,
+                'managed' => false
             ]);
         }catch (\Exception $ex){
             return $this->errorResponse($ex->getMessage(),204);
