@@ -64,7 +64,11 @@ class RelAdvisorClientNewController extends Controller
     {
         $assignedClients = RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)
         ->join('client_news', 'client_news.id', 'rel_advisor_client_new.client_new_id')
-        ->where('client_news.form_id', $formId)->get(['client_news.created_at', 'client_news.unique_indentificator']);
+        ->where('client_news.form_id', $formId)->where('rel_advisor_client_new.managed', false)->get(['client_news.created_at', 'client_news.unique_indentificator']);
+
+        $assignedClients->each(function ($item) {
+            $item->unique_indentificator = json_decode($item->unique_indentificator);
+        });
 
         return response()->json(['assigned_clients' => $assignedClients], 200);
     }
