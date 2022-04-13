@@ -128,7 +128,7 @@ class UploadController extends Controller
             'form_id' => 'required',
             'assigns' => 'required',
             'action' => 'required',
-            // 'assign_users' => 'required',
+            'assign_users' => 'required',
         ]);
         $userRrhhId = auth()->user()->rrhh_id;
         $file = $request->file('excel');
@@ -185,7 +185,7 @@ class UploadController extends Controller
                         ]);
                         DB::connection()->enableQueryLog();
                         $existingClient = $clientNewController->index($newRequest);
-                        if(!empty($existingClient) && !filter_var($request->action,FILTER_VALIDATE_BOOLEAN)){
+                        if(!empty($existingClient) && !filter_var($request->action, FILTER_VALIDATE_BOOLEAN)){
                             $updateExisting = false;
                         }
                         if($updateExisting){
@@ -221,6 +221,10 @@ class UploadController extends Controller
                                 }*/
                             }else{
                                 array_push($errorAnswers,"No se han podido insertar el cliente ubicado en la fila ".$index." del archivo cargado.");
+                            }
+                        } else {
+                            if($assignUsers){
+                                $assignUsersObject = $this->assignUsers($assignUsersObject,$row->id);
                             }
                         }
                     }else{
@@ -584,31 +588,35 @@ class UploadController extends Controller
         $groupId =  json_decode($formController->searchForm($request->form_id)->getContent())->group_id;
         $advisers = $groupController->searchGroup($groupId)['members'];
         $advisersCount = count($advisers);
-        if($advisersCount == 0){
+        if(!$advisersCount){
             return $this->errorResponse("No se encuentran asesores para asignar los registros",400);
         }
         //se valida si el resultado es exacto
         $quantity = $totalArchivos / $advisersCount;
         if(is_float($quantity)){
             //se aproxima el valor para repartirlo proporcionalmente
-            $equalRegisters = round($quantity,0,PHP_ROUND_HALF_DOWN);
+            // $equalRegisters = round($quantity,0,PHP_ROUND_HALF_DOWN);
+            $equalRegisters = (int) floor($quantity);
             // se le asigna a cada asesor la cantidad correspondiente de datos
-            foreach ($advisers as $key=>$adviser){
-                $advisers[$key]['quantity'] = $equalRegisters;
-            }
+            $advisers = array_map(function (&$item) use ($equalRegisters) {
+                $item['quantity'] = $equalRegisters;
+                return $item;
+            }, $advisers);
             // se extrae el residuo de la división para asignarlo uno a uno entre los asesores hasta que quede en 0
             $moduleRegisters = $totalArchivos % count($advisers);
-            foreach ($advisers as $key=>$adviser){
+            $advisers = array_map(function (&$item) use (&$moduleRegisters) {
                 if($moduleRegisters > 0){
-                    $advisers[$key]['quantity']++;
+                    $item['quantity']++;
                     $moduleRegisters--;
                 }
-            }
+                return $item;
+            }, $advisers);
         }else{
             // se le asigna a cada asesor la cantidad correspondiente de datos
-            foreach ($advisers as $key=>$adviser){
-                $advisers[$key]['quantity'] = $quantity;
-            }
+            $advisers = array_map(function (&$item) use ($quantity) {
+                $item['quantity'] = $quantity;
+                return $item;
+            }, $advisers);
         }
         //se generan las banderas para contar la cantidad y saber el indice del asesor
         $response->quantity = 0;
