@@ -187,8 +187,8 @@ class FormAnswerController extends Controller
             $notificationsController = new NotificationsController();
             $notificationsController->sendNotifications($request->form_id,$form_answer);
 
-            if($request->client_new_id){
-                $relAdvisorClientNew = RelAdvisorClientNew::find($request->client_new_id);
+            if(!is_null($request->client_id)){
+                $relAdvisorClientNew = RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)->where('client_new_id', $request->client_id)->first();
     
                 if (!is_null($relAdvisorClientNew)) {
                     $relAdvisorClientNew->managed = true;
