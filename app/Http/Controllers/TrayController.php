@@ -10,6 +10,7 @@ use App\Models\Section;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\FormAnswersTray;
+use App\Support\Collection;
 use stdClass;
 
 class TrayController extends Controller
@@ -103,7 +104,8 @@ class TrayController extends Controller
             return $item->id;
         }, json_decode(Form::find($id)->filters));
 
-        return response()->json(['trays' => $trays, 'form_filter' => $filters]);
+        // return response()->json(['trays' => $trays, 'form_filter' => $filters]);
+        return $this->successResponse([...$trays]);
     }
 
     /**
@@ -196,8 +198,12 @@ class TrayController extends Controller
                 array_merge($structureAnswer, $formAnswersTray) :
                 $structureAnswer;
         });
+
+        // $formsAnswers->filter(function ($answer) use ($filters, $seach) {
+
+        // });
         
-        return PaginationHelper::paginate($formsAnswers, 5);
+        return (new Collection($formsAnswers))->paginate(5);
     }
 
     public function changeState($id){

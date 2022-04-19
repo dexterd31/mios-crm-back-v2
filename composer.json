@@ -33,8 +33,7 @@
             "app/Helpers/miosHelper.php",
             "app/Helpers/formAnswerHelper.php",
             "app/Helpers/apiHelper.php",
-            "app/Helpers/filterHelper.php",
-            "app/Helpers/PaginationHelper.php"
+            "app/Helpers/filterHelper.php"
         ]
     },
     "autoload-dev": {
