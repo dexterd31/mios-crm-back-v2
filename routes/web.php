@@ -133,6 +133,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/tray/{id}','TrayController@getTray');
     $router->put('/tray/{id}','TrayController@update');
     $router->get('/tray/formAnswersByTray/{id}','TrayController@formAnswersByTray');
+    $router->post('/tray/formAnswersByTray/{id}','TrayController@formAnswersByTray');
     $router->get('/tray/changeState/{id}','TrayController@changeState');
     $router->get('/tray/duplicatedSection/{idFormAnswer}','TrayController@sectionsDuplicated');
 
