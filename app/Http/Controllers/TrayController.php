@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Form;
 use App\Models\FormAnswer;
 use App\Models\Tray;
 use App\Models\Section;
@@ -96,12 +97,9 @@ class TrayController extends Controller
         $trays = $trays->filter(function($x){
             return count(array_intersect(auth()->user()->roles, json_decode($x->rols)));
         });
-        $ArrayTrays=[];
-        foreach($trays as $tray){
-            array_push($ArrayTrays,$tray);
-        }
 
-        return $this->successResponse($ArrayTrays);
+        // return $this->successResponse($ArrayTrays);
+        return response()->json(['trays' => $trays, 'form_filter' => json_decode(Form::find($id)->filters)]);
     }
 
     /**
@@ -194,6 +192,7 @@ class TrayController extends Controller
                 $formAnswersTray = $formAnswerTrayController->getFormAnswersTray($form->id, $tray->id, $tray->form_id);
                 $form->structure_answer = isset($formAnswersTray) ? array_merge($structureAnswer, $formAnswersTray) : $structureAnswer;
         }
+        dd($formsAnswers);
         return $formsAnswers;
     }
 
