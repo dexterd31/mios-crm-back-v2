@@ -205,9 +205,12 @@ class TrayController extends Controller
                 $found = false;
     
                 foreach ($answer->structure_answer as $field) {
-                    if (in_array($field['id'], $filteredFields) && stristr($sought, strtolower((string) $field['value']))) {
-                        $found = true;
-                        break;
+                    if (in_array($field['id'], $filteredFields)) {
+                        $validated = stristr($sought, strtolower((string) $field['value']));
+                        if ($validated != false && $validated != '') {
+                            $found = true;
+                            break;
+                        }
                     }
                 }
     
