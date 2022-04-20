@@ -214,7 +214,7 @@ class TrayController extends Controller
         });
 
         if (trim($sought) != '') {
-            $formsAnswers = $this->answerFilter($formsAnswers, $filteredFields, $sought);
+            $formsAnswers = $this->answersFilter($formsAnswers, $filteredFields, $sought);
         }
 
         if ($columnToSort != '' && !is_null($columnToSort)) {
@@ -233,7 +233,7 @@ class TrayController extends Controller
      * @param string $sought - Valor con el cual se buscan las coincidencias.
      * @return Illuminate\Database\Eloquent\Collection
      */
-    private function answerFilter($formsAnswers, array $filteredFields, string $sought)
+    private function answersFilter($formsAnswers, array $filteredFields, string $sought)
     {
         return $formsAnswers->filter(function ($answer) use ($filteredFields, $sought) {
             $found = false;
