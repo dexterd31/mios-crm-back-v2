@@ -145,8 +145,11 @@ class TrayController extends Controller
     public function formAnswersByTray(Request $request, $id) {
         $sought = strtolower($request->sought);
         $filteredFields = $request->filteredFields ?? [];
+        $columnToSort = $request->columnToSort ?? false;
+        $orientation = $request->orientation ?? 'ASC';
         $tray = Tray::where('id',$id)->firstOrFail();
         $fieldsTable = collect(json_decode($tray->fields_table));
+
         $formsAnswers = FormAnswer::select(
             'form_answers.id',
             'form_answers.structure_answer',
@@ -154,7 +157,7 @@ class TrayController extends Controller
             'form_answers.channel_id',
             'form_answers.rrhh_id',
             'form_answers.client_new_id'
-        )->join('form_answers_trays', "form_answers.id", 'form_answers_trays.form_answer_id')
+        )->orderBy('form_answers.updated_at', $orientation)->join('form_answers_trays', "form_answers.id", 'form_answers_trays.form_answer_id')
         ->join('trays', "trays.id", 'form_answers_trays.tray_id')
         ->where("trays.id", $id);
 
@@ -201,21 +204,53 @@ class TrayController extends Controller
         });
 
         if (trim($sought) != '') {
-            $formsAnswers = $formsAnswers->filter(function ($answer) use ($filteredFields, $sought) {
-                $found = false;
-                
-                foreach ($answer->structure_answer as $field) {
-                    if (in_array($field['id'], $filteredFields)) {
-                        $found = str_contains(strtolower((string) $field['value']), $sought);
-                        if ($found) break;
-                    }
-                }
-    
-                return $found;
+            $formsAnswers = $this->answerFilter($formsAnswers, $filteredFields, $sought);
+        }
+
+        if ($columnToSort) {
+            $formsAnswers = $formsAnswers->toArray();
+            usort($formsAnswers, function ($answerA, $answerB) use ($columnToSort, $orientation) {
+                return $this->answerSort($answerA, $answerB, $columnToSort, $orientation);
             });
         }
 
         return (new Collection($formsAnswers))->paginate(5);
+    }
+
+    private function answerFilter(Collection $formsAnswers, array $filteredFields, string $sought)
+    {
+        return $formsAnswers->filter(function ($answer) use ($filteredFields, $sought) {
+            $found = false;
+            
+            foreach ($answer->structure_answer as $field) {
+                if (in_array($field['id'], $filteredFields)) {
+                    $found = str_contains(strtolower((string) $field['value']), $sought);
+                    if ($found) break;
+                }
+            }
+
+            return $found;
+        });
+    }
+
+    private function answerSort($answer1, $answer2, $columnToSort, $orientation)
+    {
+        $values = [];
+        $answers = [$answer1, $answer2];
+
+        if ($orientation == 'DESC') {
+            $answers = [$answer2, $answer1];
+        }
+
+        foreach ($answers as $answer) {
+            foreach ($answer['structure_answer'] as $field) {
+                if ($field['label'] == $columnToSort) {
+                    $values[] = $field['value'];
+                }
+            }
+        }
+
+        return strcasecmp(...$values);
     }
 
     public function changeState($id){
