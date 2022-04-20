@@ -147,7 +147,7 @@ class TrayController extends Controller
      * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
      *
      * @param Request $request
-     * @param integer $id
+     * @param integer $id - Identificador de la bandeja
      * @return Illuminate\Http\Response
      */
     public function formAnswersByTray(Request $request, int $id) {
