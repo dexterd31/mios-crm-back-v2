@@ -144,7 +144,7 @@ class TrayController extends Controller
 
     public function formAnswersByTray(Request $request, $id) {
         $sought = strtolower($request->sought);
-        $filteredFields = $request->filteredFields;
+        $filteredFields = $request->filteredFields ?? [];
         $tray = Tray::where('id',$id)->firstOrFail();
         $fieldsTable = collect(json_decode($tray->fields_table));
         $formsAnswers = FormAnswer::select(
