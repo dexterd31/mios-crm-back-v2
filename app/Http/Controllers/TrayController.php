@@ -143,6 +143,8 @@ class TrayController extends Controller
     }
 
     public function formAnswersByTray(Request $request, $id) {
+        $sought = $request->sought;
+        $filteredFields = $request->filteredFields;
         $tray = Tray::where('id',$id)->firstOrFail();
         $fieldsTable = collect(json_decode($tray->fields_table));
         $formsAnswers = FormAnswer::select(
@@ -198,18 +200,20 @@ class TrayController extends Controller
                 $structureAnswer;
         });
 
-        // $formsAnswers = $formsAnswers->filter(function ($answer) use ($filteredFields, $sought) {
-        //     $found = false;
-
-        //     foreach (json_decode($answer->structure_answer) as $field) {
-        //         if (in_array($field->id, $filteredFields) && str_contains($sought, strtolower((string) $field->value))) {
-        //             $found = true;
-        //             break;
-        //         }
-        //     }
-
-        //     return $found;
-        // });
+        if (trim($sought) != '') {
+            $formsAnswers = $formsAnswers->filter(function ($answer) use ($filteredFields, $sought) {
+                $found = false;
+    
+                foreach (json_decode($answer->structure_answer) as $field) {
+                    if (in_array($field->id, $filteredFields) && str_contains($sought, strtolower((string) $field->value))) {
+                        $found = true;
+                        break;
+                    }
+                }
+    
+                return $found;
+            });
+        }
 
         return (new Collection($formsAnswers))->paginate(5);
     }
