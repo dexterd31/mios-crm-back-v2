@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Helpers\PaginationHelper;
 use App\Models\Form;
 use App\Models\FormAnswer;
 use App\Models\Tray;
 use App\Models\Section;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use App\Models\FormAnswersTray;
 use App\Support\Collection;
 use stdClass;
@@ -104,8 +102,7 @@ class TrayController extends Controller
             return $item->id;
         }, json_decode(Form::find($id)->filters));
 
-        // return response()->json(['trays' => $trays, 'form_filter' => $filters]);
-        return $this->successResponse([...$trays]);
+        return response()->json(['trays' => $trays, 'form_filter' => $filters]);
     }
 
     /**
@@ -137,7 +134,6 @@ class TrayController extends Controller
     public function getTray(Request $request, $id)
     {
         $tray = Tray::where('id',$id)->with('form')->first();
-        // dd($trays);
 
         if($tray==null) {
             return $this->errorResponse('No se encontro la bandeja',404);
@@ -166,11 +162,12 @@ class TrayController extends Controller
         }
 
         $formsAnswers = $formsAnswers->get();
+
         $formsAnswers->each(function (&$answer) use ($fieldsTable, $tray) {
             $new_structure_answer = array_map(function (&$item) use ($answer) {
-                if(!isset($item->duplicated)){
+                if (!isset($item->duplicated)) {
                     $select = $this->findSelect($answer->form_id, $item->id, $item->value);
-                    if($select){
+                    if ($select) {
                         $item->value = $select;
                     }
                 }
@@ -178,15 +175,17 @@ class TrayController extends Controller
             }, json_decode($answer->structure_answer));
 
             $tableValues = [];
+
             $fieldsTable->each(function ($field) use ($new_structure_answer, &$tableValues) {
                 $foundStructure = collect($new_structure_answer)->filter(function ($item) use ($field) {
                     return $item->id == $field->id;
                 })->values();
-                if(!empty($foundStructure))
-                {
+
+                if (!empty($foundStructure)) {
                     $tableValues[] = $foundStructure;
                 }
             });
+
             $answer->table_values = $tableValues;
 
             $structureAnswer = $answer->structure_answer ? json_decode($answer->structure_answer, true) : [];
@@ -199,10 +198,19 @@ class TrayController extends Controller
                 $structureAnswer;
         });
 
-        // $formsAnswers->filter(function ($answer) use ($filters, $seach) {
+        // $formsAnswers = $formsAnswers->filter(function ($answer) use ($filteredFields, $sought) {
+        //     $found = false;
 
+        //     foreach (json_decode($answer->structure_answer) as $field) {
+        //         if (in_array($field->id, $filteredFields) && str_contains($sought, strtolower((string) $field->value))) {
+        //             $found = true;
+        //             break;
+        //         }
+        //     }
+
+        //     return $found;
         // });
-        
+
         return (new Collection($formsAnswers))->paginate(5);
     }
 
