@@ -145,8 +145,8 @@ class TrayController extends Controller
     public function formAnswersByTray(Request $request, $id) {
         $sought = strtolower($request->sought);
         $filteredFields = $request->filteredFields ?? [];
-        $columnToSort = $request->columnToSort ?? false;
-        $orientation = $request->orientation ?? 'ASC';
+        $columnToSort = $request->columnToSort;
+        $orientation = $request->orientation == '' || is_null($request->orientation) ? 'ASC' : $request->orientation;
         $tray = Tray::where('id',$id)->firstOrFail();
         $fieldsTable = collect(json_decode($tray->fields_table));
 
@@ -207,7 +207,7 @@ class TrayController extends Controller
             $formsAnswers = $this->answerFilter($formsAnswers, $filteredFields, $sought);
         }
 
-        if ($columnToSort) {
+        if ($columnToSort != '' && !is_null($columnToSort)) {
             $formsAnswers = $formsAnswers->toArray();
             usort($formsAnswers, function ($answerA, $answerB) use ($columnToSort, $orientation) {
                 return $this->answerSort($answerA, $answerB, $columnToSort, $orientation);
@@ -217,7 +217,7 @@ class TrayController extends Controller
         return (new Collection($formsAnswers))->paginate(5);
     }
 
-    private function answerFilter(Collection $formsAnswers, array $filteredFields, string $sought)
+    private function answerFilter($formsAnswers, array $filteredFields, string $sought)
     {
         return $formsAnswers->filter(function ($answer) use ($filteredFields, $sought) {
             $found = false;
