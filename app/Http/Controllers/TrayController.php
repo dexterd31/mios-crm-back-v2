@@ -146,8 +146,8 @@ class TrayController extends Controller
         $sought = strtolower($request->sought);
         $filteredFields = $request->filteredFields ?? [];
         $columnToSort = $request->columnToSort;
-        $orientation = isset($request->orientation) ? $request->orientation : 'ASC';
-        $orientation = $orientation == '' || is_null($orientation) ? 'ASC' : $orientation;
+        $orientation = isset($request->orientation) ? $request->orientation : 'DESC';
+        $orientation = $orientation == '' || is_null($orientation) ? 'DESC' : $orientation;
         $tray = Tray::where('id',$id)->firstOrFail();
         $fieldsTable = collect(json_decode($tray->fields_table));
 
