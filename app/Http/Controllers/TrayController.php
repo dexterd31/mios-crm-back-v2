@@ -205,7 +205,7 @@ class TrayController extends Controller
                 $found = false;
     
                 foreach ($answer->structure_answer as $field) {
-                    if (in_array($field['id'], $filteredFields) && str_contains($sought, strtolower((string) $field['value']))) {
+                    if (in_array($field['id'], $filteredFields) && stristr($sought, strtolower((string) $field['value']))) {
                         $found = true;
                         break;
                     }
