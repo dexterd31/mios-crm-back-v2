@@ -203,14 +203,11 @@ class TrayController extends Controller
         if (trim($sought) != '') {
             $formsAnswers = $formsAnswers->filter(function ($answer) use ($filteredFields, $sought) {
                 $found = false;
-    
+                
                 foreach ($answer->structure_answer as $field) {
                     if (in_array($field['id'], $filteredFields)) {
-                        $validated = stristr($sought, strtolower((string) $field['value']));
-                        if ($validated != false && $validated != '') {
-                            $found = true;
-                            break;
-                        }
+                        $found = str_contains(strtolower((string) $field['value']), $sought);
+                        if ($found) break;
                     }
                 }
     
