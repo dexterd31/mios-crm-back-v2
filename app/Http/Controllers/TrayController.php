@@ -143,7 +143,7 @@ class TrayController extends Controller
     }
 
     public function formAnswersByTray(Request $request, $id) {
-        $sought = $request->sought;
+        $sought = strtolower($request->sought);
         $filteredFields = $request->filteredFields;
         $tray = Tray::where('id',$id)->firstOrFail();
         $fieldsTable = collect(json_decode($tray->fields_table));
@@ -204,7 +204,7 @@ class TrayController extends Controller
             $formsAnswers = $formsAnswers->filter(function ($answer) use ($filteredFields, $sought) {
                 $found = false;
     
-                foreach (json_decode($answer->structure_answer) as $field) {
+                foreach ($answer->structure_answer as $field) {
                     if (in_array($field->id, $filteredFields) && str_contains($sought, strtolower((string) $field->value))) {
                         $found = true;
                         break;
