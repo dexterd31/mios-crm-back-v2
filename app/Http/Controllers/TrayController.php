@@ -142,10 +142,19 @@ class TrayController extends Controller
         return $this->successResponse($tray);
     }
 
-    public function formAnswersByTray(Request $request, $id) {
+    /**
+     * Retorna los datos solicitados de una bandeja.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param Request $request
+     * @param integer $id
+     * @return Illuminate\Http\Response
+     */
+    public function formAnswersByTray(Request $request, int $id) {
         $sought = strtolower($request->sought);
         $filteredFields = $request->filteredFields ?? [];
         $columnToSort = $request->columnToSort;
+        $columnToSort = isset($request->orientation) && $request->orientation == '' ? '' : $request->columnToSort;
         $orientation = isset($request->orientation) ? $request->orientation : 'DESC';
         $orientation = $orientation == '' || is_null($orientation) ? 'DESC' : $orientation;
         $tray = Tray::where('id',$id)->firstOrFail();
@@ -209,15 +218,21 @@ class TrayController extends Controller
         }
 
         if ($columnToSort != '' && !is_null($columnToSort)) {
-            $formsAnswers = $formsAnswers->toArray();
-            usort($formsAnswers, function ($answerA, $answerB) use ($columnToSort, $orientation) {
-                return $this->answerSort($answerA, $answerB, $columnToSort, $orientation);
-            });
+            $formsAnswers = $this->answersSort($formsAnswers, $columnToSort, $orientation);
         }
 
         return (new Collection($formsAnswers))->paginate(5);
     }
 
+    /**
+     * Fitra las respuestas los datos de la bandeja.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param Illuminate\Database\Eloquent\Collection $formsAnswers
+     * @param array $filteredFields - Identificadores de los campos por los cuales se va a filtrar.
+     * @param string $sought - Valor con el cual se buscan las coincidencias.
+     * @return Illuminate\Database\Eloquent\Collection
+     */
     private function answerFilter($formsAnswers, array $filteredFields, string $sought)
     {
         return $formsAnswers->filter(function ($answer) use ($filteredFields, $sought) {
@@ -234,24 +249,50 @@ class TrayController extends Controller
         });
     }
 
-    private function answerSort($answer1, $answer2, $columnToSort, $orientation)
+    /**
+     * Ordena los datos de la bandeja por la columna seleccionada.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param Illuminate\Database\Eloquent\Collection $formsAnswers
+     * @param string $columnToSort - Columna por la cual se va a ordenar
+     * @param string $orientation - Si el orden es asendende (ASC) o descendente (DESC)
+     * @return array
+     */
+    private function answersSort($formsAnswers, string $columnToSort, string $orientation) : array
     {
-        $values = [];
-        $answers = [$answer1, $answer2];
+        $formsAnswers = $formsAnswers->toArray();
+        
+        usort($formsAnswers, function ($answerA, $answerB) use ($columnToSort, $orientation) {
+            $isNumeric = false;
+            $values = [];
+            $answers = [$answerA, $answerB];
 
-        if ($orientation == 'DESC') {
-            $answers = [$answer2, $answer1];
-        }
+            if ($orientation == 'DESC') {
+                $answers = [$answerB, $answerA];
+            }
 
-        foreach ($answers as $answer) {
-            foreach ($answer['structure_answer'] as $field) {
-                if ($field['label'] == $columnToSort) {
-                    $values[] = $field['value'];
+            foreach ($answers as $answer) {
+                foreach ($answer['structure_answer'] as $field) {
+                    if ($field['label'] == $columnToSort) {
+                        $isNumeric = is_numeric($field['value']);
+                        $values[] = $field['value'];
+                    }
                 }
             }
-        }
 
-        return strcasecmp(...$values);
+            if ($isNumeric) {
+                if ($orientation == 'DESC') {
+                    $result = $values[0] < $values[1] ? 1 : -1;
+                } 
+                $result = $values[0] < $values[1] ? -1 : 1;
+            } else {
+                $result = strcasecmp(...$values);
+            }
+
+            return $result;
+        });
+
+        return $formsAnswers;
     }
 
     public function changeState($id){
