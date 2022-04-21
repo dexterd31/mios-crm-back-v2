@@ -126,12 +126,16 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
 
     //Rutas Bandejas
-    $router->group(['prefix' => 'trays'], function () use ($router){
-        $router->post('/save','TrayController@store');
-        $router->get('','TrayController@index');
-        $router->get('/delete/{id}','TrayController@delete');
-        $router->get('/form/{id}','TrayController@show');
-    });
+    $router->post('/trays/save','TrayController@store');
+    $router->get('/trays','TrayController@index');
+    $router->get('/trays/delete/{id}','TrayController@delete');
+    $router->get('/trays/form/{id}','TrayController@show');
+    $router->get('/tray/{id}','TrayController@getTray');
+    $router->put('/tray/{id}','TrayController@update');
+    $router->get('/tray/formAnswersByTray/{id}','TrayController@formAnswersByTray');
+    $router->post('/tray/formAnswersByTray/{id}','TrayController@formAnswersByTray');
+    $router->get('/tray/changeState/{id}','TrayController@changeState');
+    $router->get('/tray/duplicatedSection/{idFormAnswer}','TrayController@sectionsDuplicated');
 
     $router->group(['prefix' => 'tray'], function () use ($router){
         $router->get('/{id}','TrayController@getTray');
