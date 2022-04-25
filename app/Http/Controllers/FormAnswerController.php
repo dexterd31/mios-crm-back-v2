@@ -88,6 +88,14 @@ class FormAnswerController extends Controller
                 if($field['controlType'] == "currency"){
                     $field['value']=str_replace(",","",$field['value']);
                 }
+
+                if ($field['controlType'] == 'multiselect') {
+                    if (gettype($field['value']) != 'array') {
+                        Log::error("TIPO DE DATO ERRONEO EN EL MULTISELECT, DATA DE LA SECCIÓN: \n" . json_encode($section));
+                        $field['value'] = [ $field['value'] ];
+                    }
+                }
+
                 $register['value'] = $field['value'];
                 $register['section_id'] = $section['id'];
                 $register['preloaded'] = $field['preloaded'];
