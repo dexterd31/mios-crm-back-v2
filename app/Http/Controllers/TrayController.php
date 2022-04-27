@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Form;
+use App\Managers\TrafficTrayManager;
 use App\Models\FormAnswer;
 use App\Models\Tray;
 use App\Models\Section;
+use App\Services\TrafficTrayService;
 use Illuminate\Http\Request;
 use App\Models\FormAnswersTray;
 use App\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use stdClass;
 
 class TrayController extends Controller
@@ -35,7 +38,7 @@ class TrayController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(Request $request, TrafficTrayManager $trafficTrayManager)
     {
         $data = $request['entries'];
 
@@ -52,9 +55,12 @@ class TrayController extends Controller
         $tray->rols = json_encode($data['rols']);
         $tray->state = 1;
         $tray->save();
-
+        if(isset($data['traffic'])){
+            //creación de semaforización
+            $data['tray_id'] = $tray->id;
+            $trafficTrayManager->newTrafficTray($data);
+        }
         $this->matchTrayFields($tray, FormAnswer::all());
-
         return $this->successResponse('Bandeja creada con exito');
     }
 
@@ -78,7 +84,7 @@ class TrayController extends Controller
                 $formAnswersTrays= FormAnswersTray::selectRaw('count(form_answers_trays.id) as NumAnswers')->where('form_answers_trays.tray_id',$tray->id)->get();
             }
 
-            $tray->count=json_decode($formAnswersTrays[0])->NumAnswers;
+            $tray->count = json_decode($formAnswersTrays[0])->NumAnswers;
         }
 
         //$trays = Tray::where('form_id', $id)->get();
