@@ -95,8 +95,8 @@ class TrayController extends Controller
         }
         $trays = $trays->selectRaw('trays.*, count(tray_id) as count')
             ->groupBy('trays.id', 'trays.name', "trays.form_id", "trays.fields", "trays.rols", "trays.state", "trays.created_at", "trays.updated_at", "trays.fields_exit", "trays.fields_table", "trays.advisor_manage", "trays.save_historic")->get();*/
-        if(count($trays) == 0) {
-            return $this->successResponse([]);
+        if(count($trays)==0) {
+            return response()->json(['trays' => [], 'form_filter' => []]);
         }
 
         // validar si el usuario actual puede visualizar trays dependiendo de su rol.
