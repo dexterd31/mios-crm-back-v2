@@ -46,16 +46,17 @@ class FormAnswerController extends Controller
         $this->dataCRMServices = new DataCRMService();
     }
 
-    public function create($clientNewId, $formId, $structureAnswer, $formAnswerIndexData, $chronometer)
+    public function create($clientNewId, $formId, $structureAnswer, $formAnswerIndexData, $chronometer, $chanel_id = 1, $conversation_id = null)
     {
         $saveFormAnswer = new FormAnswer();
         $saveFormAnswer->rrhh_id = auth()->user()->rrhh_id;
-        $saveFormAnswer->channel_id = 1;
+        $saveFormAnswer->channel_id = $chanel_id;
         $saveFormAnswer->form_id = $formId;
         $saveFormAnswer->structure_answer = json_encode($structureAnswer);
         $saveFormAnswer->client_new_id = $clientNewId;
         $saveFormAnswer->form_answer_index_data = json_encode($formAnswerIndexData);
         $saveFormAnswer->tipification_time = $chronometer;
+        $saveFormAnswer->conversation_id = $conversation_id;
         $saveFormAnswer->save();
         /*$saveFormAnswer= FormAnswer::updateOrCreate([
             'rrhh_id' => auth()->user()->rrhh_id,
@@ -179,7 +180,14 @@ class FormAnswerController extends Controller
             $clientNew = $clientNewController->create($clientNew);
 
             //creando nuevo cliente formAnswer
-            $form_answer = $this->create($clientNew->id, $request->form_id, $formAnswerData, $formAnswerIndexData, $request->chronometer);
+            if(!isset($request->chanel)){
+                $request->chanel = 1;
+            }
+            if(!isset($request->conversation_id)){
+                $request->conversation_id = null;
+            }
+
+            $form_answer = $this->create($clientNew->id, $request->form_id, $formAnswerData, $formAnswerIndexData, $request->chronometer,$request->chanel,$request->conversation_id);
 
             $keyValueController = new KeyValueController();
             $keyValueController->createKeysValue($dataPreloaded, $request->form_id, $clientNew->id);
