@@ -7,7 +7,6 @@ use App\Models\Tray;
 use App\Models\FormAnswersTray;
 use App\Models\Section;
 use App\Http\Controllers\FormController;
-use Illuminate\Support\Facades\Log;
 
 class FormAnswerTrayController extends Controller
 {

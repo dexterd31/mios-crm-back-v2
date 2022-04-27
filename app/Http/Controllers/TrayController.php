@@ -7,11 +7,9 @@ use App\Managers\TrafficTrayManager;
 use App\Models\FormAnswer;
 use App\Models\Tray;
 use App\Models\Section;
-use App\Services\TrafficTrayService;
-use Illuminate\Http\Request;
 use App\Models\FormAnswersTray;
 use App\Support\Collection;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 use stdClass;
 
 class TrayController extends Controller
@@ -108,7 +106,12 @@ class TrayController extends Controller
             return $item->id;
         }, json_decode(Form::find($id)->filters));
 
-        return response()->json(['trays' => $trays->toArray(), 'form_filter' => $filters]);
+        $auxArray = [];
+        foreach ($trays as $tray) {
+            $auxArray[] = $tray;
+        }
+
+        return response()->json(['trays' => $auxArray, 'form_filter' => $filters]);
     }
 
     /**
