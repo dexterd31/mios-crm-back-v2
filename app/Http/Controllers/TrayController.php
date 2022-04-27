@@ -108,7 +108,7 @@ class TrayController extends Controller
             return $item->id;
         }, json_decode(Form::find($id)->filters));
 
-        return response()->json(['trays' => $trays, 'form_filter' => $filters]);
+        return response()->json(['trays' => $trays->toArray(), 'form_filter' => $filters]);
     }
 
     /**
