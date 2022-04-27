@@ -16,21 +16,41 @@ class OnlineUserStatusController extends Controller
         $this->onlineUserRepository = $onlineUserRepository;    
     }
 
+    /**
+     * Crea el registro del usuario que esta en línea.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param array $data
+     * @return Illuminate\Http\Response
+     */
     public function registerUserOnline(array $data)
     {
         $this->onlineUserRepository->create($data);
     }
 
+    /**
+     * Elimina registro del usuario que se desconecta.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param integer $rrhh_id
+     * @return Illuminate\Http\Response
+     */
     public function removeUserRegistrationOnline(int $rrhh_id)
     {
         $this->onlineUserRepository->delete($rrhh_id);
     }
 
+    /**
+     * Verifica si el usuario se va a registrar o se va a eliminar.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param Request $request
+     * @return Illuminate\Http\Response
+     */
     public function validateCIUUserStatus(Request $request)
     {
         $this->validate($request,[
             'rrhh_id' => 'required|integer',
-            'form_id' => 'required|exsist:forms,id',
             'status' => 'required|boolean',
             'ciu_status' => 'required|string',
             'role_id' => 'required|integer'
@@ -57,6 +77,14 @@ class OnlineUserStatusController extends Controller
 
     }
 
+    /**
+     * Reporta los usuarios que estan en linea por formulario y por rol.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param integer $formId
+     * @param integer $roleId
+     * @return Illuminate\Http\Response
+     */
     public function onlineUserReportByForm(int $formId, int $roleId)
     {
         $onlineUsers = $this->onlineUserRepository->allByFormAndRole($formId, $roleId)->get();
@@ -68,14 +96,23 @@ class OnlineUserStatusController extends Controller
         ], 200);
     }
 
-    public function changePauseUserStatus(Request $request)
+    /**
+     * Actualiza al usuario que esta en línea.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param Request $request
+     * @return Illuminate\Http\Response
+     */
+    public function updateOnlineUserStatus(Request $request)
     {
         $this->validate($request, [
             'rrhh_id' => 'required|exists:online_users,rrhh_id',
-            'is_paused' => 'required|boolean'
+            'is_paused' => 'boolean',
+            'form_id' => 'exsist:forms,id',
+            'ciu_status' => 'string'
         ]);
 
-        $this->onlineUserRepository->updateByRRHHId($request->rrhh_id, $request->only('is_paused'));
+        $this->onlineUserRepository->updateByRRHHId($request->rrhh_id, $request->except('rrhh_id'));
 
         return response()->json([
             'status_code' => 200,

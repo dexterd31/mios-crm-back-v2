@@ -25,12 +25,15 @@ use Carbon\Carbon;
 use App\Models\FormAnswersTray;
 use App\Models\RelAdvisorClientNew;
 use App\Models\RelTrayUser;
+use App\Traits\deletedFieldChecker;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 
 class FormAnswerController extends Controller
 {
+    use deletedFieldChecker;
+    
     private $ciuService;
     private $nominaService;
     private $dataCRMServices;
@@ -355,6 +358,10 @@ class FormAnswerController extends Controller
             $structureAnswer = $formAnswer['structure_answer'] ? json_decode($formAnswer['structure_answer']) : json_decode($formAnswer['data']);
             $new_structure_answer = array();
             foreach ($structureAnswer as $answer) {
+                if ($this->deletedFieldChecker($formId, $answer->id)){
+                    continue;
+                }
+
                 if(!isset($answer->duplicated))
                 {
                     $formController = new FormController();
@@ -741,34 +748,34 @@ class FormAnswerController extends Controller
      */
     private function preloaded($form_id, $client_new_id, $files)
     {
-        $structure_data = [];
         $formAnswer = FormAnswer::where('form_id',$form_id)
             ->where('client_new_id', $client_new_id)
             ->latest()->first();
+
         $directory = Directory::where('form_id',$form_id)
             ->where('client_new_id', $client_new_id)
             ->latest()->first();
+
         if($formAnswer && $directory) {
             $clientData = $formAnswer->structure_answer;
+
             if(strtotime($directory->updated_at) > strtotime($formAnswer->created_at)){
                 $clientData = $directory->data;
             }
-        }
-        elseif(!$formAnswer && $directory){
+        } elseif(!$formAnswer && $directory){
             $clientData = $directory->data;
-        }
-        elseif (!$directory && $formAnswer){
+        } elseif (!$directory && $formAnswer){
             $clientData = $formAnswer->structure_answer;
         }
-        foreach (json_decode($clientData) as $data){
-            if($data->preloaded){
-                $structure_data[] = $data;
-            }
-        }
+
+        $structure_data = collect(json_decode($clientData))->filter(function (&$field) use ($form_id){
+            return !$this->deletedFieldChecker($form_id, $field->id) && $field->preloaded;
+        })->toArray();
+
         $answer['data'] = array_merge($structure_data,$files);
         $answer['client_id']=$client_new_id;
-        return $answer;
 
+        return $answer;
     }
 
     private function findSelect($form_id, $field_id, $value)
