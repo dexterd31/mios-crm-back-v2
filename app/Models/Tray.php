@@ -30,13 +30,4 @@ class Tray extends Model
     public function formAnswersTray(){
         return $this->hasMany(FormAnswersTray::class);
     }
-
-    /**
-     * @desc retorna la configuración de semaforización de la bandeja
-     * @author Juan Pablo Camargo Vanegas (juan.cv@montechelo.com.co)
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
-     */
-    public function trafficConfig(){
-        return $this->hasOne(TrafficTraysConfig::class,'tray_id','id');
-    }
 }

@@ -138,20 +138,23 @@ class ClientNewController extends Controller
             'unique_indentificator' => 'required|json'
         ]);
 
-        if($validator->fails()){
+        if($validator->fails())
+        {
             $data = $validator->errors()->all();
-        } else {
+        }
+        else
+        {
             $clientNewRequest = new Request();
             $clientNewRequest->replace([
                 "form_id" => $request->form_id,
                 "unique_indentificator" => $request->unique_indentificator,
             ]);
-
             $clientsNew = $this->index($clientNewRequest);
-
-            if($clientsNew && isset($clientsNew->id)) {
+            if($clientsNew && isset($clientsNew->id))
+            {
                 $data = $this->update($request, $clientsNew);
-            } else {
+            }else
+            {
                 $data = $this->save($request);
             }
         }

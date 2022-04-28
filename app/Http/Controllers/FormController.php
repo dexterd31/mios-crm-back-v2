@@ -9,11 +9,9 @@ use App\Models\FormLog;
 use App\Models\FormAnswer;
 use App\Models\FormAnswerLog;
 use App\Models\FormType;
-use App\Models\RelAdvisorClientNew;
 use App\Models\Section;
 use App\Models\Tray;
 use App\Services\RrhhService;
-use App\Traits\deletedFieldChecker;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -25,7 +23,6 @@ use stdClass;
 
 class FormController extends Controller
 {
-    use deletedFieldChecker;
 
     public function __construct()
     {
@@ -79,15 +76,8 @@ class FormController extends Controller
         for ($i = 0; $i < count($formsSections->section); $i++) {
             unset($formsSections->section[$i]['created_at']);
             unset($formsSections->section[$i]['updated_at']);
-            $formId = $formsSections->section[$i]['form_id'];
-            $fields = json_decode($formsSections->section[$i]['fields']);
-
-            $formsSections->section[$i]['fields'] = collect($fields)->filter(function ($field) use ($formId){
-                return !$this->deletedFieldChecker($formId, $field->id);
-            });
-
-            unset($formId, $fields);
             unset($formsSections->section[$i]['form_id']);
+            $formsSections->section[$i]['fields'] = json_decode($formsSections->section[$i]['fields']);
         }
         $formsSections->client_unique = json_decode($formsSections->fields_client_unique_identificator);
         $formsSections->campaign_id = auth()->user()->rrhh->campaign_id;
@@ -101,9 +91,6 @@ class FormController extends Controller
         $templateExist = (count($templateController->showByFormId($id)) > 0);
         $formsSections->template = $templateExist;
         $formsSections->view_chronometer = (boolean)$formsSections->tipification_time;
-        $formsSections->count_assigned_clients = RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)
-        ->join('client_news', 'client_news.id', 'rel_advisor_client_new.client_new_id')
-        ->where('client_news.form_id', $id)->where('rel_advisor_client_new.managed', false)->get()->count();
         unset($formsSections->tipification_time);
         return response()->json($formsSections);
     }
@@ -385,8 +372,8 @@ class FormController extends Controller
                                     $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
                                         if($select->valid && isset($select->name)){
                                             $respuestas[$input->dependencies[0]->report] = $select->name;
-                                        }else{
-                                            $respuestas[$input->dependencies[0]->report] = json_encode($select);
+                                        } else {
+                                            $respuestas[$input->dependencies[0]->report] = $select->value;
                                         }
                                 }
                                 break;
@@ -395,11 +382,8 @@ class FormController extends Controller
                             $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
                             if($select->valid && isset($select->name)){
                                 $respuestas[$input->id] = $select->name;
-                            }
-                            else if($select->valid && isset($select->value)){
+                            } else {
                                 $respuestas[$input->id] = $select->value;
-                            }else{
-                                $respuestas[$input->id] = json_encode($select);
                             }
                             break;
                         }else if($field->key==$input->key){
