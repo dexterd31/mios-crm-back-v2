@@ -32,7 +32,7 @@ class FormAnswerTrayController extends Controller
         if($saveHistoric === null){
             $response = new \stdClass();
             $response->data = "no se encontraron historicos asociados";
-            return response()->json($response,200);
+            return response()->json($response,204);
         }
         foreach ($formAnswerLogs as $structureAnswer){
             foreach (json_decode($structureAnswer['structure_answer']) as $answer){

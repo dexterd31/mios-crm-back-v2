@@ -11,6 +11,7 @@ use App\Models\Upload;
 use App\Models\Directory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FormReportExport;
@@ -699,11 +700,11 @@ class UploadController extends Controller
     private function addToDirectories(array $data,int $formId,int $clientNewId, array $indexForm){
         $newDirectory = Directory::updateOrCreate([
             'form_id' => $formId,
-            'client_new_id' => $clientNewId,
-            'data' => json_encode($data)
+            'client_new_id' => $clientNewId
 
         ],[
             'rrhh_id' => auth()->user()->rrhh_id,
+            'data' => json_encode($data),
             'form_index' => json_encode($indexForm)
         ]);
 

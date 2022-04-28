@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Form;
-use App\Managers\TrafficTrayManager;
 use App\Models\FormAnswer;
 use App\Models\Tray;
 use App\Models\Section;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\FormAnswersTray;
-use App\Support\Collection;
 use stdClass;
 
 class TrayController extends Controller
@@ -36,7 +34,7 @@ class TrayController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request, TrafficTrayManager $trafficTrayManager)
+    public function store(Request $request)
     {
         $data = $request['entries'];
 
@@ -53,12 +51,9 @@ class TrayController extends Controller
         $tray->rols = json_encode($data['rols']);
         $tray->state = 1;
         $tray->save();
-        if(isset($data['traffic'])){
-            //creación de semaforización
-            $data['tray_id'] = $tray->id;
-            $trafficTrayManager->newTrafficTray($data);
-        }
+
         $this->matchTrayFields($tray, FormAnswer::all());
+
         return $this->successResponse('Bandeja creada con exito');
     }
 
@@ -93,20 +88,20 @@ class TrayController extends Controller
         }
         $trays = $trays->selectRaw('trays.*, count(tray_id) as count')
             ->groupBy('trays.id', 'trays.name', "trays.form_id", "trays.fields", "trays.rols", "trays.state", "trays.created_at", "trays.updated_at", "trays.fields_exit", "trays.fields_table", "trays.advisor_manage", "trays.save_historic")->get();*/
-        if(count($trays)==0) {
-            return response()->json(['trays' => [], 'form_filter' => []]);
+        if(count($trays) == 0) {
+            return $this->successResponse([]);
         }
 
         // validar si el usuario actual puede visualizar trays dependiendo de su rol.
         $trays = $trays->filter(function($x){
             return count(array_intersect(auth()->user()->roles, json_decode($x->rols)));
         });
+        $ArrayTrays=[];
+        foreach($trays as $tray){
+            array_push($ArrayTrays,$tray);
+        }
 
-        $filters = array_map(function ($item) {
-            return $item->id;
-        }, json_decode(Form::find($id)->filters));
-
-        return response()->json(['trays' => $trays, 'form_filter' => $filters]);
+        return $this->successResponse($ArrayTrays);
     }
 
     /**
@@ -138,6 +133,7 @@ class TrayController extends Controller
     public function getTray(Request $request, $id)
     {
         $tray = Tray::where('id',$id)->with('form')->first();
+        // dd($trays);
 
         if($tray==null) {
             return $this->errorResponse('No se encontro la bandeja',404);
@@ -146,156 +142,58 @@ class TrayController extends Controller
         return $this->successResponse($tray);
     }
 
-    /**
-     * Retorna los datos solicitados de una bandeja.
-     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
-     *
-     * @param Request $request
-     * @param integer $id - Identificador de la bandeja
-     * @return Illuminate\Http\Response
-     */
-    public function formAnswersByTray(Request $request, int $id) {
-        $sought = strtolower($request->sought);
-        $filteredFields = $request->filteredFields ?? [];
-        $columnToSort = $request->columnToSort;
-        $columnToSort = isset($request->orientation) && $request->orientation == '' ? '' : $request->columnToSort;
-        $orientation = isset($request->orientation) ? $request->orientation : 'DESC';
-        $orientation = $orientation == '' || is_null($orientation) ? 'DESC' : $orientation;
+    public function formAnswersByTray(Request $request, $id) {
         $tray = Tray::where('id',$id)->firstOrFail();
-        $fieldsTable = collect(json_decode($tray->fields_table));
-
-        $formsAnswers = FormAnswer::select(
-            'form_answers.id',
-            'form_answers.structure_answer',
-            'form_answers.form_id',
-            'form_answers.channel_id',
-            'form_answers.rrhh_id',
-            'form_answers.client_new_id'
-        )->orderBy('form_answers.updated_at', $orientation)->join('form_answers_trays', "form_answers.id", 'form_answers_trays.form_answer_id')
-        ->join('trays', "trays.id", 'form_answers_trays.tray_id')
-        ->where("trays.id", $id);
-
-        if($tray->advisor_manage == 1){
-            $formsAnswers = $formsAnswers->join('rel_trays_users','form_answers_trays.id','rel_trays_users.form_answers_trays_id')
-            ->where('rel_trays_users.rrhh_id',auth()->user()->rrhh_id);
+        $fieldsTable = json_decode($tray->fields_table);
+        if($tray->advisor_manage==1){
+            $formsAnswers = FormAnswer::join('form_answers_trays', "form_answers.id", 'form_answers_trays.form_answer_id')
+            ->join('trays', "trays.id", 'form_answers_trays.tray_id')
+            ->join('rel_trays_users','form_answers_trays.id','rel_trays_users.form_answers_trays_id')
+            ->where("trays.id", $id)
+            ->where('rel_trays_users.rrhh_id',auth()->user()->rrhh_id)
+            ->select("form_answers.id", "form_answers.structure_answer", "form_answers.form_id",
+                "form_answers.channel_id", "form_answers.rrhh_id", "form_answers.client_new_id")
+            ->paginate($request->query('n', 5))->withQueryString();
+        }else{
+            $formsAnswers = FormAnswer::join('form_answers_trays', "form_answers.id", 'form_answers_trays.form_answer_id')
+            ->join('trays', "trays.id", 'form_answers_trays.tray_id')->where("trays.id", $id)
+            ->select("form_answers.id", "form_answers.structure_answer", "form_answers.form_id",
+                "form_answers.channel_id", "form_answers.rrhh_id", "form_answers.client_new_id")
+            ->paginate($request->query('n', 5))->withQueryString();
         }
 
-        $formsAnswers = $formsAnswers->get();
-
-        $formsAnswers->each(function (&$answer) use ($fieldsTable, $tray) {
-            $new_structure_answer = array_map(function (&$item) use ($answer) {
-                if (!isset($item->duplicated)) {
-                    $select = $this->findSelect($answer->form_id, $item->id, $item->value);
-                    if ($select) {
-                        $item->value = $select;
-                    }
-                }
-                return $item;
-            }, json_decode($answer->structure_answer));
-
+        foreach($formsAnswers as $form)
+        {
             $tableValues = [];
-
-            $fieldsTable->each(function ($field) use ($new_structure_answer, &$tableValues) {
-                $foundStructure = collect($new_structure_answer)->filter(function ($item) use ($field) {
-                    return $item->id == $field->id;
-                })->values();
-
-                if (!empty($foundStructure)) {
-                    $tableValues[] = $foundStructure;
-                }
-            });
-
-            $answer->table_values = $tableValues;
-
-            $structureAnswer = $answer->structure_answer ? json_decode($answer->structure_answer, true) : [];
-
-            $formAnswersTray = (new FormAnswerTrayController)
-                ->getFormAnswersTray($answer->id, $tray->id, $tray->form_id);
-
-            $answer->structure_answer = isset($formAnswersTray) ?
-                array_merge($structureAnswer, $formAnswersTray) :
-                $structureAnswer;
-        });
-
-        if (trim($sought) != '') {
-            $formsAnswers = $this->answersFilter($formsAnswers, $filteredFields, $sought);
-        }
-
-        if ($columnToSort != '' && !is_null($columnToSort)) {
-            $formsAnswers = $this->answersSort($formsAnswers, $columnToSort, $orientation);
-        }
-
-        return (new Collection($formsAnswers))->paginate(5);
-    }
-
-    /**
-     * Fitra las respuestas los datos de la bandeja.
-     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
-     *
-     * @param Illuminate\Database\Eloquent\Collection $formsAnswers
-     * @param array $filteredFields - Identificadores de los campos por los cuales se va a filtrar.
-     * @param string $sought - Valor con el cual se buscan las coincidencias.
-     * @return Illuminate\Database\Eloquent\Collection
-     */
-    private function answersFilter($formsAnswers, array $filteredFields, string $sought)
-    {
-        return $formsAnswers->filter(function ($answer) use ($filteredFields, $sought) {
-            $found = false;
-            
-            foreach ($answer->structure_answer as $field) {
-                if (in_array($field['id'], $filteredFields)) {
-                    $found = str_contains(strtolower((string) $field['value']), $sought);
-                    if ($found) break;
-                }
-            }
-
-            return $found;
-        });
-    }
-
-    /**
-     * Ordena los datos de la bandeja por la columna seleccionada.
-     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
-     *
-     * @param Illuminate\Database\Eloquent\Collection $formsAnswers
-     * @param string $columnToSort - Columna por la cual se va a ordenar
-     * @param string $orientation - Si el orden es asendende (ASC) o descendente (DESC)
-     * @return array
-     */
-    private function answersSort($formsAnswers, string $columnToSort, string $orientation) : array
-    {
-        $formsAnswers = $formsAnswers->toArray();
-        
-        usort($formsAnswers, function ($answerA, $answerB) use ($columnToSort, $orientation) {
-            $isNumeric = false;
-            $values = [];
-            $answers = [$answerA, $answerB];
-
-            if ($orientation == 'DESC') {
-                $answers = [$answerB, $answerA];
-            }
-
-            foreach ($answers as $answer) {
-                foreach ($answer['structure_answer'] as $field) {
-                    if ($field['label'] == $columnToSort) {
-                        $isNumeric = is_numeric($field['value']);
-                        $values[] = $field['value'];
+            foreach($fieldsTable as $field)
+            {
+                $structureAnswer = json_decode($form->structure_answer);
+                $new_structure_answer = [];
+                foreach($structureAnswer as $field2){
+                    if(!isset($field2->duplicated)){
+                        $select = $this->findSelect($form->form_id, $field2->id, $field2->value);
+                        if($select){
+                            $field2->value = $select;
+                            $new_structure_answer[] = $field2;
+                        } else {
+                            $new_structure_answer[] = $field2;
+                        }
                     }
                 }
+                    $foundStructure = collect($new_structure_answer)->filter(function ($item, $key) use ($field) {
+                        return $item->id == $field->id;
+                    })->values();
+                    if(!empty($foundStructure))
+                    {
+                        $tableValues[] = $foundStructure;
+                    }
             }
-
-            if ($isNumeric) {
-                if ($orientation == 'DESC') {
-                    $result = $values[0] < $values[1] ? 1 : -1;
-                } 
-                $result = $values[0] < $values[1] ? -1 : 1;
-            } else {
-                $result = strcasecmp(...$values);
-            }
-
-            return $result;
-        });
-
+                $form->table_values = $tableValues;
+                $structureAnswer = $form->structure_answer ? json_decode($form->structure_answer, true) : [];
+                $formAnswerTrayController = new FormAnswerTrayController();
+                $formAnswersTray = $formAnswerTrayController->getFormAnswersTray($form->id, $tray->id, $tray->form_id);
+                $form->structure_answer = isset($formAnswersTray) ? array_merge($structureAnswer, $formAnswersTray) : $structureAnswer;
+        }
         return $formsAnswers;
     }
 
