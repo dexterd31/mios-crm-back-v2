@@ -7,11 +7,9 @@ use App\Managers\TrafficTrayManager;
 use App\Models\FormAnswer;
 use App\Models\Tray;
 use App\Models\Section;
-use App\Services\TrafficTrayService;
 use Illuminate\Http\Request;
 use App\Models\FormAnswersTray;
 use App\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use stdClass;
 
 class TrayController extends Controller
