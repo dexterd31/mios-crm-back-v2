@@ -310,13 +310,13 @@ class FormController extends Controller
         $char="";
         $rrhhService = new RrhhService();
         $trayHistoric = Tray::select('id')->where('form_id',$request->formId)->whereNotNull('save_historic')->get();
-            $formAnswers = DB::table('form_answer_logs')
-                ->join('form_answers','form_answer_logs.form_answer_id','=','form_answers.id')
-                ->where('form_answers.form_id','=',$request->formId)
-                ->where('form_answers.tipification_time', '!=', 'upload')
-                ->whereBetween('form_answer_logs.updated_at', ["$request->date1 00:00:00", "$request->date2 00:00:00"])
-                ->select('form_answer_logs.form_answer_id as id', 'form_answer_logs.structure_answer', 'form_answers.created_at', 'form_answer_logs.updated_at','form_answer_logs.rrhh_id as id_rhh', 'form_answers.tipification_time')
-                ->get();
+        $formAnswers = DB::table('form_answer_logs')
+            ->join('form_answers','form_answer_logs.form_answer_id','=','form_answers.id')
+            ->where('form_answers.form_id','=',$request->formId)
+            ->where('form_answers.tipification_time', '!=', 'upload')
+            ->whereBetween('form_answer_logs.updated_at', ["$request->date1 00:00:00", "$request->date2 00:00:00"])
+            ->select('form_answer_logs.form_answer_id as id', 'form_answer_logs.structure_answer', 'form_answers.created_at', 'form_answer_logs.updated_at','form_answer_logs.rrhh_id as id_rhh', 'form_answers.tipification_time')
+            ->get();
         if(count($formAnswers)==0){
             // 406 Not Acceptable
             // se envia este error ya que no esta mapeado en interceptor angular.
@@ -383,11 +383,11 @@ class FormController extends Controller
                             if(in_array($field->id,$dependencies[$input->dependencies[0]->report])){
                                 if(isset($field->value)){
                                     $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
-                                        if($select->valid && isset($select->name)){
-                                            $respuestas[$input->dependencies[0]->report] = $select->name;
-                                        }else{
-                                            $respuestas[$input->dependencies[0]->report] = json_encode($select);
-                                        }
+                                    if($select->valid && isset($select->name)){
+                                        $respuestas[$input->dependencies[0]->report] = $select->name;
+                                    }else{
+                                        $respuestas[$input->dependencies[0]->report] = $select->value;
+                                    }
                                 }
                                 break;
                             }
