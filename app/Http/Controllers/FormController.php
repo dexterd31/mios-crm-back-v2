@@ -89,6 +89,15 @@ class FormController extends Controller
             unset($formId, $fields);
             unset($formsSections->section[$i]['form_id']);
         }
+
+        $auxArray = [];
+        foreach ($formsSections->section as $key => $section) {
+            foreach ($section['fields'] as $field) {
+                $auxArray[] = $field;
+            }
+            $formsSections->section[$key]['fields'] = $auxArray;
+        }
+        
         $formsSections->client_unique = json_decode($formsSections->fields_client_unique_identificator);
         $formsSections->campaign_id = auth()->user()->rrhh->campaign_id;
         /**
