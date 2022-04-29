@@ -10,7 +10,7 @@ class FormAnswersTray extends Model
 {
     protected $table = 'form_answers_trays';
     protected $PrimaryKey = 'id';
-    protected $fillable = ["id", "form_answer_id", "tray_id", "structure_answer_tray"];
+    protected $fillable = ["id", "form_answer_id", "tray_id"];
 
     public function formAnswers(){
         return $this->belongsTo(FormAnswer::class, 'form_answer_id');
