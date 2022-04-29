@@ -717,7 +717,10 @@ class FormAnswerController extends Controller
                 }
                 $formAnsersTray = FormAnswersTray::where('form_answer_id', $formAnswer->id)
                     ->where('tray_id', $tray->id)->first();
-                FormAnswersTrayHistoric::where('form_answers_trays_id', $formAnsersTray->id)->first()->delete();
+                $formAnswersTrayHistoric = FormAnswersTrayHistoric::where('form_answers_trays_id', $formAnsersTray->id)->first();
+                if (!is_null($formAnswersTrayHistoric)) {
+                    $formAnswersTrayHistoric->delete();
+                }
                 $tray->FormAnswers()->detach($formAnswer->id);
             }
 
