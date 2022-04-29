@@ -715,6 +715,12 @@ class FormAnswerController extends Controller
                         $trafficTrayManager->disableTrafficTrayLog($formAnswer->id,$tray->trafficConfig->id);
                     }
                 }
+                $formAnsersTray = FormAnswersTray::where('form_answer_id', $formAnswer->id)
+                    ->where('tray_id', $tray->id)->first();
+                $formAnswersTrayHistoric = FormAnswersTrayHistoric::where('form_answers_trays_id', $formAnsersTray->id)->first();
+                if (!is_null($formAnswersTrayHistoric)) {
+                    $formAnswersTrayHistoric->delete();
+                }
                 $tray->FormAnswers()->detach($formAnswer->id);
             }
 
@@ -820,12 +826,17 @@ class FormAnswerController extends Controller
      * @param $structureAnswer
      * @return void
      */
-    private function createTrayHistoric(int $trayId,int $formAnswerId,$structureAnswer):void{
-        $trayHistoricModel = new FormAnswersTrayHistoric();
-        $trayHistoricModel->tray_id = $trayId;
-        $trayHistoricModel->form_answer_id = $formAnswerId;
-        $trayHistoricModel->structure_answer = json_encode($structureAnswer);
-        $trayHistoricModel->save();
+    private function createTrayHistoric(int $trayId,int $formAnswerId,$structureAnswer) : void
+    {
+        $formAnswersTrays = FormAnswersTray::create([
+            "form_answer_id" => $formAnswerId,
+            "tray_id" => $trayId
+        ]);
+        
+        $formAnsersTrayHistoric = FormAnswersTrayHistoric::create([
+            "form_answers_trays_id" => $formAnswersTrays->id,
+            "structure_answer" => json_encode($structureAnswer)
+        ]);
     }
 
     /**
