@@ -17,7 +17,7 @@ class CreateOnlineUsersTable extends Migration
             $table->id();
             $table->bigInteger('rrhh_id', false, true)->comment('Id RRHH del usuario');
             $table->bigInteger('role_id', false, true)->comment('Rol del usuario');
-            $table->foreignId('form_id')->constrained();
+            $table->foreignId('form_id')->nullable()->constrained();
             $table->string('ciu_status', false, true)->comment('Estado CIU del usuario');
             $table->boolean('is_paused')->default(0)->comment('Estado de pausa del usuario: 1 - pausado, 0 - sin pausa');
             $table->timestamps();

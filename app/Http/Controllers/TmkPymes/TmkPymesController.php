@@ -43,11 +43,11 @@ class TmkPymesController extends Controller
             "utm_medium"          => 1648574598013,
             "glid"                => 1648574626207,
             "resumen_plan"        => 1648574655164,
-            "queu_promo"          => 1648574655164,
+            "queu_promo"          => 1648574684730,
             "referencia_producto" => 1648574727543,
             "canal_trafico"       => 1648574784299,
-            "fecha"               => 1648574812677,
-            "hora"                => 1648574843546
+            "fecha_ingreso_lead"  => 1649469074467,
+            "colas_detalle"       => 1648574755287
         ];
         $this->productVicidial="TMK";
         $this->tokenVicidial="TmK202111031233";
@@ -140,8 +140,21 @@ class TmkPymesController extends Controller
                         array_push($errorAnswers,$dataValidate->message);
                     }
                 }
-
             }
+            date_default_timezone_set('America/Bogota');
+            $now = date("Y-m-d H:i:s");
+            $data = [
+                "id" => 1649469074467,
+                "key"=> "fecha-ingreso-lead19",
+                "preloaded"=> true,
+                "label"=> "Fecha ingreso Lead",
+                "isClientInfo"=> false,
+                "client_unique"=> false,
+                "value"=> $now,
+                "controlType"=> "textbox",
+                "type"=> "text"
+            ];
+            $formAnswerClient[15] = $data;
             $clientNewRequest = new Request();
             $clientNewRequest->replace([
                 "form_id" => $formId,

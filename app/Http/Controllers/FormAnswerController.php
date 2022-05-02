@@ -6,7 +6,6 @@ use App\Managers\TrafficTrayManager;
 use App\Models\ApiConnection;
 use App\Models\Directory;
 use App\Models\FormAnswer;
-use App\Models\Form;
 use App\Models\FormAnswersTrayHistoric;
 use App\Models\KeyValue;
 use App\Models\Section;
@@ -23,13 +22,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\FormAnswersTray;
+use App\Models\RelAdvisorClientNew;
 use App\Models\RelTrayUser;
+use App\Traits\deletedFieldChecker;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 
 class FormAnswerController extends Controller
 {
+    use deletedFieldChecker;
+    
     private $ciuService;
     private $nominaService;
     private $dataCRMServices;
@@ -42,16 +45,17 @@ class FormAnswerController extends Controller
         $this->dataCRMServices = new DataCRMService();
     }
 
-    public function create($clientNewId, $formId, $structureAnswer, $formAnswerIndexData, $chronometer)
+    public function create($clientNewId, $formId, $structureAnswer, $formAnswerIndexData, $chronometer, $chanel_id = 1, $conversation_id = null)
     {
         $saveFormAnswer = new FormAnswer();
         $saveFormAnswer->rrhh_id = auth()->user()->rrhh_id;
-        $saveFormAnswer->channel_id = 1;
+        $saveFormAnswer->channel_id = $chanel_id;
         $saveFormAnswer->form_id = $formId;
         $saveFormAnswer->structure_answer = json_encode($structureAnswer);
         $saveFormAnswer->client_new_id = $clientNewId;
         $saveFormAnswer->form_answer_index_data = json_encode($formAnswerIndexData);
         $saveFormAnswer->tipification_time = $chronometer;
+        $saveFormAnswer->conversation_id = $conversation_id;
         $saveFormAnswer->save();
         /*$saveFormAnswer= FormAnswer::updateOrCreate([
             'rrhh_id' => auth()->user()->rrhh_id,
@@ -88,6 +92,14 @@ class FormAnswerController extends Controller
                 if($field['controlType'] == "currency"){
                     $field['value']=str_replace(",","",$field['value']);
                 }
+
+                if ($field['controlType'] == 'multiselect') {
+                    if (gettype($field['value']) != 'array') {
+                        Log::error("TIPO DE DATO ERRONEO EN EL MULTISELECT, DATA DE LA SECCIÓN: \n" . json_encode($section));
+                        $field['value'] = [ $field['value'] ];
+                    }
+                }
+
                 $register['value'] = $field['value'];
                 $register['section_id'] = $section['id'];
                 $register['preloaded'] = $field['preloaded'];
@@ -167,7 +179,14 @@ class FormAnswerController extends Controller
             $clientNew = $clientNewController->create($clientNew);
 
             //creando nuevo cliente formAnswer
-            $form_answer = $this->create($clientNew->id, $request->form_id, $formAnswerData, $formAnswerIndexData, $request->chronometer);
+            if(!isset($request->chanel)){
+                $request->chanel = 1;
+            }
+            if(!isset($request->conversation_id)){
+                $request->conversation_id = null;
+            }
+
+            $form_answer = $this->create($clientNew->id, $request->form_id, $formAnswerData, $formAnswerIndexData, $request->chronometer,$request->chanel,$request->conversation_id);
 
             $keyValueController = new KeyValueController();
             $keyValueController->createKeysValue($dataPreloaded, $request->form_id, $clientNew->id);
@@ -190,6 +209,15 @@ class FormAnswerController extends Controller
             //validarNotificaciones
             $notificationsController = new NotificationsController();
             $notificationsController->sendNotifications($request->form_id,$form_answer);
+
+            if(!is_null($request->client_id)){
+                $relAdvisorClientNew = RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)->where('client_new_id', $request->client_id)->first();
+    
+                if (!is_null($relAdvisorClientNew)) {
+                    $relAdvisorClientNew->managed = true;
+                    $relAdvisorClientNew->save();
+                }
+            }
 
             return $this->successResponse(['message'=>"Información guardada correctamente",'formAsnwerId'=>$form_answer->id]);
         }
@@ -329,6 +357,10 @@ class FormAnswerController extends Controller
             $structureAnswer = $formAnswer['structure_answer'] ? json_decode($formAnswer['structure_answer']) : json_decode($formAnswer['data']);
             $new_structure_answer = array();
             foreach ($structureAnswer as $answer) {
+                if ($this->deletedFieldChecker($formId, $answer->id)){
+                    continue;
+                }
+
                 if(!isset($answer->duplicated))
                 {
                     $formController = new FormController();
@@ -683,6 +715,12 @@ class FormAnswerController extends Controller
                         $trafficTrayManager->disableTrafficTrayLog($formAnswer->id,$tray->trafficConfig->id);
                     }
                 }
+                $formAnsersTray = FormAnswersTray::where('form_answer_id', $formAnswer->id)
+                    ->where('tray_id', $tray->id)->first();
+                $formAnswersTrayHistoric = FormAnswersTrayHistoric::where('form_answers_trays_id', $formAnsersTray->id)->first();
+                if (!is_null($formAnswersTrayHistoric)) {
+                    $formAnswersTrayHistoric->delete();
+                }
                 $tray->FormAnswers()->detach($formAnswer->id);
             }
 
@@ -715,34 +753,34 @@ class FormAnswerController extends Controller
      */
     private function preloaded($form_id, $client_new_id, $files)
     {
-        $structure_data = [];
         $formAnswer = FormAnswer::where('form_id',$form_id)
             ->where('client_new_id', $client_new_id)
             ->latest()->first();
+
         $directory = Directory::where('form_id',$form_id)
             ->where('client_new_id', $client_new_id)
             ->latest()->first();
+
         if($formAnswer && $directory) {
             $clientData = $formAnswer->structure_answer;
+
             if(strtotime($directory->updated_at) > strtotime($formAnswer->created_at)){
                 $clientData = $directory->data;
             }
-        }
-        elseif(!$formAnswer && $directory){
+        } elseif(!$formAnswer && $directory){
             $clientData = $directory->data;
-        }
-        elseif (!$directory && $formAnswer){
+        } elseif (!$directory && $formAnswer){
             $clientData = $formAnswer->structure_answer;
         }
-        foreach (json_decode($clientData) as $data){
-            if($data->preloaded){
-                $structure_data[] = $data;
-            }
-        }
+
+        $structure_data = collect(json_decode($clientData))->filter(function (&$field) use ($form_id){
+            return !$this->deletedFieldChecker($form_id, $field->id) && $field->preloaded;
+        })->toArray();
+
         $answer['data'] = array_merge($structure_data,$files);
         $answer['client_id']=$client_new_id;
-        return $answer;
 
+        return $answer;
     }
 
     private function findSelect($form_id, $field_id, $value)
@@ -788,12 +826,17 @@ class FormAnswerController extends Controller
      * @param $structureAnswer
      * @return void
      */
-    private function createTrayHistoric(int $trayId,int $formAnswerId,$structureAnswer):void{
-        $trayHistoricModel = new FormAnswersTrayHistoric();
-        $trayHistoricModel->tray_id = $trayId;
-        $trayHistoricModel->form_answer_id = $formAnswerId;
-        $trayHistoricModel->structure_answer = json_encode($structureAnswer);
-        $trayHistoricModel->save();
+    private function createTrayHistoric(int $trayId,int $formAnswerId,$structureAnswer) : void
+    {
+        $formAnswersTrays = FormAnswersTray::create([
+            "form_answer_id" => $formAnswerId,
+            "tray_id" => $trayId
+        ]);
+        
+        $formAnsersTrayHistoric = FormAnswersTrayHistoric::create([
+            "form_answers_trays_id" => $formAnswersTrays->id,
+            "structure_answer" => json_encode($structureAnswer)
+        ]);
     }
 
     /**

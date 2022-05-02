@@ -37,4 +37,11 @@ class ClientNew extends Model
     {
         return $this->hasMany(FormAnswer::class, 'client_id');
     }
+
+    public function scopeFormFilter($query, $formId)
+    {
+        if ($formId) {
+            return $query->where('form_id', $formId);
+        }
+    }
 }

@@ -9,9 +9,11 @@ use App\Models\FormLog;
 use App\Models\FormAnswer;
 use App\Models\FormAnswerLog;
 use App\Models\FormType;
+use App\Models\RelAdvisorClientNew;
 use App\Models\Section;
 use App\Models\Tray;
 use App\Services\RrhhService;
+use App\Traits\deletedFieldChecker;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -23,6 +25,7 @@ use stdClass;
 
 class FormController extends Controller
 {
+    use deletedFieldChecker;
 
     public function __construct()
     {
@@ -76,8 +79,15 @@ class FormController extends Controller
         for ($i = 0; $i < count($formsSections->section); $i++) {
             unset($formsSections->section[$i]['created_at']);
             unset($formsSections->section[$i]['updated_at']);
+            $formId = $formsSections->section[$i]['form_id'];
+            $fields = json_decode($formsSections->section[$i]['fields']);
+
+            $formsSections->section[$i]['fields'] = collect($fields)->filter(function ($field) use ($formId){
+                return !$this->deletedFieldChecker($formId, $field->id);
+            });
+
+            unset($formId, $fields);
             unset($formsSections->section[$i]['form_id']);
-            $formsSections->section[$i]['fields'] = json_decode($formsSections->section[$i]['fields']);
         }
         $formsSections->client_unique = json_decode($formsSections->fields_client_unique_identificator);
         $formsSections->campaign_id = auth()->user()->rrhh->campaign_id;
@@ -91,6 +101,9 @@ class FormController extends Controller
         $templateExist = (count($templateController->showByFormId($id)) > 0);
         $formsSections->template = $templateExist;
         $formsSections->view_chronometer = (boolean)$formsSections->tipification_time;
+        $formsSections->count_assigned_clients = RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)
+        ->join('client_news', 'client_news.id', 'rel_advisor_client_new.client_new_id')
+        ->where('client_news.form_id', $id)->where('rel_advisor_client_new.managed', false)->get()->count();
         unset($formsSections->tipification_time);
         return response()->json($formsSections);
     }
@@ -296,27 +309,14 @@ class FormController extends Controller
     public function report(Request $request, MiosHelper $miosHelper){
         $char="";
         $rrhhService = new RrhhService();
-        $trayHistoric = Tray::select('id')->where('form_id',$request->formId)->get();
-        if(count($trayHistoric)>0){
-            $formAnswers = DB::table('form_answer_logs')
-                           ->join('form_answers','form_answer_logs.form_answer_id','=','form_answers.id')
-                           ->join('form_answers_trays', 'form_answers.id','=','form_answers_trays.form_answer_id')
-                           ->where('form_answers.form_id','=',$request->formId)
-                           ->where('form_answers.tipification_time', '!=', 'upload')
-                           ->where(function($query) use ($request){
-                               $query->whereBetween('form_answers.created_at', ["$request->date1 00:00:00", "$request->date2 00:00:00"])
-                                   ->orWhereBetween('form_answers_trays.created_at',["$request->date1 00:00:00", "$request->date2 00:00:00"]);
-                           })
-                            //->orWhereBetween('form_answers_trays.created_at',["$request->date1 00:00:00", "$request->date2 00:00:00"])
-                        ->select('form_answer_logs.form_answer_id as id', 'form_answer_logs.structure_answer', 'form_answer_logs.created_at', 'form_answer_logs.updated_at','form_answer_logs.rrhh_id as id_rhh', 'form_answers.tipification_time')
-                        ->get();
-        }else{
-            $formAnswers = FormAnswer::select('form_answers.id', 'form_answers.structure_answer', 'form_answers.created_at', 'form_answers.updated_at','form_answers.rrhh_id as id_rhh','tipification_time')
-                            ->where('form_answers.form_id',$request->formId)
-                            ->where('tipification_time','!=','upload')
-                            ->whereBetween('form_answers.created_at', ["$request->date1 00:00:00", "$request->date2 00:00:00"])
-                            ->get();
-        }
+        $trayHistoric = Tray::select('id')->where('form_id',$request->formId)->whereNotNull('save_historic')->get();
+        $formAnswers = DB::table('form_answer_logs')
+            ->join('form_answers','form_answer_logs.form_answer_id','=','form_answers.id')
+            ->where('form_answers.form_id','=',$request->formId)
+            ->where('form_answers.tipification_time', '!=', 'upload')
+            ->whereBetween('form_answer_logs.updated_at', ["$request->date1 00:00:00", "$request->date2 00:00:00"])
+            ->select('form_answer_logs.form_answer_id as id', 'form_answer_logs.structure_answer', 'form_answers.created_at', 'form_answer_logs.updated_at','form_answer_logs.rrhh_id as id_rhh', 'form_answers.tipification_time')
+            ->get();
         if(count($formAnswers)==0){
             // 406 Not Acceptable
             // se envia este error ya que no esta mapeado en interceptor angular.
@@ -383,11 +383,11 @@ class FormController extends Controller
                             if(in_array($field->id,$dependencies[$input->dependencies[0]->report])){
                                 if(isset($field->value)){
                                     $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
-                                        if($select->valid && isset($select->name)){
-                                            $respuestas[$input->dependencies[0]->report] = $select->name;
-                                        } else {
-                                            $respuestas[$input->dependencies[0]->report] = $select->value;
-                                        }
+                                    if($select->valid && isset($select->name)){
+                                        $respuestas[$input->dependencies[0]->report] = $select->name;
+                                    }else{
+                                        $respuestas[$input->dependencies[0]->report] = $select->value;
+                                    }
                                 }
                                 break;
                             }
@@ -395,8 +395,11 @@ class FormController extends Controller
                             $select = $this->findAndFormatValues($request->formId, $field->id, $field->value);
                             if($select->valid && isset($select->name)){
                                 $respuestas[$input->id] = $select->name;
-                            } else {
+                            }
+                            else if($select->valid && isset($select->value)){
                                 $respuestas[$input->id] = $select->value;
+                            }else{
+                                $respuestas[$input->id] = json_encode($select);
                             }
                             break;
                         }else if($field->key==$input->key){
