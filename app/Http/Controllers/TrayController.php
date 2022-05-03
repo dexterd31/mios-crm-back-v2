@@ -188,6 +188,14 @@ class TrayController extends Controller
         $formsAnswers = $formsAnswers->get();
 
         $formsAnswers->each(function (&$answer) use ($fieldsTable, $tray) {
+            if(isset($tray->trafficConfig)){
+                $trafficTrayManager = app(TrafficTrayManager::class);
+                $trafficTrayState = $trafficTrayManager->getTrafficTrayLog($tray->trafficConfig->id,$answer->id);
+                if($trafficTrayState){
+                    $answer->trafficTray = json_decode($trafficTrayState->data);
+                }
+            }
+
             $new_structure_answer = array_map(function (&$item) use ($answer) {
                 if (!isset($item->duplicated)) {
                     $select = $this->findSelect($answer->form_id, $item->id, $item->value);
@@ -200,7 +208,11 @@ class TrayController extends Controller
 
             $tableValues = [];
 
-            $fieldsTable->each(function ($field) use ($new_structure_answer, &$tableValues) {
+            $fieldsTable->each(function ($field) use ($new_structure_answer, &$tableValues, $tray, $answer) {
+                if(isset($tray->trafficConfig)){
+                    $trafficTrayManager = app(TrafficTrayManager::class);
+                    $trafficTrayManager->validateTrafficTrayStatus($answer->id,$tray->trafficConfig);
+                }
                 $foundStructure = collect($new_structure_answer)->filter(function ($item) use ($field) {
                     return $item->id == $field->id;
                 })->values();

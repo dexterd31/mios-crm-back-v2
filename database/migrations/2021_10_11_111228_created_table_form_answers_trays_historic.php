@@ -15,6 +15,7 @@ class CreatedTableFormAnswersTraysHistoric extends Migration
     {
         Schema::create('form_answer_trays_historic', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('trays_id')->constrained('trays');
             $table->foreignId('form_answers_trays_id')->constrained('form_answers_trays');
             $table->json('structure_answer');
             $table->timestamps();
