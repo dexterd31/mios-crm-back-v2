@@ -715,13 +715,13 @@ class FormAnswerController extends Controller
                         $trafficTrayManager->disableTrafficTrayLog($formAnswer->id,$tray->trafficConfig->id);
                     }
                 }
-                $formAnsersTray = FormAnswersTray::where('form_answer_id', $formAnswer->id)
+                $formAnswersTray = FormAnswersTray::where('form_answer_id', $formAnswer->id)
                     ->where('tray_id', $tray->id)->first();
-                $formAnswersTrayHistoric = FormAnswersTrayHistoric::where('form_answers_trays_id', $formAnsersTray->id)->first();
+                $formAnswersTrayHistoric = FormAnswersTrayHistoric::where('form_answers_trays_id', $formAnswersTray->id)->first();
                 if (!is_null($formAnswersTrayHistoric)) {
                     $formAnswersTrayHistoric->delete();
+                    $formAnswersTray->delete();
                 }
-                $tray->FormAnswers()->detach($formAnswer->id);
             }
 
 
