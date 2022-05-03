@@ -607,63 +607,67 @@ class FormAnswerController extends Controller
      */
     public function matchTrayFields($formId, $formAnswer){
 
-        $trays = Tray::where('form_id',$formId)->with('trafficConfig')
-                        ->get();
+        $trays = Tray::where('form_id',$formId)->with('trafficConfig')->get();
+
         foreach ($trays as $tray) {
 
             /* entrada a bandeja */
             $in_fields_matched = 0;
-            foreach(json_decode($tray->fields) as $field){
+            foreach (json_decode($tray->fields) as $field) {
 
                 $estructura = json_decode($formAnswer->structure_answer);
                 // Filtrar que contenga el id del field buscado
                 $tray_in = collect($estructura)->filter( function ($value, $key) use ($field) {
                     // si es tipo options, validar el valor del option
-                    if($field->type == "options"){
-                        if($value->id==$field->id){
+                    if ($field->type == "options") {
+                        if ($value->id == $field->id) {
                             $validate = false;
-                            if(!isset($field->value) || empty($field->value))
-                            {
+                            if (!isset($field->value) || empty($field->value)) {
                                 return 0;
                             }
-                            foreach($field->value as $fieldValue){
-                                if($value->value == $fieldValue->id){
+
+                            foreach ($field->value as $fieldValue) {
+                                if ($value->value == $fieldValue->id) {
                                     $validate = true;
                                 }
                             }
-                            if($validate == true){
-                                return 1;
-                            }else{
-                                return 0;
 
+                            if ($validate == true) {
+                                return 1;
+                            } else {
+                                return 0;
                             }
                         }
-                    }else{
+                    } else {
                         // si es otro tipo validar que el valor no este vacio o nulo.
-                        if($value->id==$field->id && !empty($value->value)){
+                        if ($value->id == $field->id && !empty($value->value)) {
                             return 1;
-                        }else{
+                        } else {
                             return 0;
                         }
                     }
-
                 });
-                if(count($tray_in)>=1){
+
+                if (count($tray_in) >= 1) {
                     $in_fields_matched++;
                 }
             }
-            if($in_fields_matched>0 && ((count(json_decode($tray->fields))> 0) || ($in_fields_matched == count(json_decode($tray->fields))))){
+
+            if ($in_fields_matched > 0 && ((count(json_decode($tray->fields)) > 0) || ($in_fields_matched == count(json_decode($tray->fields))))){
                 if(!$tray->FormAnswers->contains($formAnswer->id)){
                     $formAnswerTrays = new FormAnswersTray([
                         'form_answer_id' => $formAnswer->id,
                         'tray_id' =>  $tray->id
                     ]);
+
                     $formAnswerTrays->save();
+
                     $relUsersTraysModel = new RelTrayUser([
                         'trays_id' => $tray->id,
                         'rrhh_id' => auth()->user()->rrhh_id,
                         'form_answers_trays_id' =>$formAnswerTrays->id
                     ]);
+
                     $relUsersTraysModel->save();
                     //semaforización
                     if(isset($tray->trafficConfig)){
@@ -675,13 +679,14 @@ class FormAnswerController extends Controller
 
             /* salida a bandeja */
             $exit_fields_matched = 0;
-            foreach(json_decode($tray->fields_exit) as $field_exit){
+
+            foreach (json_decode($tray->fields_exit) as $field_exit) {
                 $estructura = json_decode($formAnswer->structure_answer);
                 // Filtrar que contenga el id del field buscado
                 $tray_out = collect($estructura)->filter( function ($value, $key) use ($field_exit) {
                     // si es tipo options, validar el valor del option
                     if($field_exit->type == "options"){
-                        if($value->id==$field_exit->id){
+                        if($value->id == $field_exit->id){
                             $validate = false;
                             foreach($field_exit->value as $fieldValue){
                                 if($value->value == $fieldValue->id){
@@ -696,38 +701,37 @@ class FormAnswerController extends Controller
                         }
                     }else{
                         // si es otro tipo validar que el valor no este vacio o nulo.
-                        if($value->id==$field_exit->id && !empty($value->value)){
+                        if($value->id == $field_exit->id && !empty($value->value)){
                             return 1;
                         }else{
                             return 0;
                         }
                     }
                 });
-                if(count($tray_out)>=1){
+                if(count($tray_out) >= 1){
                     $exit_fields_matched++;
                 }
             }
-
             if((count(json_decode($tray->fields_exit)) >0 ) && ($exit_fields_matched == count(json_decode($tray->fields_exit)))){
-
+                
                 if($tray->FormAnswers->contains($formAnswer->id)){
                     //semaforización
                     if(isset($tray->trafficConfig)){
                         $trafficTrayManager = app(TrafficTrayManager::class);
-                        $trafficTrayManager->disableTrafficTrayLog($formAnswer->id,$tray->trafficConfig->id);
+                        $trafficTrayManager->disableTrafficTrayLog($formAnswer->id, $tray->trafficConfig->id);
                     }
                 }
-
+                
                 $formAnswersTray = FormAnswersTray::where('form_answer_id', $formAnswer->id)
                     ->where('tray_id', $tray->id)->first();
-
+                    
                 if (!is_null($formAnswersTray) && isset($formAnswersTray->id)) {
-                    $formAnswersTrayHistoric = FormAnswersTrayHistoric::where('form_answers_trays_id', $formAnswersTray->id)->first();
-
-                    if (!is_null($formAnswersTrayHistoric)) {
-                        $formAnswersTrayHistoric->delete();
-                        $formAnswersTray->delete();
-                    }
+                        $formAnswersTrayHistoric = FormAnswersTrayHistoric::where('form_answers_trays_id', $formAnswersTray->id)->first();
+                        
+                        if (!is_null($formAnswersTrayHistoric)) {
+                            $formAnswersTrayHistoric->delete();
+                        }
+                    $formAnswersTray->delete();
                 }
             }
         }
