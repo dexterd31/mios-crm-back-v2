@@ -707,7 +707,9 @@ class FormAnswerController extends Controller
                     $exit_fields_matched++;
                 }
             }
+
             if((count(json_decode($tray->fields_exit)) >0 ) && ($exit_fields_matched == count(json_decode($tray->fields_exit)))){
+
                 if($tray->FormAnswers->contains($formAnswer->id)){
                     //semaforización
                     if(isset($tray->trafficConfig)){
@@ -715,17 +717,19 @@ class FormAnswerController extends Controller
                         $trafficTrayManager->disableTrafficTrayLog($formAnswer->id,$tray->trafficConfig->id);
                     }
                 }
+
                 $formAnswersTray = FormAnswersTray::where('form_answer_id', $formAnswer->id)
                     ->where('tray_id', $tray->id)->first();
-                $formAnswersTrayHistoric = FormAnswersTrayHistoric::where('form_answers_trays_id', $formAnswersTray->id)->first();
-                if (!is_null($formAnswersTrayHistoric)) {
-                    $formAnswersTrayHistoric->delete();
-                    $formAnswersTray->delete();
+
+                if (!is_null($formAnswersTray) && isset($formAnswersTray->id)) {
+                    $formAnswersTrayHistoric = FormAnswersTrayHistoric::where('form_answers_trays_id', $formAnswersTray->id)->first();
+
+                    if (!is_null($formAnswersTrayHistoric)) {
+                        $formAnswersTrayHistoric->delete();
+                        $formAnswersTray->delete();
+                    }
                 }
             }
-
-
-
         }
     }
 
