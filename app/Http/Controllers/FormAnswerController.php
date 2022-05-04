@@ -584,17 +584,18 @@ class FormAnswerController extends Controller
         // Manejar bandejas
         $this->matchTrayFields($form_answer->form_id, $form_answer);
 
+        // ! Por verificar
         //creando el histórico de bandejas
-        if(count($trayFilds) > 0){
-            $trayHistoricCollection =  collect($trayFilds);
-            $trayHistoricCollection->each(function ($item, $key) use ($form_answer){
-                collect($item->tray)->each(function ($tray, $key) use ($form_answer,$item){
-                    $trayId = $tray['id'];
-                    unset($item->tray);
-                    $this->createTrayHistoric($trayId,$form_answer->id,$item);
-                });
-            });
-        }
+        // if(count($trayFilds) > 0){
+        //     $trayHistoricCollection =  collect($trayFilds);
+        //     $trayHistoricCollection->each(function ($item, $key) use ($form_answer){
+        //         collect($item->tray)->each(function ($tray, $key) use ($form_answer,$item){
+        //             $trayId = $tray['id'];
+        //             unset($item->tray);
+        //             $this->createTrayHistoric($trayId,$form_answer->id,$item);
+        //         });
+        //     });
+        // }
 
         // Log FormAnswer
         $this->logFormAnswer($form_answer);
@@ -607,8 +608,10 @@ class FormAnswerController extends Controller
      */
     public function matchTrayFields($formId, $formAnswer){
 
-        $trays = Tray::where('form_id',$formId)->with('trafficConfig')
-                        ->get();
+        $trays = Tray::where('form_id',$formId)->with('trafficConfig')->get();
+
+        // dd($trays[0]->fields, $trays[0]->fields_exit, $formAnswer->structure_answer);
+
         foreach ($trays as $tray) {
 
             /* entrada a bandeja */
@@ -620,7 +623,7 @@ class FormAnswerController extends Controller
                 $tray_in = collect($estructura)->filter( function ($value, $key) use ($field) {
                     // si es tipo options, validar el valor del option
                     if($field->type == "options"){
-                        if($value->id==$field->id){
+                        if($value->id == $field->id){
                             $validate = false;
                             if(!isset($field->value) || empty($field->value))
                             {
@@ -652,13 +655,12 @@ class FormAnswerController extends Controller
                     $in_fields_matched++;
                 }
             }
-            if($in_fields_matched>0 && ((count(json_decode($tray->fields))> 0) || ($in_fields_matched == count(json_decode($tray->fields))))){
+            if($in_fields_matched > 0 && ((count(json_decode($tray->fields) ) > 0) || ($in_fields_matched == count(json_decode($tray->fields))))){
                 if(!$tray->FormAnswers->contains($formAnswer->id)){
-                    $formAnswerTrays = new FormAnswersTray([
+                    $formAnswerTrays = FormAnswersTray::create([
                         'form_answer_id' => $formAnswer->id,
                         'tray_id' =>  $tray->id
                     ]);
-                    $formAnswerTrays->save();
                     $relUsersTraysModel = new RelTrayUser([
                         'trays_id' => $tray->id,
                         'rrhh_id' => auth()->user()->rrhh_id,
@@ -707,30 +709,23 @@ class FormAnswerController extends Controller
                     $exit_fields_matched++;
                 }
             }
+
             if((count(json_decode($tray->fields_exit)) >0 ) && ($exit_fields_matched == count(json_decode($tray->fields_exit)))){
                 if($tray->FormAnswers->contains($formAnswer->id)){
                     //semaforización
                     if(isset($tray->trafficConfig)){
                         $trafficTrayManager = app(TrafficTrayManager::class);
-                        $trafficTrayManager->disableTrafficTrayLog($formAnswer->id,$tray->trafficConfig->id);
+                        $trafficTrayManager->disableTrafficTrayLog($formAnswer->id, $tray->trafficConfig->id);
                     }
                 }
+                
                 $formAnswersTray = FormAnswersTray::where('form_answer_id', $formAnswer->id)
                     ->where('tray_id', $tray->id)->first();
                     
                 if (!is_null($formAnswersTray) && isset($formAnswersTray->id)) {
-                    $formAnswersTrayHistoric = FormAnswersTrayHistoric::where('form_answers_trays_id', $formAnswersTray->id)->first();
-                    
-                    if (!is_null($formAnswersTrayHistoric)) {
-                        $formAnswersTrayHistoric->delete();
-                    }
-                    
                     $formAnswersTray->delete();
                 }
             }
-
-
-
         }
     }
 
@@ -833,13 +828,19 @@ class FormAnswerController extends Controller
      */
     private function createTrayHistoric(int $trayId,int $formAnswerId,$structureAnswer) : void
     {
-        $formAnswersTrays = FormAnswersTray::create([
-            "form_answer_id" => $formAnswerId,
-            "tray_id" => $trayId
-        ]);
+        $formAnswersTray = FormAnswersTray::where('form_answer_id', $formAnswerId)
+            ->where('tray_id', $trayId)->whereNull('deleted_at')->first();
+        if (is_null($formAnswersTray)) {
+            $formAnswersTray = FormAnswersTray::create([
+                "form_answer_id" => $formAnswerId,
+                "tray_id" => $trayId
+            ]);
+        }
+
+        // dd($formAnswersTray->id);
         
         $formAnsersTrayHistoric = FormAnswersTrayHistoric::create([
-            "form_answers_trays_id" => $formAnswersTrays->id,
+            "form_answers_trays_id" => $formAnswersTray->id,
             "structure_answer" => json_encode($structureAnswer)
         ]);
     }

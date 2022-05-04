@@ -56,30 +56,32 @@ class FormAnswerTrayController extends Controller
     public function getFormAnswersTray($idFormAnswer, $idTray, $formId)
     {
         $formAnswersTray = FormAnswersTray::where("tray_id", $idTray)->where("form_answer_id", $idFormAnswer)->first();
-        $structureAnswerTray = json_decode($formAnswersTray->structure_answer_tray);
         $answerTray = [];
-        if(!isset($structureAnswerTray))
-        {
-            return [];
-        }
-        $sections = Section::where("form_id", $formId)->get();
-        foreach($structureAnswerTray as $answer)
-        {
-            foreach ($sections as $section)
+        if (!is_null($formAnswersTray)) {
+            $structureAnswerTray = json_decode($formAnswersTray->structure_answer_tray);
+            if(!isset($structureAnswerTray))
             {
-                $fields = json_decode($section->fields);
-                foreach ($fields as $field)
+                return [];
+            }
+            $sections = Section::where("form_id", $formId)->get();
+            foreach($structureAnswerTray as $answer)
+            {
+                foreach ($sections as $section)
                 {
-                    if($answer->id ==  $field->id && isset($field->tray))
+                    $fields = json_decode($section->fields);
+                    foreach ($fields as $field)
                     {
-                        foreach ($field->tray as $tray)
+                        if($answer->id ==  $field->id && isset($field->tray))
                         {
-                            if($tray->id == $idTray)
+                            foreach ($field->tray as $tray)
                             {
-                                array_push($answerTray, $answer);
+                                if($tray->id == $idTray)
+                                {
+                                    array_push($answerTray, $answer);
+                                }
                             }
+    
                         }
-
                     }
                 }
             }
