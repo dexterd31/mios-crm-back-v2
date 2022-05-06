@@ -582,7 +582,12 @@ class FormController extends Controller
             foreach($value as $val){
                 $field_name = collect($field->options)->filter(function($x) use ($val){
                     return $x->id == $val;
-                })->first()->name;
+                })->first();
+                if (is_null($field_name)) {
+                    continue;
+                } else {
+                    $field_name = $field_name->name;
+                }
                 array_push($multiAnswer,$field_name);
             }
             $response->valid = true;
