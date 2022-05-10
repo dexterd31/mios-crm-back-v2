@@ -24,6 +24,7 @@ use Carbon\Carbon;
 use App\Models\FormAnswersTray;
 use App\Models\RelAdvisorClientNew;
 use App\Models\RelTrayUser;
+use App\Traits\CheckDuplicateSections;
 use App\Traits\deletedFieldChecker;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -31,7 +32,7 @@ use Illuminate\Support\Facades\Storage;
 
 class FormAnswerController extends Controller
 {
-    use deletedFieldChecker;
+    use deletedFieldChecker, CheckDuplicateSections;
     
     private $ciuService;
     private $nominaService;
@@ -317,11 +318,17 @@ class FormAnswerController extends Controller
                 $formAnswersData = $data["formAnswers"];
                 $files = $data["files"];
             }
+
             $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
-            if($clientNewId)
-            {
+
+            if($clientNewId) {
+                $formAnswerId = FormAnswer::where('form_id',$request->form_id)
+                    ->where('client_new_id', $clientNewId)
+                    ->latest()->first()->id;
                 $data["preloaded"] = $this->preloaded($request->form_id, $clientNewId, $files);
+                $data["duplicate_sections"] = $this->checkDuplicateSections($formAnswerId);
             }
+
             return response()->json($data, $data['code']);
         }
         return $this->errorResponse('Error al buscar la gestion', 500);
@@ -772,12 +779,19 @@ class FormAnswerController extends Controller
         } elseif (!$directory && $formAnswer){
             $clientData = $formAnswer->structure_answer;
         }
-
+        
         $structure_data = collect(json_decode($clientData))->filter(function (&$field) use ($form_id){
-            return !$this->deletedFieldChecker($form_id, $field->id) && $field->preloaded;
+            $fieldId = $field->id;
+
+            if (isset($field->duplicated)) {
+                $fieldId = (int) substr((string) $fieldId, 0, -1);
+            }
+
+            return !$this->deletedFieldChecker($form_id, $fieldId) && $field->preloaded;
+
         })->toArray();
 
-        $answer['data'] = array_merge($structure_data,$files);
+        $answer['data'] = array_merge($structure_data, $files);
         $answer['client_id']=$client_new_id;
 
         return $answer;
