@@ -16,13 +16,14 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FormReportExport;
 use App\Services\CiuService;
 use App\Imports\ClientNewImport;
+use App\Traits\FieldsForSection;
+use App\Traits\FindAndFormatValues;
 use stdClass;
 use Throwable;
 
-use function GuzzleHttp\json_encode;
-
 class UploadController extends Controller
 {
+    use FieldsForSection, FindAndFormatValues;
 
     //Constante para limitar la carga de filas
     static $LIMIT_ROW_UPLOAD_FILE = 10000;
@@ -120,7 +121,7 @@ class UploadController extends Controller
      * @param array ->assigns Arreglo de Objetos con la assignación de idField a cada una de las columnas del campo [{"columnName":"Nombre","id":123456789890},{"columnName":"Apellido","id":12345678908787}]
      * @param string ->action Cadena de texto con dos posibles opciones update o none
      */
-    public function excelClients(Request $request , MiosHelper $miosHelper, FormController $formController, ClientNewController $clientNewController, FormAnswerController $formAnswerController, KeyValueController $keyValuesController){
+    public function excelClients(Request $request , MiosHelper $miosHelper, ClientNewController $clientNewController, FormAnswerController $formAnswerController, KeyValueController $keyValuesController){
         //Primero Validamos que todos los parametros necesarios para el correcto funcionamiento esten
         $this->validate($request,[
             'excel' => 'required',
@@ -138,7 +139,7 @@ class UploadController extends Controller
             $assignUsersObject = $this->getAdvisers($request,$totalRows);
         }
         if($totalRows){
-            $fieldsLoad = $formController->getSpecificFieldForSection(json_decode($request->assigns),$request->form_id);
+            $fieldsLoad = $this->getSpecificFieldForSection(json_decode($request->assigns),$request->form_id);
             foreach(json_decode($request->assigns) as $assign){
                 foreach($fieldsLoad as $key=>$field){
                     if($field->id == $assign->id){
@@ -285,7 +286,7 @@ class UploadController extends Controller
         $keysValueExcel=[];
         $errorAnswers=[];
         if($totalArchivos>0){
-            $fieldsLoad=$formController->getSpecificFieldForSection(json_decode($request->assigns),$request->form_id);
+            $fieldsLoad = $this->getSpecificFieldForSection(json_decode($request->assigns),$request->form_id);
             foreach(json_decode($request->assigns) as $assign){
                 foreach($fieldsLoad as $key=>$field){
                     if($field->id == $assign->id){
@@ -390,8 +391,7 @@ class UploadController extends Controller
         $answer->success=false;
         $answer->message=[];
         if($formId != null){
-            $formController = new FormController();
-            $formatValue = $formController->findAndFormatValues($formId,$field->id,$data);
+            $formatValue = $this->findAndFormatValues($formId,$field->id,$data);
             if($formatValue->valid){
                 $data = $formatValue->value;
             }else{

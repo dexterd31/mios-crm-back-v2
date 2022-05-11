@@ -25,13 +25,20 @@ use App\Models\FormAnswersTray;
 use App\Models\RelAdvisorClientNew;
 use App\Models\RelTrayUser;
 use App\Traits\deletedFieldChecker;
+use App\Traits\FieldsForSection;
+use App\Traits\FindAndFormatValues;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 
 class FormAnswerController extends Controller
 {
+<<<<<<< Updated upstream
     use deletedFieldChecker;
+=======
+    use deletedFieldChecker, CheckDuplicateSections;
+    use FieldsForSection, FindAndFormatValues;
+>>>>>>> Stashed changes
     
     private $ciuService;
     private $nominaService;
@@ -363,8 +370,7 @@ class FormAnswerController extends Controller
 
                 if(!isset($answer->duplicated))
                 {
-                    $formController = new FormController();
-                    $select = $formController->findAndFormatValues($formId, $answer->id, $answer->value);
+                    $select = $this->findAndFormatValues($formId, $answer->id, $answer->value);
                     if($select->valid)
                     {
                         $answer->value = $select->value;
@@ -435,16 +441,15 @@ class FormAnswerController extends Controller
                 $new_structure_answer = [];
                 foreach($form_answers->structure_answer as $field){
                     $fieldSend=[];
-                    $formController = new FormController();
                     if(isset($field['duplicated'])){
-                        $select = $formController->findAndFormatValues($form_answers->form_id, $field['duplicated']['idOriginal'], $field['value']);
+                        $select = $this->findAndFormatValues($form_answers->form_id, $field['duplicated']['idOriginal'], $field['value']);
                     }else{
-                        $select = $formController->findAndFormatValues($form_answers->form_id, $field['id'], $field['value']);
+                        $select = $this->findAndFormatValues($form_answers->form_id, $field['id'], $field['value']);
                     }
                     $object= new \stdClass();
                     $object->id=$field['id'];
                     array_push($fieldSend,$object);
-                    $input=$formController->getSpecificFieldForSection($fieldSend,$form_answers->form_id);
+                    $input = $this->getSpecificFieldForSection($fieldSend,$form_answers->form_id);
                     $field['type']=$input[$object->id]->type;
                     $field['controlType']=$input[$object->id]->controlType;
 

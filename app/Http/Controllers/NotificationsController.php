@@ -8,6 +8,7 @@ use App\Models\NotificationsAttatchment;
 use App\Models\NotificationsType;
 use App\Services\NotificationsService;
 use App\Traits\ApiResponse;
+use App\Traits\FindAndFormatValues;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,7 +16,8 @@ use Illuminate\Support\Facades\Storage;
 
 class NotificationsController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, FindAndFormatValues;
+    
     public function __construct()
     {
         $this->middleware('auth');
@@ -320,9 +322,8 @@ class NotificationsController extends Controller
         $emailBody = $notification->template_to_send;
         //SEGUNDA FASE MATAR SI NO EXISTE DESTINATARIO
         $to = (isset($notification->to))? json_decode($notification->to) : null;
-        $formController = new FormController();
         foreach (json_decode($formAnswerData->structure_answer,true) as $data){
-            $formatedAnswer = $formController->findAndFormatValues($formId,$data['id'],$data['value'],true);
+            $formatedAnswer = $this->findAndFormatValues($formId,$data['id'],$data['value'],true);
             if(isset($formatedAnswer->name)){
                 $data['value'] = $formatedAnswer->name;
             }else{
