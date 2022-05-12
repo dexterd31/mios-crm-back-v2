@@ -322,11 +322,12 @@ class FormAnswerController extends Controller
             $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
 
             if($clientNewId) {
-                $formAnswerId = FormAnswer::where('form_id',$request->form_id)
+                $formAnswer = FormAnswer::where('form_id',$request->form_id)
                     ->where('client_new_id', $clientNewId)
-                    ->latest()->first()->id;
+                    ->latest()->first();
                 $data["preloaded"] = $this->preloaded($request->form_id, $clientNewId, $files);
-                $data["duplicate_sections"] = $this->checkDuplicateSections($formAnswerId);
+                $data["duplicate_sections"] = !is_null($formAnswer) ?
+                    $this->checkDuplicateSections($formAnswer->id) : [];
             }
 
             return response()->json($data, $data['code']);
