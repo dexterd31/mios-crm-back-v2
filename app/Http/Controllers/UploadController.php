@@ -16,6 +16,8 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FormReportExport;
 use App\Services\CiuService;
 use App\Imports\ClientNewImport;
+use App\Managers\ClientsManager;
+use App\Models\RelAdvisorClientNew;
 use App\Traits\FieldsForSection;
 use App\Traits\FindAndFormatValues;
 use stdClass;
@@ -177,24 +179,25 @@ class UploadController extends Controller
                             array_push($errorAnswers, $dataValidate->message);
                         }
                     }
+
                     if(!count($errorAnswers)){
-                        $newRequest = new Request();
-                        $newRequest->replace([
+                        $clientsManager = new ClientsManager;
+                        $data = [
                             "form_id" => $request->form_id,
-                            "unique_indentificator" => json_encode($answerFields->uniqueIdentificator[0]),
-                        ]);
+                            "unique_indentificator" => $answerFields->uniqueIdentificator[0],
+                        ];
+
                         DB::connection()->enableQueryLog();
-                        $existingClient = $clientNewController->index($newRequest);
+                        $existingClient = $clientsManager->findClient($data);
+
                         if(!empty($existingClient) && !filter_var($request->action, FILTER_VALIDATE_BOOLEAN)){
                             $updateExisting = false;
                         }
+
                         if($updateExisting){
-                            $newRequest->replace([
-                                "form_id" => $request->form_id,
-                                "information_data" => json_encode($answerFields->informationClient),
-                                "unique_indentificator" => json_encode($answerFields->uniqueIdentificator[0]),
-                            ]);
-                            $row = $clientNewController->create($newRequest);
+                            $data['information_data'] = $answerFields->informationClient;
+                            $row = $clientsManager->updateOrCreateClient($data);
+
                             if(isset($row->id)){
                                 //insertar en rel_advisor_client_new
                                 if($assignUsers){
@@ -630,30 +633,35 @@ class UploadController extends Controller
      * @param $clienId
      * @return mixed
      */
-    private function assignUsers($assignUsersObject, $clienId){
-        $relAdvisorClientNewController = new RelAdvisorClientNewController();
-
+    private function assignUsers($assignUsersObject, $clienId)
+    {
         $advisers = $assignUsersObject->advisers;
         $advisersIndex = $assignUsersObject->advisersIndex;
         $quantity = $assignUsersObject->quantity;
-        $existingRel = $relAdvisorClientNewController->show($clienId, $advisers[$advisersIndex]['id_rhh']);
+        $rrhhId = $advisers[$advisersIndex]['id_rhh'];
+
+        $existingRel = RelAdvisorClientNew::where('client_new_id',$clienId)->where('rrhh_id',$rrhhId)->first();
+
         if(!isset($existingRel->id)){
-            $relAdvisorRequest = new Request();
-            $relAdvisorRequest->replace([
-                'client_new_id'=>$clienId,
-                'rrhh_id'=>$advisers[$advisersIndex]['id_rhh']
+            $relAdvisorClient = RelAdvisorClientNew::create([
+                'client_new_id' => $clienId,
+                'rrhh_id' => $rrhhId,
+                'managed' => false
             ]);
-            $relAdvisorClient = $relAdvisorClientNewController->create($relAdvisorRequest);
+
             if(!empty($relAdvisorClient)){
                 $assignUsersObject->quantity++;
             }
+
         }else{
             $assignUsersObject->quantity++;
         }
+
         if($advisers[$advisersIndex]['quantity'] == $quantity){
             $assignUsersObject->advisersIndex++;
             $assignUsersObject->quantity = 1;
         }
+
         return $assignUsersObject;
     }
 

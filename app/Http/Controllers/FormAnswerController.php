@@ -33,12 +33,8 @@ use Illuminate\Support\Facades\Storage;
 
 class FormAnswerController extends Controller
 {
-<<<<<<< Updated upstream
     use deletedFieldChecker;
-=======
-    use deletedFieldChecker, CheckDuplicateSections;
     use FieldsForSection, FindAndFormatValues;
->>>>>>> Stashed changes
     
     private $ciuService;
     private $nominaService;

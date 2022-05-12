@@ -32,7 +32,7 @@ class RelAdvisorClientNewController extends Controller
      * @param  \App\Models\RelAdvisorClientNew  $relAdvisorClientNew
      * @return \Illuminate\Http\Response
      */
-    public function show($clientNewId,$rrhhId)
+    public function show($clientNewId, $rrhhId)
     {
         return $this->relAdvisorModel->where('client_new_id',$clientNewId)->where('rrhh_id',$rrhhId)->first();
     }
