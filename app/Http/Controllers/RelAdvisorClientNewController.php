@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CustomerDataPreload;
 use App\Models\RelAdvisorClientNew;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
@@ -32,7 +33,7 @@ class RelAdvisorClientNewController extends Controller
      * @param  \App\Models\RelAdvisorClientNew  $relAdvisorClientNew
      * @return \Illuminate\Http\Response
      */
-    public function show($clientNewId,$rrhhId)
+    public function show($clientNewId, $rrhhId)
     {
         return $this->relAdvisorModel->where('client_new_id',$clientNewId)->where('rrhh_id',$rrhhId)->first();
     }
@@ -62,10 +63,9 @@ class RelAdvisorClientNewController extends Controller
 
     public function showAssignedClients(int $formId)
     {
-        $assignedClients = RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)
-        ->join('client_news', 'client_news.id', 'rel_advisor_client_new.client_new_id')
-        ->where('client_news.form_id', $formId)->where('rel_advisor_client_new.managed', false)->get(['client_news.created_at', 'client_news.unique_indentificator']);
-
+        $assignedClients = CustomerDataPreload::adviserFilter(auth()->user()->rrhh_id)->formFilter($formId)
+            ->managedFilter(false)->get(['created_at', 'unique_identificator']);
+        
         $assignedClients->each(function ($item) {
             $item->unique_indentificator = json_decode($item->unique_indentificator);
         });
