@@ -7,9 +7,12 @@ use App\Models\Tray;
 use App\Models\FormAnswersTray;
 use App\Models\Section;
 use App\Http\Controllers\FormController;
+use App\Traits\FindAndFormatValues;
 
 class FormAnswerTrayController extends Controller
 {
+    use FindAndFormatValues;
+    
     public function __construct()
     {
         $this->middleware('auth');
@@ -37,8 +40,7 @@ class FormAnswerTrayController extends Controller
         foreach ($formAnswerLogs as $structureAnswer){
             foreach (json_decode($structureAnswer['structure_answer']) as $answer){
                 if(array_search($answer->id,json_decode($saveHistoric))!== false){
-                    $formController = new FormController();
-                    $formatValue = $formController->findAndFormatValues($traysSaveHistoric->form_id,$answer->id,$answer->value);
+                    $formatValue = $this->findAndFormatValues($traysSaveHistoric->form_id,$answer->id,$answer->value);
                     if($formatValue->valid){
                         if($formatValue->valid && isset($formatValue->name)){
                             $answer->value = $formatValue->name;
