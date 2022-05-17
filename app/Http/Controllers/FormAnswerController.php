@@ -313,6 +313,7 @@ class FormAnswerController extends Controller
                 {
                     $clientNewId = $formAnswersData[0]->client_new_id;
                 }
+                // dd($formAnswersData);
                 $data = $this->setNewStructureAnswer($formAnswersData, $request->form_id);
 
                 $formAnswersData = $data["formAnswers"];
@@ -366,20 +367,26 @@ class FormAnswerController extends Controller
             $structureAnswer = $formAnswer['structure_answer'] ? json_decode($formAnswer['structure_answer']) : json_decode($formAnswer['data']);
             $new_structure_answer = array();
             foreach ($structureAnswer as $answer) {
-                if ($this->deletedFieldChecker($formId, $answer->id)){
+                $fieldId = $answer->id;
+
+                if (isset($answer->duplicated)) {
+                    $digitNumbers = explode('_', $answer->key);
+                    $digitNumbers = strlen($digitNumbers[count($digitNumbers) - 1]);
+                    $fieldId = (int) substr((string) $fieldId, 0, - $digitNumbers);
+                }
+
+                if ($this->deletedFieldChecker($formId, $fieldId)){
                     continue;
                 }
 
-                // if(!isset($answer->duplicated))
-                // {
-                    $formController = new FormController();
-                    $select = $formController->findAndFormatValues($formId, $answer->id, $answer->value);
-                    if($select->valid)
-                    {
-                        $answer->value = $select->value;
-                    }
-                    array_push($new_structure_answer,$answer);
-                // }
+                $formController = new FormController();
+                $select = $formController->findAndFormatValues($formId, $fieldId, $answer->value);
+
+                if($select->valid) {
+                    $answer->value = $select->value;
+                }
+
+                array_push($new_structure_answer,$answer);
 
                 if(isset($answer->nameFile) && $answer->nameFile && $answer->preloaded)
                 {
@@ -787,7 +794,9 @@ class FormAnswerController extends Controller
             $fieldId = $field->id;
 
             if (isset($field->duplicated)) {
-                $fieldId = (int) substr((string) $fieldId, 0, -1);
+                $digitNumbers = explode('_', $field->key);
+                $digitNumbers = strlen($digitNumbers[count($digitNumbers) - 1]);
+                $fieldId = (int) substr((string) $fieldId, 0, - $digitNumbers);
             }
 
             return !$this->deletedFieldChecker($form_id, $fieldId) && $field->preloaded;
