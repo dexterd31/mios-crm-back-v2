@@ -180,6 +180,8 @@ class UploadController extends Controller
                     if (!count($errorAnswers)) {
                         $uniqueIdentificator = $answerFields->uniqueIdentificator[0];
 
+                        $rrhhId = 0;
+                        
                         if ($assignUsers) {
                             [$assignUsersObject, $rrhhId] = $this->assignUsers($assignUsersObject, $uniqueIdentificator, $request->form_id);
                         };
