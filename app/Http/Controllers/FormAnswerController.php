@@ -319,15 +319,16 @@ class FormAnswerController extends Controller
                 $files = $data["files"];
             }
 
+            
             $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
-
+            
             if($clientNewId) {
                 $formAnswer = FormAnswer::where('form_id',$request->form_id)
-                    ->where('client_new_id', $clientNewId)
-                    ->latest()->first();
+                ->where('client_new_id', $clientNewId)
+                ->latest()->first();
                 $data["preloaded"] = $this->preloaded($request->form_id, $clientNewId, $files);
                 $data["duplicate_sections"] = !is_null($formAnswer) ?
-                    $this->checkDuplicateSections($formAnswer->id) : [];
+                $this->checkDuplicateSections($formAnswer->id) : [];
             }
 
             return response()->json($data, $data['code']);
@@ -369,8 +370,8 @@ class FormAnswerController extends Controller
                     continue;
                 }
 
-                if(!isset($answer->duplicated))
-                {
+                // if(!isset($answer->duplicated))
+                // {
                     $formController = new FormController();
                     $select = $formController->findAndFormatValues($formId, $answer->id, $answer->value);
                     if($select->valid)
@@ -378,7 +379,8 @@ class FormAnswerController extends Controller
                         $answer->value = $select->value;
                     }
                     array_push($new_structure_answer,$answer);
-                }
+                // }
+
                 if(isset($answer->nameFile) && $answer->nameFile && $answer->preloaded)
                 {
                     array_push($files, (Object)[
