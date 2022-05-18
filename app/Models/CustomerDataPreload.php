@@ -15,14 +15,14 @@ class CustomerDataPreload extends Model
         'form_answer'
     ];
 
-    //? Relaciones -----------------------------------------------------------------------------------------------------
+    //? Relations ------------------------------------------------------------------------------------------------------
 
     public function form()
     {
         return $this->belongsTo(Form::class);
     }
 
-    //? Filtros --------------------------------------------------------------------------------------------------------
+    //? Filters --------------------------------------------------------------------------------------------------------
 
     public function scopeFormFilter($query, $formId)
     {
@@ -50,5 +50,29 @@ class CustomerDataPreload extends Model
         if ($managed) {
             return $query->where('managed', $managed);
         }
+    }
+
+    //? Accessor -------------------------------------------------------------------------------------------------------
+
+    public function getUniqueIdentificatorAttribute($value)
+    {
+        return json_decode($value);
+    }
+
+    public function getCustomerDataAttribute($value)
+    {
+        return json_decode($value);
+    }
+
+    public function getFormAnswerAttribute($value)
+    {
+        return json_decode($value);
+    }
+
+    //? Mutators -------------------------------------------------------------------------------------------------------
+
+    public function setUniqueIdentificatorAttribute($value)
+    {
+        $this->attributes['unique_identificator'] = json_encode($value);
     }
 }

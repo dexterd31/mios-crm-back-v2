@@ -608,8 +608,6 @@ class FormAnswerController extends Controller
 
         $trays = Tray::where('form_id',$formId)->with('trafficConfig')->get();
 
-        // dd($trays[0]->fields, $trays[0]->fields_exit, $formAnswer->structure_answer);
-
         foreach ($trays as $tray) {
 
             /* entrada a bandeja */
@@ -834,8 +832,6 @@ class FormAnswerController extends Controller
                 "tray_id" => $trayId
             ]);
         }
-
-        // dd($formAnswersTray->id);
         
         $formAnsersTrayHistoric = FormAnswersTrayHistoric::create([
             "form_answers_trays_id" => $formAnswersTray->id,
@@ -869,22 +865,31 @@ class FormAnswerController extends Controller
         return $exists;
     }
 
+    /**
+     * Realiza la consulta sobre los datos precargados de los excel y consulta si el cliente existe,
+     * si existe lo actualiza de haberlo solicitado, sino, lo crea.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param mixed $formId
+     * @param mixed $uniqueIdentificator
+     * @return void
+     */
     private function processPreloadedData($formId, $uniqueIdentificator)
     {
-        $customerDataPreload = CustomerDataPreload::where('form_id', $formId)->where('adviser', auth()->user()->rrhh_id)
-            ->whereJsonContains("unique_identificator",["id" => $uniqueIdentificator->id]);
+        $customerDataPreload = CustomerDataPreload::where('form_id', $formId)
+        ->whereJsonContains("unique_identificator",["id" => $uniqueIdentificator->id]);
 
         $uniqueValueInt = intval($uniqueIdentificator->value);
-
+        
         if (gettype($uniqueValueInt) == 'integer') {
-            $customerDataPreload->where(function ($query) use ($uniqueValueInt,$uniqueIdentificator) {
+            $customerDataPreload = $customerDataPreload->where(function ($query) use ($uniqueValueInt, $uniqueIdentificator) {
                 $query->whereJsonContains("unique_identificator",["value" => $uniqueIdentificator->value])
                 ->orWhereJsonContains("unique_identificator",["value" => $uniqueValueInt]);
             });
         } else {
-            $customerDataPreload->whereJsonContains("unique_identificator",["value" => $uniqueIdentificator->value]);
+            $customerDataPreload = $customerDataPreload->whereJsonContains("unique_identificator",["value" => $uniqueIdentificator->value]);
         }
-
+        
         $customerDataPreload = $customerDataPreload->first();
 
         if (!is_null($customerDataPreload)) {
@@ -895,10 +900,10 @@ class FormAnswerController extends Controller
                 "unique_indentificator" => $customerDataPreload->unique_identificator,
             ];
 
-            $existingClient = $clientsManager->findClient($data);
+            $client = $clientsManager->findClient($data);
             $updateExisting = true;
 
-            if(!empty($existingClient) && !$customerDataPreload->to_update){
+            if(!empty($client) && !$customerDataPreload->to_update){
                 $updateExisting = false;
             }
             
@@ -913,15 +918,12 @@ class FormAnswerController extends Controller
                 }
             }
         }
-
-
-
-
-
     }
 
     /**
-     * @desc crea o actualiza un registro en la tabla directories
+     * Crea o actualiza un registro en la tabla directories
+     * @author Edwin David Sanchez Babin <e.sanchez@montechelo.com.co> 
+     * 
      * @param array $data
      * @param int $formId
      * @param int $clientId

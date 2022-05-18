@@ -44,4 +44,10 @@ class ClientNew extends Model
             return $query->where('form_id', $formId);
         }
     }
+
+    //*Para una posterior mejora en todo el codigo
+    // public function setUniqueIndentificatorAttribute($value)
+    // {
+    //     $this->attributes['unique_indentificator'] = json_encode($value);
+    // }
 }
