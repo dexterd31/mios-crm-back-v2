@@ -188,11 +188,11 @@ class UploadController extends Controller
                         
                         CustomerDataPreload::create([
                             'form_id' => $request->form_id,
-                            'customer_data' => json_encode($answerFields->informationClient),
+                            'customer_data' => $answerFields->informationClient,
                             'to_update' => filter_var($request->action, FILTER_VALIDATE_BOOLEAN),
                             'adviser' => $rrhhId,
-                            'unique_identificator' => json_encode($uniqueIdentificator),
-                            'form_answer' => json_encode($formAnswerClient),
+                            'unique_identificator' => $uniqueIdentificator,
+                            'form_answer' => $formAnswerClient,
                         ]);
 
                         $dataLoad++;

@@ -85,7 +85,7 @@ class ClientsManager
         $client = ClientNew::create([
             "form_id" => $data['form_id'],
             "information_data" => $this->formatInformationData($data['information_data']),
-            "unique_indentificator" => $data['unique_indentificator'],
+            "unique_indentificator" => json_encode($data['unique_indentificator']),
         ]);
 
         return $client;
