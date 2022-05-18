@@ -75,4 +75,14 @@ class CustomerDataPreload extends Model
     {
         $this->attributes['unique_identificator'] = json_encode($value);
     }
+
+    public function setCustomerDataAttribute($value)
+    {
+        $this->attributes['customer_data'] = json_encode($value);
+    }
+
+    public function setFormAnswerAttribute($value)
+    {
+        $this->attributes['form_answer'] = json_encode($value);
+    }
 }
