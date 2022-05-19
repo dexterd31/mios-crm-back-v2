@@ -26,6 +26,7 @@ use Carbon\Carbon;
 use App\Models\FormAnswersTray;
 use App\Models\RelAdvisorClientNew;
 use App\Models\RelTrayUser;
+use App\Traits\CheckDuplicateSections;
 use App\Traits\deletedFieldChecker;
 use App\Traits\FieldsForSection;
 use App\Traits\FindAndFormatValues;
@@ -35,7 +36,7 @@ use Illuminate\Support\Facades\Storage;
 
 class FormAnswerController extends Controller
 {
-    use deletedFieldChecker;
+    use deletedFieldChecker, CheckDuplicateSections;
     use FieldsForSection, FindAndFormatValues;
     
     private $ciuService;
@@ -312,16 +313,25 @@ class FormAnswerController extends Controller
                 {
                     $clientNewId = $formAnswersData[0]->client_new_id;
                 }
+                // dd($formAnswersData);
                 $data = $this->setNewStructureAnswer($formAnswersData, $request->form_id);
 
                 $formAnswersData = $data["formAnswers"];
                 $files = $data["files"];
             }
+
+            
             $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
-            if($clientNewId)
-            {
+            
+            if($clientNewId) {
+                $formAnswer = FormAnswer::where('form_id',$request->form_id)
+                ->where('client_new_id', $clientNewId)
+                ->latest()->first();
                 $data["preloaded"] = $this->preloaded($request->form_id, $clientNewId, $files);
+                $data["duplicate_sections"] = !is_null($formAnswer) ?
+                $this->checkDuplicateSections($formAnswer->id) : [];
             }
+
             return response()->json($data, $data['code']);
         }
         return $this->errorResponse('Error al buscar la gestion', 500);
@@ -357,7 +367,15 @@ class FormAnswerController extends Controller
             $structureAnswer = $formAnswer['structure_answer'] ? json_decode($formAnswer['structure_answer']) : json_decode($formAnswer['data']);
             $new_structure_answer = array();
             foreach ($structureAnswer as $answer) {
-                if ($this->deletedFieldChecker($formId, $answer->id)){
+                $fieldId = $answer->id;
+
+                if (isset($answer->duplicated)) {
+                    $digitNumbers = explode('_', $answer->key);
+                    $digitNumbers = strlen($digitNumbers[count($digitNumbers) - 1]);
+                    $fieldId = (int) substr((string) $fieldId, 0, - $digitNumbers);
+                }
+
+                if ($this->deletedFieldChecker($formId, $fieldId)){
                     continue;
                 }
 
@@ -370,6 +388,9 @@ class FormAnswerController extends Controller
                     }
                     array_push($new_structure_answer,$answer);
                 }
+
+                array_push($new_structure_answer,$answer);
+
                 if(isset($answer->nameFile) && $answer->nameFile && $answer->preloaded)
                 {
                     array_push($files, (Object)[
@@ -768,12 +789,21 @@ class FormAnswerController extends Controller
         } elseif (!$directory && $formAnswer){
             $clientData = $formAnswer->structure_answer;
         }
-
+        
         $structure_data = collect(json_decode($clientData))->filter(function (&$field) use ($form_id){
-            return !$this->deletedFieldChecker($form_id, $field->id) && $field->preloaded;
+            $fieldId = $field->id;
+
+            if (isset($field->duplicated)) {
+                $digitNumbers = explode('_', $field->key);
+                $digitNumbers = strlen($digitNumbers[count($digitNumbers) - 1]);
+                $fieldId = (int) substr((string) $fieldId, 0, - $digitNumbers);
+            }
+
+            return !$this->deletedFieldChecker($form_id, $fieldId) && $field->preloaded;
+
         })->toArray();
 
-        $answer['data'] = array_merge($structure_data,$files);
+        $answer['data'] = array_merge($structure_data, $files);
         $answer['client_id']=$client_new_id;
 
         return $answer;
