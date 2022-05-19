@@ -124,7 +124,7 @@ class UploadController extends Controller
      */
     public function excelClients(Request $request , MiosHelper $miosHelper)
     {
-        $this->validate($request,[
+        $this->validate($request, [
             'excel' => 'required',
             'form_id' => 'required',
             'assigns' => 'required',
