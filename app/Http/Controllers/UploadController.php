@@ -16,13 +16,15 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FormReportExport;
 use App\Services\CiuService;
 use App\Imports\ClientNewImport;
+use App\Models\CustomerDataPreload;
+use App\Traits\FieldsForSection;
+use App\Traits\FindAndFormatValues;
 use stdClass;
 use Throwable;
 
-use function GuzzleHttp\json_encode;
-
 class UploadController extends Controller
 {
+    use FieldsForSection, FindAndFormatValues;
 
     //Constante para limitar la carga de filas
     static $LIMIT_ROW_UPLOAD_FILE = 10000;
@@ -120,113 +122,82 @@ class UploadController extends Controller
      * @param array ->assigns Arreglo de Objetos con la assignación de idField a cada una de las columnas del campo [{"columnName":"Nombre","id":123456789890},{"columnName":"Apellido","id":12345678908787}]
      * @param string ->action Cadena de texto con dos posibles opciones update o none
      */
-    public function excelClients(Request $request , MiosHelper $miosHelper, FormController $formController, ClientNewController $clientNewController, FormAnswerController $formAnswerController, KeyValueController $keyValuesController){
-        //Primero Validamos que todos los parametros necesarios para el correcto funcionamiento esten
-        $this->validate($request,[
+    public function excelClients(Request $request , MiosHelper $miosHelper)
+    {
+        $this->validate($request, [
             'excel' => 'required',
             'form_id' => 'required',
             'assigns' => 'required',
             'action' => 'required',
             'assign_users' => 'required',
         ]);
+
         $userRrhhId = auth()->user()->rrhh_id;
         $file = $request->file('excel');
         $rows = json_decode(Excel::toCollection(new ClientNewImport(), $file)[0]);
         $totalRows = count($rows);
         $assignUsers = filter_var($request->assign_users,FILTER_VALIDATE_BOOLEAN);
+
         if($assignUsers){
             $assignUsersObject = $this->getAdvisers($request,$totalRows);
         }
+
         if($totalRows){
-            $fieldsLoad = $formController->getSpecificFieldForSection(json_decode($request->assigns),$request->form_id);
-            foreach(json_decode($request->assigns) as $assign){
-                foreach($fieldsLoad as $key=>$field){
-                    if($field->id == $assign->id){
-                        $fieldsLoad[$assign->columnName]=$field;
+            $fieldsLoad = $this->getSpecificFieldForSection(json_decode($request->assigns), $request->form_id);
+            foreach (json_decode($request->assigns) as $assign){
+                foreach ($fieldsLoad as $key => $field) {
+                    if ($field->id == $assign->id) {
+                        $fieldsLoad[$assign->columnName] = $field;
                         unset($fieldsLoad[$key]);
                     }
                 }
             }
-            if(count($fieldsLoad)){
-                $directories = [];
-                $dataLoad=0;
+            if (count($fieldsLoad)) {
+                $dataLoad = 0;
                 $dataNotLoad=[];
-                foreach($rows as $index => $row){
+                foreach ($rows as $index => $row) {
                     $answerFields = (Object)[];
                     $errorAnswers = [];
                     $formAnswerClient=[];
-                    $formAnswerClientIndexado=[];
-                    $updateExisting = true;
-                    foreach($row as $dataIndex => $data){
+                    foreach ($row as $dataIndex => $data) {
                         $dataValidate = $this->validateClientDataUpload($fieldsLoad[$dataIndex], $data, $request->form_id);
-                        if($dataValidate->success){
-                            foreach($dataValidate->in as $in){
-                                if (!isset($answerFields->$in)){
+                        if ($dataValidate->success) {
+                            foreach ($dataValidate->in as $in) {
+                                if (!isset($answerFields->$in)) {
                                     $answerFields->$in = [];
                                 }
                                 array_push($answerFields->$in, $dataValidate->$in);
-                                array_push($directories, $dataValidate->$in);
                             }
                             array_push($formAnswerClient, $dataValidate->formAnswer);
-                            array_push($formAnswerClientIndexado, $dataValidate->formAnswerIndex);
-                        }else{
+                        } else {
                             $fila = strval(intval($index) + 1);
                             $columnErrorMessage = "Error en la Fila $fila";
                             array_push($dataValidate->message, $columnErrorMessage);
                             array_push($errorAnswers, $dataValidate->message);
                         }
                     }
-                    if(!count($errorAnswers)){
-                        $newRequest = new Request();
-                        $newRequest->replace([
-                            "form_id" => $request->form_id,
-                            "unique_indentificator" => json_encode($answerFields->uniqueIdentificator[0]),
+
+                    if (!count($errorAnswers)) {
+                        $uniqueIdentificator = $answerFields->uniqueIdentificator[0];
+
+                        $rrhhId = 0;
+                        
+                        if ($assignUsers) {
+                            [$assignUsersObject, $rrhhId] = $this->assignUsers($assignUsersObject, $uniqueIdentificator, $request->form_id);
+                        };
+                        
+                        CustomerDataPreload::create([
+                            'form_id' => $request->form_id,
+                            'customer_data' => $answerFields->informationClient,
+                            'to_update' => filter_var($request->action, FILTER_VALIDATE_BOOLEAN),
+                            'adviser' => $rrhhId,
+                            'unique_identificator' => $uniqueIdentificator,
+                            'form_answer' => $formAnswerClient,
                         ]);
-                        DB::connection()->enableQueryLog();
-                        $existingClient = $clientNewController->index($newRequest);
-                        if(!empty($existingClient) && !filter_var($request->action, FILTER_VALIDATE_BOOLEAN)){
-                            $updateExisting = false;
-                        }
-                        if($updateExisting){
-                            $newRequest->replace([
-                                "form_id" => $request->form_id,
-                                "information_data" => json_encode($answerFields->informationClient),
-                                "unique_indentificator" => json_encode($answerFields->uniqueIdentificator[0]),
-                            ]);
-                            $row = $clientNewController->create($newRequest);
-                            if(isset($row->id)){
-                                //insertar en rel_advisor_client_new
-                                if($assignUsers){
-                                    $assignUsersObject = $this->assignUsers($assignUsersObject,$row->id);
-                                }
-                                //TODO: insertar en directories, crear columna index data e insertar la variable $formAnswerClientIndexado en la tabla
-                                /*$formAnswerSave=$formAnswerController->create($row->id,$request->form_id,$formAnswerClient,$formAnswerClientIndexado,"upload");*/
-                                $saveDirectories = $this->addToDirectories($formAnswerClient,$request->form_id,$row->id,$formAnswerClientIndexado);
-                                $dataLoad++;
-                                /*if(isset($formAnswerSave->id)){
-                                    if(isset($answerFields->preload)){
-                                        $keyValues=$keyValuesController->createKeysValue($answerFields->preload,$request->form_id,$row->id);
-                                        Log::info("Key values created, fila $index");
-                                        if(!isset($keyValues)){
-                                            array_push($errorAnswers,"No se han podido insertar keyValues para el cliente ".$row->id);
-                                        }else{
-                                            $dataLoad++;
-                                        }
-                                    }else{
-                                        $dataLoad++;
-                                    }
-                                } else {
-                                    array_push($errorAnswers,"No se han podido insertar el form answer para el cliente ".$row->id);
-                                }*/
-                            }else{
-                                array_push($errorAnswers,"No se han podido insertar el cliente ubicado en la fila ".$index." del archivo cargado.");
-                            }
-                        } else {
-                            if($assignUsers){
-                                $assignUsersObject = $this->assignUsers($assignUsersObject,$row->id);
-                            }
-                        }
-                    }else{
+
+                        $dataLoad++;
+                        
+                    } else {
                         array_push($dataNotLoad, $errorAnswers);
                     }
                 }
@@ -234,7 +205,7 @@ class UploadController extends Controller
                 $resume->totalRegistros = $totalRows;
                 $resume->cargados = $dataLoad;
                 $resume->nocargados = count($dataNotLoad);
-                $resume->errores=$dataNotLoad;
+                $resume->errores = $dataNotLoad;
                 $informe = new stdClass();
                 $informe->totalArchivo = $resume->totalRegistros;
                 $informe->cargados = $resume->cargados;
@@ -254,10 +225,10 @@ class UploadController extends Controller
                 $response->uploadId = $uploadId;
                 $response->informe = $informe;
                 $data = $miosHelper->jsonResponse(true,200,"data",$response);
-            }else{
+            } else {
                 $data = $miosHelper->jsonResponse(false,400,"message","No se encuentra los campos en el formulario");
             }
-        }else{
+        } else {
             $data = $miosHelper->jsonResponse(false,400,"message","El archivo que intenta cargar no tiene datos.");
         }
         return response()->json($data,$data['code']);
@@ -285,7 +256,7 @@ class UploadController extends Controller
         $keysValueExcel=[];
         $errorAnswers=[];
         if($totalArchivos>0){
-            $fieldsLoad=$formController->getSpecificFieldForSection(json_decode($request->assigns),$request->form_id);
+            $fieldsLoad = $this->getSpecificFieldForSection(json_decode($request->assigns),$request->form_id);
             foreach(json_decode($request->assigns) as $assign){
                 foreach($fieldsLoad as $key=>$field){
                     if($field->id == $assign->id){
@@ -390,8 +361,7 @@ class UploadController extends Controller
         $answer->success=false;
         $answer->message=[];
         if($formId != null){
-            $formController = new FormController();
-            $formatValue = $formController->findAndFormatValues($formId,$field->id,$data);
+            $formatValue = $this->findAndFormatValues($formId,$field->id,$data);
             if($formatValue->valid){
                 $data = $formatValue->value;
             }else{
@@ -630,31 +600,42 @@ class UploadController extends Controller
      * @param $clienId
      * @return mixed
      */
-    private function assignUsers($assignUsersObject, $clienId){
-        $relAdvisorClientNewController = new RelAdvisorClientNewController();
-
+    private function assignUsers($assignUsersObject, $uniqueIndentificator, $formId)
+    {
         $advisers = $assignUsersObject->advisers;
         $advisersIndex = $assignUsersObject->advisersIndex;
         $quantity = $assignUsersObject->quantity;
-        $existingRel = $relAdvisorClientNewController->show($clienId, $advisers[$advisersIndex]['id_rhh']);
-        if(!isset($existingRel->id)){
-            $relAdvisorRequest = new Request();
-            $relAdvisorRequest->replace([
-                'client_new_id'=>$clienId,
-                'rrhh_id'=>$advisers[$advisersIndex]['id_rhh']
-            ]);
-            $relAdvisorClient = $relAdvisorClientNewController->create($relAdvisorRequest);
-            if(!empty($relAdvisorClient)){
-                $assignUsersObject->quantity++;
-            }
-        }else{
+        $rrhhId = $advisers[$advisersIndex]['id_rhh'];
+
+        $customerDataPreload = CustomerDataPreload::where('form_id', $formId)->where('adviser', $rrhhId)
+            ->whereJsonContains("unique_identificator",["id"=>$uniqueIndentificator->id]);
+
+        $uniqueValueInt = intval($uniqueIndentificator->value);
+
+        if (gettype($uniqueValueInt) == 'integer') {
+            $customerDataPreload->where(function ($query) use ($uniqueValueInt,$uniqueIndentificator) {
+                $query->whereJsonContains("unique_identificator",["value" => $uniqueIndentificator->value])
+                ->orWhereJsonContains("unique_identificator",["value" => $uniqueValueInt]);
+            });
+        } else {
+            $customerDataPreload->whereJsonContains("unique_identificator",["value" => $uniqueIndentificator->value]);
+        }
+
+        $customerDataPreload = $customerDataPreload->first();
+
+        if (!isset($customerDataPreload->id)) {
+            $assignUsersObject->quantity++;
+        } else {
+            $rrhhId = 0;
             $assignUsersObject->quantity++;
         }
+
         if($advisers[$advisersIndex]['quantity'] == $quantity){
             $assignUsersObject->advisersIndex++;
             $assignUsersObject->quantity = 1;
         }
-        return $assignUsersObject;
+
+        return [$assignUsersObject, $rrhhId];
     }
 
     /**

@@ -14,10 +14,13 @@ use App\Http\Controllers\UploadController;
 use Carbon\Carbon;
 use App\Models\FormAnswer;
 use App\Models\FormAnswerLog;
+use App\Traits\FieldsForSection;
 use Illuminate\Support\Facades\Http;
 
 class TmkPymesController extends Controller
 {
+    use FieldsForSection;
+    
     private $formId;
     private $idFieldsInFormLead;
     private $leadFields;
@@ -240,7 +243,7 @@ class TmkPymesController extends Controller
             array_push($idFields,$object);
         }
         $formController = new FormController();
-        $prechargables=$formController->getSpecificFieldForSection($idFields,$this->formId);
+        $prechargables = $this->getSpecificFieldForSection($idFields,$this->formId);
         $fullField=[];
         foreach($this->idFieldsInFormLead as $k=>$field){
             foreach($prechargables as $preload){
