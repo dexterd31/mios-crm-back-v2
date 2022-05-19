@@ -313,13 +313,12 @@ class FormAnswerController extends Controller
                 {
                     $clientNewId = $formAnswersData[0]->client_new_id;
                 }
-                // dd($formAnswersData);
+
                 $data = $this->setNewStructureAnswer($formAnswersData, $request->form_id);
 
                 $formAnswersData = $data["formAnswers"];
                 $files = $data["files"];
             }
-
             
             $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
             
@@ -379,14 +378,11 @@ class FormAnswerController extends Controller
                     continue;
                 }
 
-                if(!isset($answer->duplicated))
-                {
-                    $select = $this->findAndFormatValues($formId, $answer->id, $answer->value);
-                    if($select->valid)
-                    {
-                        $answer->value = $select->value;
-                    }
-                    array_push($new_structure_answer,$answer);
+                $formController = new FormController();
+                $select = $formController->findAndFormatValues($formId, $fieldId, $answer->value);
+
+                if($select->valid) {
+                    $answer->value = $select->value;
                 }
 
                 array_push($new_structure_answer,$answer);
