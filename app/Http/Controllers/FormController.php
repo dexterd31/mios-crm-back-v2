@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\FormReportExport;
 use App\Models\ApiConnection;
+use App\Models\CustomerDataPreload;
 use App\Models\Form;
 use App\Models\FormLog;
 use App\Models\FormType;
@@ -99,9 +100,8 @@ class FormController extends Controller
         $templateExist = (count($templateController->showByFormId($id)) > 0);
         $formsSections->template = $templateExist;
         $formsSections->view_chronometer = (boolean)$formsSections->tipification_time;
-        $formsSections->count_assigned_clients = RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)
-        ->join('client_news', 'client_news.id', 'rel_advisor_client_new.client_new_id')
-        ->where('client_news.form_id', $id)->where('rel_advisor_client_new.managed', false)->get()->count();
+        $formsSections->count_assigned_clients = CustomerDataPreload::adviserFilter(auth()->user()->rrhh_id)
+        ->formFilter($id)->managedFilter(false)->get(['id'])->count();
         unset($formsSections->tipification_time);
         return response()->json($formsSections);
     }
