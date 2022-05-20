@@ -272,13 +272,12 @@ class FormAnswerController extends Controller
         $files = [];
         $replace["form_id"] = $request->form_id;
 
-        $this->processPreloadedData($replace["form_id"], (object) $dataFilters["client_unique"][0]);
-
         $clientNewController = new ClientNewController();
         $clientNewData = new Request();
-
+        
         if(isset($dataFilters["isClientInfo"]))
         {
+            $this->processPreloadedData($replace["form_id"], (object) $dataFilters["client_unique"][0]);
             $replace["information_data"] = $dataFilters["isClientInfo"];
         }
 
