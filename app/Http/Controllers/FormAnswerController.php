@@ -917,6 +917,13 @@ class FormAnswerController extends Controller
                     $customerDataPreload->delete();
                 }
             }
+
+            if (isset($client->id) && $customerDataPreload->adviser) {
+                RelAdvisorClientNew::create([
+                    'client_new_id' => $client->id,
+                    'rrhh_id' => $customerDataPreload->adviser
+                ]);
+            }
         }
     }
 
