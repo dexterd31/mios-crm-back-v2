@@ -216,6 +216,15 @@ class FormAnswerController extends Controller
             $notificationsController = new NotificationsController();
             $notificationsController->sendNotifications($request->form_id,$form_answer);
 
+            if(!is_null($request->client_id)){
+                $relAdvisorClientNew = RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)->where('client_new_id', $request->client_id)->first();
+    
+                if (!is_null($relAdvisorClientNew)) {
+                    $relAdvisorClientNew->managed = true;
+                    $relAdvisorClientNew->save();
+                }
+            }
+
             return $this->successResponse(['message'=>"Información guardada correctamente",'formAsnwerId'=>$form_answer->id]);
         }
         return $this->errorResponse($data["message"], 500);
@@ -264,18 +273,17 @@ class FormAnswerController extends Controller
         $files = [];
         $replace["form_id"] = $request->form_id;
 
-        $this->processPreloadedData($replace["form_id"], (object) $dataFilters["client_unique"][0]);
-
         $clientNewController = new ClientNewController();
         $clientNewData = new Request();
-
+        
         if(isset($dataFilters["isClientInfo"]))
         {
             $replace["information_data"] = $dataFilters["isClientInfo"];
         }
-
+        
         if(isset($dataFilters["client_unique"]))
         {
+            $this->processPreloadedData($replace["form_id"], (object) $dataFilters["client_unique"][0]);
             $replace["unique_indentificator"] = json_encode($dataFilters["client_unique"][0]);
         }
 
@@ -942,6 +950,13 @@ class FormAnswerController extends Controller
                     $saveDirectories = $this->addToDirectories($customerDataPreload->form_answer, $formId, $client->id,$customerDataPreload->customer_data);
                     $customerDataPreload->delete();
                 }
+            }
+
+            if (isset($client->id) && $customerDataPreload->adviser) {
+                RelAdvisorClientNew::create([
+                    'client_new_id' => $client->id,
+                    'rrhh_id' => $customerDataPreload->adviser
+                ]);
             }
         }
     }

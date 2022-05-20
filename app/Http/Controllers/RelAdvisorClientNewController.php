@@ -63,8 +63,21 @@ class RelAdvisorClientNewController extends Controller
 
     public function showAssignedClients(int $formId)
     {
-        $assignedClients = CustomerDataPreload::adviserFilter(auth()->user()->rrhh_id)->formFilter($formId)
-            ->managedFilter(false)->get(['created_at', 'unique_identificator']);
+        $assignedClients1 = RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)
+        ->join('client_news', 'client_news.id', 'rel_advisor_client_new.client_new_id')
+        ->where('client_news.form_id', $formId)->where('rel_advisor_client_new.managed', false)->get(['client_news.created_at', 'client_news.unique_indentificator']);
+
+        $assignedClients1->each(function ($item) {
+            $item->unique_identificator = json_decode($item->unique_indentificator);
+            unset($item->unique_indentificator);
+        });
+
+        $assignedClients1 = $assignedClients1->toArray();
+
+        $assignedClients2 = CustomerDataPreload::adviserFilter(auth()->user()->rrhh_id)->formFilter($formId)
+        ->managedFilter(false)->get(['created_at', 'unique_identificator'])->toArray();
+
+        $assignedClients = array_merge($assignedClients1, $assignedClients2);
 
         return response()->json(['assigned_clients' => $assignedClients], 200);
     }
