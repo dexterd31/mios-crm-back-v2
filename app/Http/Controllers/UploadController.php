@@ -19,6 +19,7 @@ use App\Imports\ClientNewImport;
 use App\Models\CustomerDataPreload;
 use App\Traits\FieldsForSection;
 use App\Traits\FindAndFormatValues;
+use Maatwebsite\Excel\HeadingRowImport;
 use stdClass;
 use Throwable;
 
@@ -79,34 +80,37 @@ class UploadController extends Controller
     * @return array ->prechargables Arreglo de objetos en el que se pasan el id y el label del field precargable [{"id": 11221212,"label": "Primer Nombre"},{"id": 7838473847,"label": "Primer Apellido"}].
     * @author Leonardo Giraldo Quintero
     */
-    public function extractColumnsNames(Request $request, MiosHelper $miosHelper){
+    public function extractColumnsNames(Request $request, MiosHelper $miosHelper)
+    {
+        $this->validate($request, [
+            'excel' => 'required|file'
+        ]);
+
         try {
+            $uploadImport = new UploadImport;
             $file = $request->file('excel');
-            $answer = [];
-            if(isset($file)){
-                $form_import_validate = Excel::toArray(new UploadImport, $file);
-                if(count($form_import_validate[0])>1 && count($form_import_validate[0][0])>0 && $form_import_validate[0][0]<>NULL){
-                    $FormController = new FormController();
-                    $prechargables = $FormController->searchPrechargeFields($request->form_id)->getData();
-                    $answer['columnsFile'] = $form_import_validate[0][0];
-                    $answer['prechargables']=[];
-                    $answer['rowsFile'] = count($form_import_validate[0]) - 1;
-                    foreach($prechargables->section as $section){
-                        foreach($section->fields as $field){
-                            if($field){
-                                $prechargedField=new \stdClass();
-                                $prechargedField->id=$field->id;
-                                $prechargedField->label=$field->label;
-                                array_push($answer['prechargables'],$prechargedField);
-                            }
+            Excel::import($uploadImport, $file);
+            $fileInfo = $uploadImport->getFileInfo();
+
+            if(count($fileInfo['columnsFile']) && $fileInfo['rowsFile'] > 0){
+                $FormController = new FormController();
+                $prechargables = $FormController->searchPrechargeFields($request->form_id)->getData();
+                $fileInfo['prechargables'] = [];
+
+                foreach($prechargables->section as $section){
+                    foreach($section->fields as $field){
+                        if($field){
+                            $prechargedField = new stdClass();
+                            $prechargedField->id = $field->id;
+                            $prechargedField->label = $field->label;
+                            array_push($fileInfo['prechargables'], $prechargedField);
                         }
                     }
-                    $data = $miosHelper->jsonResponse(true,200,"data",$answer);
-                }else{
-                    $data = $miosHelper->jsonResponse(false,406,"message","El archivo cargado no tiene datos para cargar, recuerde que en la primera fila se debe utilizar para identificar los datos asignados a cada columna.");
                 }
+
+                $data = $miosHelper->jsonResponse(true,200,"data",$fileInfo);
             }else{
-                $data = $miosHelper->jsonResponse(false,406,"message","No se encuentra ningun archivo");
+                $data = $miosHelper->jsonResponse(false,406,"message","El archivo cargado no tiene datos para cargar, recuerde que en la primera fila se debe utilizar para identificar los datos asignados a cada columna.");
             }
             return response()->json($data, $data['code']);
         } catch (Throwable $e) {
@@ -139,7 +143,7 @@ class UploadController extends Controller
         $assignUsers = filter_var($request->assign_users,FILTER_VALIDATE_BOOLEAN);
 
         if($assignUsers){
-            $assignUsersObject = $this->getAdvisers($request,$totalRows);
+            $assignUsersObject = $this->getAdvisers($request, $totalRows);
         }
 
         if($totalRows){
