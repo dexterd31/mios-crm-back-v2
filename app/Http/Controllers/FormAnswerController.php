@@ -277,12 +277,12 @@ class FormAnswerController extends Controller
         
         if(isset($dataFilters["isClientInfo"]))
         {
-            $this->processPreloadedData($replace["form_id"], (object) $dataFilters["client_unique"][0]);
             $replace["information_data"] = $dataFilters["isClientInfo"];
         }
-
+        
         if(isset($dataFilters["client_unique"]))
         {
+            $this->processPreloadedData($replace["form_id"], (object) $dataFilters["client_unique"][0]);
             $replace["unique_indentificator"] = json_encode($dataFilters["client_unique"][0]);
         }
 
