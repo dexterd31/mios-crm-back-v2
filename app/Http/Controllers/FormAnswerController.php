@@ -338,21 +338,17 @@ class FormAnswerController extends Controller
     private function getDataFilters($filters)
     {
         $dataFilters = [];
-        $filds = ["isClientInfo", "preloaded", "client_unique"];
-        foreach ($filters as $filter)
-        {
-            foreach ($filds as $fild)
-            {
-                if(isset($filter[$fild]))
-                {
-                    if(!isset($dataFilters[$fild]))
-                    {
-                        $dataFilters[$fild] = [];
+        $attributes = ["isClientInfo", "preloaded", "client_unique"];
+        foreach ($filters as $filter) {
+            foreach ($attributes as $attribute) {
+                if(isset($filter[$attribute])) {
+                    if ($filter[$attribute]) {
+                        $dataFilters[$attribute][] = $filter;
                     }
-                    array_push($dataFilters[$fild], $filter);
                 }
             }
         }
+
         return $dataFilters;
     }
 
