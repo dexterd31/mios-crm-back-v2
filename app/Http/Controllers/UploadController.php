@@ -19,7 +19,6 @@ use App\Imports\ClientNewImport;
 use App\Models\CustomerDataPreload;
 use App\Traits\FieldsForSection;
 use App\Traits\FindAndFormatValues;
-use Maatwebsite\Excel\HeadingRowImport;
 use stdClass;
 use Throwable;
 
@@ -134,107 +133,57 @@ class UploadController extends Controller
             'assigns' => 'required',
             'action' => 'required',
             'assign_users' => 'required',
+            'rows_file' => 'required'
         ]);
 
-        $userRrhhId = auth()->user()->rrhh_id;
-        $file = $request->file('excel');
-        $rows = json_decode(Excel::toCollection(new ClientNewImport(), $file)[0]);
-        $totalRows = count($rows);
         $assignUsers = filter_var($request->assign_users,FILTER_VALIDATE_BOOLEAN);
 
         if($assignUsers){
-            $assignUsersObject = $this->getAdvisers($request, $totalRows);
+            $assignUsersObject = $this->getAdvisers($request, $request->rows_file);
         }
 
-        if($totalRows){
-            $fieldsLoad = $this->getSpecificFieldForSection(json_decode($request->assigns), $request->form_id);
-            foreach (json_decode($request->assigns) as $assign){
-                foreach ($fieldsLoad as $key => $field) {
-                    if ($field->id == $assign->id) {
-                        $fieldsLoad[$assign->columnName] = $field;
-                        unset($fieldsLoad[$key]);
-                    }
+        $userRrhhId = auth()->user()->rrhh_id;
+        $file = $request->file('excel');
+        
+        
+        $fieldsLoad = $this->getSpecificFieldForSection(json_decode($request->assigns), $request->form_id);
+        foreach (json_decode($request->assigns) as $assign){
+            foreach ($fieldsLoad as $key => $field) {
+                if ($field->id == $assign->id) {
+                    $fieldsLoad[$assign->columnName] = $field;
+                    unset($fieldsLoad[$key]);
                 }
             }
-            if (count($fieldsLoad)) {
-                $dataLoad = 0;
-                $dataNotLoad=[];
-                foreach ($rows as $index => $row) {
-                    $answerFields = (Object)[];
-                    $errorAnswers = [];
-                    $formAnswerClient=[];
-                    foreach ($row as $dataIndex => $data) {
-                        $dataValidate = $this->validateClientDataUpload($fieldsLoad[$dataIndex], $data, $request->form_id);
-                        if ($dataValidate->success) {
-                            foreach ($dataValidate->in as $in) {
-                                if (!isset($answerFields->$in)) {
-                                    $answerFields->$in = [];
-                                }
-                                array_push($answerFields->$in, $dataValidate->$in);
-                            }
-                            array_push($formAnswerClient, $dataValidate->formAnswer);
-                        } else {
-                            $fila = strval(intval($index) + 1);
-                            $columnErrorMessage = "Error en la Fila $fila";
-                            array_push($dataValidate->message, $columnErrorMessage);
-                            array_push($errorAnswers, $dataValidate->message);
-                        }
-                    }
+        }
+        
+        if (count($fieldsLoad)) {
+            $clientNewImport = new ClientNewImport($this, $request->form_id, filter_var($request->action, FILTER_VALIDATE_BOOLEAN), $fieldsLoad, $assignUsersObject);
+            Excel::import($clientNewImport, $file);
 
-                    if (!count($errorAnswers)) {
-                        $uniqueIdentificator = $answerFields->uniqueIdentificator[0];
-
-                        $rrhhId = 0;
-                        
-                        if ($assignUsers) {
-                            [$assignUsersObject, $rrhhId] = $this->assignUsers($assignUsersObject, $uniqueIdentificator, $request->form_id);
-                        };
-                        
-                        CustomerDataPreload::create([
-                            'form_id' => $request->form_id,
-                            'customer_data' => $answerFields->informationClient,
-                            'to_update' => filter_var($request->action, FILTER_VALIDATE_BOOLEAN),
-                            'adviser' => $rrhhId,
-                            'unique_identificator' => $uniqueIdentificator,
-                            'form_answer' => $formAnswerClient,
-                        ]);
-
-                        $dataLoad++;
-                        
-                    } else {
-                        array_push($dataNotLoad, $errorAnswers);
-                    }
-                }
-                $resume = new stdClass();
-                $resume->totalRegistros = $totalRows;
-                $resume->cargados = $dataLoad;
-                $resume->nocargados = count($dataNotLoad);
-                $resume->errores = $dataNotLoad;
-                $informe = new stdClass();
-                $informe->totalArchivo = $resume->totalRegistros;
-                $informe->cargados = $resume->cargados;
-                $informe->noCargados = $resume->nocargados;
-                $informe->resumenHtml = implode("<br>",["<b>Total Archivo</b>: $resume->totalRegistros " , "<b>Cargados</b>: $resume->cargados", "<b>No Cargados</b>: $resume->nocargados"]);
-                $saveUploadRequest = new Request();
-                $saveUploadRequest->replace([
-                    "name" => $file->getClientOriginalName(),
-                    "rrhh_id" => $userRrhhId,
-                    "form_id" => $request->form_id,
-                    "count" => $dataLoad,
-                    "method" => $request->action,
-                    "resume"=> json_encode($resume)
-                ]);
-                $uploadId = $this->saveUpload($saveUploadRequest);
-                $response = new stdClass();
-                $response->uploadId = $uploadId;
-                $response->informe = $informe;
-                $data = $miosHelper->jsonResponse(true,200,"data",$response);
-            } else {
-                $data = $miosHelper->jsonResponse(false,400,"message","No se encuentra los campos en el formulario");
-            }
+            $resume = $clientNewImport->getResume();
+            $informe = new stdClass();
+            $informe->totalArchivo = $resume->totalRegistros;
+            $informe->cargados = $resume->cargados;
+            $informe->noCargados = $resume->nocargados;
+            $informe->resumenHtml = implode("<br>",["<b>Total Archivo</b>: $resume->totalRegistros " , "<b>Cargados</b>: $resume->cargados", "<b>No Cargados</b>: $resume->nocargados"]);
+            $saveUploadRequest = new Request();
+            $saveUploadRequest->replace([
+                "name" => $file->getClientOriginalName(),
+                "rrhh_id" => $userRrhhId,
+                "form_id" => $request->form_id,
+                "count" => $resume->cargados,
+                "method" => $request->action,
+                "resume"=> json_encode($resume)
+            ]);
+            $uploadId = $this->saveUpload($saveUploadRequest);
+            $response = new stdClass();
+            $response->uploadId = $uploadId;
+            $response->informe = $informe;
+            $data = $miosHelper->jsonResponse(true,200,"data",$response);
         } else {
-            $data = $miosHelper->jsonResponse(false,400,"message","El archivo que intenta cargar no tiene datos.");
+            $data = $miosHelper->jsonResponse(false,400,"message","No se encuentra los campos en el formulario");
         }
+
         return response()->json($data,$data['code']);
     }
 
@@ -596,50 +545,6 @@ class UploadController extends Controller
         $response->advisersIndex = 0;
         $response->advisers = $advisers;
         return $response;
-    }
-
-    /**
-     * @desc Asigna los registros a los usuarios insertando en la tabla rel_advisor_client_new
-     * @param $assignUsersObject
-     * @param $clienId
-     * @return mixed
-     */
-    private function assignUsers($assignUsersObject, $uniqueIndentificator, $formId)
-    {
-        $advisers = $assignUsersObject->advisers;
-        $advisersIndex = $assignUsersObject->advisersIndex;
-        $quantity = $assignUsersObject->quantity;
-        $rrhhId = $advisers[$advisersIndex]['id_rhh'];
-
-        $customerDataPreload = CustomerDataPreload::where('form_id', $formId)->where('adviser', $rrhhId)
-            ->whereJsonContains("unique_identificator",["id"=>$uniqueIndentificator->id]);
-
-        $uniqueValueInt = intval($uniqueIndentificator->value);
-
-        if (gettype($uniqueValueInt) == 'integer') {
-            $customerDataPreload->where(function ($query) use ($uniqueValueInt,$uniqueIndentificator) {
-                $query->whereJsonContains("unique_identificator",["value" => $uniqueIndentificator->value])
-                ->orWhereJsonContains("unique_identificator",["value" => $uniqueValueInt]);
-            });
-        } else {
-            $customerDataPreload->whereJsonContains("unique_identificator",["value" => $uniqueIndentificator->value]);
-        }
-
-        $customerDataPreload = $customerDataPreload->first();
-
-        if (!isset($customerDataPreload->id)) {
-            $assignUsersObject->quantity++;
-        } else {
-            $rrhhId = 0;
-            $assignUsersObject->quantity++;
-        }
-
-        if($advisers[$advisersIndex]['quantity'] == $quantity){
-            $assignUsersObject->advisersIndex++;
-            $assignUsersObject->quantity = 1;
-        }
-
-        return [$assignUsersObject, $rrhhId];
     }
 
     /**
