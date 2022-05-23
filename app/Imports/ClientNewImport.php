@@ -29,7 +29,7 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading
         $this->toUpdate = $toUpdate;
         $this->fieldsLoad = $fieldsLoad;
         $this->assignUsers = $assignUsers;
-        $this->resume = ['dataLoad' => 0, 'errores' => [], 'nocargados' => 0, 'totalRegistros' => 0];
+        $this->resume = ['cargados' => 0, 'errores' => [], 'nocargados' => 0, 'totalRegistros' => 0];
     }
 
     public function collection(Collection $rows)
