@@ -157,7 +157,7 @@ class UploadController extends Controller
         }
         
         if (count($fieldsLoad)) {
-            $clientNewImport = new ClientNewImport($this, $request->form_id, filter_var($request->action, FILTER_VALIDATE_BOOLEAN), $fieldsLoad, $assignUsersObject);
+            $clientNewImport = new ClientNewImport($this, $request->form_id, filter_var($request->action, FILTER_VALIDATE_BOOLEAN), $fieldsLoad, $assignUsersObject ?? null);
             Excel::import($clientNewImport, $file);
 
             $resume = $clientNewImport->getResume();
