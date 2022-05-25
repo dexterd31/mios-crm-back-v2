@@ -266,8 +266,8 @@ class FormAnswerController extends Controller
     {
         $miosHelper = new MiosHelper();
         $filterHelper = new FilterHelper();
-        $requestJson = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
-        $dataFilters = $this->getDataFilters($requestJson['filter']);
+        $filter = $request->filter;
+        $dataFilters = $this->getDataFilters($filter);
         $data = [];
         $files = [];
         $replace["form_id"] = $request->form_id;
@@ -293,20 +293,20 @@ class FormAnswerController extends Controller
         }else{
             $clientNew = [];
         }
-
+        
         if(!isset($clientNew["error"]))
         {
             $clientNewId = $clientNew ? $clientNew->id : null;
-            $formAnswers = $this->filterFormAnswer($request->form_id, $requestJson['filter'], $clientNewId);
+            $formAnswers = $this->filterFormAnswer($request->form_id, $filter, $clientNewId);
             $formAnswersData = $formAnswers->getCollection();
             if(count($formAnswersData) == 0)
             {
-                $formAnswers = $filterHelper->filterByDataBase($request->form_id, $clientNewId, $requestJson['filter']);
+                $formAnswers = $filterHelper->filterByDataBase($request->form_id, $clientNewId, $filter);
                 $formAnswersData = $formAnswers->getCollection();
             }
             if(count($formAnswersData) == 0)
             {
-                $formAnswersApi = $filterHelper->filterbyApi($request->form_id, $requestJson['filter']);
+                $formAnswersApi = $filterHelper->filterbyApi($request->form_id, $filter);
                 if(isset($formAnswersApi))
                 {
                     $formAnswers = $formAnswersApi;
@@ -397,7 +397,7 @@ class FormAnswerController extends Controller
                 'id' => $filter['id'],
                 'value' => $filter['value']
             ];
-            $filterData = json_encode($filterData);
+            $filterData = json_encode($filterData, JSON_UNESCAPED_UNICODE);
             $formAnswersQuery = $formAnswersQuery->whereRaw("json_contains(lower(form_answer_index_data), lower('$filterData'))");
         }
         if($clientNewId)
@@ -761,6 +761,8 @@ class FormAnswerController extends Controller
             ->where('client_new_id', $client_new_id)
             ->latest()->first();
 
+        $answer = [];
+
         if($formAnswer && $directory) {
             $clientData = $formAnswer->structure_answer;
 
@@ -773,12 +775,14 @@ class FormAnswerController extends Controller
             $clientData = $formAnswer->structure_answer;
         }
 
-        $structure_data = collect(json_decode($clientData))->filter(function (&$field) use ($form_id){
-            return !$this->deletedFieldChecker($form_id, $field->id) && $field->preloaded;
-        })->toArray();
-
-        $answer['data'] = array_merge($structure_data,$files);
-        $answer['client_id']=$client_new_id;
+        if (isset($clientData)) {
+            $structure_data = collect(json_decode($clientData))->filter(function (&$field) use ($form_id){
+                return !$this->deletedFieldChecker($form_id, $field->id) && $field->preloaded;
+            })->toArray();
+    
+            $answer['data'] = array_merge($structure_data,$files);
+            $answer['client_id']=$client_new_id;
+        }
 
         return $answer;
     }
