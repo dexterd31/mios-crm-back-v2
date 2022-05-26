@@ -7,12 +7,13 @@ use App\Models\CustomerDataPreload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 
 
-class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading
+class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading, WithBatchInserts
 {
     private $formId;
     private $toUpdate;
@@ -21,7 +22,7 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading
     private $resume;
     private $uploadController;
 
-    public function __construct(UploadController $uploadController, $formId = 0, $toUpdate = false, $fieldsLoad = [], $assignUsers = null)
+    public function __construct(UploadController $uploadController = null, $formId = 0, $toUpdate = false, $fieldsLoad = [], $assignUsers = null)
     {
         HeadingRowFormatter::default('none');
         $this->uploadController = $uploadController;
@@ -34,14 +35,14 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading
 
     public function collection(Collection $rows)
     {
-        $rows->each(function ($row, $rowIndex) {
+        foreach ($rows as $rowIndex => $row) {
             $answerFields = (Object)[];
             $errorAnswers = [];
             $formAnswerClient=[];
-
-            $row->each(function ($field, $fieldIndex) use ($rowIndex, &$answerFields, &$errorAnswers, &$formAnswerClient) {
+    
+            foreach ($row as $fieldIndex => $field) {
                 $dataValidate = $this->uploadController->validateClientDataUpload($this->fieldsLoad[$fieldIndex], $field, $this->formId);
-
+    
                 if ($dataValidate->success) {
                     foreach ($dataValidate->in as $in) {
                         if (!isset($answerFields->$in)) {
@@ -58,7 +59,7 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading
                     array_push($dataValidate->message, $columnErrorMessage);
                     array_push($errorAnswers, $dataValidate->message);
                 }
-            });
+            }
     
             if (!count($errorAnswers)) {
                 $uniqueIdentificator = $answerFields->uniqueIdentificator[0];
@@ -84,14 +85,19 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading
                 $this->resume['errores'][] = $errorAnswers;
                 $this->resume['nocargados']++;
             }
-
+    
             $this->resume['totalRegistros']++;
-        });
+        }
     }
 
     public function chunkSize(): int
     {
-        return 100;
+        return 5000;
+    }
+
+    public function batchSize(): int
+    {
+        return 5000;
     }
 
     public function getResume()
@@ -139,7 +145,7 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading
 
         if($advisers[$advisersIndex]['quantity'] == $quantity){
             $assignUsersObject->advisersIndex++;
-            $assignUsersObject->quantity = 1;
+            $assignUsersObject->quantity = 0;
         }
 
         return [$assignUsersObject, $rrhhId];
