@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use Exception;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -14,7 +15,7 @@ class UploadImport implements ToCollection, WithChunkReading
     public function __construct()
     {
         $this->fileInfo['columnsFile'] = [];
-        $this->fileInfo['rowsFile'] = -1;
+        $this->fileInfo['rowsFile'] = 0;
     }
 
     /**
@@ -22,36 +23,27 @@ class UploadImport implements ToCollection, WithChunkReading
     */
     public function collection(Collection $rows)
     {
-        $rows->each(function ($row, $index) {
+        foreach ($rows as $index => $row) {
             if ($this->chunkCounter == 1 && !$index) {
-                $row->each(function ($field) {
+                foreach ($row as $field) {
                     if (!is_null($field)) {
                         $this->fileInfo['columnsFile'][] = $field;
+                    } else {
+                        throw new Exception("Error: Por favor verifique que la cabecera de las columnas no esten vacias.");
+                        break;
                     }
-                });
+                }
+            } else {
+                $this->fileInfo['rowsFile']++;
             }
-
-            $numOfColumns = count($this->fileInfo['columnsFile']);
-
-            $row->each(function ($field, $index) use ($numOfColumns) {
-                $countNullFields = 1;
-
-                if (is_null($field)) {
-                    $countNullFields++;
-                }
-
-                if ($countNullFields < $numOfColumns && ($index + 1) == $numOfColumns) {
-                    $this->fileInfo['rowsFile']++;
-                }
-            });
-        });
+        }
 
         $this->chunkCounter++;
     }
 
     public function chunkSize(): int
     {
-        return 100;
+        return 5000;
     }
 
     public function getFileInfo()
