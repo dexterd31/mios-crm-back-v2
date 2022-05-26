@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Managers\ClientsManager;
 use App\Managers\TrafficTrayManager;
 use App\Models\ApiConnection;
 use App\Models\Directory;
@@ -11,6 +12,7 @@ use App\Models\KeyValue;
 use App\Models\Section;
 use App\Models\Tray;
 use App\Models\Attachment;
+use App\Models\CustomerDataPreload;
 use App\Models\FormAnswerLog;
 use App\Models\FormAnswerMiosPhone;
 use App\Services\CiuService;
@@ -25,6 +27,8 @@ use App\Models\FormAnswersTray;
 use App\Models\RelAdvisorClientNew;
 use App\Models\RelTrayUser;
 use App\Traits\deletedFieldChecker;
+use App\Traits\FieldsForSection;
+use App\Traits\FindAndFormatValues;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -32,6 +36,7 @@ use Illuminate\Support\Facades\Storage;
 class FormAnswerController extends Controller
 {
     use deletedFieldChecker;
+    use FieldsForSection, FindAndFormatValues;
     
     private $ciuService;
     private $nominaService;
@@ -261,23 +266,25 @@ class FormAnswerController extends Controller
     {
         $miosHelper = new MiosHelper();
         $filterHelper = new FilterHelper();
-        $requestJson = json_decode(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $request->getContent()), true);
-        $dataFilters = $this->getDataFilters($requestJson['filter']);
+        $filter = $request->filter;
+        $dataFilters = $this->getDataFilters($filter);
         $data = [];
         $files = [];
+        $replace["form_id"] = $request->form_id;
 
         $clientNewController = new ClientNewController();
         $clientNewData = new Request();
-        $replace = [];
+        
         if(isset($dataFilters["isClientInfo"]))
         {
             $replace["information_data"] = $dataFilters["isClientInfo"];
         }
+        
         if(isset($dataFilters["client_unique"]))
         {
+            $this->processPreloadedData($replace["form_id"], (object) $dataFilters["client_unique"][0]);
             $replace["unique_indentificator"] = json_encode($dataFilters["client_unique"][0]);
         }
-        $replace["form_id"] = $request->form_id;
 
         if(isset($replace["form_id"]) && (isset($replace["information_data"]) || isset($replace["unique_indentificator"]))){
             $clientNewData->replace($replace);
@@ -286,19 +293,20 @@ class FormAnswerController extends Controller
         }else{
             $clientNew = [];
         }
+        
         if(!isset($clientNew["error"]))
         {
             $clientNewId = $clientNew ? $clientNew->id : null;
-            $formAnswers = $this->filterFormAnswer($request->form_id, $requestJson['filter'], $clientNewId);
+            $formAnswers = $this->filterFormAnswer($request->form_id, $filter, $clientNewId);
             $formAnswersData = $formAnswers->getCollection();
             if(count($formAnswersData) == 0)
             {
-                $formAnswers = $filterHelper->filterByDataBase($request->form_id, $clientNewId, $requestJson['filter']);
+                $formAnswers = $filterHelper->filterByDataBase($request->form_id, $clientNewId, $filter);
                 $formAnswersData = $formAnswers->getCollection();
             }
             if(count($formAnswersData) == 0)
             {
-                $formAnswersApi = $filterHelper->filterbyApi($request->form_id, $requestJson['filter']);
+                $formAnswersApi = $filterHelper->filterbyApi($request->form_id, $filter);
                 if(isset($formAnswersApi))
                 {
                     $formAnswers = $formAnswersApi;
@@ -330,21 +338,17 @@ class FormAnswerController extends Controller
     private function getDataFilters($filters)
     {
         $dataFilters = [];
-        $filds = ["isClientInfo", "preloaded", "client_unique"];
-        foreach ($filters as $filter)
-        {
-            foreach ($filds as $fild)
-            {
-                if(isset($filter[$fild]))
-                {
-                    if(!isset($dataFilters[$fild]))
-                    {
-                        $dataFilters[$fild] = [];
+        $attributes = ["isClientInfo", "preloaded", "client_unique"];
+        foreach ($filters as $filter) {
+            foreach ($attributes as $attribute) {
+                if(isset($filter[$attribute])) {
+                    if ($filter[$attribute]) {
+                        $dataFilters[$attribute][] = $filter;
                     }
-                    array_push($dataFilters[$fild], $filter);
                 }
             }
         }
+
         return $dataFilters;
     }
 
@@ -363,8 +367,7 @@ class FormAnswerController extends Controller
 
                 if(!isset($answer->duplicated))
                 {
-                    $formController = new FormController();
-                    $select = $formController->findAndFormatValues($formId, $answer->id, $answer->value);
+                    $select = $this->findAndFormatValues($formId, $answer->id, $answer->value);
                     if($select->valid)
                     {
                         $answer->value = $select->value;
@@ -394,7 +397,7 @@ class FormAnswerController extends Controller
                 'id' => $filter['id'],
                 'value' => $filter['value']
             ];
-            $filterData = json_encode($filterData);
+            $filterData = json_encode($filterData, JSON_UNESCAPED_UNICODE);
             $formAnswersQuery = $formAnswersQuery->whereRaw("json_contains(lower(form_answer_index_data), lower('$filterData'))");
         }
         if($clientNewId)
@@ -435,16 +438,15 @@ class FormAnswerController extends Controller
                 $new_structure_answer = [];
                 foreach($form_answers->structure_answer as $field){
                     $fieldSend=[];
-                    $formController = new FormController();
                     if(isset($field['duplicated'])){
-                        $select = $formController->findAndFormatValues($form_answers->form_id, $field['duplicated']['idOriginal'], $field['value']);
+                        $select = $this->findAndFormatValues($form_answers->form_id, $field['duplicated']['idOriginal'], $field['value']);
                     }else{
-                        $select = $formController->findAndFormatValues($form_answers->form_id, $field['id'], $field['value']);
+                        $select = $this->findAndFormatValues($form_answers->form_id, $field['id'], $field['value']);
                     }
                     $object= new \stdClass();
                     $object->id=$field['id'];
                     array_push($fieldSend,$object);
-                    $input=$formController->getSpecificFieldForSection($fieldSend,$form_answers->form_id);
+                    $input = $this->getSpecificFieldForSection($fieldSend,$form_answers->form_id);
                     $field['type']=$input[$object->id]->type;
                     $field['controlType']=$input[$object->id]->controlType;
 
@@ -610,8 +612,6 @@ class FormAnswerController extends Controller
 
         $trays = Tray::where('form_id',$formId)->with('trafficConfig')->get();
 
-        // dd($trays[0]->fields, $trays[0]->fields_exit, $formAnswer->structure_answer);
-
         foreach ($trays as $tray) {
 
             /* entrada a bandeja */
@@ -761,6 +761,8 @@ class FormAnswerController extends Controller
             ->where('client_new_id', $client_new_id)
             ->latest()->first();
 
+        $answer = [];
+
         if($formAnswer && $directory) {
             $clientData = $formAnswer->structure_answer;
 
@@ -773,12 +775,14 @@ class FormAnswerController extends Controller
             $clientData = $formAnswer->structure_answer;
         }
 
-        $structure_data = collect(json_decode($clientData))->filter(function (&$field) use ($form_id){
-            return !$this->deletedFieldChecker($form_id, $field->id) && $field->preloaded;
-        })->toArray();
-
-        $answer['data'] = array_merge($structure_data,$files);
-        $answer['client_id']=$client_new_id;
+        if (isset($clientData)) {
+            $structure_data = collect(json_decode($clientData))->filter(function (&$field) use ($form_id){
+                return !$this->deletedFieldChecker($form_id, $field->id) && $field->preloaded;
+            })->toArray();
+    
+            $answer['data'] = array_merge($structure_data,$files);
+            $answer['client_id']=$client_new_id;
+        }
 
         return $answer;
     }
@@ -836,8 +840,6 @@ class FormAnswerController extends Controller
                 "tray_id" => $trayId
             ]);
         }
-
-        // dd($formAnswersTray->id);
         
         $formAnsersTrayHistoric = FormAnswersTrayHistoric::create([
             "form_answers_trays_id" => $formAnswersTray->id,
@@ -869,5 +871,92 @@ class FormAnswerController extends Controller
             }
         }
         return $exists;
+    }
+
+    /**
+     * Realiza la consulta sobre los datos precargados de los excel y consulta si el cliente existe,
+     * si existe lo actualiza de haberlo solicitado, sino, lo crea.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param mixed $formId
+     * @param mixed $uniqueIdentificator
+     * @return void
+     */
+    private function processPreloadedData($formId, $uniqueIdentificator)
+    {
+        $customerDataPreload = CustomerDataPreload::where('form_id', $formId)
+        ->whereJsonContains("unique_identificator",["id" => $uniqueIdentificator->id]);
+
+        $uniqueValueInt = intval($uniqueIdentificator->value);
+        
+        if (gettype($uniqueValueInt) == 'integer') {
+            $customerDataPreload = $customerDataPreload->where(function ($query) use ($uniqueValueInt, $uniqueIdentificator) {
+                $query->whereJsonContains("unique_identificator",["value" => $uniqueIdentificator->value])
+                ->orWhereJsonContains("unique_identificator",["value" => $uniqueValueInt]);
+            });
+        } else {
+            $customerDataPreload = $customerDataPreload->whereJsonContains("unique_identificator",["value" => $uniqueIdentificator->value]);
+        }
+        
+        $customerDataPreload = $customerDataPreload->first();
+
+        if (!is_null($customerDataPreload)) {
+            $clientsManager = new ClientsManager;
+
+            $data = [
+                "form_id" => $formId,
+                "unique_indentificator" => $customerDataPreload->unique_identificator,
+            ];
+
+            $client = $clientsManager->findClient($data);
+            $updateExisting = true;
+
+            if(!empty($client) && !$customerDataPreload->to_update){
+                $updateExisting = false;
+            }
+            
+            if ($updateExisting) {
+                $data['information_data'] = $customerDataPreload->customer_data;
+    
+                $client = $clientsManager->updateOrCreateClient($data);
+    
+                if(isset($client->id)){
+                    $saveDirectories = $this->addToDirectories($customerDataPreload->form_answer, $formId, $client->id,$customerDataPreload->customer_data);
+                    $customerDataPreload->delete();
+                }
+            }
+
+            if (isset($client->id) && $customerDataPreload->adviser) {
+                RelAdvisorClientNew::create([
+                    'client_new_id' => $client->id,
+                    'rrhh_id' => $customerDataPreload->adviser
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Crea o actualiza un registro en la tabla directories
+     * @author Edwin David Sanchez Babin <e.sanchez@montechelo.com.co> 
+     * 
+     * @param array $data
+     * @param int $formId
+     * @param int $clientId
+     * @param int $clientNewId
+     * @param array $indexForm
+     * @return mixed
+     */
+    private function addToDirectories(array $data,int $formId,int $clientNewId, array $indexForm){
+        $newDirectory = Directory::updateOrCreate([
+            'form_id' => $formId,
+            'client_new_id' => $clientNewId,
+            'data' => json_encode($data)
+
+        ],[
+            'rrhh_id' => auth()->user()->rrhh_id,
+            'form_index' => json_encode($indexForm)
+        ]);
+
+        return $newDirectory;
     }
 }

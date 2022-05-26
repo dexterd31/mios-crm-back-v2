@@ -4,19 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Exports\FormReportExport;
 use App\Models\ApiConnection;
+use App\Models\CustomerDataPreload;
 use App\Models\Form;
 use App\Models\FormLog;
-use App\Models\FormAnswer;
-use App\Models\FormAnswerLog;
 use App\Models\FormType;
 use App\Models\RelAdvisorClientNew;
 use App\Models\Section;
 use App\Models\Tray;
 use App\Services\RrhhService;
 use App\Traits\deletedFieldChecker;
+use App\Traits\FindAndFormatValues;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +24,7 @@ use stdClass;
 
 class FormController extends Controller
 {
-    use deletedFieldChecker;
+    use deletedFieldChecker, FindAndFormatValues;
 
     public function __construct()
     {
@@ -101,9 +100,11 @@ class FormController extends Controller
         $templateExist = (count($templateController->showByFormId($id)) > 0);
         $formsSections->template = $templateExist;
         $formsSections->view_chronometer = (boolean)$formsSections->tipification_time;
-        $formsSections->count_assigned_clients = RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)
+        $formsSections->count_assigned_clients = CustomerDataPreload::adviserFilter(auth()->user()->rrhh_id)
+        ->formFilter($id)->managedFilter(false)->get(['id'])->count();
+        $formsSections->count_assigned_clients += RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)
         ->join('client_news', 'client_news.id', 'rel_advisor_client_new.client_new_id')
-        ->where('client_news.form_id', $id)->where('rel_advisor_client_new.managed', false)->get()->count();
+        ->where('client_news.form_id', $id)->where('rel_advisor_client_new.managed', false)->get(['rel_advisor_client_new.id'])->count();
         unset($formsSections->tipification_time);
         return response()->json($formsSections);
     }
@@ -504,111 +505,6 @@ class FormController extends Controller
         return response()->json($formsSections);
     }
 
-    /**
-     * Valida que el field exista en el formulario, valida el tipo de dato y lo formatea de ser necesario,
-     * @param $form_id : id del fomulario
-     * @param $field_id: id del field a consultar
-     * @param $value: valor del field que se está validando
-     * @return stdClass : objeto que puede contener los siguientes atributos:
-     *                      -   valid (boolean) : indica si la validación fue exitosa
-     *                      -   value : retorna el valor formateado en caso que el atributo valid sea verdadero
-     *                      -   message : retorna el mensaje de error en caso que el atributo valid sea falso
-     */
-    public function findAndFormatValues($form_id, $field_id, $value, $moneyConvert = false)
-    {
-        $response = new stdClass();
-        $response->valid = false;
-        $response->message = "";
-        $fields = json_decode(Section::where('form_id', $form_id)
-        ->whereJsonContains('fields', ['id' => $field_id])
-        ->first()->fields);
-
-        if(count($fields) == 0){
-            $response->message = "field not found";
-            return $response;
-        }
-        $field = collect($fields)->filter(function($x) use ($field_id){
-            return $x->id == $field_id;
-        })->first();
-        if(empty($field)){
-            $response->message = "field not found";
-            return $response;
-        }
-        if(($field->controlType == 'dropdown' || $field->controlType == 'autocomplete' || $field->controlType == 'radiobutton')){
-            $field_name = collect($field->options)->filter(function($x) use ($value){
-                if(intval($value) == 0){
-                    return $x->name == $value;
-                }
-                return $x->id == $value;
-            })->first();
-            if($field_name){
-                $response->valid = true;
-                $response->value = $field_name->id;
-                $response->name = $field_name->name;
-                return $response;
-            }
-            $response->message = "value $value not match";
-            return $response;
-        }elseif($field->controlType == 'datepicker'){
-            if($value !="Invalid date"){
-                $date = "";
-                try {
-                    if(is_int($value)){
-                       //Se suma un dia pues producción le resta un dia a las fechas formato date de excel
-                        $unix_date = (($value+1) - 25569) * 86400;
-                        $date = Carbon::createFromTimestamp($unix_date)->format('Y-m-d');
-                    }else{
-                        $date = Carbon::parse(str_replace("/","-",$value))->format('Y-m-d');
-                    }
-                    $response->valid = true;
-                    $response->value = $date;
-                }catch (\Exception $ex){
-                    $response->valid = false;
-                    $response->message = "date $value is not a valid format";
-                }
-            }else{
-                $response->valid = true;
-                $response->value = '';
-            }
-            return $response;
-        }elseif($field->controlType == 'file'){
-            $attachmentController = new AttachmentController();
-            $attachment = $attachmentController->show($value);
-            $response->valid = true;
-            $response->value = url().'/api/attachment/downloadFile/'.$attachment->id;
-            return $response;
-        }elseif($field->controlType == 'multiselect'){
-            $multiAnswer=[];
-            foreach($value as $val){
-                $field_name = collect($field->options)->filter(function($x) use ($val){
-                    return $x->id == $val;
-                })->first();
-                if (is_null($field_name)) {
-                    continue;
-                } else {
-                    $field_name = $field_name->name;
-                }
-                array_push($multiAnswer,$field_name);
-            }
-            $response->valid = true;
-            $response->value = implode(",",$multiAnswer);
-            return $response;
-        }elseif($field->controlType == 'currency'){
-            $response->valid = true;
-            if($moneyConvert){
-                $response->value = number_format(intval($value));
-                return $response;
-            }
-            $response->value = str_replace(",","",$value);
-            return $response;
-        }else{
-            $response->valid = true;
-            $response->value = $value;
-            return $response;
-        }
-
-    }
-
     private function getFormsByIdUser($rrhhId, $paginate)
     {
         $forms = Form::join('form_types', 'forms.form_type_id', '=', 'form_types.id')
@@ -678,45 +574,6 @@ class FormController extends Controller
 
 
         return $sections;
-    }
-
-    /**
-     * @desc Función para devolver las secciones de un formulario
-     * @param Integer $formId id del formulario que se necesitan traer las secciones
-     * @return Array Arreglo de objetos en donde se encuntran todas las secciones del formulario
-     * @author Leonardo Giraldo Quintero
-     *  */
-    public function getSections($formId){
-        if(isset($formId)){
-            return Section::where('form_id','=',$formId)->get();
-        }else{
-            return "Error al definir la variable formId";
-        }
-
-    }
-
-    /**
-     * @desc Busca los fields por su id en las secciones
-     * @param array $search Arreglo de objetos, cada objeto debe contener los elementos id: numero del field al que pertenece
-     * @param integer $formId Numero entero con el id del formulario al que se le debe realizar la busqueda de fields
-     * @return array arreglo con los field solicitados con toda su estructura
-     * @author Leonardo Giraldo Quintero
-     */
-    public function getSpecificFieldForSection($searchIdFileds , $formId){
-        $completeFileds=[];
-        $sections = $this->getSections($formId);
-        if(count($sections)>0){
-            foreach($sections as $section){
-                foreach(json_decode($section->fields) as $field){
-                    foreach($searchIdFileds as $search){
-                        if($search->id==$field->id){
-                            $completeFileds[$field->id]=$field;
-                        }
-                    }
-                }
-            }
-            return $completeFileds;
-        }
     }
 
     /**

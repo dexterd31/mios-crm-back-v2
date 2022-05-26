@@ -1,0 +1,107 @@
+<?php
+
+namespace App\Managers;
+
+use App\Models\ClientNew;
+
+class ClientsManager
+{
+    public function findClient(array $data)
+    {
+        $clientNew = new ClientNew;
+        
+        if (isset($data['client_new_id'])){
+            $clientNew = $clientNew->find($data['client_new_id']);
+
+        } else {
+            $clientNew = $clientNew::where("form_id", $data['form_id']);
+
+            if (isset($data['information_data'])) {
+                foreach($data['information_data'] as $informationData) {
+                    $informationDataJson = json_encode([
+                        "id"=> $informationData["id"],
+                        "value"=> $informationData["value"]
+                    ]);
+    
+                    $clientNew = $clientNew->whereRaw("json_contains(lower(information_data), lower('$informationDataJson'))");
+                }
+            }
+
+            if (isset($data['unique_indentificator'])) {
+                $unique_indentificator = $data['unique_indentificator'];
+                $clientNew = $clientNew->whereJsonContains("unique_indentificator",[
+                    "id" => $unique_indentificator->id
+                ]);
+
+                $uniqueValueInt=intval($unique_indentificator->value);
+
+                if (gettype($uniqueValueInt) == 'integer') {
+                    $clientNew = $clientNew->where(function ($query) use ($uniqueValueInt, $unique_indentificator) {
+                        $query->whereJsonContains("unique_indentificator",[
+                            "value" => $unique_indentificator->value
+                        ])
+                        ->orWhereJsonContains("unique_indentificator",["value" => $uniqueValueInt]);
+                    });
+
+                } else {
+                    $clientNew = $clientNew->whereJsonContains("unique_indentificator",[
+                        "value" => $unique_indentificator->value
+                    ]);
+                }
+            }
+
+            $clientNew = $clientNew->first();
+        }
+
+        return $clientNew;
+    }
+
+    public function updateOrCreateClient(array $data) 
+    {
+        $clientExists = $this->findClient([
+            'form_id' => $data['form_id'],
+            'unique_indentificator' => $data['unique_indentificator']
+        ]);
+
+        if($clientExists && isset($clientExists->id)) {
+            $clientExists = $this->updateClient($clientExists, $data['information_data']);
+        } else {
+            $clientExists = $this->storeNewClient($data);
+        }
+
+        return $clientExists;
+    }
+
+    public function updateClient($client, array $informationData)
+    {
+        $client->information_data = $this->formatInformationData($informationData);
+        $client->save();
+
+        return $client;
+    }
+
+    public function storeNewClient(array $data)
+    {
+        $client = ClientNew::create([
+            "form_id" => $data['form_id'],
+            "information_data" => $this->formatInformationData($data['information_data']),
+            "unique_indentificator" => json_encode($data['unique_indentificator']),
+        ]);
+
+        return $client;
+    }
+
+    private function formatInformationData(array $informationData) : string
+    {
+        $informationDataClient = [];
+
+        foreach($informationData as $value){
+            array_push($informationDataClient, (Object) [
+                "id" => $value->id,
+                "value" => $value->value,
+            ]);
+        }
+
+        return json_encode($informationDataClient);
+    }
+}
