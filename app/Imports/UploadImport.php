@@ -29,7 +29,7 @@ class UploadImport implements ToCollection, WithChunkReading
                     if (!is_null($field)) {
                         $this->fileInfo['columnsFile'][] = $field;
                     } else {
-                        throw new Exception("Error: Por favor verifique que la cabecera de las columnas no esten vacias.");
+                        throw new Exception("Por favor verifique que la cabecera de las columnas no esten vacias.");
                         break;
                     }
                 }
