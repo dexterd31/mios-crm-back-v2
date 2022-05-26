@@ -36,6 +36,7 @@ class UploadController extends Controller
 
     public function __construct()
     {
+        ini_set('max_execution_time', 300);
         $this->middleware('auth');
     }
 
@@ -84,7 +85,7 @@ class UploadController extends Controller
         $this->validate($request, [
             'excel' => 'required|file'
         ]);
-
+        
         try {
             $uploadImport = new UploadImport;
             $file = $request->file('excel');
