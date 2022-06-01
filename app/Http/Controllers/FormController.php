@@ -60,9 +60,11 @@ class FormController extends Controller
     }
 
     /**
-     * Nicol Ramirez
-     * 27-01-2020
      * Método para consultar el formulario con sus respectivas secciones
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co> 
+     *
+     * @param mixed $id
+     * @return void
      */
     public function searchForm($id)
     {
@@ -626,6 +628,59 @@ class FormController extends Controller
             }
         }
         return $result;
+    }
+
+    /**
+     * Método para consultar el formulario con sus respectivas secciones
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co> 
+     *
+     * @param mixed $id
+     * @return void
+     */
+    public function surveyForm()
+    {
+        $surveyFormId = env('SURVEY_FORM');
+        $formsSections = Form::where('id', $surveyFormId)
+            ->with(["section" => function($q){
+                $q->where('state', '!=', 1);
+            }])
+            ->select('*')
+            ->first();
+
+        $formsSections->seeRoles = json_decode($formsSections->seeRoles);
+        $formsSections->filters = json_decode($formsSections->filters);
+        for ($i = 0; $i < count($formsSections->section); $i++) {
+            unset($formsSections->section[$i]['created_at']);
+            unset($formsSections->section[$i]['updated_at']);
+            $formId = $formsSections->section[$i]['form_id'];
+            $fields = json_decode($formsSections->section[$i]['fields']);
+
+            $formsSections->section[$i]['fields'] = collect($fields)->filter(function ($field) use ($formId){
+                return !$this->deletedFieldChecker($formId, $field->id);
+            });
+
+            unset($formId, $fields);
+            unset($formsSections->section[$i]['form_id']);
+        }
+        $formsSections->client_unique = json_decode($formsSections->fields_client_unique_identificator);
+        /**
+         * Se agrega validacion de api_connections para integracion con SBS (DataCRM)
+         */
+        $formsSections->externalNotifications = false;
+        $apiConnection = ApiConnection::where('form_id',$surveyFormId)->where('api_type',10)->where('status',1)->first();
+        if($apiConnection) $formsSections->externalNotifications = true;
+        $templateController = new TemplateController();
+        $templateExist = (count($templateController->showByFormId($surveyFormId)) > 0);
+        $formsSections->template = $templateExist;
+        $formsSections->view_chronometer = (boolean)$formsSections->tipification_time;
+        // $formsSections->count_assigned_clients = CustomerDataPreload::adviserFilter(auth()->user()->rrhh_id)
+        // ->formFilter($id)->managedFilter(false)->get(['id'])->count();
+        // $formsSections->count_assigned_clients += RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)
+        // ->join('client_news', 'client_news.id', 'rel_advisor_client_new.client_new_id')
+        // ->where('client_news.form_id', $id)->where('rel_advisor_client_new.managed', false)->get(['rel_advisor_client_new.id'])->count();
+        unset($formsSections->tipification_time);
+
+        return response()->json($formsSections);
     }
 }
 

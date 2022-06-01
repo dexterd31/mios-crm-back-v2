@@ -21,6 +21,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/saveform', 'FormController@saveForm');
     $router->get('/formslist', 'FormController@FormsList');
     $router->get('/searchform/{id}', 'FormController@searchForm');
+    $router->get('/survey-form', 'FormController@surveyForm');
     $router->get('/searchPrechargeFields/{id}', 'FormController@searchPrechargeFields');
     $router->get('/searchformtype', 'FormController@searchFormType');
     $router->put('/editform/{id}', 'FormController@editForm');
