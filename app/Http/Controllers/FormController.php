@@ -314,9 +314,10 @@ class FormController extends Controller
         $rrhhService = new RrhhService();
         $trayHistoric = Tray::select('id')->where('form_id',$request->formId)->whereNotNull('save_historic')->get();
         $formAnswers = DB::table('form_answer_logs')
-            ->join('form_answers','form_answer_logs.form_answer_id','=','form_answers.id')
-            ->where('form_answers.form_id','=',$request->formId)
+            ->join('form_answers','form_answer_logs.form_answer_id', 'form_answers.id')
+            ->where('form_answers.form_id', $request->formId)
             ->where('form_answers.tipification_time', '!=', 'upload')
+            ->orWhere('form_answers.tipification_time', null)
             ->whereBetween('form_answer_logs.updated_at', ["$request->date1 00:00:00", "$request->date2 00:00:00"])
             ->select('form_answer_logs.form_answer_id as id', 'form_answer_logs.structure_answer', 'form_answers.created_at', 'form_answer_logs.updated_at','form_answer_logs.rrhh_id as id_rhh', 'form_answers.tipification_time')
             ->get();
