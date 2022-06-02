@@ -415,13 +415,10 @@ class UploadController extends Controller
         $objectUpload = json_decode($upload);
         $resumen = json_decode($objectUpload->resume);
         $listaErrores = [];
-        //die( print_r($resumen->errores) );
         foreach ($resumen->errores as $errores){
-
                 foreach($errores as $error){
                     array_push($listaErrores,$error);
                 }
-
         }
         $response = [
             "Nombre archivo: $objectUpload->name ".PHP_EOL,
