@@ -321,13 +321,12 @@ class FormAnswerController extends Controller
                 {
                     $clientNewId = $formAnswersData[0]->client_new_id;
                 }
-                // dd($formAnswersData);
+
                 $data = $this->setNewStructureAnswer($formAnswersData, $request->form_id);
 
                 $formAnswersData = $data["formAnswers"];
                 $files = $data["files"];
             }
-
             
             $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
             

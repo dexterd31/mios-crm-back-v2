@@ -9,6 +9,7 @@ deploy:
  
  script:
      - cd /var/www/mios/mios-backend/mios-crm-back-v2
+     - git status
      - git checkout .
      - git pull
      - composer dump-autoload
