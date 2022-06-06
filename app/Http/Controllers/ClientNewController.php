@@ -92,19 +92,6 @@ class ClientNewController extends Controller
             return $this->clientNewModel->find($request->client_new_id);
         }
 
-        $informations_data = $request->information_data;
-        if($informations_data)
-        {
-            foreach($informations_data as $informationData)
-            {
-                $informationDataJson = json_encode([
-                    "id"=> $informationData["id"],
-                    "value"=> $informationData["value"]
-                ]);
-                $clientNewQuery = $clientNewQuery->whereRaw("json_contains(lower(information_data), lower('$informationDataJson'))");
-            }
-        }
-
         if($request->unique_indentificator)
         {
             $unique_indentificator = json_decode($request->unique_indentificator);
@@ -119,7 +106,29 @@ class ClientNewController extends Controller
                 $clientNewQuery->whereJsonContains("unique_indentificator",["value"=>$unique_indentificator->value]);
             }
         }
-        return $clientNewQuery->first();
+        
+        $informations_data = $request->information_data;
+
+        if($informations_data) {
+            foreach($informations_data as $informationData) {
+                $clientNewQuery = $clientNewQuery->get()->filter(function ($client) use ($informationData) {
+                    $foundCounter = 0;
+                    foreach (json_decode($client->information_data) as $data) {
+                        if ($data->id == $informationData["id"] && $data->value == $informationData["value"]) {
+                            $foundCounter++;
+                        }
+                    }
+
+                    return $foundCounter ? true : false;
+                });
+
+                $clientNewQuery = $clientNewQuery[0];
+            }
+        } else {
+            $clientNewQuery = $clientNewQuery->first();
+        }
+        
+        return $clientNewQuery;
     }
 
     //TODO: crear método para consultar el indice con la relación
