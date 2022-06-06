@@ -791,24 +791,22 @@ class FormAnswerController extends Controller
         } elseif (!$directory && $formAnswer){
             $clientData = $formAnswer->structure_answer;
         }
+        
+        $structure_data = collect(json_decode($clientData))->filter(function (&$field) use ($form_id){
+            $fieldId = $field->id;
 
-        if (isset($clientData)) {
-            $structure_data = collect(json_decode($clientData))->filter(function (&$field) use ($form_id){
-                $fieldId = $field->id;
-    
-                if (isset($field->duplicated)) {
-                    $digitNumbers = explode('_', $field->key);
-                    $digitNumbers = strlen($digitNumbers[count($digitNumbers) - 1]);
-                    $fieldId = (int) substr((string) $fieldId, 0, - $digitNumbers);
-                }
-    
-                return !$this->deletedFieldChecker($form_id, $fieldId) && $field->preloaded;
-    
-            })->toArray();
-    
-            $answer['data'] = array_merge($structure_data, $files);
-            $answer['client_id']=$client_new_id;
-        }
+            if (isset($field->duplicated)) {
+                $digitNumbers = explode('_', $field->key);
+                $digitNumbers = strlen($digitNumbers[count($digitNumbers) - 1]);
+                $fieldId = (int) substr((string) $fieldId, 0, - $digitNumbers);
+            }
+
+            return !$this->deletedFieldChecker($form_id, $fieldId) && $field->preloaded;
+
+        })->toArray();
+
+        $answer['data'] = array_merge($structure_data, $files);
+        $answer['client_id']=$client_new_id;
 
         return $answer;
     }
