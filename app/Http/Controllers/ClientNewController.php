@@ -110,25 +110,23 @@ class ClientNewController extends Controller
         $informations_data = $request->information_data;
 
         if($informations_data) {
-            foreach($informations_data as $informationData) {
-                $clientNewQuery = $clientNewQuery->get()->filter(function ($client) use ($informationData) {
-                    $foundCounter = 0;
+            $clientNewQuery = $clientNewQuery->get()->filter(function ($client) use ($informations_data) {
+                $foundCounter = 0;
+                foreach($informations_data as $informationData) {
                     foreach (json_decode($client->information_data) as $data) {
                         if ($data->id == $informationData["id"] && $data->value == $informationData["value"]) {
                             $foundCounter++;
+                            break;
                         }
                     }
+                }
+                
+                return $foundCounter ? true : false;
+            });
 
-                    return $foundCounter ? true : false;
-                });
-
-                $clientNewQuery = $clientNewQuery[0];
-            }
-        } else {
-            $clientNewQuery = $clientNewQuery->first();
         }
-        
-        return $clientNewQuery;
+
+        return $clientNewQuery->first();
     }
 
     //TODO: crear método para consultar el indice con la relación
