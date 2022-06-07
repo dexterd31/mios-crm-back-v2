@@ -955,6 +955,8 @@ class FormAnswerController extends Controller
                     'client_new_id' => $client->id,
                     'rrhh_id' => $customerDataPreload->adviser
                 ]);
+                
+                $customerDataPreload->delete();
             }
         }
     }
