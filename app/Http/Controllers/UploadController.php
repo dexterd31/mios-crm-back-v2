@@ -85,7 +85,7 @@ class UploadController extends Controller
         $this->validate($request, [
             'excel' => 'required|file'
         ]);
-        
+
         try {
             $uploadImport = new UploadImport;
             $file = $request->file('excel');
@@ -145,8 +145,8 @@ class UploadController extends Controller
 
         $userRrhhId = auth()->user()->rrhh_id;
         $file = $request->file('excel');
-        
-        
+
+
         $fieldsLoad = $this->getSpecificFieldForSection(json_decode($request->assigns), $request->form_id);
         foreach (json_decode($request->assigns) as $assign){
             foreach ($fieldsLoad as $key => $field) {
@@ -156,7 +156,7 @@ class UploadController extends Controller
                 }
             }
         }
-        
+
         if (count($fieldsLoad)) {
             $clientNewImport = new ClientNewImport($this, $request->form_id, filter_var($request->action, FILTER_VALIDATE_BOOLEAN), $fieldsLoad, $assignUsersObject ?? null);
             Excel::import($clientNewImport, $file);
@@ -416,11 +416,9 @@ class UploadController extends Controller
         $resumen = json_decode($objectUpload->resume);
         $listaErrores = [];
         foreach ($resumen->errores as $errores){
-            foreach($errores as $erroresFila){
-                foreach($erroresFila as $error){
+                foreach($errores as $error){
                     array_push($listaErrores,$error);
                 }
-            }
         }
         $response = [
             "Nombre archivo: $objectUpload->name ".PHP_EOL,

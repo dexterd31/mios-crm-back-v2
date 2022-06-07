@@ -326,7 +326,6 @@ class FormAnswerController extends Controller
                 $formAnswersData = $data["formAnswers"];
                 $files = $data["files"];
             }
-
             
             $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
             
