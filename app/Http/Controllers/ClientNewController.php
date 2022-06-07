@@ -92,19 +92,6 @@ class ClientNewController extends Controller
             return $this->clientNewModel->find($request->client_new_id);
         }
 
-        $informations_data = $request->information_data;
-        if($informations_data)
-        {
-            foreach($informations_data as $informationData)
-            {
-                $informationDataJson = json_encode([
-                    "id"=> $informationData["id"],
-                    "value"=> $informationData["value"]
-                ]);
-                $clientNewQuery = $clientNewQuery->whereRaw("json_contains(lower(information_data), lower('$informationDataJson'))");
-            }
-        }
-
         if($request->unique_indentificator)
         {
             $unique_indentificator = json_decode($request->unique_indentificator);
@@ -119,6 +106,29 @@ class ClientNewController extends Controller
                 $clientNewQuery->whereJsonContains("unique_indentificator",["value"=>$unique_indentificator->value]);
             }
         }
+        
+        $informations_data = $request->information_data;
+
+        if($informations_data) {
+            $clientNewQuery = $clientNewQuery->get()->filter(function ($client) use ($informations_data) {
+                $foundCounter = 0;
+                foreach($informations_data as $informationData) {
+                    foreach (json_decode($client->information_data) as $data) {
+                        $value = strtolower(strval($data->value));
+                        $infoValue = strtolower(strval($informationData["value"]));
+                        
+                        if ($data->id == $informationData["id"] && $value == $infoValue) {
+                            $foundCounter++;
+                            break;
+                        }
+                    }
+                }
+                
+                return $foundCounter ? true : false;
+            });
+
+        }
+
         return $clientNewQuery->first();
     }
 
