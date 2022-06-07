@@ -114,7 +114,10 @@ class ClientNewController extends Controller
                 $foundCounter = 0;
                 foreach($informations_data as $informationData) {
                     foreach (json_decode($client->information_data) as $data) {
-                        if ($data->id == $informationData["id"] && $data->value == $informationData["value"]) {
+                        $value = strtolower(strval($data->value));
+                        $infoValue = strtolower(strval($informationData["value"]));
+                        
+                        if ($data->id == $informationData["id"] && $value == $infoValue) {
                             $foundCounter++;
                             break;
                         }
