@@ -34,7 +34,7 @@ class RelAdvisorClientNew extends Model
 
     public function scopeManagedFilter($query, $managed)
     {
-        if ($managed) {
+        if (!is_null($managed)) {
             return $query->where('managed', $managed);
         }
     }
