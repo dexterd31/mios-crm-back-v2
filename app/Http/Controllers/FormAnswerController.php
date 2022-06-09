@@ -217,7 +217,8 @@ class FormAnswerController extends Controller
             $notificationsController->sendNotifications($request->form_id,$form_answer);
 
             if(!is_null($request->client_id)){
-                $relAdvisorClientNew = RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)->where('client_new_id', $request->client_id)->first();
+                $relAdvisorClientNew = RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)
+                ->clientNewFilter($request->client_id)->managedFilter(false)->first();
     
                 if (!is_null($relAdvisorClientNew)) {
                     $relAdvisorClientNew->managed = true;
@@ -954,6 +955,8 @@ class FormAnswerController extends Controller
                     'client_new_id' => $client->id,
                     'rrhh_id' => $customerDataPreload->adviser
                 ]);
+                
+                $customerDataPreload->delete();
             }
         }
     }
