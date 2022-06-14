@@ -42,8 +42,8 @@ class PqrsService
             'preguntas' => $preguntas,
             'radicado_ext' => $radicado_ext,
             'solicitud' => $solicitud
-    ];
-        return $this->request('POST', '/api/PQRS/', $requestBody);
+        ];
+        return $this->request('POST', '/api/PQRS', $requestBody);
     }
 
 }

@@ -313,11 +313,28 @@ class ClientNewController extends Controller
         {
             return $validator->errors()->all();
         }else{
-            $informationCliente = Escalation :: select('information_client')->where('asunto_id',$request->asuntoId)->first();
+            $informationCliente = Escalation::select('information_client')
+            ->where('campaign_id', auth()->user()->rrhh->campaign_id)->where('asunto_id',$request->asuntoId)->get();
             $client = ClientNew::select('information_data')->where('id',$request->clientId)->first();
             $clientInformation = json_decode($client->information_data);
+            
+            $informationCliente = $informationCliente->filter(function ($escalation) use ($clientInformation) {
+                $countMatch = 0;
+                $information_client = json_decode($escalation->information_client);
+                foreach ($clientInformation as $field) {
+                    foreach ($information_client as $data) {
+                        if ($field->id == $data->id) {
+                            $countMatch++;
+                        }
+                    }
+                }
+                return $countMatch ? true : false;
+            })->first();
+
             $informationClientNeed=json_decode($informationCliente->information_client);
             $newClientInformation=(Object)[];
+
+            // dd($informationClientNeed, $clientInformation);
             foreach($informationClientNeed as $attClient){
                 $name=$attClient->name;
                 foreach($clientInformation as $client){
@@ -328,6 +345,7 @@ class ClientNewController extends Controller
                     }
                 }
             }
+
             return json_encode($newClientInformation);
         }
     }

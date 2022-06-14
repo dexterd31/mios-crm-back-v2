@@ -18,21 +18,22 @@ trait RequestService
             ]);
             if (isset($this->secret)) {
                 $headers['Authorization'] = 'Bearer '.$this->secret;
+                $headers['Content-Type'] = 'application/json';
             }
-            $response = $client->request($method, env('LOCAL') ? 'public/'.$requestUrl : $requestUrl,
-                [
-                    'form_params' => $formParams,
-                    'headers' => $headers,
-                    'timeout' => 10,
-                    'connect_timeout' => 10
-                ]
-            );
+
+            $data = [
+                'headers' => $headers,
+                'timeout' => 10,
+                'connect_timeout' => 10,
+                'json' => $formParams
+            ];
+
+            $response = $client->request($method, env('LOCAL') ? 'public/'.$requestUrl : $requestUrl, $data);
 
             return json_decode($response->getBody()->getContents());
-        }
-        catch (Exception $e){
-            Log::info($e->getMessage());
-            throw new \Exception($e->getMessage());
+        } catch (Exception $e){
+            Log::error($e->getMessage());
+            return json_decode($e->getMessage());
         }
     }
 
