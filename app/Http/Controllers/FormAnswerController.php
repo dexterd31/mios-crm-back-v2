@@ -947,15 +947,15 @@ class FormAnswerController extends Controller
     
                 if(isset($client->id)){
                     $saveDirectories = $this->addToDirectories($customerDataPreload->form_answer, $formId, $client->id,$customerDataPreload->customer_data);
+                    $customerDataPreload->delete();
                 }
             }
+
             if (isset($client->id) && $customerDataPreload->adviser) {
                 RelAdvisorClientNew::create([
                     'client_new_id' => $client->id,
                     'rrhh_id' => $customerDataPreload->adviser
                 ]);
-            
-                $customerDataPreload->delete();
             }
         }
     }
