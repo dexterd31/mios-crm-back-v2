@@ -16,7 +16,10 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FormReportExport;
 use App\Services\CiuService;
 use App\Imports\ClientNewImport;
-use App\Models\CustomerDataPreload;
+use App\Managers\ClientsManager;
+use App\Models\Channel;
+use App\Models\Form;
+use App\Models\FormAnswer;
 use App\Traits\FieldsForSection;
 use App\Traits\FindAndFormatValues;
 use stdClass;
@@ -33,11 +36,13 @@ class UploadController extends Controller
     static $LIMIT_CHARACTERS_CELL = 2000;
 
     protected $formController;
+    private $ciuService;
 
     public function __construct()
     {
         ini_set('max_execution_time', 300);
         $this->middleware('auth');
+        $this->ciuService = new CiuService();
     }
 
     /**
@@ -603,6 +608,129 @@ class UploadController extends Controller
         ]);
 
         return $newDirectory;
+    }
+
+    public function uploadClientDataFromEmail(Request $request)
+    {
+        $this->validate($request, [
+            'form_id' => 'required|integer|exists:forms,id',
+            'pqrs_id' => 'required|integer',
+            'email'   => 'required|email',
+            'rrhh_id' => 'required|integer'
+        ]);
+
+        $formId = $request->form_id;
+
+        $FormController = new FormController();
+        $prechargables = $FormController->searchPrechargeFields($formId)->getData();
+        $fileInfo['prechargables'] = [];
+        
+        foreach($prechargables->section as $section){
+            foreach($section->fields as $field){
+                if($field){
+                    $prechargedField = new stdClass();
+                    $prechargedField->id = $field->id;
+                    $prechargedField->label = $field->label;
+                    array_push($fileInfo['prechargables'], $prechargedField);
+                }
+            }
+        }
+        
+        $fieldsLoad = $this->getSpecificFieldForSection($fileInfo['prechargables'], $formId);
+
+        $answerFields = (Object)[];
+        $formAnswerClient=[];
+
+        foreach ($fileInfo['prechargables'] as $assign){
+            foreach ($fieldsLoad as $key => $field) {
+                if ($field->id == $assign->id) {
+                    $fieldsLoad[$assign->label] = $field;
+                    $data = 'No registra';
+                    if (isset($field->client_unique) && $field->client_unique) {
+                        $data = $request->email;
+                    }
+                    unset($fieldsLoad[$key]);
+                    $dataValidate = $this->validateClientDataUpload($fieldsLoad[$assign->label], $data, $formId);
+                    if ($dataValidate->success) {
+                        foreach ($dataValidate->in as $in) {
+                            if (!isset($answerFields->$in)) {
+                                $answerFields->$in = [];
+                            }
+                            
+                            array_push($answerFields->$in, $dataValidate->$in);
+                        }
+                        array_push($formAnswerClient, $dataValidate->formAnswer);
+                    }
+                }
+            }
+        }
+
+        $clientsManager = new ClientsManager;
+
+        $data = [
+            "form_id" => $formId,
+            "unique_indentificator" => $answerFields->uniqueIdentificator[0],
+        ];
+
+        $client = $clientsManager->findClient($data);
+
+        if(empty($client)){
+            $data['information_data'] = $answerFields->informationClient;
+    
+            $client = $clientsManager->updateOrCreateClient($data);
+    
+            if(isset($client->id)){
+                $saveDirectories = $this->addToDirectories($formAnswerClient, $formId, $client->id, $data['information_data']);
+            }
+        }
+
+        $sections = Form::find($formId)->section()->get([
+            'id',
+            'name_section',
+            'type_section',
+            'fields',
+            'collapse',
+            'duplicate',
+            'state',
+        ]);
+
+        $sections->map(function ($section) {
+            $section->fields = json_decode($section->fields);
+            return $section;
+        });
+
+        $structureAnswer = [];
+        $formAnswerIndexData = [];
+
+        foreach ($formAnswerClient as $answer) {
+            $formAnswerIndexData[] = [
+                'id' => $answer->id,
+                'value' => $answer->value
+            ];
+            unset($answer->type);
+            unset($answer->controlType);
+            $structureAnswer[] = $answer;
+        }
+
+        $formAnswer = FormAnswer::formFilter($formId)->clientFilter($client->id)->first();
+        $chanel = Channel::nameFilter('Email')->first();
+
+        if (!$formAnswer) {
+            $formAnswer = FormAnswer::create([
+                'structure_answer' => json_encode($structureAnswer),
+                'form_id' => $formId,
+                'channel_id' => $chanel->id,
+                'rrhh_id' => $request->rrhh_id,
+                'client_new_id' => $client->id,
+                'form_answer_index_data' => json_encode($formAnswerIndexData),
+            ]);
+        }
+
+        return response()->json([
+            'form_answer_id' => $formAnswer->id,
+            'preguntas' => json_encode((Object) ['sections' => $sections]),
+            'client_id' => $client->id
+        ], 200);
     }
 
 }
