@@ -226,4 +226,6 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->post('online-user/update','OnlineUserStatusController@updateOnlineUserStatus');
       //Ruta para reporte de usuarios en línea
       $router->get('online-users/report/{formId}/role/{roleId}','OnlineUserStatusController@onlineUserReportByForm');
+
+      $router->post('upload/from-email', 'UploadController@uploadClientDataFromEmail');
 });
