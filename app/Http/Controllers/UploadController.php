@@ -646,21 +646,74 @@ class UploadController extends Controller
                 if ($field->id == $assign->id) {
                     $fieldsLoad[$assign->label] = $field;
                     $data = 'No registra';
+
                     if (isset($field->client_unique) && $field->client_unique) {
                         $data = $request->email;
                     }
+
                     unset($fieldsLoad[$key]);
-                    $dataValidate = $this->validateClientDataUpload($fieldsLoad[$assign->label], $data, $formId);
-                    if ($dataValidate->success) {
-                        foreach ($dataValidate->in as $in) {
-                            if (!isset($answerFields->$in)) {
-                                $answerFields->$in = [];
-                            }
-                            
-                            array_push($answerFields->$in, $dataValidate->$in);
-                        }
-                        array_push($formAnswerClient, $dataValidate->formAnswer);
+                    $field->value=$data;
+                    $answer=new stdClass();
+                    $answer->in=[];
+
+                    if(isset($field->isClientInfo) && $field->isClientInfo){
+                        $answer->informationClient= (object)[
+                            "id" => $field->id,
+                            "value" => $field->value
+                        ];
+                        array_push($answer->in,'informationClient');
                     }
+
+                    if(isset($field->client_unique) && $field->client_unique){
+                        $answer->uniqueIdentificator = (Object)[
+                            "id" => $field->id,
+                            "key" => $field->key,
+                            "preloaded" => $field->preloaded,
+                            "label" => $field->label,
+                            "isClientInfo" => $field->isClientInfo,
+                            "client_unique" => $field->client_unique,
+                            "value" => $field->value
+                        ];
+                        array_push($answer->in,'uniqueIdentificator');
+                    }
+
+                    if(isset($field->preloaded) && $field->preloaded){
+                        $answer->preload=[
+                            "id" => $field->id,
+                            "key" => $field->key,
+                            "value" => $field->value
+                        ];
+                        array_push($answer->in,'preload');
+                    }
+
+                    $answer->formAnswer = (Object)[
+                        "id" => $field->id,
+                        "key" => $field->key,
+                        "preloaded" => $field->preloaded,
+                        "label" => $field->label,
+                        "isClientInfo" => $field->isClientInfo,
+                        "client_unique" => isset($field->client_unique) ? $field->client_unique : false,
+                        "value" => gettype($field->value) !=="string" ?  strval($field->value) : $field->value,
+                        "controlType" => $field->controlType,
+                        "type" => $field->type
+                    ];
+
+                    $answer->formAnswerIndex = (Object)[
+                        "id" => $field->id,
+                        "value" => gettype($field->value) !=="string" ?  strval($field->value) : $field->value
+                    ];
+
+                    $answer->success=true;
+                    $answer->Originalfield=$field;
+
+                    foreach ($answer->in as $in) {
+                        if (!isset($answerFields->$in)) {
+                            $answerFields->$in = [];
+                        }
+                        
+                        array_push($answerFields->$in, $answer->$in);
+                    }
+                    array_push($formAnswerClient, $answer->formAnswer);
                 }
             }
         }
@@ -684,6 +737,21 @@ class UploadController extends Controller
             }
         }
 
+        $structureAnswer = [];
+        $formAnswerIndexData = [];
+        $formAnswerAux = [];
+
+        foreach ($formAnswerClient as $answer) {
+            $formAnswerIndexData[] = [
+                'id' => $answer->id,
+                'value' => $answer->value
+            ];
+            $formAnswerAux[$answer->id] = $answer->value;
+            unset($answer->type);
+            unset($answer->controlType);
+            $structureAnswer[] = $answer;
+        }
+
         $sections = Form::find($formId)->section()->get([
             'id',
             'name_section',
@@ -694,22 +762,19 @@ class UploadController extends Controller
             'state',
         ]);
 
-        $sections->map(function ($section) {
+        $sections->map(function ($section) use ($formAnswerAux) {
             $section->fields = json_decode($section->fields);
             return $section;
         });
 
-        $structureAnswer = [];
-        $formAnswerIndexData = [];
-
-        foreach ($formAnswerClient as $answer) {
-            $formAnswerIndexData[] = [
-                'id' => $answer->id,
-                'value' => $answer->value
-            ];
-            unset($answer->type);
-            unset($answer->controlType);
-            $structureAnswer[] = $answer;
+        foreach ($sections as $index => $section) {
+            $fields = $section->fields;
+            foreach ($fields as $key => $field) {
+                if (isset($formAnswerAux[$field->id])) {
+                    $fields[$key]->value = $formAnswerAux[$field->id];
+                }
+            }
+            $sections[$index]->fields = $fields;
         }
 
         $formAnswer = FormAnswer::formFilter($formId)->clientFilter($client->id)->first();
