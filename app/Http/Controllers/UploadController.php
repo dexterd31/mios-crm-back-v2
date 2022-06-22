@@ -427,8 +427,10 @@ class UploadController extends Controller
         $resumen = json_decode($objectUpload->resume);
         $listaErrores = [];
         foreach ($resumen->errores as $errores){
-                foreach($errores as $error){
-                    array_push($listaErrores,$error);
+                foreach($errores as $erroresFila){
+                    foreach($erroresFila as $error){
+                        array_push($listaErrores,$error);
+                    }
                 }
         }
         $response = [
