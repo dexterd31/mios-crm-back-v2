@@ -41,7 +41,7 @@ class UploadController extends Controller
     public function __construct()
     {
         ini_set('max_execution_time', 300);
-        $this->middleware('auth');
+        $this->middleware('auth', ['except' => 'uploadClientDataFromEmail']);
         $this->ciuService = new CiuService();
     }
 
@@ -616,7 +616,6 @@ class UploadController extends Controller
     {
         $this->validate($request, [
             'form_id' => 'required|integer|exists:forms,id',
-            'pqrs_id' => 'required|integer',
             'email'   => 'required|email',
             'rrhh_id' => 'required|integer'
         ]);
