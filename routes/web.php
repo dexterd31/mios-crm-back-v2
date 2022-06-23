@@ -228,4 +228,4 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->get('online-users/report/{formId}/role/{roleId}','OnlineUserStatusController@onlineUserReportByForm');
 
       $router->post('upload/from-email', 'UploadController@uploadClientDataFromEmail');
-});
+    });
