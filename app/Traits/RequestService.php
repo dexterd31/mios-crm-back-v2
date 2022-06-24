@@ -32,7 +32,7 @@ trait RequestService
         }
         catch (Exception $e){
             Log::info($e->getMessage());
-            throw new \Exception($e->getMessage());
+            // throw new \Exception($e->getMessage());
         }
     }
 

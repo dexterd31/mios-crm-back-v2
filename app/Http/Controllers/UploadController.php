@@ -792,5 +792,4 @@ class UploadController extends Controller
             'client_id' => $client->id
         ], 200);
     }
-
 }
