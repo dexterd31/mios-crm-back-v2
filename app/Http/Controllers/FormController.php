@@ -106,7 +106,8 @@ class FormController extends Controller
         ->formFilter($id)->managedFilter(false)->get(['id'])->count();
         $formsSections->count_assigned_clients += RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)
         ->join('client_news', 'client_news.id', 'rel_advisor_client_new.client_new_id')
-        ->where('client_news.form_id', $id)->where('rel_advisor_client_new.managed', false)->get(['rel_advisor_client_new.id'])->count();
+        ->where('client_news.form_id', $id)->where('rel_advisor_client_new.managed', false)
+        ->get(['rel_advisor_client_new.id'])->count();
         unset($formsSections->tipification_time);
         return response()->json($formsSections);
     }
