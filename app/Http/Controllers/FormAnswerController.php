@@ -1002,7 +1002,7 @@ class FormAnswerController extends Controller
             $data = [
                 "form_id" => $customerDataPreload->form_id,
                 "unique_indentificator" => $customerDataPreload->unique_identificator,
-                "information_data" => (array) $customerDataPreload->customer_data
+                "information_data" => $customerDataPreload->customer_data
             ];
 
             $client = $clientsManager->findClient($data);

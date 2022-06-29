@@ -18,6 +18,9 @@ class ClientsManager
 
             if (isset($data['information_data'])) {
                 foreach($data['information_data'] as $informationData) {
+                    if (gettype($informationData) == 'object') {
+                        $informationData = (array) $informationData;
+                    }
                     $informationDataJson = json_encode([
                         "id"=> $informationData["id"],
                         "value"=> $informationData["value"]
