@@ -65,7 +65,7 @@ class RelAdvisorClientNewController extends Controller
     {
         $assignedClients1 = RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)
         ->join('client_news', 'client_news.id', 'rel_advisor_client_new.client_new_id')
-        ->where('client_news.form_id', $formId)->where('rel_advisor_client_new.managed', false)->get(['client_news.created_at', 'client_news.unique_indentificator']);
+        ->where('client_news.form_id', $formId)->where('rel_advisor_client_new.managed', false)->get(['client_news.created_at', 'client_news.unique_indentificator', 'rel_advisor_client_new.id']);
 
         $assignedClients1->each(function ($item) {
             $item->unique_identificator = json_decode($item->unique_indentificator);
@@ -76,7 +76,7 @@ class RelAdvisorClientNewController extends Controller
         $assignedClients1 = $assignedClients1->toArray();
 
         $assignedClients2 = CustomerDataPreload::adviserFilter(auth()->user()->rrhh_id)->formFilter($formId)
-        ->managedFilter(false)->get(['created_at', 'unique_identificator']);
+        ->managedFilter(false)->get(['created_at', 'unique_identificator', 'id']);
 
         $assignedClients2->each(function ($item) {
             $item->from_table = 'CustomerDataPreload';
