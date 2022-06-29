@@ -1059,7 +1059,7 @@ class FormAnswerController extends Controller
             $formAnswer = FormAnswer::where('form_id',$client->form_id)
             ->where('client_new_id', $clientNewId)
             ->latest()->first();
-            $data["preloaded"] = $this->preloaded($client->form_id, $clientNewId, $files);
+            $data["preloaded"] = $this->preloaded($client->form_id, $clientNewId, $files ?? []);
             $data["duplicate_sections"] = !is_null($formAnswer) ?
             $this->checkDuplicateSections($formAnswer->id) : [];
         }
