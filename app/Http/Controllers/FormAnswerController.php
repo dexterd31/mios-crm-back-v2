@@ -983,4 +983,14 @@ class FormAnswerController extends Controller
 
         return $newDirectory;
     }
+
+    public function formAnswerFilterFrojmCeroTray(Request $request)
+    {
+        $this->validate($request, [
+            'id' => 'required|numeric',
+            'from_table' => 'required|string'
+        ]);
+
+        
+    }
 }

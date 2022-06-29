@@ -71,7 +71,7 @@ class RelAdvisorClientNewController extends Controller
             $item->unique_identificator = json_decode($item->unique_indentificator);
             unset($item->unique_indentificator);
             $item->from_table = 'RelAdvisorClientNew';
-        });
+        })->toArray();
 
         $assignedClients1 = $assignedClients1->toArray();
 
@@ -81,6 +81,8 @@ class RelAdvisorClientNewController extends Controller
         $assignedClients2->each(function ($item) {
             $item->from_table = 'CustomerDataPreload';
         });
+
+        $assignedClients2 = $assignedClients2->toArray();
 
         $assignedClients = array_merge($assignedClients1, $assignedClients2);
 
