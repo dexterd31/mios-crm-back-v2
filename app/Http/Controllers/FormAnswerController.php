@@ -1046,7 +1046,7 @@ class FormAnswerController extends Controller
             if(!$clientNewId) {
                 $clientNewId = $formAnswersData[0]->client_new_id;
             }
-            $data = $this->setNewStructureAnswer($formAnswersData, $request->form_id);
+            $data = $this->setNewStructureAnswer($formAnswersData, $client->form_id);
 
             $formAnswersData = $data["formAnswers"];
             $files = $data["files"];
