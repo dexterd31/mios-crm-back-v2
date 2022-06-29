@@ -993,8 +993,9 @@ class FormAnswerController extends Controller
 
         $miosHelper = new MiosHelper();
 
-        if ($request->from_table == 'CustomerDataPreload') {
-            $customerDataPreload = CustomerDataPreload::find($request->id);
+        $customerDataPreload = CustomerDataPreload::find($request->id);
+
+        if ($request->from_table == 'CustomerDataPreload' && !is_null($customerDataPreload)) {
 
             $clientsManager = new ClientsManager;
 
@@ -1023,7 +1024,7 @@ class FormAnswerController extends Controller
 
             if (isset($client->id) && $customerDataPreload->adviser) {
                 $relAdvisorClientNew = RelAdvisorClientNew::where('client_new_id', $client->id)->where('rrhh_id', $customerDataPreload->adviser)->first();
-                
+
                 if (is_null($relAdvisorClientNew)) {
                     $relAdvisorClientNew = RelAdvisorClientNew::create([
                         'client_new_id' => $client->id,
