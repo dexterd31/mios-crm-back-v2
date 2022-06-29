@@ -1027,9 +1027,9 @@ class FormAnswerController extends Controller
                     'rrhh_id' => $customerDataPreload->adviser
                 ]);
             }
-        } else {
-            $client = RelAdvisorClientNew::find($request->id)->clientNew;    
         }
+        
+        $client = RelAdvisorClientNew::find($request->id)->clientNew;    
 
         $clientNewId = $client->id;
         $formAnswers = FormAnswer::where('form_id', $client->form_id)
