@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Services\PqrsService;
 use Log;
 use App\Http\Controllers\ClientNewController;
+use Exception;
 
 class EscalationController extends Controller
 {
@@ -114,8 +115,16 @@ class EscalationController extends Controller
                     foreach ($form as $form_section) {
                         //iterar campos del formulario
                         foreach ($form_section['fields'] as $form_field) {
+                            $compare_values = 0;
                             //hacer interseccion de campos de formulario con los campos a validar
-                            $compare_values = count(array_intersect_assoc($compare, $form_field));
+                            if ($compare["id"] == $form_field["id"]) {
+                                $compare_values++;
+                                if (gettype($compare['value']) == gettype($form_field['value'])) {
+                                    if ($compare['value'] == $form_field['value']) {
+                                        $compare_values++;
+                                    }
+                                }
+                            }
                             // si hay interseccion de tanto el id como el value en campo a validar y en campo de formularion entonces esta validado
                             if ($compare_values == 2) {
                                 $validated_fields +=1;
