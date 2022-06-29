@@ -25,8 +25,17 @@ class RelAdvisorClientNew extends Model
         }
     }
 
-    public function scopeClientNewByForm($query, $formId)
+    public function scopeClientNewFilter($query, $clientId)
     {
-        return $query->where('form_id', $formId);
+        if ($clientId) {
+            return $query->where('client_new_id', $clientId);
+        }
+    }
+
+    public function scopeManagedFilter($query, $managed)
+    {
+        if (!is_null($managed)) {
+            return $query->where('managed', $managed);
+        }
     }
 }

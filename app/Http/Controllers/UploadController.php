@@ -163,7 +163,13 @@ class UploadController extends Controller
         }
 
         if (count($fieldsLoad)) {
-            $clientNewImport = new ClientNewImport($this, $request->form_id, filter_var($request->action, FILTER_VALIDATE_BOOLEAN), $fieldsLoad, $assignUsersObject ?? null);
+            $clientNewImport = new ClientNewImport(
+                $request->form_id,
+                filter_var($request->action, FILTER_VALIDATE_BOOLEAN),
+                $fieldsLoad,
+                $assignUsersObject ?? null
+            );
+
             Excel::import($clientNewImport, $file);
 
             $resume = $clientNewImport->getResume();
@@ -421,8 +427,10 @@ class UploadController extends Controller
         $resumen = json_decode($objectUpload->resume);
         $listaErrores = [];
         foreach ($resumen->errores as $errores){
-                foreach($errores as $error){
-                    array_push($listaErrores,$error);
+                foreach($errores as $erroresFila){
+                    foreach($erroresFila as $error){
+                        array_push($listaErrores,$error);
+                    }
                 }
         }
         $response = [
