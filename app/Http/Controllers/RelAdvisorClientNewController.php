@@ -78,7 +78,7 @@ class RelAdvisorClientNewController extends Controller
         $assignedClients2 = CustomerDataPreload::adviserFilter(auth()->user()->rrhh_id)->formFilter($formId)
         ->managedFilter(false)->get(['created_at', 'unique_identificator']);
 
-        $assignedClients1->each(function ($item) {
+        $assignedClients2->each(function ($item) {
             $item->from_table = 'CustomerDataPreload';
         });
 
