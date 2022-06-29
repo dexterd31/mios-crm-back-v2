@@ -1022,10 +1022,15 @@ class FormAnswerController extends Controller
             }
 
             if (isset($client->id) && $customerDataPreload->adviser) {
-                $client = RelAdvisorClientNew::create([
-                    'client_new_id' => $client->id,
-                    'rrhh_id' => $customerDataPreload->adviser
-                ])->clientNew;
+                $relAdvisorClientNew = RelAdvisorClientNew::where('client_new_id', $client->id)->where('rrhh_id', $customerDataPreload->adviser)->first();
+                
+                if (is_null($relAdvisorClientNew)) {
+                    $relAdvisorClientNew = RelAdvisorClientNew::create([
+                        'client_new_id' => $client->id,
+                        'rrhh_id' => $customerDataPreload->adviser
+                    ]);
+                }
+                $client = $relAdvisorClientNew->clientNew;
             }
         } else {
             $client = RelAdvisorClientNew::find($request->id)->clientNew;  
