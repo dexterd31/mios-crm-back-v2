@@ -984,13 +984,86 @@ class FormAnswerController extends Controller
         return $newDirectory;
     }
 
-    public function formAnswerFilterFrojmCeroTray(Request $request)
+    public function formAnswerFilterFromCeroTray(Request $request)
     {
         $this->validate($request, [
             'id' => 'required|numeric',
             'from_table' => 'required|string'
         ]);
 
+        $miosHelper = new MiosHelper();
+
+        if ($request->from_table == 'CustomerDataPreload') {
+            $customerDataPreload = CustomerDataPreload::find($request->id);
+
+            $clientsManager = new ClientsManager;
+
+            $data = [
+                "form_id" => $customerDataPreload->form_id,
+                "unique_indentificator" => $customerDataPreload->unique_identificator,
+            ];
+
+            $client = $clientsManager->findClient($data);
+            $updateExisting = true;
+
+            if(!empty($client) && !$customerDataPreload->to_update){
+                $updateExisting = false;
+            }
+            
+            if ($updateExisting) {
+                $data['information_data'] = $customerDataPreload->customer_data;
+    
+                $client = $clientsManager->updateOrCreateClient($data);
+    
+                if(isset($client->id)){
+                    $saveDirectories = $this->addToDirectories($customerDataPreload->form_answer, $customerDataPreload->form_id, $client->id, $customerDataPreload->customer_data);
+                    $customerDataPreload->delete();
+                }
+            }
+
+            if (isset($client->id) && $customerDataPreload->adviser) {
+                $client = RelAdvisorClientNew::create([
+                    'client_new_id' => $client->id,
+                    'rrhh_id' => $customerDataPreload->adviser
+                ]);
+            }
+        } else {
+            $client = RelAdvisorClientNew::find($request->id)->clientNew;    
+        }
+
+        $clientNewId = $client->id;
+        $formAnswers = FormAnswer::where('form_id', $client->form_id)
+        ->where('client_new_id', $client->id)->paginate(5);
+        $formAnswersData = $formAnswers->getCollection();
+
+        if(count($formAnswersData) == 0) {
+            $formAnswersData = Directory::where('form_id', $client->form_id)
+            ->where('client_new_id', $client->id)->paginate(5);
+            $formAnswersData = $formAnswers->getCollection();
+        }
+
+        if(count($formAnswersData)) {
+            if(!$clientNewId) {
+                $clientNewId = $formAnswersData[0]->client_new_id;
+            }
+            $data = $this->setNewStructureAnswer($formAnswersData, $request->form_id);
+
+            $formAnswersData = $data["formAnswers"];
+            $files = $data["files"];
+        }
+
         
+        $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
+        
+        if($clientNewId) {
+            $formAnswer = FormAnswer::where('form_id',$request->form_id)
+            ->where('client_new_id', $clientNewId)
+            ->latest()->first();
+            $data["preloaded"] = $this->preloaded($request->form_id, $clientNewId, $files);
+            $data["duplicate_sections"] = !is_null($formAnswer) ?
+            $this->checkDuplicateSections($formAnswer->id) : [];
+        }
+
+        return response()->json($data, $data['code']);
     }
 }

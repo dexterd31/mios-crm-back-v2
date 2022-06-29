@@ -140,6 +140,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
         $router->get('/changeState/{id}','TrayController@changeState');
         $router->get('/duplicatedSection/{idFormAnswer}','TrayController@sectionsDuplicated');
         $router->put('/{id}','TrayController@update');
+        $router->post('/cero', 'FormAnswerController@formAnswerFilterFromCeroTray');
 
         //semaforización de bandejas
         $router->group(['prefix' => 'traffic'], function() use ($router){
