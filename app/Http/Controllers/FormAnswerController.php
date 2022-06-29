@@ -1002,6 +1002,7 @@ class FormAnswerController extends Controller
             $data = [
                 "form_id" => $customerDataPreload->form_id,
                 "unique_indentificator" => $customerDataPreload->unique_identificator,
+                "information_data" => $customerDataPreload->customer_data
             ];
 
             $client = $clientsManager->findClient($data);
@@ -1012,7 +1013,6 @@ class FormAnswerController extends Controller
             }
             
             if ($updateExisting) {
-                $data['information_data'] = $customerDataPreload->customer_data;
     
                 $client = $clientsManager->updateOrCreateClient($data);
     
@@ -1034,7 +1034,7 @@ class FormAnswerController extends Controller
                 $client = $relAdvisorClientNew->clientNew;
             }
         } else {
-            $client = RelAdvisorClientNew::find($request->id)->clientNew;  
+            $client = RelAdvisorClientNew::find($request->id)->clientNew;
         }
 
         $clientNewId = $client->id;
