@@ -87,4 +87,15 @@ class Form extends Model
     {
         return $this->hasMany(Tags::class);
     }
+
+    /**
+     * Consulta los campos personalizados asociados al formulario.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @return App\Models\CustomField
+     */
+    public function cutomFields()
+    {
+        return $this->hasOne(CustomField::class);
+    }
 }

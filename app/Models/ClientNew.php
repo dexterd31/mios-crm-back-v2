@@ -48,6 +48,17 @@ class ClientNew extends Model
         return $this->belongsToMany(Tag::class, 'client_tag');
     }
 
+    /**
+     * Consulta los datos de los campos personalizados asociados al cliente.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @return App\Models\CustomFieldData
+     */
+    public function customFieldData()
+    {
+        return $this->hasOne(CustomFieldData::class);
+    }
+
     //? Filters --------------------------------------------------------------------------------------------------------
 
     public function scopeFormFilter($query, $formId)
