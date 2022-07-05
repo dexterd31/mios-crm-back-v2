@@ -17,6 +17,7 @@ use App\Exports\FormReportExport;
 use App\Services\CiuService;
 use App\Imports\ClientNewImport;
 use App\Models\CustomerDataPreload;
+use App\Models\Tag;
 use App\Traits\FieldsForSection;
 use App\Traits\FindAndFormatValues;
 use stdClass;
@@ -83,7 +84,8 @@ class UploadController extends Controller
     public function extractColumnsNames(Request $request, MiosHelper $miosHelper)
     {
         $this->validate($request, [
-            'excel' => 'required|file'
+            'excel' => 'required|file',
+            'form_id' => 'required|exists:forms,id'
         ]);
 
         try {
@@ -109,6 +111,7 @@ class UploadController extends Controller
                 }
 
                 $data = $miosHelper->jsonResponse(true,200,"data",$fileInfo);
+                $data['tags'] = Tag::formFilter($request->form_id)->get();
             }else{
                 $data = $miosHelper->jsonResponse(false,406,"message","El archivo cargado no tiene datos para cargar, recuerde que en la primera fila se debe utilizar para identificar los datos asignados a cada columna.");
             }
