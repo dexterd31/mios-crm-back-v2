@@ -3,9 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Directory;
-use App\Models\FormAnswer;
-use App\Models\KeyValue;
 
 
 class ClientNew extends Model
@@ -17,6 +14,8 @@ class ClientNew extends Model
         "information_data",
         "unique_indentificator",
     ];
+
+    //? Relations ------------------------------------------------------------------------------------------------------
 
     public function form()
     {
@@ -38,16 +37,23 @@ class ClientNew extends Model
         return $this->hasMany(FormAnswer::class, 'client_id');
     }
 
+    /**
+     * Consulta las etiquetas asociados al cliente.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @return Illuminate\Database\Eloquent\Collection
+     */
+    public function tags()
+    {
+        return $this->belongsToMany(Tag::class, 'client_tag');
+    }
+
+    //? Filters --------------------------------------------------------------------------------------------------------
+
     public function scopeFormFilter($query, $formId)
     {
         if ($formId) {
             return $query->where('form_id', $formId);
         }
     }
-
-    //*Para una posterior mejora en todo el codigo
-    // public function setUniqueIndentificatorAttribute($value)
-    // {
-    //     $this->attributes['unique_indentificator'] = json_encode($value);
-    // }
 }
