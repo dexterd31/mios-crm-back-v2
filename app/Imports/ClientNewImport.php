@@ -45,23 +45,25 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
             $customFieldData = [];
     
             foreach ($row as $fieldIndex => $field) {
-                $dataValidate = $this->uploadController->validateClientDataUpload($this->fieldsLoad[$fieldIndex], $field, $this->formId);
-    
-                if ($dataValidate->success) {
-                    foreach ($dataValidate->in as $in) {
-                        if (!isset($answerFields->$in)) {
-                            $answerFields->$in = [];
+                if (isset($this->fieldsLoad[$fieldIndex])) {
+                    $dataValidate = $this->uploadController->validateClientDataUpload($this->fieldsLoad[$fieldIndex], $field, $this->formId);
+        
+                    if ($dataValidate->success) {
+                        foreach ($dataValidate->in as $in) {
+                            if (!isset($answerFields->$in)) {
+                                $answerFields->$in = [];
+                            }
+                            
+                            array_push($answerFields->$in, $dataValidate->$in);
                         }
                         
-                        array_push($answerFields->$in, $dataValidate->$in);
+                        array_push($formAnswerClient, $dataValidate->formAnswer);
+                    } else {
+                        $fila = strval(intval($rowIndex) + 1);
+                        $columnErrorMessage = "Error en la Fila $fila";
+                        array_push($dataValidate->message, $columnErrorMessage);
+                        array_push($errorAnswers, $dataValidate->message);
                     }
-                    
-                    array_push($formAnswerClient, $dataValidate->formAnswer);
-                } else {
-                    $fila = strval(intval($rowIndex) + 1);
-                    $columnErrorMessage = "Error en la Fila $fila";
-                    array_push($dataValidate->message, $columnErrorMessage);
-                    array_push($errorAnswers, $dataValidate->message);
                 }
 
                 if (count($this->customFields)) {
