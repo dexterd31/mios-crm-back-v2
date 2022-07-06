@@ -142,8 +142,9 @@ class UploadController extends Controller
         ]);
 
         // Creacion de los tags
-        if (count($request->tags)) {
-            foreach ($request->tags as $tag) {
+        $tags = json_decode($request->tags);
+        if (count($tags)) {
+            foreach ($tags as $tag) {
                 if (is_string($tag)) {
                     $tag = Tag::create([
                         'name' => $tag,
@@ -152,7 +153,7 @@ class UploadController extends Controller
                 }
             }
         } else {
-            $request->tags[] = Tag::create([
+            $tags[] = Tag::create([
                 'name' => Carbon::now('America/Bogota')->toDateTimeString(),
                 'form_id' => $request->form_id
             ])->id;
