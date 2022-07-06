@@ -149,14 +149,16 @@ class UploadController extends Controller
                     $tag = Tag::create([
                         'name' => $tag,
                         'form_id' => $request->form_id
-                    ])->id;
+                    ]);
+                    $tags[] = $tag->id;
                 }
             }
         } else {
-            $tags[] = Tag::create([
+            $tag = Tag::create([
                 'name' => Carbon::now('America/Bogota')->toDateTimeString(),
                 'form_id' => $request->form_id
             ])->id;
+            $tags[] = $tag->id;
         }
 
         $assignUsers = filter_var($request->assign_users,FILTER_VALIDATE_BOOLEAN);
@@ -190,7 +192,16 @@ class UploadController extends Controller
             if ($customField) {
                 $fields = $customField->fields;
                 foreach ($custom_fields as $field) {
-                    $fields[] = $field;
+                    $found = false;
+                    foreach ($fields as $existingField) {
+                        if ($existingField->id == $field->id) {
+                            $found = true;
+                            break;
+                        }
+                    }
+                    if (!$found) {
+                        $fields[] = $field;
+                    }
                 }
                 $customField->fields = $fields;
                 $customField->save();
@@ -219,7 +230,7 @@ class UploadController extends Controller
         }
 
         if (count($fieldsLoad)) {
-            $clientNewImport = new ClientNewImport($this, $request->form_id, filter_var($request->action, FILTER_VALIDATE_BOOLEAN), $fieldsLoad, $assignUsersObject ?? null, $request->tags, $customFields);
+            $clientNewImport = new ClientNewImport($this, $request->form_id, filter_var($request->action, FILTER_VALIDATE_BOOLEAN), $fieldsLoad, $assignUsersObject ?? null, $tags, $customFields);
             Excel::import($clientNewImport, $file);
 
             $resume = $clientNewImport->getResume();
