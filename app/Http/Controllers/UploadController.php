@@ -182,11 +182,19 @@ class UploadController extends Controller
                 //Concatenamos el resultado del label transformado con la variable $cadena
                 $request->custom_fields[$key]->key = "$fieldKey-$field->id";
             }
-    
-            CustomField::create([
-                'form_id' => $request->form_id,
-                'fields' => $request->custom_fields
-            ]);
+            
+            $customField = CustomField::formFilter($request->form_id)->first();
+
+            if ($customField) {
+                foreach ($request->custom_fields as $field) {
+                    $customField->fields[] = $field;
+                }
+            } else {
+                CustomField::create([
+                    'form_id' => $request->form_id,
+                    'fields' => $request->custom_fields
+                ]);
+            }
         }
 
         $customFields = [];
