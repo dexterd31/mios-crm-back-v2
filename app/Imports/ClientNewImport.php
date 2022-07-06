@@ -4,7 +4,6 @@ namespace App\Imports;
 
 use App\Http\Controllers\UploadController;
 use App\Models\CustomerDataPreload;
-use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
@@ -21,8 +20,10 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
     private $fieldsLoad;
     private $resume;
     private $uploadController;
+    private $tags;
+    private $customFields;
 
-    public function __construct(UploadController $uploadController = null, $formId = 0, $toUpdate = false, $fieldsLoad = [], $assignUsers = null)
+    public function __construct(UploadController $uploadController = null, $formId = 0, $toUpdate = false, $fieldsLoad = [], $assignUsers = null, $tags = [], $customFields = [])
     {
         HeadingRowFormatter::default('none');
         $this->uploadController = $uploadController;
@@ -31,6 +32,8 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
         $this->fieldsLoad = $fieldsLoad;
         $this->assignUsers = $assignUsers;
         $this->resume = ['cargados' => 0, 'errores' => [], 'nocargados' => 0, 'totalRegistros' => 0];
+        $this->tags = $tags;
+        $this->customFields = $customFields;
     }
 
     public function collection(Collection $rows)
@@ -39,6 +42,7 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
             $answerFields = (Object)[];
             $errorAnswers = [];
             $formAnswerClient=[];
+            $customFieldData = [];
     
             foreach ($row as $fieldIndex => $field) {
                 $dataValidate = $this->uploadController->validateClientDataUpload($this->fieldsLoad[$fieldIndex], $field, $this->formId);
@@ -59,6 +63,12 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
                     array_push($dataValidate->message, $columnErrorMessage);
                     array_push($errorAnswers, $dataValidate->message);
                 }
+
+                if (count($this->customFields)) {
+                    if (isset($this->customFields[$fieldIndex])) {
+                        $customFieldData[] = ['id' => $this->customFields[$fieldIndex], 'value' => $field];
+                    }
+                }
             }
     
             if (!count($errorAnswers)) {
@@ -77,6 +87,8 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
                     'adviser' => $rrhhId,
                     'unique_identificator' => $uniqueIdentificator,
                     'form_answer' => $formAnswerClient,
+                    'custom_field_data' => count($this->customFields) ? $$customFieldData : [],
+                    'tags' => $this->tags
                 ]);
     
                 $this->resume['cargados']++;

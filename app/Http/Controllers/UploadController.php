@@ -17,6 +17,7 @@ use App\Exports\FormReportExport;
 use App\Services\CiuService;
 use App\Imports\ClientNewImport;
 use App\Models\CustomerDataPreload;
+use App\Models\CustomField;
 use App\Models\Tag;
 use App\Traits\FieldsForSection;
 use App\Traits\FindAndFormatValues;
@@ -140,6 +141,23 @@ class UploadController extends Controller
             'rows_file' => 'required'
         ]);
 
+        // Creacion de los tags
+        if (count($request->tags)) {
+            foreach ($request->tags as $tag) {
+                if (is_string($tag)) {
+                    $tag = Tag::create([
+                        'name' => $tag,
+                        'form_id' => $request->form_id
+                    ])->id;
+                }
+            }
+        } else {
+            $request->tags[] = Tag::create([
+                'name' => Carbon::now('America/Bogota')->toDateTimeString(),
+                'form_id' => $request->form_id
+            ])->id;
+        }
+
         $assignUsers = filter_var($request->assign_users,FILTER_VALIDATE_BOOLEAN);
 
         if($assignUsers){
@@ -149,19 +167,46 @@ class UploadController extends Controller
         $userRrhhId = auth()->user()->rrhh_id;
         $file = $request->file('excel');
 
+        // Creacion de los campos personalizados
+        $customFieldsIds = [];
 
+        if (count($request->custom_fields)) {
+            foreach ($request->custom_fields as $key => $field) {
+                $customFieldsIds[] = $field->id;
+                //Reemplaza todos los acentos o tildes de la cadena
+                $fieldKey = $miosHelper->replaceAccents($field->label);
+                //Reemplaza todos los caracteres extraños
+                $fieldKey = preg_replace('([^A-Za-z0-9 ])', '', $fieldKey);
+                //Convertimos a minusculas y Remplazamos espacios por el simbolo -
+                $fieldKey = strtolower( str_replace(array(' ', '  '), '-', $fieldKey));
+                //Concatenamos el resultado del label transformado con la variable $cadena
+                $request->custom_fields[$key]->key = "$fieldKey-$field->id";
+            }
+    
+            CustomField::create([
+                'form_id' => $request->form_id,
+                'fields' => $request->custom_fields
+            ]);
+        }
+
+        $customFields = [];
         $fieldsLoad = $this->getSpecificFieldForSection(json_decode($request->assigns), $request->form_id);
-        foreach (json_decode($request->assigns) as $assign){
+        foreach (json_decode($request->assigns) as $assign) {
             foreach ($fieldsLoad as $key => $field) {
                 if ($field->id == $assign->id) {
                     $fieldsLoad[$assign->columnName] = $field;
                     unset($fieldsLoad[$key]);
                 }
             }
+            if (count($customFieldsIds)) {
+                if (in_array($assign->id, $customFieldsIds)) {
+                    $customFields[$assign->columnName] = $assign->id;
+                }
+            }
         }
 
         if (count($fieldsLoad)) {
-            $clientNewImport = new ClientNewImport($this, $request->form_id, filter_var($request->action, FILTER_VALIDATE_BOOLEAN), $fieldsLoad, $assignUsersObject ?? null);
+            $clientNewImport = new ClientNewImport($this, $request->form_id, filter_var($request->action, FILTER_VALIDATE_BOOLEAN), $fieldsLoad, $assignUsersObject ?? null, $request->tags, $customFields);
             Excel::import($clientNewImport, $file);
 
             $resume = $clientNewImport->getResume();

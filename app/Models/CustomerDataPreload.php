@@ -12,7 +12,9 @@ class CustomerDataPreload extends Model
         'to_update',
         'adviser',
         'unique_identificator',
-        'form_answer'
+        'form_answer',
+        'custom_field_data',
+        'tags'
     ];
 
     //? Relations ------------------------------------------------------------------------------------------------------
@@ -69,6 +71,16 @@ class CustomerDataPreload extends Model
         return json_decode($value);
     }
 
+    public function getCustomFieldDataAttribute($value)
+    {
+        return json_decode($value);
+    }
+
+    public function getTagsAttribute($value)
+    {
+        return explode(',', $value);
+    }
+
     //? Mutators -------------------------------------------------------------------------------------------------------
 
     public function setUniqueIdentificatorAttribute($value)
@@ -84,5 +96,15 @@ class CustomerDataPreload extends Model
     public function setFormAnswerAttribute($value)
     {
         $this->attributes['form_answer'] = json_encode($value);
+    }
+
+    public function setCustomFieldDataAttribute($value)
+    {
+        $this->attributes['custom_field_data'] = json_encode($value);
+    }
+
+    public function setTagsAttribute($value)
+    {
+        $this->attributes['tags'] = implode(',', $value);
     }
 }
