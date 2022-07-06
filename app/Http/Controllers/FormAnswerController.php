@@ -14,6 +14,7 @@ use App\Models\Tray;
 use App\Models\Attachment;
 use App\Models\ClientNew;
 use App\Models\CustomerDataPreload;
+use App\Models\CustomFieldData;
 use App\Models\FormAnswerLog;
 use App\Models\FormAnswerMiosPhone;
 use App\Services\CiuService;
@@ -1057,7 +1058,26 @@ class FormAnswerController extends Controller
                 $client = $clientsManager->storeNewClient($data);
                 $saveDirectories = $this->addToDirectories($customerDataPreload->form_answer, $customerDataPreload->form_id, $client->id, $customerDataPreload->customer_data);
             }
-            
+
+            if ($customerDataPreload->custom_field_data) {
+                $customFieldData = CustomFieldData::clientFilter($client->id)->first();
+    
+                if ($customFieldData) {
+                    foreach ($customerDataPreload->custom_field_data as $fieldData) {
+                        $customFieldData->field_data[] = $fieldData;
+                    }
+                    $customFieldData->save();
+                } else {
+                    CustomFieldData::create([
+                        'client_id' => $client->id,
+                        'field_data' => $customerDataPreload->custom_field_data
+                    ]);
+                }
+            }
+
+            if (count($customerDataPreload->tags)) {
+                $client->tags()->attach($customerDataPreload->tags);
+            }
 
             if ($customerDataPreload->adviser){
                 $relAdvisorClientNew = RelAdvisorClientNew::where('client_new_id', $client->id)->where('rrhh_id', $customerDataPreload->adviser)->first();

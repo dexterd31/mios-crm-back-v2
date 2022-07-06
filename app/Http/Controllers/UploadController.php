@@ -189,6 +189,7 @@ class UploadController extends Controller
                 foreach ($request->custom_fields as $field) {
                     $customField->fields[] = $field;
                 }
+                $customField->save();
             } else {
                 CustomField::create([
                     'form_id' => $request->form_id,
