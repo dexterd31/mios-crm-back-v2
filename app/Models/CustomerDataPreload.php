@@ -78,7 +78,7 @@ class CustomerDataPreload extends Model
 
     public function getTagsAttribute($value)
     {
-        return explode(',', $value);
+        return json_decode($value);
     }
 
     //? Mutators -------------------------------------------------------------------------------------------------------
@@ -105,6 +105,6 @@ class CustomerDataPreload extends Model
 
     public function setTagsAttribute($value)
     {
-        $this->attributes['tags'] = implode(',', $value);
+        $this->attributes['tags'] = json_encode($value);
     }
 }

@@ -14,8 +14,8 @@ class AddCustomFieldDataColumnToCustomerDataPreloadsTable extends Migration
     public function up()
     {
         Schema::table('customer_data_preloads', function (Blueprint $table) {
-            $table->json('custom_field_data')->default(null)->comment('Datos de los campos personalizados');
-            $table->string('tags')->default('')->comment('Etiquetas asignadas.');
+            $table->json('custom_field_data')->nullable()->comment('Datos de los campos personalizados');
+            $table->json('tags')->nullable()->comment('Etiquetas asignadas.');
         });
     }
 
