@@ -170,8 +170,9 @@ class UploadController extends Controller
         // Creacion de los campos personalizados
         $customFieldsIds = [];
 
-        if (count($request->custom_fields)) {
-            foreach ($request->custom_fields as $key => $field) {
+        $custom_fields = json_decode($request->custom_fields);
+        if (count($custom_fields)) {
+            foreach ($custom_fields as $key => $field) {
                 $customFieldsIds[] = $field->id;
                 //Reemplaza todos los acentos o tildes de la cadena
                 $fieldKey = $miosHelper->replaceAccents($field->label);
@@ -180,13 +181,13 @@ class UploadController extends Controller
                 //Convertimos a minusculas y Remplazamos espacios por el simbolo -
                 $fieldKey = strtolower( str_replace(array(' ', '  '), '-', $fieldKey));
                 //Concatenamos el resultado del label transformado con la variable $cadena
-                $request->custom_fields[$key]->key = "$fieldKey-$field->id";
+                $custom_fields[$key]->key = "$fieldKey-$field->id";
             }
             
             $customField = CustomField::formFilter($request->form_id)->first();
 
             if ($customField) {
-                foreach ($request->custom_fields as $field) {
+                foreach ($custom_fields as $field) {
                     $customField->fields[] = $field;
                 }
                 $customField->save();
