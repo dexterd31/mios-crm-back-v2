@@ -89,7 +89,7 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
                     'adviser' => $rrhhId,
                     'unique_identificator' => $uniqueIdentificator,
                     'form_answer' => $formAnswerClient,
-                    'custom_field_data' => count($this->customFields) ? $$customFieldData : [],
+                    'custom_field_data' => count($this->customFields) ? $customFieldData : [],
                     'tags' => $this->tags
                 ]);
     
