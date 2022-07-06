@@ -194,7 +194,7 @@ class UploadController extends Controller
             } else {
                 CustomField::create([
                     'form_id' => $request->form_id,
-                    'fields' => $request->custom_fields
+                    'fields' => $custom_fields
                 ]);
             }
         }
