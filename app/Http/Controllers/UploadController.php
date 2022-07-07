@@ -233,7 +233,10 @@ class UploadController extends Controller
                     break;
                 }
             }
-            if (count($customFieldsIds) || !$found) {
+            if (!$found) {
+                $customFields[$assign->columnName] = $assign->id;
+            }
+            if (count($customFieldsIds)) {
                 if (in_array($assign->id, $customFieldsIds)) {
                     $customFields[$assign->columnName] = $assign->id;
                 }
