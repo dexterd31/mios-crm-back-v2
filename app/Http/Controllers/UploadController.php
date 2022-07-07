@@ -163,7 +163,7 @@ class UploadController extends Controller
             $tag = Tag::create([
                 'name' => Carbon::now('America/Bogota')->toDateTimeString(),
                 'form_id' => $request->form_id
-            ])->id;
+            ]);
             $tagsIds[] = $tag->id;
         }
 
