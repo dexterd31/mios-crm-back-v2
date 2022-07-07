@@ -153,7 +153,7 @@ class UploadController extends Controller
                     $tagsIds[] = $tag;
                 } else {
                     $tag = Tag::create([
-                        'name' => $tag,
+                        'name' => $tag->name,
                         'form_id' => $request->form_id
                     ]);
                     $tagsIds[] = $tag->id;
