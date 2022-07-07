@@ -224,13 +224,16 @@ class UploadController extends Controller
         $customFields = [];
         $fieldsLoad = $this->getSpecificFieldForSection(json_decode($request->assigns), $request->form_id);
         foreach (json_decode($request->assigns) as $assign) {
+            $found = false;
             foreach ($fieldsLoad as $key => $field) {
                 if ($field->id == $assign->id) {
+                    $found = true;
                     $fieldsLoad[$assign->columnName] = $field;
                     unset($fieldsLoad[$key]);
+                    break;
                 }
             }
-            if (count($customFieldsIds)) {
+            if (count($customFieldsIds) || !$found) {
                 if (in_array($assign->id, $customFieldsIds)) {
                     $customFields[$assign->columnName] = $assign->id;
                 }
