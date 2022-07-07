@@ -15,7 +15,7 @@ class CreateImportedFileClientTable extends Migration
     {
         Schema::create('imported_file_client', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('imported_file_id')->comment('Id del archivo importado').
+            $table->foreignId('imported_file_id')->comment('Id del archivo importado');
             $table->foreignId('client_new_id')->comment('Id del cliente.');
             $table->timestamps();
         });
