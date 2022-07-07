@@ -51,7 +51,10 @@ class DataBaseManager
     public function createClients()
     {
         $clientsManager = new ClientsManager;
-        $customerDataPreload = CustomerDataPreload::take(200)->get();
+        $customerDataPreload = CustomerDataPreload::take(200);
+        $customerDataPreloadIds = clone $customerDataPreload->pluck('id');
+        $customerDataPreload = $customerDataPreload->get();
+
 
         $data = [
             "form_id" => $customerDataPreload->form_id,
@@ -107,6 +110,8 @@ class DataBaseManager
                 
             }
         }
+
+        CustomerDataPreload::destroy($customerDataPreloadIds);
     }
 
     /**
