@@ -18,6 +18,7 @@ use App\Services\CiuService;
 use App\Imports\ClientNewImport;
 use App\Models\CustomerDataPreload;
 use App\Models\CustomField;
+use App\Models\ImportedFile;
 use App\Models\Tag;
 use App\Traits\FieldsForSection;
 use App\Traits\FindAndFormatValues;
@@ -112,7 +113,7 @@ class UploadController extends Controller
                 }
 
                 $data = $miosHelper->jsonResponse(true,200,"data",$fileInfo);
-                $data['tags'] = Tag::formFilter($request->form_id)->get();
+                $data['tags'] = Tag::formFilter($request->form_id)->get(['id', 'name']);
             }else{
                 $data = $miosHelper->jsonResponse(false,406,"message","El archivo cargado no tiene datos para cargar, recuerde que en la primera fila se debe utilizar para identificar los datos asignados a cada columna.");
             }
@@ -169,6 +170,8 @@ class UploadController extends Controller
 
         $userRrhhId = auth()->user()->rrhh_id;
         $file = $request->file('excel');
+
+        $importedFile = ImportedFile::create(['name' => $file->getClientOriginalName()]);
 
         // Creacion de los campos personalizados
         $customFieldsIds = [];
@@ -230,7 +233,7 @@ class UploadController extends Controller
         }
 
         if (count($fieldsLoad)) {
-            $clientNewImport = new ClientNewImport($this, $request->form_id, filter_var($request->action, FILTER_VALIDATE_BOOLEAN), $fieldsLoad, $assignUsersObject ?? null, $tags, $customFields);
+            $clientNewImport = new ClientNewImport($this, $request->form_id, filter_var($request->action, FILTER_VALIDATE_BOOLEAN), $fieldsLoad, $assignUsersObject ?? null, $tags, $customFields, $importedFile->id);
             Excel::import($clientNewImport, $file);
 
             $resume = $clientNewImport->getResume();

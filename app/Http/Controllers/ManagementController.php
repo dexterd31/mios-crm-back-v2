@@ -1,0 +1,45 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Managers\DataBaseManager;
+use App\Models\Section;
+use Illuminate\Http\Request;
+
+class ManagementController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
+    /**
+     * Retorna una lista de clientes y las columnas a usar en la tabla.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param Request $request
+     * @return Illuminate\Http\Response
+     */
+    public function indexDataBaseManagement(Request $request)
+    {
+        [$clients, $tableColumns] = (new DataBaseManager)->listManagement($request->form_id, [
+            'tags' => $request->tags,
+            'fromDate' => $request->from_date,
+            'toDate' => $request->to_date,
+        ]);
+
+        $nameColumns = [];
+
+        Section::where('form_id', $request->form_id)->get('fields')
+        ->each(function ($section) use ($tableColumns, &$nameColumns) {
+            $fields = json_decode($section->fields);
+            foreach ($fields as $field) {
+                if (in_array($field->id, $tableColumns)) {
+                    $nameColumns[] = ucwords($field->label);
+                }
+            }
+        });
+
+        return response()->json(['clients' => $clients, 'name_columns' => $nameColumns]);
+    }
+}

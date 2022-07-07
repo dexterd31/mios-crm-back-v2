@@ -59,12 +59,24 @@ class ClientNew extends Model
         return $this->hasOne(CustomFieldData::class);
     }
 
+    public function importedFiles()
+    {
+        return $this->belongsToMany(ImportedFile::class, 'imported_file_client');
+    }
+
     //? Filters --------------------------------------------------------------------------------------------------------
 
     public function scopeFormFilter($query, $formId)
     {
         if ($formId) {
             return $query->where('form_id', $formId);
+        }
+    }
+
+    public function scopeUpdatedAtBetweenFilter($query, $from, $to)
+    {
+        if ($from && $to) {
+            return $query->whereDate('updated_at', '>=', $from)->whereDate('updated_at', '<=', $to);
         }
     }
 }

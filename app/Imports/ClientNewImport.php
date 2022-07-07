@@ -22,8 +22,9 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
     private $uploadController;
     private $tags;
     private $customFields;
+    private $importedFileId;
 
-    public function __construct(UploadController $uploadController = null, $formId = 0, $toUpdate = false, $fieldsLoad = [], $assignUsers = null, $tags = [], $customFields = [])
+    public function __construct(UploadController $uploadController = null, $formId = 0, $toUpdate = false, $fieldsLoad = [], $assignUsers = null, $tags = [], $customFields = [], $importedFileId = 0)
     {
         HeadingRowFormatter::default('none');
         $this->uploadController = $uploadController;
@@ -34,6 +35,7 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
         $this->resume = ['cargados' => 0, 'errores' => [], 'nocargados' => 0, 'totalRegistros' => 0];
         $this->tags = $tags;
         $this->customFields = $customFields;
+        $this->importedFileId = $importedFileId;
     }
 
     public function collection(Collection $rows)
@@ -90,7 +92,8 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
                     'unique_identificator' => $uniqueIdentificator,
                     'form_answer' => $formAnswerClient,
                     'custom_field_data' => count($this->customFields) ? $customFieldData : [],
-                    'tags' => $this->tags
+                    'tags' => $this->tags,
+                    'imported_file_id' => $this->importedFileId
                 ]);
     
                 $this->resume['cargados']++;

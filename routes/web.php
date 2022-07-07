@@ -227,4 +227,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->post('online-user/update','OnlineUserStatusController@updateOnlineUserStatus');
       //Ruta para reporte de usuarios en línea
       $router->get('online-users/report/{formId}/role/{roleId}','OnlineUserStatusController@onlineUserReportByForm');
+
+      $router->group(['prefix' => 'managements'], function () use($router) {
+        $router->get('/database/{formId}', 'ManagementController@indexDataBaseManagement');
+        $router->post('/database/{formId}', 'ManagementController@indexDataBaseManagement');
+      });
 });
