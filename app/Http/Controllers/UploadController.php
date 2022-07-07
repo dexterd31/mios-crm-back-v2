@@ -150,7 +150,7 @@ class UploadController extends Controller
         if (count($tags)) {
             foreach ($tags as $tag) {
                 if ($tag->id) {
-                    $tagsIds[] = $tag;
+                    $tagsIds[] = $tag->id;
                 } else {
                     $tag = Tag::create([
                         'name' => $tag->name,
