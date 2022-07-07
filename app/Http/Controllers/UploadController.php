@@ -114,6 +114,8 @@ class UploadController extends Controller
 
                 $data = $miosHelper->jsonResponse(true,200,"data",$fileInfo);
                 $data['tags'] = Tag::formFilter($request->form_id)->get(['id', 'name']);
+                $customFields = CustomField::formFilter($request->form_id)->first();
+                $data['custom_fields'] = $customFields ? $customFields->fields : [];
             }else{
                 $data = $miosHelper->jsonResponse(false,406,"message","El archivo cargado no tiene datos para cargar, recuerde que en la primera fila se debe utilizar para identificar los datos asignados a cada columna.");
             }
