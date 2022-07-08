@@ -233,11 +233,21 @@ class ClientNewController extends Controller
 
         $client->tags = $client->tags()->get(['tags.id', 'tags.name'])->makeHidden('pivot');
         $client->field_data = $client->customFieldData->field_data ?? [];
-        $client->form_answer = $client->formanswer()->latest()->first() ?? json_decode($client->directory->data ?? '[]');
+        $formAnswer = $client->formanswer()->latest()->first() ?? json_decode($client->directory->data ?? '[]');
         
         $sections = $client->form->section()->get(['name_section', 'fields'])
-        ->map(function ($section) {
-            $section->fields = json_decode($section->fields);
+        ->map(function ($section) use ($formAnswer) {
+            $fields = json_decode($section->fields);
+
+            foreach ($fields as $key => $field) {
+                foreach ($formAnswer as $answer) {
+                    if ($field->id == $answer->id) {
+                        $fields[$key]->value = $answer->value;
+                    }
+                }
+            }
+
+            $section->fields = $fields;
             return $section;
         });
         
@@ -248,6 +258,7 @@ class ClientNewController extends Controller
             foreach ($client->field_data as $data) {
                 if ($data->id == $customField->id) {
                     $found = true;
+                    $customFields[$key]->value = $data->value;
                 }
             }
 
@@ -256,7 +267,7 @@ class ClientNewController extends Controller
             }
         }
 
-        $client = $client->only('tags', 'field_data', 'form_answer', 'id', 'unique_indentificator');
+        $client = $client->only('tags', 'id', 'unique_indentificator');
 
         return response()->json(['client' => $client, 'custom_fields' => $customFields, 'sections' => $sections]);
     }
