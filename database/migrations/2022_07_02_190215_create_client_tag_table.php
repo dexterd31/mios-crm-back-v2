@@ -15,10 +15,8 @@ class CreateClientTagTable extends Migration
     {
         Schema::create('client_tag', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('client_id')->comment('Id del cliente');
+            $table->foreignId('client_new_id')->comment('Id del cliente');
             $table->foreignId('tag_id')->comment('Id_de la etiqueta');
-            $table->timestamps();
-            $table->softDeletes();
         });
     }
 

@@ -55,56 +55,56 @@ class DataBaseManager
         $customerDataPreloadIds = clone $customerDataPreload->pluck('id');
         $customerDataPreload = $customerDataPreload->get();
 
-
-        $data = [
-            "form_id" => $customerDataPreload->form_id,
-            "unique_indentificator" => $customerDataPreload->unique_identificator,
-            "information_data" => $customerDataPreload->customer_data
-        ];
-
+        
         foreach ($customerDataPreload as $customerData) {
+            $data = [
+                "form_id" => $customerData->form_id,
+                "unique_indentificator" => $customerData->unique_identificator,
+                "information_data" => $customerData->customer_data
+            ];
+
             $client = $clientsManager->findClientByCustomerDataPreload($customerData);
 
-            if ($client && $customerDataPreload->to_update) {
+            if ($client && $customerData->to_update) {
                 $client = $clientsManager->updateClient($client, $data["information_data"]);
-                $customerDataPreload->delete();
-                $saveDirectories = $this->addToDirectories($customerDataPreload->form_answer, $customerDataPreload->form_id, $client->id, $customerDataPreload->customer_data);
+                $customerData->delete();
+                $saveDirectories = $this->addToDirectories($customerData->form_answer, $customerData->form_id, $client->id, $customerData->customer_data, $customerData->adviser);
             } else if (is_null($client)) {
                 $client = $clientsManager->storeNewClient($data);
-                $saveDirectories = $this->addToDirectories($customerDataPreload->form_answer, $customerDataPreload->form_id, $client->id, $customerDataPreload->customer_data);
+                $saveDirectories = $this->addToDirectories($customerData->form_answer, $customerData->form_id, $client->id, $customerData->customer_data, $customerData->adviser);
             }
 
-            if ($customerDataPreload->custom_field_data) {
+            if ($customerData->custom_field_data) {
                 $customFieldData = CustomFieldData::clientFilter($client->id)->first();
     
                 if ($customFieldData) {
-                    foreach ($customerDataPreload->custom_field_data as $fieldData) {
+                    foreach ($customerData->custom_field_data as $fieldData) {
                         $customFieldData->field_data[] = $fieldData;
                     }
                     $customFieldData->save();
                 } else {
                     CustomFieldData::create([
-                        'client_id' => $client->id,
-                        'field_data' => $customerDataPreload->custom_field_data
+                        'client_new_id' => $client->id,
+                        'field_data' => $customerData->custom_field_data
                     ]);
                 }
             }
 
-            if (count($customerDataPreload->tags)) {
-                $client->tags()->attach($customerDataPreload->tags);
+            if (count($customerData->tags)) {
+                $client->tags()->attach($customerData->tags);
             }
 
-            if ($customerDataPreload->imported_file_id) {
-                $client->importedFiles()->attach([$customerDataPreload->imported_file_id]);
+            if ($customerData->imported_file_id) {
+                $client->importedFiles()->attach([$customerData->imported_file_id]);
             }
 
-            if ($customerDataPreload->adviser){
-                $relAdvisorClientNew = RelAdvisorClientNew::where('client_new_id', $client->id)->where('rrhh_id', $customerDataPreload->adviser)->first();
+            if ($customerData->adviser){
+                $relAdvisorClientNew = RelAdvisorClientNew::where('client_new_id', $client->id)->where('rrhh_id', $customerData->adviser)->first();
     
                 if (is_null($relAdvisorClientNew)) {
                     $relAdvisorClientNew = RelAdvisorClientNew::create([
                         'client_new_id' => $client->id,
-                        'rrhh_id' => $customerDataPreload->adviser
+                        'rrhh_id' => $customerData->adviser
                     ]);
                 }
                 
@@ -123,16 +123,17 @@ class DataBaseManager
      * @param int $clientId
      * @param int $clientNewId
      * @param array $indexForm
+     * @param int $rrhhId
      * @return mixed
      */
-    private function addToDirectories(array $data,int $formId,int $clientNewId, array $indexForm){
+    private function addToDirectories(array $data,int $formId,int $clientNewId, array $indexForm, int $rrhhId){
         $newDirectory = Directory::updateOrCreate([
             'form_id' => $formId,
             'client_new_id' => $clientNewId,
             'data' => json_encode($data)
 
         ],[
-            'rrhh_id' => auth()->user()->rrhh_id,
+            'rrhh_id' => $rrhhId,
             'form_index' => json_encode($indexForm)
         ]);
 

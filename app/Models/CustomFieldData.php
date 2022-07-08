@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class CustomFieldData extends Model
 {
     protected $fillable = [
-        'client_id',
+        'client_new_id',
         'field_data'
     ];
 
@@ -37,7 +37,7 @@ class CustomFieldData extends Model
     public function scopeClientFilter($query, $client)
     {
         if ($client) {
-            return $query->where('client_id', $client);
+            return $query->where('client_new_id', $client);
         }
     }
 

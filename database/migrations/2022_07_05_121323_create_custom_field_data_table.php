@@ -15,7 +15,7 @@ class CreateCustomFieldDataTable extends Migration
     {
         Schema::create('custom_field_data', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('client_id')->comment('Id del cliente.');
+            $table->foreignId('client_new_id')->comment('Id del cliente.');
             $table->json('field_data')->comment('Datos de los campos personalizados por cliente.');
             $table->timestamps();
         });

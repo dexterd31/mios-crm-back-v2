@@ -22,11 +22,17 @@ class ManagementController extends Controller
      */
     public function indexDataBaseManagement(Request $request)
     {
-        [$clients, $tableColumns] = (new DataBaseManager)->listManagement($request->form_id, [
-            'tags' => $request->tags,
-            'fromDate' => $request->from_date,
-            'toDate' => $request->to_date,
-        ]);
+        $filterOptions = [];
+
+        if ($request->method() == 'POST') {
+            $filterOptions = [
+                'tags' => $request->tags,
+                'fromDate' => $request->from_date,
+                'toDate' => $request->to_date,
+            ];
+        }
+
+        [$clients, $tableColumns] = (new DataBaseManager)->listManagement($request->form_id, $filterOptions);
 
         $nameColumns = [];
 
