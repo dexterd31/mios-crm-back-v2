@@ -35,16 +35,19 @@ class DataBaseManager
         
         $tableColumns = [];
         $clients = $clients->get(['client_news.id', 'client_news.updated_at', 'information_data', 'unique_indentificator'])
-        ->map(function ($client) use ($tableColumns) {
+        ->map(function ($client) use (&$tableColumns) {
             $informationData = json_decode($client->information_data);
-            $client->information_data = $informationData[0]->value;
             $uniqueIndentificator = json_decode($client->unique_indentificator);
+            $client->information_data = $informationData[0]->value;
             $client->unique_indentificator = $uniqueIndentificator->value;
 
             if (!count($tableColumns)) {
-                $tableColumns = [$informationData[0]->id, $uniqueIndentificator->id];
+                $tableColumns = [
+                    'information_data' => $informationData[0]->id,
+                    'unique_indentificator' => $uniqueIndentificator->id
+                ];
             }
-
+            
             return $client;
         });
 

@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Managers\DataBaseManager;
 use App\Models\Section;
+use App\Models\Tag;
 use Illuminate\Http\Request;
 
 class ManagementController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth', ['except' => ['test']]);
+        $this->middleware('auth', ['except' => ['indexDataBaseManagement', 'test']]);
     }
 
     /**
@@ -40,13 +41,17 @@ class ManagementController extends Controller
         ->each(function ($section) use ($tableColumns, &$nameColumns) {
             $fields = json_decode($section->fields);
             foreach ($fields as $field) {
-                if (in_array($field->id, $tableColumns)) {
-                    $nameColumns[] = ucwords($field->label);
+                foreach ($tableColumns as $key => $value) {
+                    if ($field->id == $value) {
+                        $nameColumns[$key] = ucwords($field->label);
+                    }
                 }
             }
         });
 
-        return response()->json(['clients' => $clients, 'name_columns' => $nameColumns]);
+        $tags = Tag::formFilter($formId)->get(['id', 'name']);
+
+        return response()->json(['clients' => $clients, 'name_columns' => $nameColumns, 'tags' => $tags]);
     }
 
     public function test()
