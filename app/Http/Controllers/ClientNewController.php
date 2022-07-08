@@ -17,7 +17,7 @@ class ClientNewController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth', ['except' => 'show']);
+        $this->middleware('auth');
     }
 
     public function setClientNewModel($clientNewModel)
@@ -222,10 +222,28 @@ class ClientNewController extends Controller
     public function show($clietId)
     {
         $client = ClientNew::find($clietId);
+        $uniqueIndentificator = json_decode($client->unique_indentificator);
+
+        $client->unique_indentificator = (object) [
+            'label' => $uniqueIndentificator->label,
+            'value' => $uniqueIndentificator->value
+        ];
+
         $client->tags = $client->tags()->get(['tags.id', 'tags.name'])->makeHidden('pivot');
         $client->field_data = $client->customFieldData->field_data;
-        // $clientNew->load('tags');
-        dd($client);
+        $client->form_answer = $client->formanswer()->latest()->first() ?? json_decode($client->directory->data);
+        
+        $sections = $client->form->section()->get(['name_section', 'fields'])
+        ->map(function ($section) {
+            $section->fields = json_decode($section->fields);
+            return $section;
+        });
+        
+        $customFields = $client->form->cutomFields->fields;
+
+        $client = $client->only('tags', 'field_data', 'form_answer', 'id', 'unique_indentificator');
+
+        return response()->json(['client' => $client, 'custom_fields' => $customFields, 'sections' => $sections]);
     }
 
     /**
