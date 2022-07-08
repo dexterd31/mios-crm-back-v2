@@ -32,11 +32,11 @@ class ManagementController extends Controller
             ];
         }
 
-        [$clients, $tableColumns] = (new DataBaseManager)->listManagement($form_id, $filterOptions);
+        [$clients, $tableColumns] = (new DataBaseManager)->listManagement($formId, $filterOptions);
 
         $nameColumns = [];
 
-        Section::where('form_id', $request->form_id)->get('fields')
+        Section::where('form_id', $formId)->get('fields')
         ->each(function ($section) use ($tableColumns, &$nameColumns) {
             $fields = json_decode($section->fields);
             foreach ($fields as $field) {
