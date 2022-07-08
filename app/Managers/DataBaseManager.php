@@ -60,7 +60,7 @@ class DataBaseManager
     public function createClients()
     {
         $clientsManager = new ClientsManager;
-        $customerDataPreload = CustomerDataPreload::take(200);
+        $customerDataPreload = CustomerDataPreload::take(1);
         $customerDataPreloadIds = clone $customerDataPreload->pluck('id');
         $customerDataPreload = $customerDataPreload->get();
 
@@ -102,7 +102,7 @@ class DataBaseManager
             }
 
             if (count($customerData->tags)) {
-                $clientTags = $client->tags()->pluck('id');
+                $clientTags = $client->tags()->pluck('tags.id');
                 if (count($clientTags)) {
                     foreach ($customerData->tags as $tag) {
                         if (!in_array($tag, $clientTags)) {
