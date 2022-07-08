@@ -231,7 +231,7 @@ class ClientNewController extends Controller
         ];
 
         $client->tags = $client->tags()->get(['tags.id', 'tags.name'])->makeHidden('pivot');
-        $client->field_data = $client->customFieldData->field_data;
+        $client->field_data = $client->customFieldData->field_data ?? [];
         $client->form_answer = $client->formanswer()->latest()->first() ?? json_decode($client->directory->data);
         
         $sections = $client->form->section()->get(['name_section', 'fields'])
@@ -240,7 +240,7 @@ class ClientNewController extends Controller
             return $section;
         });
         
-        $customFields = $client->form->cutomFields->fields;
+        $customFields = $client->form->cutomFields->fields ?? [];
 
         $client = $client->only('tags', 'field_data', 'form_answer', 'id', 'unique_indentificator');
 
