@@ -70,12 +70,19 @@ class RelAdvisorClientNewController extends Controller
         $assignedClients1->each(function ($item) {
             $item->unique_identificator = json_decode($item->unique_indentificator);
             unset($item->unique_indentificator);
-        });
+            $item->from_table = 'RelAdvisorClientNew';
+        })->toArray();
 
         $assignedClients1 = $assignedClients1->toArray();
 
         $assignedClients2 = CustomerDataPreload::adviserFilter(auth()->user()->rrhh_id)->formFilter($formId)
-        ->managedFilter(false)->get(['created_at', 'unique_identificator'])->toArray();
+        ->managedFilter(false)->get(['created_at', 'unique_identificator', 'id']);
+
+        $assignedClients2->each(function ($item) {
+            $item->from_table = 'CustomerDataPreload';
+        });
+
+        $assignedClients2 = $assignedClients2->toArray();
 
         $assignedClients = array_merge($assignedClients1, $assignedClients2);
 

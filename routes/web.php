@@ -140,6 +140,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
         $router->get('/changeState/{id}','TrayController@changeState');
         $router->get('/duplicatedSection/{idFormAnswer}','TrayController@sectionsDuplicated');
         $router->put('/{id}','TrayController@update');
+        $router->post('/cero', 'FormAnswerController@formAnswerFilterFromCeroTray');
 
         //semaforización de bandejas
         $router->group(['prefix' => 'traffic'], function() use ($router){
@@ -228,4 +229,13 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->get('online-users/report/{formId}/role/{roleId}','OnlineUserStatusController@onlineUserReportByForm');
 
       $router->post('upload/from-email', 'UploadController@uploadClientDataFromEmail');
-    });
+      
+      $router->group(['prefix' => 'managements'], function () use($router) {
+        $router->get('/database/{formId}', 'ManagementController@indexDataBaseManagement');
+        $router->post('/database/{formId}', 'ManagementController@indexDataBaseManagement');
+      });
+
+      $router->group(['prefix' => 'clients'], function () use ($router) {
+        $router->get('/{clietId}', 'ClientNewController@show');
+      });
+});
