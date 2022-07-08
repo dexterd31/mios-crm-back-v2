@@ -17,7 +17,8 @@ class ClientNewController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth');
+        // $this->middleware('auth');
+        $this->middleware('auth', ['except' => ['show']]);
     }
 
     public function setClientNewModel($clientNewModel)
@@ -241,6 +242,19 @@ class ClientNewController extends Controller
         });
         
         $customFields = $client->form->cutomFields->fields ?? [];
+
+        foreach($customFields as $key => $customField) {
+            $found = false;
+            foreach ($client->field_data as $data) {
+                if ($data->id == $customField->id) {
+                    $found = true;
+                }
+            }
+
+            if (!$found) {
+                unset($customFields[$key]);
+            }
+        }
 
         $client = $client->only('tags', 'field_data', 'form_answer', 'id', 'unique_indentificator');
 
