@@ -11,6 +11,7 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 
+
 class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading, WithBatchInserts
 {
     private $formId;
@@ -104,8 +105,6 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
     
             $this->resume['totalRegistros']++;
         }
-
-        $this->chunkCounter++;
     }
 
     public function chunkSize(): int
