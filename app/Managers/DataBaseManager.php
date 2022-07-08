@@ -2,6 +2,7 @@
 
 namespace App\Managers;
 
+use App\Jobs\CreateClients;
 use App\Models\ClientNew;
 use App\Models\ClientTag;
 use App\Models\CustomerDataPreload;
@@ -161,6 +162,8 @@ class DataBaseManager
             CustomerDataPreload::destroy($customerDataPreloadIds);
 
             DB::commit();
+            
+            dispatch((new CreateClients)->delay(Carbon::now()->addSeconds(10)))->onQueue('create-clients');
         } catch (Exception $e) {
             Log::error("Client Masive Creator: {$e->getMessage()}");
             DB::rollBack();
