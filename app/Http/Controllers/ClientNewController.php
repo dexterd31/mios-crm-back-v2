@@ -219,10 +219,11 @@ class ClientNewController extends Controller
      * @param  \App\Models\ClientNew  $clientNew
      * @return \Illuminate\Http\Response
      */
-    public function show(ClientNew $clientNew)
+    public function show($clietId)
     {
+        $client = ClientNew::find($clietId);
         // $clientNew->load('tags');
-        dd($clientNew, $clientNew->tags()->toSql());
+        dd($client->load(['tags', 'customFieldData:field_data']));
     }
 
     /**

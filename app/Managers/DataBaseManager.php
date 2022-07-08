@@ -27,7 +27,7 @@ class DataBaseManager
         $clients = ClientNew::formFilter($formId);
         
         if (isset($filterOptions['tags']) && count($filterOptions['tags'])) {
-            $clients->join('client_tag', 'client_tag.client_id', 'client_news.id')
+            $clients->join('client_tag', 'client_tag.client_new_id', 'client_news.id')
             ->whereIn('client_tag.tag_id', $filterOptions['tags']);  
         }
         if (isset($filterOptions['from_date']) && isset($filterOptions['to_date'])) {

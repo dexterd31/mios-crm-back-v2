@@ -235,6 +235,6 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       });
 
       $router->group(['prefix' => 'clients'], function () use ($router) {
-        $router->get('/{clientNew}', 'ClientNewController@show');
+        $router->get('/{clietId}', 'ClientNewController@show');
       });
 });
