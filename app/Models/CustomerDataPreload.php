@@ -31,6 +31,12 @@ class CustomerDataPreload extends Model
         return $this->belongsTo(Form::class);
     }
 
+    /**
+     * Consulta el nombre del archivo del cual fue importado el registro.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @return App\Models\ImportedFile
+     */
     public function importedFile()
     {
         return $this->belongsTo(ImportedFile::class);

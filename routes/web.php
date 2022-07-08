@@ -231,7 +231,6 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->group(['prefix' => 'managements'], function () use($router) {
         $router->get('/database/{formId}', 'ManagementController@indexDataBaseManagement');
         $router->post('/database/{formId}', 'ManagementController@indexDataBaseManagement');
-        $router->get('/test', 'ManagementController@test');
       });
 
       $router->group(['prefix' => 'clients'], function () use ($router) {

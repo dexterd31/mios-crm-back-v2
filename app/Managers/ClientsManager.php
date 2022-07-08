@@ -7,6 +7,13 @@ use App\Models\CustomerDataPreload;
 
 class ClientsManager
 {
+    /**
+     * Busca un cliente.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param array $data
+     * @return App\Models\ClientNew
+     */
     public function findClient(array $data)
     {
         $clientNew = new ClientNew;
@@ -60,6 +67,13 @@ class ClientsManager
         return $clientNew;
     }
 
+    /**
+     * Actualiza o crea un cliente.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param array $data
+     * @return App\Models\ClientNew
+     */
     public function updateOrCreateClient(array $data) 
     {
         $clientExists = $this->findClient([
@@ -76,6 +90,14 @@ class ClientsManager
         return $clientExists;
     }
 
+    /**
+     * Actualia un cliente.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param App\Models\ClientNew $client
+     * @param array $informationData
+     * @return App\Models\ClientNew
+     */
     public function updateClient($client, array $informationData)
     {
         $client->information_data = $this->formatInformationData($informationData);
@@ -84,6 +106,13 @@ class ClientsManager
         return $client;
     }
 
+    /**
+     * Crea un cliente.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param array $data
+     * @return App\Models\ClientNew
+     */
     public function storeNewClient(array $data)
     {
         $client = ClientNew::create([
@@ -95,6 +124,13 @@ class ClientsManager
         return $client;
     }
 
+    /**
+     * Da formato a la infomacion del cliente.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param array $informationData
+     * @return string
+     */
     private function formatInformationData(array $informationData) : string
     {
         $informationDataClient = [];
@@ -109,6 +145,13 @@ class ClientsManager
         return json_encode($informationDataClient);
     }
 
+    /**
+     * Busca un cliente segun los datos precargados, lo actualiza si es necesario y si no lo encuentra lo crea.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param App\Models\CustomerDataPreload $customerDataPreload
+     * @return App\Models\ClientNew
+     */
     public function findClientByCustomerDataPreload(CustomerDataPreload $customerDataPreload)
     {
         return ClientNew::where('form_id', $customerDataPreload->form_id)->get()

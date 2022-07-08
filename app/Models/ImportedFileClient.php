@@ -15,6 +15,14 @@ class ImportedFileClient extends Model
 
     //? Filters --------------------------------------------------------------------------------------------------------
 
+    /**
+     * Filtra por id del cliente.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param Illuminate\Database\Query\Builder $query
+     * @param int $client
+     * @return Illuminate\Database\Query\Builder
+     */
     public function scopeClientFilter($query, $client)
     {
         if ($client) {
@@ -22,6 +30,14 @@ class ImportedFileClient extends Model
         }
     }
 
+    /**
+     * Filtra por el id del archivo importado.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @param Illuminate\Database\Query\Builder $query
+     * @param int $importedFile
+     * @return Illuminate\Database\Query\Builder
+     */
     public function scopeImportedFileFilter($query, $importedFile)
     {
         if ($importedFile) {

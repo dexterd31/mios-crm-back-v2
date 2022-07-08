@@ -59,6 +59,12 @@ class ClientNew extends Model
         return $this->hasOne(CustomFieldData::class);
     }
 
+    /**
+     * Consulta el nombre del archivo del cual se importo.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
+     *
+     * @return Illuminate\Database\Eloquent\Collection
+     */
     public function importedFiles()
     {
         return $this->belongsToMany(ImportedFile::class, 'imported_file_client');
@@ -66,6 +72,13 @@ class ClientNew extends Model
 
     //? Filters --------------------------------------------------------------------------------------------------------
 
+    /**
+     * Undocumented function
+     *
+     * @param Illuminate\Database\Query\Builder $query
+     * @param int $formId
+     * @return Illuminate\Database\Query\Builder
+     */
     public function scopeFormFilter($query, $formId)
     {
         if ($formId) {
@@ -73,6 +86,14 @@ class ClientNew extends Model
         }
     }
 
+    /**
+     * Filtra la fecha de actualiazción entre un lapso de fechas dadas.
+     *
+     * @param Illuminate\Database\Query\Builder $query
+     * @param string $from Fecha inicial
+     * @param string $to Fecha final
+     * @return Illuminate\Database\Query\Builder
+     */
     public function scopeUpdatedAtBetweenFilter($query, $from, $to)
     {
         if ($from && $to) {
