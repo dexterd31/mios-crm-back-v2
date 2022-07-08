@@ -20,7 +20,7 @@ class ManagementController extends Controller
      * @param Request $request
      * @return Illuminate\Http\Response
      */
-    public function indexDataBaseManagement($form_id, Request $request)
+    public function indexDataBaseManagement($formId, Request $request)
     {
         $filterOptions = [];
 
