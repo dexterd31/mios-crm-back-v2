@@ -30,8 +30,8 @@ class DataBaseManager
             $clients->join('client_tag', 'client_tag.client_id', 'client_news.id')
             ->whereIn('client_tag.tag_id', $filterOptions['tags']);  
         }
-        if (isset($filterOptions['fromDate']) && isset($filterOptions['toDate'])) {
-            $clients->updatedAtBetweenFilter($filterOptions['fromDate'], $filterOptions['toDate']);
+        if (isset($filterOptions['from_date']) && isset($filterOptions['to_date'])) {
+            $clients->updatedAtBetweenFilter($filterOptions['from_date'], $filterOptions['to_date']);
         }
         
         $tableColumns = [];
