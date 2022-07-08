@@ -4,7 +4,6 @@ namespace App\Imports;
 
 use App\Http\Controllers\UploadController;
 use App\Models\CustomerDataPreload;
-use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
@@ -21,8 +20,11 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
     private $fieldsLoad;
     private $resume;
     private $uploadController;
+    private $tags;
+    private $customFields;
+    private $importedFileId;
 
-    public function __construct(UploadController $uploadController = null, $formId = 0, $toUpdate = false, $fieldsLoad = [], $assignUsers = null)
+    public function __construct(UploadController $uploadController = null, $formId = 0, $toUpdate = false, $fieldsLoad = [], $assignUsers = null, $tags = [], $customFields = [], $importedFileId = 0)
     {
         HeadingRowFormatter::default('none');
         $this->uploadController = $uploadController;
@@ -31,6 +33,9 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
         $this->fieldsLoad = $fieldsLoad;
         $this->assignUsers = $assignUsers;
         $this->resume = ['cargados' => 0, 'errores' => [], 'nocargados' => 0, 'totalRegistros' => 0];
+        $this->tags = $tags;
+        $this->customFields = $customFields;
+        $this->importedFileId = $importedFileId;
     }
 
     public function collection(Collection $rows)
@@ -39,25 +44,34 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
             $answerFields = (Object)[];
             $errorAnswers = [];
             $formAnswerClient=[];
+            $customFieldData = [];
     
             foreach ($row as $fieldIndex => $field) {
-                $dataValidate = $this->uploadController->validateClientDataUpload($this->fieldsLoad[$fieldIndex], $field, $this->formId);
-    
-                if ($dataValidate->success) {
-                    foreach ($dataValidate->in as $in) {
-                        if (!isset($answerFields->$in)) {
-                            $answerFields->$in = [];
+                if (isset($this->fieldsLoad[$fieldIndex])) {
+                    $dataValidate = $this->uploadController->validateClientDataUpload($this->fieldsLoad[$fieldIndex], $field, $this->formId);
+        
+                    if ($dataValidate->success) {
+                        foreach ($dataValidate->in as $in) {
+                            if (!isset($answerFields->$in)) {
+                                $answerFields->$in = [];
+                            }
+                            
+                            array_push($answerFields->$in, $dataValidate->$in);
                         }
                         
-                        array_push($answerFields->$in, $dataValidate->$in);
+                        array_push($formAnswerClient, $dataValidate->formAnswer);
+                    } else {
+                        $fila = strval(intval($rowIndex) + 1);
+                        $columnErrorMessage = "Error en la Fila $fila";
+                        array_push($dataValidate->message, $columnErrorMessage);
+                        array_push($errorAnswers, $dataValidate->message);
                     }
-                    
-                    array_push($formAnswerClient, $dataValidate->formAnswer);
-                } else {
-                    $fila = strval(intval($rowIndex) + 1);
-                    $columnErrorMessage = "Error en la Fila $fila";
-                    array_push($dataValidate->message, $columnErrorMessage);
-                    array_push($errorAnswers, $dataValidate->message);
+                }
+
+                if (count($this->customFields)) {
+                    if (isset($this->customFields[$fieldIndex])) {
+                        $customFieldData[] = ['id' => $this->customFields[$fieldIndex], 'value' => $field];
+                    }
                 }
             }
     
@@ -77,6 +91,9 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
                     'adviser' => $rrhhId,
                     'unique_identificator' => $uniqueIdentificator,
                     'form_answer' => $formAnswerClient,
+                    'custom_field_data' => count($this->customFields) ? $customFieldData : [],
+                    'tags' => $this->tags,
+                    'imported_file_id' => $this->importedFileId
                 ]);
     
                 $this->resume['cargados']++;
