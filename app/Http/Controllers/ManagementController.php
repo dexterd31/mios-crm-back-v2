@@ -10,7 +10,7 @@ class ManagementController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware('auth', ['except' => 'test']);
     }
 
     /**
@@ -20,7 +20,7 @@ class ManagementController extends Controller
      * @param Request $request
      * @return Illuminate\Http\Response
      */
-    public function indexDataBaseManagement(Request $request)
+    public function indexDataBaseManagement($form_id, Request $request)
     {
         $filterOptions = [];
 
@@ -32,7 +32,7 @@ class ManagementController extends Controller
             ];
         }
 
-        [$clients, $tableColumns] = (new DataBaseManager)->listManagement($request->form_id, $filterOptions);
+        [$clients, $tableColumns] = (new DataBaseManager)->listManagement($form_id, $filterOptions);
 
         $nameColumns = [];
 
@@ -47,5 +47,10 @@ class ManagementController extends Controller
         });
 
         return response()->json(['clients' => $clients, 'name_columns' => $nameColumns]);
+    }
+
+    public function test()
+    {
+        (new DataBaseManager)->createClients();
     }
 }
