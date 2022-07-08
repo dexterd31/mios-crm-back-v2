@@ -24,7 +24,7 @@ class DataBaseManager
     public function listManagement(int $formId, array $filterOptions = []) : array
     {
         $clients = ClientNew::formFilter($formId);
-
+        
         if (isset($filterOptions['tags']) && count($filterOptions['tags'])) {
             $clients->join('client_tag', 'client_tag.client_id', 'client_news.id')
             ->whereIn('client_tag.tag_id', $filterOptions['tags']);  
@@ -32,17 +32,20 @@ class DataBaseManager
         if (isset($filterOptions['fromDate']) && isset($filterOptions['toDate'])) {
             $clients->updatedAtBetweenFilter($filterOptions['fromDate'], $filterOptions['toDate']);
         }
-
+        
         $tableColumns = [];
-        $clients->get(['client_news.id', 'client_news.updated_at', 'information_data', 'unique_indentificator'])
+        $clients = $clients->get(['client_news.id', 'client_news.updated_at', 'information_data', 'unique_indentificator'])
         ->map(function ($client) use ($tableColumns) {
             $informationData = json_decode($client->information_data);
             $client->information_data = $informationData[0]->value;
             $uniqueIndentificator = json_decode($client->unique_indentificator);
             $client->unique_indentificator = $uniqueIndentificator->value;
+
             if (!count($tableColumns)) {
                 $tableColumns = [$informationData[0]->id, $uniqueIndentificator->id];
             }
+
+            return $client;
         });
 
         return [$clients, $tableColumns];
@@ -78,9 +81,11 @@ class DataBaseManager
                 $customFieldData = CustomFieldData::clientFilter($client->id)->first();
     
                 if ($customFieldData) {
+                    $fieldDataArray = $customFieldData->field_data;
                     foreach ($customerData->custom_field_data as $fieldData) {
-                        $customFieldData->field_data[] = $fieldData;
+                        $fieldDataArray[] = $fieldData;
                     }
+                    $customFieldData->field_data = $fieldDataArray;
                     $customFieldData->save();
                 } else {
                     CustomFieldData::create([
