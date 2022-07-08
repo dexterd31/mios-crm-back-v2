@@ -215,8 +215,9 @@ class ClientNewController extends Controller
 
     /**
      * Display the specified resource.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
      *
-     * @param  \App\Models\ClientNew  $clientNew
+     * @param  int  $clietId
      * @return \Illuminate\Http\Response
      */
     public function show($clietId)

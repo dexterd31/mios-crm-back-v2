@@ -17,6 +17,7 @@ class CreateImportedFileClientTable extends Migration
             $table->id();
             $table->foreignId('imported_file_id')->comment('Id del archivo importado');
             $table->foreignId('client_new_id')->comment('Id del cliente.');
+            $table->timestamps();
         });
     }
 

@@ -3,9 +3,11 @@
 namespace App\Managers;
 
 use App\Models\ClientNew;
+use App\Models\ClientTag;
 use App\Models\CustomerDataPreload;
 use App\Models\CustomFieldData;
 use App\Models\Directory;
+use App\Models\ImportedFileClient;
 use App\Models\RelAdvisorClientNew;
 use Illuminate\Support\Carbon;
 
@@ -100,11 +102,36 @@ class DataBaseManager
             }
 
             if (count($customerData->tags)) {
-                $client->tags()->attach($customerData->tags);
+                $clientTags = $client->tags()->pluck('id');
+                if (count($clientTags)) {
+                    foreach ($customerData->tags as $tag) {
+                        if (!in_array($tag, $clientTags)) {
+                            ClientTag::create([
+                                'client_new_id' => $client->id,
+                                'tag_id' => $tag
+                            ]);
+                        }
+                    }
+                } else {
+                    foreach ($customerData->tags as $tag) {
+                        ClientTag::create([
+                            'client_new_id' => $client->id,
+                            'tag_id' => $tag
+                        ]);
+                    }
+                }
             }
 
             if ($customerData->imported_file_id) {
-                $client->importedFiles()->attach([$customerData->imported_file_id]);
+                $importedFileClient = ImportedFileClient::clientFilter($client->id)
+                ->importedFileFilter($customerData->imported_file_id)->first();
+
+                if (!is_null($importedFileClient)) {
+                    ImportedFileClient::create([
+                        'client_new_id' => $client->id,
+                        'imported_file_id' => $customerData->imported_file_id
+                    ]);
+                }
             }
 
             if ($customerData->adviser){
