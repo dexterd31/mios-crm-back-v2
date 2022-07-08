@@ -222,8 +222,10 @@ class ClientNewController extends Controller
     public function show($clietId)
     {
         $client = ClientNew::find($clietId);
+        $client->tags = $client->tags()->get(['tags.id', 'tags.name'])->makeHidden('pivot');
+        $client->field_data = $client->customFieldData->field_data;
         // $clientNew->load('tags');
-        dd($client->load(['tags', 'customFieldData:field_data']));
+        dd($client);
     }
 
     /**
