@@ -35,7 +35,7 @@ class ManagementController extends Controller
 
         [$clients, $tableColumns] = (new DataBaseManager)->listManagement($formId, $filterOptions);
 
-        $nameColumns = [];
+        $nameColumns = ['updated_at' => 'Actualizado por última vez'];
 
         Section::where('form_id', $formId)->get('fields')
         ->each(function ($section) use ($tableColumns, &$nameColumns) {

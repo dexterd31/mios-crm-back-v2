@@ -7,6 +7,7 @@ use App\Models\CustomerDataPreload;
 use App\Models\CustomFieldData;
 use App\Models\Directory;
 use App\Models\RelAdvisorClientNew;
+use Illuminate\Support\Carbon;
 
 class DataBaseManager
 {
@@ -40,6 +41,7 @@ class DataBaseManager
             $uniqueIndentificator = json_decode($client->unique_indentificator);
             $client->information_data = $informationData[0]->value;
             $client->unique_indentificator = $uniqueIndentificator->value;
+            $client->updated_at = $client->updated_at->toDateString();
 
             if (!count($tableColumns)) {
                 $tableColumns = [
