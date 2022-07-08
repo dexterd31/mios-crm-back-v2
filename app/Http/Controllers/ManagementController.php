@@ -25,14 +25,6 @@ class ManagementController extends Controller
     {
         $filterOptions = $request->filter_options ?? [];
 
-        if ($request->method() == 'POST') {
-            $filterOptions = [
-                'tags' => $request->tags,
-                'fromDate' => $request->from_date,
-                'toDate' => $request->to_date,
-            ];
-        }
-
         [$clients, $tableColumns] = (new DataBaseManager)->listManagement($formId, (array) $filterOptions);
 
         $nameColumns = ['updated_at' => 'Actualizado por última vez'];
