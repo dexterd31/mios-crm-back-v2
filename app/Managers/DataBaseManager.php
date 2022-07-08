@@ -39,9 +39,9 @@ class DataBaseManager
             $informationData = json_decode($client->information_data);
             $client->information_data = $informationData[0]->value;
             $uniqueIndentificator = json_decode($client->unique_indentificator);
-            $client->unique_indentificator = $uniqueIndentificator[0]->value;
+            $client->unique_indentificator = $uniqueIndentificator->value;
             if (!count($tableColumns)) {
-                $tableColumns = [$informationData[0]->id, $uniqueIndentificator[0]->id];
+                $tableColumns = [$informationData[0]->id, $uniqueIndentificator->id];
             }
         });
 

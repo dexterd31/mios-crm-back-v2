@@ -10,7 +10,7 @@ class ManagementController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth', ['except' => 'test']);
+        $this->middleware('auth', ['except' => 'indexDataBaseManagement']);
     }
 
     /**
