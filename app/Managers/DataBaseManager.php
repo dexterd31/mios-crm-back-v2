@@ -41,7 +41,6 @@ class DataBaseManager
             $uniqueIndentificator = json_decode($client->unique_indentificator);
             $client->information_data = $informationData[0]->value;
             $client->unique_indentificator = $uniqueIndentificator->value;
-            $client->updated_at = $client->updated_at->toDateString();
 
             if (!count($tableColumns)) {
                 $tableColumns = [
@@ -49,7 +48,7 @@ class DataBaseManager
                     'unique_indentificator' => $uniqueIndentificator->id
                 ];
             }
-            
+
             return $client;
         });
 

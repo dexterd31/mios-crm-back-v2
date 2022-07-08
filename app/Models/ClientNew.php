@@ -45,7 +45,8 @@ class ClientNew extends Model
      */
     public function tags()
     {
-        return $this->belongsToMany(Tag::class, 'client_tag');
+        return $this->hasManyThrough(Tag::class, ClientTag::class, 'client_new_id', 'id', 'id', 'tag_id');
+        // return $this->hasManyThrough(Tag::class, AreaUser::class, 'area_id', 'id', 'id', 'user_id');
     }
 
     /**

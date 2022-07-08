@@ -11,7 +11,7 @@ class ManagementController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth', ['except' => ['indexDataBaseManagement', 'test']]);
+        $this->middleware('auth', ['except' => ['test']]);
     }
 
     /**
@@ -23,7 +23,7 @@ class ManagementController extends Controller
      */
     public function indexDataBaseManagement($formId, Request $request)
     {
-        $filterOptions = [];
+        $filterOptions = $request->filter_options ?? [];
 
         if ($request->method() == 'POST') {
             $filterOptions = [
@@ -33,7 +33,7 @@ class ManagementController extends Controller
             ];
         }
 
-        [$clients, $tableColumns] = (new DataBaseManager)->listManagement($formId, $filterOptions);
+        [$clients, $tableColumns] = (new DataBaseManager)->listManagement($formId, (array) $filterOptions);
 
         $nameColumns = ['updated_at' => 'Actualizado por última vez'];
 

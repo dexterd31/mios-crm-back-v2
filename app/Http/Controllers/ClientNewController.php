@@ -15,6 +15,11 @@ class ClientNewController extends Controller
 {
     private $clientNewModel;
 
+    public function __construct()
+    {
+        $this->middleware('auth', ['except' => 'show']);
+    }
+
     public function setClientNewModel($clientNewModel)
 	{
 		$this->clientNewModel = $clientNewModel;
@@ -216,7 +221,8 @@ class ClientNewController extends Controller
      */
     public function show(ClientNew $clientNew)
     {
-        //
+        // $clientNew->load('tags');
+        dd($clientNew, $clientNew->tags()->toSql());
     }
 
     /**
