@@ -45,6 +45,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/form/upload/excelClients', 'UploadController@excelClients');
     //$router->post('/form/upload/excelClients', 'UploadController@excelClientsETL');
     $router->post('/form/upload/downloadManagement','UploadController@downloadManagement');
+    $router->get('/forms/ByAdviser', 'FormController@indexFormsByAdviser');
 
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
