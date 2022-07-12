@@ -45,7 +45,6 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('/form/upload/excelClients', 'UploadController@excelClients');
     //$router->post('/form/upload/excelClients', 'UploadController@excelClientsETL');
     $router->post('/form/upload/downloadManagement','UploadController@downloadManagement');
-    $router->get('/forms/ByAdviser', 'FormController@indexFormsByAdviser');
 
     //Rutas para la información del formulario
     $router->post('/formanswer/saveinfo', 'FormAnswerController@saveinfo');
@@ -232,6 +231,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->group(['prefix' => 'managements'], function () use($router) {
         $router->get('/database/{formId}', 'ManagementController@indexDataBaseManagement');
         $router->post('/database/{formId}', 'ManagementController@indexDataBaseManagement');
+        $router->get('/outbound/{formId}', 'OutboundManagementController@indexByForm');
+        $router->post('/outbound/{formId}', 'OutboundManagementController@indexByForm');
+        $router->get('/outbound/create/{formId}', 'OutboundManagementController@create');
       });
 
       $router->group(['prefix' => 'clients'], function () use ($router) {
