@@ -30,6 +30,7 @@ class OutboundManagementManager
         
         $outboundManagement = $outboundManagement->get()->map(function ($management) {
             $management->channel = $management->channel->name;
+            return $management;
         });
 
         return $outboundManagement;

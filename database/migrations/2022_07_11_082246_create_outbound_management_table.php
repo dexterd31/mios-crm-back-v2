@@ -20,7 +20,7 @@ class CreateOutboundManagementTable extends Migration
             $table->foreignId('channel_id')->comment('Canal de disfusión.');
             $table->json('settings')->comment('Configuraciónes');
             $table->bigInteger('total', false, true)->default(0)->comment('Total difundido y/o enviado');
-            $table->boolean('status')->comment('Estado de la gestión: 0 - Borrador, 1 - Enviado');
+            $table->boolean('status')->default(0)->comment('Estado de la gestión: 0 - Borrador, 1 - Enviado');
             $table->timestamps();
         });
     }

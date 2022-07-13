@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Managers\OutboundManagementManager;
+use App\Models\Channel;
 use App\Models\Form;
 use App\Models\OutboundManagement;
+use App\Services\NotificationsService;
 use Illuminate\Http\Request;
 
 class OutboundManagementController extends Controller
@@ -47,11 +49,37 @@ class OutboundManagementController extends Controller
 
     Public function show($outboundManagementId)
     {
+        $outboundManagement = OutboundManagement::find($outboundManagementId)->load('tags');
 
+        return response()->json($outboundManagement);
     }
 
     public function storeAndUpdate(Request $request)
     {
+        if ($request->outbound_management_id) {
+            $outboundManagement = OutboundManagement::find($request->outbound_management_id);
+            $outboundManagement->name = $request->name;
+            $outboundManagement->settings = $request->settings;
+            $outboundManagement->save();
+        } else {
+            $channel = Channel::nameFilter($request->channel)->first();
+            $outboundManagement = OutboundManagement::create([
+                'form_id' => $request->form_id,
+                'name' => $request->name,
+                'channel_id' => $channel->id,
+                'settings' => $request->settings,
+            ]);
+        }
 
+        return response()->json(200);
+    }
+
+    public function sendDiffusion(Request $request)
+    {
+        $notificationsService = new NotificationsService;
+        $outboundManagement = OutboundManagement::find($request->outbound_management_id);
+        $outboundManagement->name = $request->name;
+        $outboundManagement->settings = $request->settings;
+        $outboundManagement->save();
     }
 }
