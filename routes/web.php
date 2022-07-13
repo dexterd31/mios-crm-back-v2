@@ -228,6 +228,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       //Ruta para reporte de usuarios en línea
       $router->get('online-users/report/{formId}/role/{roleId}','OnlineUserStatusController@onlineUserReportByForm');
 
+      $router->post('upload/client/videochat', 'UploadController@uploadClientFromVideoChat');
+
       $router->group(['prefix' => 'managements'], function () use($router) {
         $router->get('/database/{formId}', 'ManagementController@indexDataBaseManagement');
         $router->post('/database/{formId}', 'ManagementController@indexDataBaseManagement');
@@ -239,4 +241,5 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->group(['prefix' => 'clients'], function () use ($router) {
         $router->get('/{clietId}', 'ClientNewController@show');
       });
+
 });
