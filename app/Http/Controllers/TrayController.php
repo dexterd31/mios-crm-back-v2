@@ -9,7 +9,6 @@ use App\Models\FormAnswer;
 use App\Support\Collection;
 use Illuminate\Http\Request;
 use App\Models\FormAnswerLog;
-use App\Models\FormAnswersTray;
 use App\Managers\TrafficTrayManager;
 use App\Traits\CheckDuplicateSections;
 
@@ -181,23 +180,28 @@ class TrayController extends Controller
         $tray = Tray::where('id',$id)->firstOrFail();
         $fieldsTable = collect(json_decode($tray->fields_table));
 
-        $formsAnswers = FormAnswer::select(
+        $formsAnswers = FormAnswer::orderBy('form_answers.updated_at', $orientation)->join('form_answers_trays', "form_answers.id", 'form_answers_trays.form_answer_id')
+        ->join('trays', "trays.id", 'form_answers_trays.tray_id')
+        ->where("trays.id", $id);        
+        
+        if($tray->advisor_manage == 1){
+            $formsAnswersIds = clone $formsAnswers;
+            $formsAnswersIds = $formsAnswersIds->get(['form_answers.id'])->toArray();
+    
+            $formAnswerLogIds = FormAnswerLog::whereIn('form_answer_id', $formsAnswersIds)
+            ->where('rrhh_id', auth()->user()->rrhh_id)->distinct()->get(['form_answer_id'])->toArray();
+
+            $formsAnswers = $formsAnswers->whereIn('form_answers.id', $formAnswerLogIds);
+        }
+
+        $formsAnswers = $formsAnswers->get([
             'form_answers.id',
             'form_answers.structure_answer',
             'form_answers.form_id',
             'form_answers.channel_id',
             'form_answers.rrhh_id',
             'form_answers.client_new_id'
-        )->orderBy('form_answers.updated_at', $orientation)->join('form_answers_trays', "form_answers.id", 'form_answers_trays.form_answer_id')
-        ->join('trays', "trays.id", 'form_answers_trays.tray_id')
-        ->where("trays.id", $id);
-
-        if($tray->advisor_manage == 1){
-            $formsAnswers = $formsAnswers->join('rel_trays_users','form_answers_trays.id','rel_trays_users.form_answers_trays_id')
-            ->where('rel_trays_users.rrhh_id',auth()->user()->rrhh_id);
-        }
-
-        $formsAnswers = $formsAnswers->get();
+        ]);
 
         $formsAnswers->each(function (&$answer) use ($fieldsTable, $tray) {
             $new_structure_answer = array_map(function (&$item) use ($answer) {

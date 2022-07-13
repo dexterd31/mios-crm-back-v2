@@ -217,7 +217,8 @@ class FormAnswerController extends Controller
             $notificationsController->sendNotifications($request->form_id,$form_answer);
 
             if(!is_null($request->client_id)){
-                $relAdvisorClientNew = RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)->where('client_new_id', $request->client_id)->first();
+                $relAdvisorClientNew = RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)
+                ->clientNewFilter($request->client_id)->managedFilter(false)->first();
     
                 if (!is_null($relAdvisorClientNew)) {
                     $relAdvisorClientNew->managed = true;
@@ -321,12 +322,12 @@ class FormAnswerController extends Controller
                 {
                     $clientNewId = $formAnswersData[0]->client_new_id;
                 }
+
                 $data = $this->setNewStructureAnswer($formAnswersData, $request->form_id);
 
                 $formAnswersData = $data["formAnswers"];
                 $files = $data["files"];
             }
-
             
             $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
             
@@ -955,6 +956,8 @@ class FormAnswerController extends Controller
                     'client_new_id' => $client->id,
                     'rrhh_id' => $customerDataPreload->adviser
                 ]);
+                
+                $customerDataPreload->delete();
             }
         }
     }
