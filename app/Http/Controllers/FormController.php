@@ -693,10 +693,10 @@ class FormController extends Controller
             ->select('name_form', 'forms.id', 'name_type', 'forms.state', 'seeRoles', 'forms.updated_at')
             ->where('group_users.rrhh_id', auth()->user()->rrhh_id)->get()
             ->filter(function ($form) {
-                return $form->tags()->count();
+                return $form->tags()->count() ? true : false;
             });
 
-       return response()->json(['forms' => $forms]);
+       return response()->json($forms);
     }
 }
 
