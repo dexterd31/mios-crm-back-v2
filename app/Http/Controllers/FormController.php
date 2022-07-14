@@ -685,18 +685,16 @@ class FormController extends Controller
         return response()->json($formsSections);
     }
 
-    public function indexFormsByAdviser()
+    public function indexFormsByAdviser(Request $request)
     {
-        $forms = [];
-        User::rrhhFilter(auth()->user()->rrhh_id)->first()->groups()->campaingFilter(auth()->user()->rrhh->campaing)
-        ->with('forms')->get()->each(function ($group) use (&$forms) {
-            $group->forms->each(function ($form) use (&$forms) {
-                $forms[] = (object) [
-                    'id' => $form->id,
-                    'name' => $form->name_form
-                ];
+        $forms = Form::join('form_types', 'forms.form_type_id', '=', 'form_types.id')
+            ->join("groups", "groups.id", "forms.group_id")
+            ->join('group_users', 'group_users.group_id', 'groups.id')
+            ->select('name_form', 'forms.id', 'name_type', 'forms.state', 'seeRoles', 'forms.updated_at')
+            ->where('group_users.rrhh_id', auth()->user()->rrhh_id)->get()
+            ->filter(function ($form) {
+                return $form->tags()->count();
             });
-        });
 
        return response()->json(['forms' => $forms]);
     }

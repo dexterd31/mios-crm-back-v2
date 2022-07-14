@@ -242,4 +242,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
         $router->get('/{clietId}', 'ClientNewController@show');
       });
 
+      $router->group(['prefix' => 'forms'], function () use ($router) {
+        $router->get('/byAdviser', 'FormController@indexFormsByAdviser');
+      });
 });
