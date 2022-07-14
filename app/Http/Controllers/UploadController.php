@@ -727,7 +727,6 @@ class UploadController extends Controller
                 if ($field->id == $assign->id) {
                     $fieldsLoad[$assign->label] = $field;
                     $data = $request->fields[$field->id];
-                    dd($data);
 
                     unset($fieldsLoad[$key]);
                     $field->value = $data;

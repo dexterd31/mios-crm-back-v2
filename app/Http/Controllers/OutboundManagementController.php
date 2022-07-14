@@ -2,36 +2,44 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\DiffusionBySMS;
 use App\Managers\OutboundManagementManager;
 use App\Models\Channel;
+use App\Models\ClientNew;
 use App\Models\Form;
+use App\Models\FormAnswer;
 use App\Models\OutboundManagement;
 use App\Services\NotificationsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class OutboundManagementController extends Controller
 {
-    public function __construct()
+    protected $outboundManagementManager;
+
+    public function __construct(OutboundManagementManager $outboundManagementManager)
     {
         $this->middleware('auth', ['except' => 'show']);
+        $this->outboundManagementManager = $outboundManagementManager;
     }
 
     public function indexByForm($formId, Request $request)
     {
         $filterOptions = $request->filter_options ?? [];
 
-        $outboundManagement = (new OutboundManagementManager)->listManagement($formId, (array) $filterOptions);
+        $outboundManagement = $this->outboundManagementManager->listManagement($formId, (array) $filterOptions);
 
         return response()->json($outboundManagement);
     }
 
     public function create($formId)
     {
-        $tags = Form::find($formId)->tags()->get(['id', 'name']);
+        $form = Form::find($formId);
+
+        $tags = Form::find($formId)->tags;
 
         $fields = [];
 
-        $form = Form::find($formId);
 
         $form->section()->get('fields')->each(function ($section) use (&$fields) {
             $sectionFields = json_decode($section->fields);
@@ -56,30 +64,17 @@ class OutboundManagementController extends Controller
 
     public function storeAndUpdate(Request $request)
     {
-        if ($request->outbound_management_id) {
-            $outboundManagement = OutboundManagement::find($request->outbound_management_id);
-            $outboundManagement->name = $request->name;
-            $outboundManagement->settings = $request->settings;
-            $outboundManagement->save();
-        } else {
-            $channel = Channel::nameFilter($request->channel)->first();
-            $outboundManagement = OutboundManagement::create([
-                'form_id' => $request->form_id,
-                'name' => $request->name,
-                'channel_id' => $channel->id,
-                'settings' => $request->settings,
-            ]);
-        }
+        $this->outboundManagementManager->storeAndUpdate($request->all());
 
-        return response()->json(200);
+        return response()->json(['success' => 'OK'], 200);
     }
 
     public function sendDiffusion(Request $request)
     {
-        $notificationsService = new NotificationsService;
-        $outboundManagement = OutboundManagement::find($request->outbound_management_id);
-        $outboundManagement->name = $request->name;
-        $outboundManagement->settings = $request->settings;
-        $outboundManagement->save();
+        $outboundManagement = $this->outboundManagementManager->storeAndUpdate($request->all());
+
+        $this->outboundManagementManager->createDiffusion($outboundManagement);
+        
+        return response()->json(['success' => 'OK'], 200);
     }
 }

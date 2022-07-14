@@ -35,7 +35,20 @@ class NotificationsService{
 
         $this->request('POST','/api/notification/send', $params);
     }
+    
+    public function sendSMS(string $message, array $addressee, string $origin = 'DEFAULT_SMS')
+    {
+        $request = new \stdClass();
+        $request->body = $message;
+        $request->to = $addressee;
 
+        $params = [
+            'idType' => 1,
+            'origin'=> $origin,
+            'request'=> $request
+        ];
 
+        $this->request('POST','/api/notification/send', $params);
+    }
 
 }
