@@ -48,8 +48,10 @@ class OutboundManagementController extends Controller
             }
         });
 
-        foreach ($form->cutomFields->fields as $field) {
-            $fields[] = ['id' => $field->id, 'name' => $field->label];
+        if ($form->cutomFields) {
+            foreach ($form->cutomFields->fields as $field) {
+                $fields[] = ['id' => $field->id, 'name' => $field->label];
+            }
         }
 
         return response()->json(['tags' => $tags, 'fields' => $fields]);
