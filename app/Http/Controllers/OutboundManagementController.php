@@ -36,7 +36,7 @@ class OutboundManagementController extends Controller
     {
         $form = Form::find($formId);
 
-        $tags = Form::find($formId)->tags;
+        $tags = $form->tags;
 
         $fields = [];
 
