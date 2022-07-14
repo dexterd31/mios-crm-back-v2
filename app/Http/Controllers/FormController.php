@@ -690,11 +690,9 @@ class FormController extends Controller
         $forms = Form::join('form_types', 'forms.form_type_id', '=', 'form_types.id')
             ->join("groups", "groups.id", "forms.group_id")
             ->join('group_users', 'group_users.group_id', 'groups.id')
+            ->join('tags', 'tags.form_id', 'forms.id')
             ->select('name_form', 'forms.id', 'name_type', 'forms.state', 'seeRoles', 'forms.updated_at')
-            ->where('group_users.rrhh_id', auth()->user()->rrhh_id)->get()
-            ->filter(function ($form) {
-                return $form->tags()->count() ? true : false;
-            });
+            ->where('group_users.rrhh_id', auth()->user()->rrhh_id)->get();
 
        return response()->json($forms);
     }
