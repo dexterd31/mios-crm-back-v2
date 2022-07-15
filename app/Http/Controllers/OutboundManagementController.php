@@ -56,20 +56,9 @@ class OutboundManagementController extends Controller
             }
         }
 
-        $campaings = (array) (new NotificationsService)->getEmailsByCampaing();
-        $campaingsIds = array_keys($campaings);
-        $campaingsData = (new NominaService)->fetchSpecificCampaigns($campaingsIds);
-        $campaingsWithEmail = [];
+        $emails = (new NotificationsService)->getEmailsByCampaing(auth()->user()->rrhh->campaign_id);
 
-        foreach ($campaingsData->data as $campaing) {
-            $campaingsWithEmail[] = [
-                'campaing' => $campaing->name,
-                'campaing_id' => $campaings[$campaing->id]->campaing,
-                'emails' => $campaings[$campaing->id]->emails
-            ];
-        }
-
-        return response()->json(['tags' => $tags, 'fields' => $fields, 'campaings' => $campaingsWithEmail]);
+        return response()->json(['tags' => $tags, 'fields' => $fields, 'emails' => $emails]);
     }
 
     public function show($outboundManagementId)
