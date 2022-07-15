@@ -9,6 +9,8 @@ use App\Models\ClientNew;
 use App\Models\Form;
 use App\Models\FormAnswer;
 use App\Models\OutboundManagement;
+use App\Models\Section;
+use App\Services\NominaService;
 use App\Services\NotificationsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -19,7 +21,7 @@ class OutboundManagementController extends Controller
 
     public function __construct(OutboundManagementManager $outboundManagementManager)
     {
-        $this->middleware('auth', ['except' => 'show']);
+        $this->middleware('auth', ['except' => ['show', 'create']]);
         $this->outboundManagementManager = $outboundManagementManager;
     }
 
@@ -36,7 +38,7 @@ class OutboundManagementController extends Controller
     {
         $form = Form::find($formId);
 
-        $tags = $form->tags;
+        $tags = $form->tags()->get(['id', 'name']);
 
         $fields = [];
 
@@ -54,12 +56,36 @@ class OutboundManagementController extends Controller
             }
         }
 
-        return response()->json(['tags' => $tags, 'fields' => $fields]);
+        $campaings = (array) (new NotificationsService)->getEmailsByCampaing();
+        $campaingsIds = array_keys($campaings);
+        $campaingsData = (new NominaService)->fetchSpecificCampaigns($campaingsIds);
+        $campaingsWithEmail = [];
+
+        foreach ($campaingsData->data as $campaing) {
+            $campaingsWithEmail[] = [
+                'campaing' => $campaing->name,
+                'campaing_id' => $campaings[$campaing->id]->campaing,
+                'emails' => $campaings[$campaing->id]->emails
+            ];
+        }
+
+        return response()->json(['tags' => $tags, 'fields' => $fields, 'campaings' => $campaingsWithEmail]);
     }
 
-    Public function show($outboundManagementId)
+    public function show($outboundManagementId)
     {
         $outboundManagement = OutboundManagement::find($outboundManagementId)->load('tags');
+        
+        if ($outboundManagement->channel == 'SMS') {
+            $content = $outboundManagement->settings->sms->message_content;
+
+            $outboundManagement->settings->sms->message_content = $this->replaceContent($outboundManagement->form_id, $content);
+
+        } else if ($outboundManagement->channel == 'Email') {
+            $content = $outboundManagement->settings->email->body;
+            
+            $outboundManagement->settings->email->body = $this->replaceContent($outboundManagement->form_id, $content);
+        }
 
         return response()->json($outboundManagement);
     }
@@ -78,5 +104,17 @@ class OutboundManagementController extends Controller
         $this->outboundManagementManager->createDiffusion($outboundManagement);
         
         return response()->json(['success' => 'OK'], 200);
+    }
+
+    private function replaceContent($formId, $content)
+    {
+        $sections = Section::formFilter($formId)->get()->each(function ($section) use (&$content) {
+            $fields = json_decode($section->fields);
+            foreach ($fields as $field) {
+                $content = str_replace("[[$field->id]]", $field->label, $content);
+            }
+        });
+
+        return $content;
     }
 }

@@ -9,7 +9,7 @@ class OutboundManagement extends Model
     protected $fillable = [
         'form_id',
         'name',
-        'channel_id',
+        'channel',
         'settings',
         'total',
         'status',
@@ -25,11 +25,6 @@ class OutboundManagement extends Model
     public function tags()
     {
         $this->belongsToMany(Tag::class, 'outbound_management_tags');
-    }
-
-    public function channel()
-    {
-        return $this->belongsTo(Channel::class);
     }
 
     //? Filters --------------------------------------------------------------------------------------------------------

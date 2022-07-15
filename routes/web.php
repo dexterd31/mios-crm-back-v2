@@ -236,6 +236,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
         $router->get('/outbound/{formId}', 'OutboundManagementController@indexByForm');
         $router->post('/outbound/{formId}', 'OutboundManagementController@indexByForm');
         $router->get('/outbound/create/{formId}', 'OutboundManagementController@create');
+        $router->get('/outbound/show/{outboundManagementId}', 'OutboundManagementController@show');
       });
 
       $router->group(['prefix' => 'clients'], function () use ($router) {

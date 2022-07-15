@@ -51,4 +51,9 @@ class NotificationsService{
         $this->request('POST','/api/notification/send', $params);
     }
 
+    public function getEmailsByCampaing()
+    {
+        return $this->request('GET', '/api/campaings/emails');
+    }
+
 }
