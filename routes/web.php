@@ -237,7 +237,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
         $router->post('/outbound/{formId}', 'OutboundManagementController@indexByForm');
         $router->get('/outbound/create/{formId}', 'OutboundManagementController@create');
         $router->get('/outbound/show/{outboundManagementId}', 'OutboundManagementController@show');
-        $router->get('/outbound/storeAndUpdate/{outboundManagementId}', 'OutboundManagementController@show');
+        $router->post('/outbound/save', 'OutboundManagementController@save');
+        $router->delete('/outbound/attachments/delete/{id}', 'OutboundManagementController@deleteAttachment');
       });
 
       $router->group(['prefix' => 'clients'], function () use ($router) {

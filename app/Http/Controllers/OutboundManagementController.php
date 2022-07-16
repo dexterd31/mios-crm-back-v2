@@ -2,18 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\DiffusionBySMS;
 use App\Managers\OutboundManagementManager;
-use App\Models\Channel;
-use App\Models\ClientNew;
 use App\Models\Form;
-use App\Models\FormAnswer;
 use App\Models\OutboundManagement;
 use App\Models\Section;
-use App\Services\NominaService;
 use App\Services\NotificationsService;
+use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 
 class OutboundManagementController extends Controller
 {
@@ -21,7 +16,7 @@ class OutboundManagementController extends Controller
 
     public function __construct(OutboundManagementManager $outboundManagementManager)
     {
-        $this->middleware('auth', ['except' => ['show', 'create']]);
+        $this->middleware('auth');
         $this->outboundManagementManager = $outboundManagementManager;
     }
 
@@ -74,25 +69,44 @@ class OutboundManagementController extends Controller
             $content = $outboundManagement->settings->email->body;
             
             $outboundManagement->settings->email->body = $this->replaceContent($outboundManagement->form_id, $content);
+
+            $outboundManagement->load('attachments');
         }
 
         return response()->json($outboundManagement);
     }
 
-    public function storeAndUpdate(Request $request)
+    public function save(Request $request)
     {
-        $this->outboundManagementManager->storeAndUpdate($request->all());
+        $fileKeys = array_keys($request->file());
+
+        if (count($fileKeys)) {
+            $input = $request->except(...$fileKeys);
+        } else {
+            $input = $request->all();
+        }
+
+        $this->outboundManagementManager->save($input, $request->file());
 
         return response()->json(['success' => 'OK'], 200);
     }
 
     public function sendDiffusion(Request $request)
     {
-        $outboundManagement = $this->outboundManagementManager->storeAndUpdate($request->all());
+        $outboundManagement = $this->outboundManagementManager->save($request->all());
 
         $this->outboundManagementManager->createDiffusion($outboundManagement);
         
         return response()->json(['success' => 'OK'], 200);
+    }
+
+    public function deleteAttachment($id, Request $request)
+    {
+        try {
+            $this->outboundManagementManager->destroyAttachment($id, $request->path);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()]);
+        }
     }
 
     private function replaceContent($formId, $content)

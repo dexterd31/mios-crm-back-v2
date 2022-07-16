@@ -27,6 +27,11 @@ class OutboundManagement extends Model
         $this->belongsToMany(Tag::class, 'outbound_management_tags');
     }
 
+    public function attachments()
+    {
+        return $this->hasMany(OutboundManagementAttachment::class);
+    }
+
     //? Filters --------------------------------------------------------------------------------------------------------
 
     public function scopeFormFilter($query, $form)

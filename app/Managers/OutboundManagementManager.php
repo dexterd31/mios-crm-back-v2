@@ -7,8 +7,12 @@ use App\Jobs\DiffusionBySMS;
 use App\Models\Channel;
 use App\Models\FormAnswer;
 use App\Models\OutboundManagement;
+use App\Models\OutboundManagementAttachment;
 use App\Services\NotificationsService;
+use Exception;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class OutboundManagementManager
 {
@@ -42,10 +46,9 @@ class OutboundManagementManager
         return $outboundManagement;
     }
 
-    public function storeAndUpdate(array $data)
+    public function save(array $data, array $files = [])
     {
-        dd($data);
-        if ($data['outbound_management_id']) {
+        if (isset($data['outbound_management_id'])) {
             $outboundManagement = OutboundManagement::find($data['outbound_management_id']);
             $outboundManagement->name = $data['name'];
             $outboundManagement->settings = $data['settings'];
@@ -54,34 +57,40 @@ class OutboundManagementManager
             $outboundManagement->tags()->detach();
             $outboundManagement->tags()->attach($data['tags']);
 
-            if (isset($data['file'])) {
-                foreach ($data['file'] as $file) {
-                    dd($file);
-                    $file->store();
-                }
-            }
-
         } else {
-            $channel = Channel::nameFilter($data['channel'])->first();
             $outboundManagement = OutboundManagement::create([
                 'form_id' => $data['form_id'],
                 'name' => $data['name'],
-                'channel_id' => $channel->id,
+                'channel' => $data['channel'],
                 'settings' => $data['settings'],
             ]);
 
             $outboundManagement->tags()->attach($data['tags']);
+        }
 
-            if (isset($data['file'])) {
-                foreach ($data['file'] as $file) {
-                    dd($file);
-                    $file->store();
-                }
+        if (count($files)) {
+            foreach ($files as $file) {
+                $path = $file->store("outbound_management_attachments/$outboundManagement->id");
+                OutboundManagementAttachment::create([
+                    'outbound_management_id' => $outboundManagement->id,
+                    'name' => $file->getClientOriginalName(),
+                    'path' => $path
+                ]);
             }
-
         }
 
         return $outboundManagement;
+    }
+
+    public function destroyAttachment($id, string $path)
+    {
+        try {
+            OutboundManagementAttachment::destroy($id);
+            Storage::delete($path);
+        } catch (Exception $e) {
+            Log::error("OutboundManagement@destroyAttachment: {$e->getMessage()}");
+            throw new Exception("Error al eliminar archivo adjunto, por favor comuniquese con el adminstrador.");
+        }
     }
 
     public function createDiffusion($outboundManagement)
