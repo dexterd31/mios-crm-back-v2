@@ -347,4 +347,9 @@ class OutboundManagementManager
             throw new Exception("Ocurrio un error al calcular la próxima ejecución, por favor comuniquese con el administrador del sistema.");
         }
     }
+
+    public function sendTestMail(array $data, array $files)
+    {
+        
+    }
 }

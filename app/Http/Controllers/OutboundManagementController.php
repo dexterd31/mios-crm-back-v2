@@ -130,4 +130,9 @@ class OutboundManagementController extends Controller
         }
     }
 
+    public function sendEmailTest(Request $request)
+    {
+        (new NotificationsService)->sendEmail();
+    }
+
 }

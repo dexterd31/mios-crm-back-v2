@@ -231,16 +231,16 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->post('upload/client/videochat', 'UploadController@uploadClientFromVideoChat');
 
       $router->group(['prefix' => 'managements'], function () use($router) {
+        $router->post('/outbound/save/', 'OutboundManagementController@save');
+        $router->post('/outbound/send/', 'OutboundManagementController@sendDiffusion');
         $router->get('/database/{formId}', 'ManagementController@indexDataBaseManagement');
         $router->post('/database/{formId}', 'ManagementController@indexDataBaseManagement');
         $router->get('/outbound/{formId}', 'OutboundManagementController@indexByForm');
         $router->post('/outbound/{formId}', 'OutboundManagementController@indexByForm');
         $router->get('/outbound/create/{formId}', 'OutboundManagementController@create');
         $router->get('/outbound/show/{outboundManagementId}', 'OutboundManagementController@show');
-        $router->post('/outbound/save', 'OutboundManagementController@save');
         $router->delete('/outbound/attachments/delete/{id}', 'OutboundManagementController@deleteAttachment');
         $router->get('/outbound/attachments/download/{id}', 'OutboundManagementController@downloadAttachment');
-        $router->post('/outbound/send', 'OutboundManagementController@sendDiffusion');
       });
 
       $router->group(['prefix' => 'clients'], function () use ($router) {
