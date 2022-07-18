@@ -8,7 +8,7 @@ use App\Services\NotificationsService;
 class DiffusionBySMS extends Job
 {
     protected $clients;
-    protected $startHour;
+    protected $options;
     protected $endHour;
     protected $days;
     /**
@@ -16,12 +16,10 @@ class DiffusionBySMS extends Job
      *
      * @return void
      */
-    public function __construct(array $clients, string $startHour, string $endHour, array $days)
+    public function __construct(array $clients, array $options)
     {
         $this->clients = $clients;
-        $this->startHour = $startHour;
-        $this->endHour = $endHour;
-        $this->days = $days;
+        $this->options = $options;
     }
 
     /**
@@ -31,6 +29,6 @@ class DiffusionBySMS extends Job
      */
     public function handle(OutboundManagementManager $outboundManagementManager)
     {
-        $outboundManagementManager->sendDiffusionBySMS($this->clients, $this->startHour, $this->endHour, $this->days);
+        $outboundManagementManager->sendDiffusionBySMS($this->clients, $this->options);
     }
 }

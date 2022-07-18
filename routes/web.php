@@ -239,6 +239,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
         $router->get('/outbound/show/{outboundManagementId}', 'OutboundManagementController@show');
         $router->post('/outbound/save', 'OutboundManagementController@save');
         $router->delete('/outbound/attachments/delete/{id}', 'OutboundManagementController@deleteAttachment');
+        $router->get('/outbound/attachments/download/{id}', 'OutboundManagementController@downloadAttachment');
       });
 
       $router->group(['prefix' => 'clients'], function () use ($router) {

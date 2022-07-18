@@ -2,19 +2,21 @@
 
 namespace App\Jobs;
 
-use App\Services\NotificationsService;
+use App\Managers\OutboundManagementManager;
 
 class DiffusionByEmail extends Job
 {
     protected $clients;
+    protected $options;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(array $clients)
+    public function __construct(array $clients, array $options)
     {
         $this->clients = $clients;
+        $this->options = $options;
     }
 
     /**
@@ -22,10 +24,8 @@ class DiffusionByEmail extends Job
      *
      * @return void
      */
-    public function handle(NotificationsService $notificationsService)
+    public function handle(OutboundManagementManager $outboundManagementManager)
     {
-        foreach ($this->clients as $client) {
-            $notificationsService->sendEmail($client['body'], $client['subject'], $client['to'], $client['attatchment'],$client['cc'], $client['cco'], 'DEF');
-        }
+        $outboundManagementManager->sendDiffusionByEmail($this->clients, $this->options);
     }
 }
