@@ -74,6 +74,7 @@ class OutboundManagementManager
                         'name' => $data['name'],
                         'channel' => $data['channel'],
                         'settings' => $data['settings'],
+                        'status' => 0,
                     ]);
         
                     $outboundManagement->tags()->attach($data['tags']);
@@ -350,6 +351,6 @@ class OutboundManagementManager
 
     public function sendTestMail(array $data, array $files)
     {
-        
+
     }
 }
