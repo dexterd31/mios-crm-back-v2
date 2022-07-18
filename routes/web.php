@@ -240,6 +240,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
         $router->post('/outbound/save', 'OutboundManagementController@save');
         $router->delete('/outbound/attachments/delete/{id}', 'OutboundManagementController@deleteAttachment');
         $router->get('/outbound/attachments/download/{id}', 'OutboundManagementController@downloadAttachment');
+        $router->post('/outbound/send', 'OutboundManagementController@sendDiffusion');
       });
 
       $router->group(['prefix' => 'clients'], function () use ($router) {
@@ -250,3 +251,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
         $router->get('/byAdviser', 'FormController@indexFormsByAdviser');
       });
 });
+
+// $router->group(['namespace' => '\Rap2hpoutre\LaravelLogViewer'], function() use ($router) {
+//     $router->get('logs', 'LogViewerController@index');
+// });

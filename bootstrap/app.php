@@ -117,8 +117,9 @@ $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
 $app->register(Flipbox\LumenGenerator\LumenGeneratorServiceProvider::class);
 $app->register(Illuminate\Filesystem\FilesystemServiceProvider::class);
 $app->register(Maatwebsite\Excel\ExcelServiceProvider::class);
- $app->register(App\Providers\EventServiceProvider::class);
- $app->register(App\Providers\RepositoriesServicesProvider::class);
+$app->register(App\Providers\EventServiceProvider::class);
+$app->register(App\Providers\RepositoriesServicesProvider::class);
+$app->register(\Rap2hpoutre\LaravelLogViewer\LaravelLogViewerServiceProvider::class);
 /*
 |--------------------------------------------------------------------------
 | Load The Application Routes
