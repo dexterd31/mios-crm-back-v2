@@ -28,12 +28,13 @@ class CorsMiddleware
             return response()->json('{"method":"OPTIONS"}', 200, $headers);
         }
 
-        $response = $next($request);
         foreach($headers as $key => $value)
         {
             //$response->header($key, $value);
-            $response->headers->set($key, $value);
+            $request->headers->set($key, $value);
         }
+
+        $response = $next($request);
 
         return $response;
     }

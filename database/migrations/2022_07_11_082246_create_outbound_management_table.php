@@ -17,7 +17,7 @@ class CreateOutboundManagementTable extends Migration
             $table->id();
             $table->foreignId('form_id')->comment('Id del formulario.');
             $table->string('name')->comment('Nombre de la difusión y/o gestión.');
-            $table->foreignId('channel_id')->comment('Canal de disfusión.');
+            $table->string('channel')->comment('Canal de disfusión.');
             $table->json('settings')->comment('Configuraciónes');
             $table->bigInteger('total', false, true)->default(0)->comment('Total difundido y/o enviado');
             $table->boolean('status')->default(0)->comment('Estado de la gestión: 0 - Borrador, 1 - Enviado');

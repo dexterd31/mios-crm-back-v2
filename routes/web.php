@@ -252,6 +252,6 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       });
 });
 
-// $router->group(['namespace' => '\Rap2hpoutre\LaravelLogViewer'], function() use ($router) {
-//     $router->get('logs', 'LogViewerController@index');
-// });
+$router->group(['namespace' => '\Rap2hpoutre\LaravelLogViewer'], function() use ($router) {
+    $router->get('logs', 'LogViewerController@index');
+});
