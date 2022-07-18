@@ -77,7 +77,7 @@ class OutboundManagementManager
                         'status' => 0,
                     ]);
         
-                    $outboundManagement->tags->attach($data['tags']);
+                    $outboundManagement->tags()->attach($data['tags']);
                 } catch (Exception $e) {
                     Log::error("OutboundManagement@save: {$e->getMessage()}");
                     throw new Exception("Error al crear la gestión, por favor comuniquese con el adminstrador del sistema.");
