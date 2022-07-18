@@ -6,5 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class OutboundManagementTag extends Model
 {
-    //
+    protected $fillable = [
+        'aoutbound_management_id',
+        'tag_id'
+    ];
 }

@@ -7,6 +7,7 @@ use App\Jobs\DiffusionBySMS;
 use App\Models\FormAnswer;
 use App\Models\OutboundManagement;
 use App\Models\OutboundManagementAttachment;
+use App\Models\OutboundManagementTag;
 use App\Models\Section;
 use App\Services\NotificationsService;
 use Exception;
