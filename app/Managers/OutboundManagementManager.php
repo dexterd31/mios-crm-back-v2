@@ -322,12 +322,12 @@ class OutboundManagementManager
             $outboundManagement = OutboundManagement::find($id);
             
             if ($outboundManagement->channel == 'Email') {
-                $outboundManagement->attachments = $outboundManagement->attachments()->get(['id', 'name', 'path']);
+                $outboundManagement->attachments = $outboundManagement->attachments()->get(['id', 'name']);
             }
     
             $outboundManagement->tags = $outboundManagement->tags()->pluck('tags.id');
-            $outboundManagement = $outboundManagement->only('id', 'name', 'attachments', 'tags', 'settings');
-            
+            $outboundManagement = $outboundManagement->only('id', 'name', 'attachments', 'tags', 'settings', 'form_id');
+
             return $outboundManagement;
         } catch (Exception $e) {
             Log::error("OutboundManagement@showOutboundManagement: {$e->getMessage()}");
