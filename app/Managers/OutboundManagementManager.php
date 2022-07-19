@@ -60,7 +60,7 @@ class OutboundManagementManager
 
     public function save(array $data, array $files = [])
     {
-        DB::transaction();
+        DB::beginTransaction();
         $tags = json_decode($data['tags']);
         if (isset($data['outbound_management_id'])) {
                 try {
@@ -99,7 +99,7 @@ class OutboundManagementManager
             }
     
             try {
-                DB::transaction();
+                DB::beginTransaction();
                 if (count($files)) {
                     foreach ($files as $file) {
                         $path = $file->store("outbound_management_attachments/$outboundManagement->id");
