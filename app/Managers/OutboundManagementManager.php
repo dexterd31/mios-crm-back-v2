@@ -40,7 +40,13 @@ class OutboundManagementManager
                 $outboundManagement->join('outbound_management_tags', 'outbound_management_tags.aoutbound_management_id', 'outbound_management.id')->whereIn('outbound_management_tags.tag_id', $filterOptions['tags']);
             }
 
-            $outboundManagement =  $outboundManagement->get();
+            $outboundManagement =  $outboundManagement->get([
+                'outbound_management.id',
+                'outbound_management.status',
+                'outbound_management.name',
+                'outbound_management.channel',
+                'outbound_management.total'
+            ]);
     
             return $outboundManagement;
         } catch (Exception $e) {
