@@ -329,7 +329,7 @@ class OutboundManagementManager
             } else if ($outboundManagement->channel == 'Email') {
                 $content = $outboundManagement->settings->email->body;
                 
-                $outboundManagement->settings->email->body_with_labels = $this->replaceContent($outboundManagement->form_id, $content);
+                $outboundManagement->body_with_labels = $this->replaceContent($outboundManagement->form_id, $content);
     
                 $outboundManagement->load('attachments');
             }
@@ -347,7 +347,7 @@ class OutboundManagementManager
             Section::formFilter($formId)->get()->each(function ($section) use (&$content) {
                 $fields = json_decode($section->fields);
                 foreach ($fields as $field) {
-                    $content = str_replace("[[$field->id]]", $field->label, $content);
+                    $content = str_replace("[[$field->id]]", "[[$field->label]]", $content);
                 }
             });
 
