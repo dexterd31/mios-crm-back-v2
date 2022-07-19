@@ -262,7 +262,7 @@ class OutboundManagementManager
                     if (!is_null($nextExecution) && count($clients)) {
                         $outboundManagement->status = 'En proceso...';
                         $outboundManagement->save();
-                        dispatch((new DiffusionBySMS($outboundManagementId, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$nextExecution")))
+                        dispatch((new DiffusionBySMS($outboundManagementId, $clients, $options))->delay($nextExecution))
                         ->onQueue('diffusions');
                     } else {
                         $outboundManagement->status = 'Entregado';
@@ -298,7 +298,7 @@ class OutboundManagementManager
                     if (!is_null($nextExecution) && count($clients)) {
                         $outboundManagement->status = 'En proceso...';
                         $outboundManagement->save();
-                        dispatch((new DiffusionByEmail($outboundManagementId, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$nextExecution")))
+                        dispatch((new DiffusionByEmail($outboundManagementId, $clients, $options))->delay($nextExecution))
                         ->onQueue('diffusions');
                     } else {
                         $outboundManagement->status = 'Entregado';
