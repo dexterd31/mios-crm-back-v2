@@ -319,12 +319,13 @@ class OutboundManagementManager
     public function showOutboundManagement($id)
     {
         try {
-            $outboundManagement = OutboundManagement::find($id)->load('tags');
+            $outboundManagement = OutboundManagement::find($id);
             
             if ($outboundManagement->channel == 'Email') {
                 $outboundManagement->load('attachments');
             }
     
+            $outboundManagement->tags = $outboundManagement->tags()->pluck('tags.id');
             return $outboundManagement;
         } catch (Exception $e) {
             Log::error("OutboundManagement@showOutboundManagement: {$e->getMessage()}");
