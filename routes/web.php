@@ -1,4 +1,6 @@
 <?php
+
+use App\Managers\LogsManager;
 use App\Models\FormAnswer;
 /*
 |--------------------------------------------------------------------------
@@ -251,8 +253,4 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->group(['prefix' => 'forms'], function () use ($router) {
         $router->get('/byAdviser', 'FormController@indexFormsByAdviser');
       });
-});
-
-$router->group(['prefix' => 'logs'], function () use ($router) {
-    $router->get('/', 'LogViewerController@index');
 });
