@@ -16,7 +16,7 @@ class OutboundManagementController extends Controller
 
     public function __construct(OutboundManagementManager $outboundManagementManager)
     {
-        $this->middleware('auth');
+        $this->middleware('auth', ['except' => 'indexByForm']);
         $this->outboundManagementManager = $outboundManagementManager;
     }
 

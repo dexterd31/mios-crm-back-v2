@@ -24,7 +24,7 @@ class OutboundManagement extends Model
 
     public function tags()
     {
-        $this->belongsToMany(Tag::class, 'outbound_management_tags', 'outbound_management_id', 'tag_id');
+        return $this->belongsToMany(Tag::class, 'outbound_management_tags');
     }
 
     public function attachments()

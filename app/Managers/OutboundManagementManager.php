@@ -37,7 +37,7 @@ class OutboundManagementManager
                 $outboundManagement->updatedAtBetweenFilter($filterOptions['from_date'], $filterOptions['to_date']);
             }
             if (isset($filterOptions['tags']) && count($filterOptions['tags'])) {
-                $outboundManagement->join('outbound_management_tags', 'outbound_management_tags.aoutbound_management_id', 'outbound_management.id')->whereIn('outbound_management_tags.tag_id', $filterOptions['tags']);
+                $outboundManagement->join('outbound_management_tags', 'outbound_management_tags.outbound_management_id', 'outbound_management.id')->whereIn('outbound_management_tags.tag_id', $filterOptions['tags']);
             }
 
             $outboundManagement =  $outboundManagement->get([
@@ -46,7 +46,10 @@ class OutboundManagementManager
                 'outbound_management.name',
                 'outbound_management.channel',
                 'outbound_management.total'
-            ]);
+            ])->map(function ($outbound) {
+                $outbound->tags = join(', ', $outbound->tags()->pluck('name')->toArray());
+                return $outbound;
+            });
     
             return $outboundManagement;
         } catch (Exception $e) {
