@@ -16,7 +16,7 @@ class OutboundManagementController extends Controller
 
     public function __construct(OutboundManagementManager $outboundManagementManager)
     {
-        $this->middleware('auth', ['except' => ['indexByForm', 'show']]);
+        $this->middleware('auth', ['except' => ['indexByForm', 'downloadAttachment']]);
         $this->outboundManagementManager = $outboundManagementManager;
     }
 
@@ -123,7 +123,7 @@ class OutboundManagementController extends Controller
     {
         try {
             $outboundManagementAttachment = OutboundManagementAttachment::find($id);
-            return response()->download(storage_path("app/$outboundManagementAttachment->path"), $outboundManagementAttachment->name);
+            return response()->download(file_get_contents(storage_path("app/$outboundManagementAttachment->path")), $outboundManagementAttachment->name);
         } catch (\Throwable $th) {
             Log::error("OutboundManagementController@downloadAttachment: {$th->getMessage()}");
             return response()->json(['error' => 'Error al descargar el adjunto, por favor comuniquese con el administrador.'], 500);
