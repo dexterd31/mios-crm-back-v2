@@ -66,7 +66,7 @@ class OutboundManagementManager
                 try {
                     $outboundManagement = OutboundManagement::find($data['outbound_management_id']);
                     $outboundManagement->name = $data['name'];
-                    $outboundManagement->settings = $data['settings'];
+                    $outboundManagement->settings = json_decode($data['settings']);
                     $outboundManagement->save();
                     
                     $outboundManagement->tags()->detach();
@@ -84,7 +84,7 @@ class OutboundManagementManager
                         'form_id' => $data['form_id'],
                         'name' => $data['name'],
                         'channel' => $data['channel'],
-                        'settings' => $data['settings'],
+                        'settings' => json_decode($data['settings']),
                         'status' => 'Borrador',
                     ]);
         
