@@ -9,17 +9,17 @@ class DiffusionBySMS extends Job
 {
     protected $clients;
     protected $options;
-    protected $endHour;
-    protected $days;
+    protected $outboundManagementId;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(array $clients, array $options)
+    public function __construct(int $outboundManagementId, array $clients, array $options)
     {
         $this->clients = $clients;
         $this->options = $options;
+        $this->outboundManagementId = $outboundManagementId;
     }
 
     /**
@@ -29,6 +29,6 @@ class DiffusionBySMS extends Job
      */
     public function handle(OutboundManagementManager $outboundManagementManager)
     {
-        $outboundManagementManager->sendDiffusionBySMS($this->clients, $this->options);
+        $outboundManagementManager->sendDiffusionBySMS($this->outboundManagementId, $this->clients, $this->options);
     }
 }

@@ -8,15 +8,18 @@ class DiffusionByEmail extends Job
 {
     protected $clients;
     protected $options;
+    protected $outboundManagementId;
+
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(array $clients, array $options)
+    public function __construct(int $outboundManagementId, array $clients, array $options)
     {
         $this->clients = $clients;
         $this->options = $options;
+        $this->outboundManagementId = $outboundManagementId;
     }
 
     /**
@@ -26,6 +29,6 @@ class DiffusionByEmail extends Job
      */
     public function handle(OutboundManagementManager $outboundManagementManager)
     {
-        $outboundManagementManager->sendDiffusionByEmail($this->clients, $this->options);
+        $outboundManagementManager->sendDiffusionByEmail($this->outboundManagementId, $this->clients, $this->options);
     }
 }

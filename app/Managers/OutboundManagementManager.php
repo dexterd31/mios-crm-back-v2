@@ -168,7 +168,7 @@ class OutboundManagementManager
                 'days' => $outboundManagement->settings->delivery_schedule_days
             ];
     
-            dispatch((new DiffusionBySMS($clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
+            dispatch((new DiffusionBySMS($outboundManagement->id, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
             ->onQueue('diffusions');
         } catch (Exception $e) {
             Log::error("OutboundManagement@diffusionBySMS: {$e->getMessage()}");
@@ -223,7 +223,7 @@ class OutboundManagementManager
                 'replay_email' => $outboundManagement->settings->email->replay_email
             ];
     
-            dispatch((new DiffusionByEmail($clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
+            dispatch((new DiffusionByEmail($outboundManagement->id, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
             ->onQueue('diffusions');
         } catch (Exception $e) {
             Log::error("OutboundManagement@diffusionByEmail: {$e->getMessage()}");
@@ -231,7 +231,7 @@ class OutboundManagementManager
         }
     }
 
-    public function sendDiffusionBySMS(array $clients, array $options)
+    public function sendDiffusionBySMS(int $outboundManagementId, array $clients, array $options)
     {
         try {
             $notificationsService = new NotificationsService;
@@ -247,8 +247,12 @@ class OutboundManagementManager
                 } else {
                     $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
                     if (!is_null($nextExecution) && count($clients)) {
-                        dispatch((new DiffusionBySMS($clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$nextExecution")))
+                        dispatch((new DiffusionBySMS($outboundManagementId, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$nextExecution")))
                         ->onQueue('diffusions');
+                    } else {
+                        $outboundManagement = OutboundManagement::find($outboundManagementId);
+                        $outboundManagement->status = 1;
+                        $outboundManagement->save();
                     }
                     break;
                 }
@@ -257,11 +261,11 @@ class OutboundManagementManager
             Log::error("OutboundManagement@sendDiffusionBySMS: {$e->getMessage()}");
             throw new Exception("Ocurrio un error al notificar por SMS, por favor comuniquese con el administrador del sistema.");
         } finally {
-            dispatch((new DiffusionBySMS($clients, $options)))->onQueue('diffusions');
+            dispatch((new DiffusionBySMS($outboundManagementId, $clients, $options)))->onQueue('diffusions');
         }
     }
 
-    public function sendDiffusionByEmail(array $clients, array $options)
+    public function sendDiffusionByEmail(int $outboundManagementId, array $clients, array $options)
     {
         try {
             $notificationsService = new NotificationsService;
@@ -277,8 +281,12 @@ class OutboundManagementManager
                 } else {
                     $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
                     if (!is_null($nextExecution) && count($clients)) {
-                        dispatch((new DiffusionByEmail($clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$nextExecution")))
+                        dispatch((new DiffusionByEmail($outboundManagementId, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$nextExecution")))
                         ->onQueue('diffusions');
+                    } else {
+                        $outboundManagement = OutboundManagement::find($outboundManagementId);
+                        $outboundManagement->status = 1;
+                        $outboundManagement->save();
                     }
                     break;
                 }
