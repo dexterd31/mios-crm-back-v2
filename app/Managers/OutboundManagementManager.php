@@ -39,6 +39,8 @@ class OutboundManagementManager
             if (isset($filterOptions['tags']) && count($filterOptions['tags'])) {
                 $outboundManagement->join('outbound_management_tags', 'outbound_management_tags.aoutbound_management_id', 'outbound_management.id')->whereIn('outbound_management_tags.tag_id', $filterOptions['tags']);
             }
+
+            $outboundManagement =  $outboundManagement->get();
     
             return $outboundManagement;
         } catch (Exception $e) {
