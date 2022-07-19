@@ -321,16 +321,7 @@ class OutboundManagementManager
         try {
             $outboundManagement = OutboundManagement::find($id)->load('tags');
             
-            if ($outboundManagement->channel == 'SMS') {
-                $content = $outboundManagement->settings->sms->message_content;
-    
-                $outboundManagement->settings->sms->message_content_with_labels = $this->replaceContent($outboundManagement->form_id, $content);
-    
-            } else if ($outboundManagement->channel == 'Email') {
-                $content = $outboundManagement->settings->email->body;
-                
-                $outboundManagement->body_with_labels = $this->replaceContent($outboundManagement->form_id, $content);
-    
+            if ($outboundManagement->channel == 'Email') {
                 $outboundManagement->load('attachments');
             }
     
@@ -338,23 +329,6 @@ class OutboundManagementManager
         } catch (Exception $e) {
             Log::error("OutboundManagement@showOutboundManagement: {$e->getMessage()}");
             throw new Exception("Ocurrio un error al buscar la gestión, por favor comuniquese con el administrador del sistema.");
-        }
-    }
-
-    private function replaceContent($formId, $content)
-    {
-        try {
-            Section::formFilter($formId)->get()->each(function ($section) use (&$content) {
-                $fields = json_decode($section->fields);
-                foreach ($fields as $field) {
-                    $content = str_replace("[[$field->id]]", "[[$field->label]]", $content);
-                }
-            });
-
-            return $content;
-        } catch (Exception $e) {
-            Log::error("OutboundManagement@replaceContent: {$e->getMessage()}");
-            throw new Exception("Ocurrio un error al obtener el mensaje, por favor comuniquese con el administrador del sistema.");
         }
     }
 
