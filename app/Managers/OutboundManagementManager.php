@@ -79,7 +79,13 @@ class OutboundManagementManager
                     ]);
         
                     $tags = json_decode($data['tags']);
-                    $outboundManagement->tags()->attach($tags);
+                    
+                    foreach ($tags as $tag) {
+                        OutboundManagementTag::create([
+                            'outbound_management_id' => $outboundManagement->id,
+                            'tag_id' => $tag
+                        ]);
+                    }
                 } catch (Exception $e) {
                     Log::error("OutboundManagement@save: {$e->getMessage()}");
                     throw new Exception("Error al crear la gestión, por favor comuniquese con el adminstrador del sistema.");

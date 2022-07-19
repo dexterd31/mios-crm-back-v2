@@ -15,7 +15,7 @@ class CreateOutboundManagementTagsTable extends Migration
     {
         Schema::create('outbound_management_tags', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('aoutbound_management_id')->comment('Id de la gestión.');
+            $table->foreignId('outbound_management_id')->comment('Id de la gestión.');
             $table->foreignId('tag_id')->comment('Id del tag.');
         });
     }
