@@ -158,6 +158,9 @@ class OutboundManagementManager
                     'message' => $messageContent
                 ];
             });
+
+            $outboundManagement->total = count($clients);
+            $outboundManagement->save();
     
             $options = [
                 'startHour' => $outboundManagement->settings->start_delivery_schedule_time,
@@ -197,6 +200,9 @@ class OutboundManagementManager
                     'cco' => [],
                 ];
             });
+
+            $outboundManagement->total = count($clients);
+            $outboundManagement->save();
     
             $attachments = [];
     
