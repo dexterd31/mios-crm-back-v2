@@ -295,7 +295,7 @@ class OutboundManagementManager
             Log::error("OutboundManagement@sendDiffusionByEmail: {$e->getMessage()}");
             throw new Exception("Ocurrio un error al notificar por Email, por favor comuniquese con el administrador del sistema.");
         } finally {
-            dispatch((new DiffusionByEmail($clients, $options)))->onQueue('diffusions');
+            dispatch((new DiffusionByEmail($outboundManagementId, $clients, $options)))->onQueue('diffusions');
         }
 
     }
@@ -370,6 +370,21 @@ class OutboundManagementManager
 
     public function sendTestMail(array $data, array $files)
     {
-        // $this->noti
+        try {
+            $attachments = [];
+    
+            foreach ($files as $key => $file) {
+                $attachments[] = [
+                    'name' => $key,
+                    'contents' => $file->getContent(),
+                    'filename' => $file->getClientOriginalName(),
+                ];
+            }
+    
+            (new NotificationsService)->sendEmail($data['body'], $data['subject'], [$data['to']], $attachments, [], [], $data['sender_email']);
+        } catch (Exception $e) {
+            Log::error("OutboundManagement@sendTestMail: {$e->getMessage()}");
+            throw new Exception("Ocurrio un error al enviar el correo de prueba, por favor comuniquese con el administrador del sistema.");
+        }
     }
 }

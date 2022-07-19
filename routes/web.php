@@ -233,6 +233,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->group(['prefix' => 'managements'], function () use($router) {
         $router->post('/outbound/save/', 'OutboundManagementController@save');
         $router->post('/outbound/send/', 'OutboundManagementController@sendDiffusion');
+        $router->post('/outbound/send/email/test', 'OutboundManagementController@sendEmailTest');
         $router->get('/database/{formId}', 'ManagementController@indexDataBaseManagement');
         $router->post('/database/{formId}', 'ManagementController@indexDataBaseManagement');
         $router->get('/outbound/{formId}', 'OutboundManagementController@indexByForm');

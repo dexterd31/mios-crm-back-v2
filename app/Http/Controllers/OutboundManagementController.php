@@ -132,7 +132,21 @@ class OutboundManagementController extends Controller
 
     public function sendEmailTest(Request $request)
     {
-        (new NotificationsService)->sendEmail();
+        try {
+            $fileKeys = array_keys($request->file());
+        
+            if (count($fileKeys)) {
+                $input = $request->except(...$fileKeys);
+            } else {
+                $input = $request->all();
+            }
+    
+            $this->outboundManagementManager->sendTestMail($input, $request->file());
+
+            return response()->json(['success' => 'OK'], 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
 }
