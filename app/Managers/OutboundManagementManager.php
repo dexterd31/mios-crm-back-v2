@@ -39,11 +39,6 @@ class OutboundManagementManager
             if (isset($filterOptions['tags']) && count($filterOptions['tags'])) {
                 $outboundManagement->join('outbound_management_tags', 'outbound_management_tags.aoutbound_management_id', 'outbound_management.id')->whereIn('outbound_management_tags.tag_id', $filterOptions['tags']);
             }
-            
-            $outboundManagement = $outboundManagement->get()->map(function ($management) {
-                $management->channel = $management->channel->name;
-                return $management;
-            });
     
             return $outboundManagement;
         } catch (Exception $e) {
@@ -80,12 +75,6 @@ class OutboundManagementManager
         
                     $tags = json_decode($data['tags']);
                     $outboundManagement->tags()->attach($data['tags']);
-                    // foreach ($tags as $tag) {
-                    //     OutboundManagementTag::create([
-                    //         'outbound_management_id' => $outboundManagement->id,
-                    //         'tag_id' => $tag
-                    //     ]);
-                    // }
                 } catch (Exception $e) {
                     Log::error("OutboundManagement@save: {$e->getMessage()}");
                     throw new Exception("Error al crear la gestión, por favor comuniquese con el adminstrador del sistema.");
@@ -359,6 +348,6 @@ class OutboundManagementManager
 
     public function sendTestMail(array $data, array $files)
     {
-
+        // $this->noti
     }
 }
