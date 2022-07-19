@@ -326,7 +326,7 @@ class OutboundManagementManager
             }
     
             $outboundManagement->tags = $outboundManagement->tags()->pluck('tags.id');
-            $outboundManagement = $outboundManagement->only('id', 'name', 'attachments', 'tags', 'settings', 'form_id');
+            $outboundManagement = $outboundManagement->only('id', 'name', 'attachments', 'tags', 'settings', 'form_id', 'channel');
 
             return $outboundManagement;
         } catch (Exception $e) {
