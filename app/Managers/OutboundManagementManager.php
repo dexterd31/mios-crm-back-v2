@@ -7,11 +7,11 @@ use App\Jobs\DiffusionBySMS;
 use App\Models\FormAnswer;
 use App\Models\OutboundManagement;
 use App\Models\OutboundManagementAttachment;
-use App\Models\OutboundManagementTag;
 use App\Models\Section;
 use App\Services\NotificationsService;
 use Exception;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -57,6 +57,8 @@ class OutboundManagementManager
 
     public function save(array $data, array $files = [])
     {
+        DB::transaction();
+        $tags = json_decode($data['tags']);
         if (isset($data['outbound_management_id'])) {
                 try {
                     $outboundManagement = OutboundManagement::find($data['outbound_management_id']);
@@ -65,9 +67,11 @@ class OutboundManagementManager
                     $outboundManagement->save();
                     
                     $outboundManagement->tags()->detach();
-                    $outboundManagement->tags()->attach($data['tags']);
+                    $outboundManagement->tags()->attach($tags);
     
+                    DB::commit();
                 } catch (Exception $e) {
+                    DB::rollBack();
                     Log::error("OutboundManagement@save: {$e->getMessage()}");
                     throw new Exception("Error al actualizar la gestión, por favor comuniquese con el adminstrador del sistema.");
                 }
@@ -78,18 +82,21 @@ class OutboundManagementManager
                         'name' => $data['name'],
                         'channel' => $data['channel'],
                         'settings' => $data['settings'],
-                        'status' => 0,
+                        'status' => 'Borrador',
                     ]);
         
                     $tags = json_decode($data['tags']);
-                    $outboundManagement->tags()->attach($data['tags']);
+                    $outboundManagement->tags()->attach($tags);
+                    DB::commit();
                 } catch (Exception $e) {
+                    DB::rollBack();
                     Log::error("OutboundManagement@save: {$e->getMessage()}");
                     throw new Exception("Error al crear la gestión, por favor comuniquese con el adminstrador del sistema.");
                 }
             }
     
             try {
+                DB::transaction();
                 if (count($files)) {
                     foreach ($files as $file) {
                         $path = $file->store("outbound_management_attachments/$outboundManagement->id");
@@ -100,7 +107,9 @@ class OutboundManagementManager
                         ]);
                     }
                 }
+                DB::commit();
             } catch (Exception $e) {
+                DB::rollBack();
                 Log::error("OutboundManagement@save: {$e->getMessage()}");
                 throw new Exception("Error al guardar los archivos de la gestión, por favor comuniquese con el adminstrador del sistema.");
             }
@@ -240,18 +249,20 @@ class OutboundManagementManager
                 $now = Carbon::now('America/Bogota');
                 $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
                 $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
-    
+                
                 if ($isGreaterThanOrEqualTo && $isLessThan) {
                     $notificationsService->sendSMS($client['message'], [$client['diffusion']]);
                     unset($clients[$key]);
                 } else {
+                    $outboundManagement = OutboundManagement::find($outboundManagementId);
                     $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
                     if (!is_null($nextExecution) && count($clients)) {
+                        $outboundManagement->status = 'En proceso...';
+                        $outboundManagement->save();
                         dispatch((new DiffusionBySMS($outboundManagementId, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$nextExecution")))
                         ->onQueue('diffusions');
                     } else {
-                        $outboundManagement = OutboundManagement::find($outboundManagementId);
-                        $outboundManagement->status = 1;
+                        $outboundManagement->status = 'Entregado';
                         $outboundManagement->save();
                     }
                     break;
@@ -274,18 +285,20 @@ class OutboundManagementManager
                 $now = Carbon::now('America/Bogota');
                 $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
                 $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
-    
+                
                 if ($isGreaterThanOrEqualTo && $isLessThan) {
                     $notificationsService->sendEmail($client['body'], $client['subject'], [$client['to']], $options['attachments'],$client['cc'], $client['cco'], $options['sender_email']);
                     unset($clients[$key]);
                 } else {
+                    $outboundManagement = OutboundManagement::find($outboundManagementId);
                     $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
                     if (!is_null($nextExecution) && count($clients)) {
+                        $outboundManagement->status = 'En proceso...';
+                        $outboundManagement->save();
                         dispatch((new DiffusionByEmail($outboundManagementId, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$nextExecution")))
                         ->onQueue('diffusions');
                     } else {
-                        $outboundManagement = OutboundManagement::find($outboundManagementId);
-                        $outboundManagement->status = 1;
+                        $outboundManagement->status = 'Entregado';
                         $outboundManagement->save();
                     }
                     break;
