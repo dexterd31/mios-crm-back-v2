@@ -7,6 +7,7 @@ use App\Jobs\DiffusionBySMS;
 use App\Models\FormAnswer;
 use App\Models\OutboundManagement;
 use App\Models\OutboundManagementAttachment;
+use App\Models\Product;
 use App\Models\Section;
 use App\Services\NotificationsService;
 use Exception;
@@ -143,8 +144,10 @@ class OutboundManagementManager
     
             if ($outboundManagement->channel == 'SMS') {
                 $this->diffusionBySMS($formAnswers, $outboundManagement, $startDiffusionDateTime);
-            }else if ($outboundManagement->channel == 'Email') {
+            } else if ($outboundManagement->channel == 'Email') {
                 $this->diffusionByEmail($formAnswers, $outboundManagement, $startDiffusionDateTime);
+            } else if ($outboundManagement->channel == 'Email') {
+
             }
         } catch (Exception $e) {
             Log::error("OutboundManagement@createDiffusion: {$e->getMessage()}");
@@ -233,6 +236,41 @@ class OutboundManagementManager
                 'attachments' => $attachments,
                 'sender_email' => $outboundManagement->settings->email->sender_email,
                 'replay_email' => $outboundManagement->settings->email->replay_email
+            ];
+    
+            dispatch((new DiffusionByEmail($outboundManagement->id, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
+            ->onQueue('diffusions');
+        } catch (Exception $e) {
+            Log::error("OutboundManagement@diffusionByEmail: {$e->getMessage()}");
+            throw new Exception("Error al crear la difución por Email, por favor comuniquese con el adminstrador del sistema.");
+        }
+    }
+
+    public function diffusionByVoice($formAnswers, $outboundManagement, $startDiffusionDateTime)
+    {
+        try {
+            $clients = [];
+            $formAnswers->each(function ($answer) use ($outboundManagement, &$clients) {
+                $fields = json_decode($answer->structure_answer);
+                foreach ($fields as $field) {
+                    if ($field->id == $outboundManagement->settings->diffusion_field) {
+                        $clients[] = $field->value;
+                        break;
+                    }
+                }
+            });
+
+            $outboundManagement->total = count($clients);
+            $outboundManagement->save();
+
+            $product = Product::find($outboundManagement->settings->voice->product);
+    
+            $options = [
+                'startHour' => $outboundManagement->settings->start_delivery_schedule_time,
+                'endHour' => $outboundManagement->settings->end_delivery_schedule_time,
+                'days' => $outboundManagement->settings->delivery_schedule_days,
+                'token' => $product->token,
+                'product' => $product->name,
             ];
     
             dispatch((new DiffusionByEmail($outboundManagement->id, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))

@@ -98,4 +98,9 @@ class Form extends Model
     {
         return $this->hasOne(CustomField::class);
     }
+
+    public function scopeGroupInFilter($query, array $ids)
+    {
+        return $query->whereIn('group_id', $ids);
+    }
 }

@@ -3,8 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Managers\OutboundManagementManager;
+use App\Models\Campaing;
 use App\Models\Form;
+use App\Models\Group;
 use App\Models\OutboundManagementAttachment;
+use App\Models\Product;
+use App\Models\Server;
+use App\Services\NominaService;
 use App\Services\NotificationsService;
 use Exception;
 use Illuminate\Http\Request;
@@ -16,7 +21,7 @@ class OutboundManagementController extends Controller
 
     public function __construct(OutboundManagementManager $outboundManagementManager)
     {
-        $this->middleware('auth', ['except' => ['indexByForm', 'downloadAttachment']]);
+        $this->middleware('auth', ['except' => ['indexByForm', 'create']]);
         $this->outboundManagementManager = $outboundManagementManager;
     }
 
@@ -58,7 +63,25 @@ class OutboundManagementController extends Controller
     
             $emails = (new NotificationsService)->getEmailsByCampaing(auth()->user()->rrhh->campaign_id);
 
-            return response()->json(['tags' => $tags, 'fields' => $fields, 'emails' => $emails]);
+            $servers = Server::get('id', 'name');
+
+            // $campaing = (new NominaService)->fetchCampaign(auth()->user()->rrhh->campaing_id);
+
+            $groups = Group::campaingFilter(auth()->user()->rrhh->campaing_id)->pluck('id');
+
+            $forms = Form::groupInFilter($groups)->distinct()->pluck('id');
+
+            $products = Product::join('form_product', 'form_product.product_id', 'product.id')
+            ->where('form_product.form_id', $forms)->distinct()->get(['products.id', 'products.name']);
+
+            return response()->json([
+                'tags' => $tags,
+                'fields' => $fields,
+                'emails' => $emails,
+                'servers' => $servers,
+                // 'campaing' => $campaing,
+                'products' => $products
+            ]);
 
         } catch (Exception $e) {
             Log::error("OutboundManagementController@create: {$e->getMessage()}");
