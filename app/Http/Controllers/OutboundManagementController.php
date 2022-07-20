@@ -63,16 +63,16 @@ class OutboundManagementController extends Controller
     
             $emails = (new NotificationsService)->getEmailsByCampaing(auth()->user()->rrhh->campaign_id);
 
-            $servers = Server::get('id', 'name');
+            $servers = Server::get(['id', 'name']);
 
             // $campaing = (new NominaService)->fetchCampaign(auth()->user()->rrhh->campaing_id);
 
-            $groups = Group::campaingFilter(auth()->user()->rrhh->campaing_id)->pluck('id');
+            $groups = Group::campaingFilter(auth()->user()->rrhh->campaign_id)->pluck('id')->toArray();
 
-            $forms = Form::groupInFilter($groups)->distinct()->pluck('id');
+            $forms = Form::groupInFilter($groups)->distinct()->pluck('id')->toArray();
 
-            $products = Product::join('form_product', 'form_product.product_id', 'product.id')
-            ->where('form_product.form_id', $forms)->distinct()->get(['products.id', 'products.name']);
+            $products = Product::join('form_product', 'form_product.product_id', 'products.id')
+            ->whereIn('form_product.form_id', $forms)->distinct()->get(['products.id', 'products.name']);
 
             return response()->json([
                 'tags' => $tags,
