@@ -18,9 +18,10 @@ use App\Services\CiuService;
 use App\Imports\ClientNewImport;
 use App\Managers\ClientsManager;
 use App\Models\Channel;
+use App\Models\CustomerDataPreload;
+use App\Models\CustomField;
 use App\Models\Form;
 use App\Models\FormAnswer;
-use App\Models\CustomField;
 use App\Models\ImportedFile;
 use App\Models\Tag;
 use App\Traits\FieldsForSection;
@@ -44,8 +45,7 @@ class UploadController extends Controller
     public function __construct()
     {
         ini_set('max_execution_time', 300);
-        $this->middleware('auth', ['except' => 'uploadClientDataFromEmail']);
-        $this->ciuService = new CiuService();
+        $this->middleware('auth', ['except' => ['uploadClientFromVideoChat', 'uploadClientDataFromEmail']]);
     }
 
     /**
@@ -701,7 +701,6 @@ class UploadController extends Controller
         ]);
 
         $formId = $request->form_id;
-
         $FormController = new FormController();
         $prechargables = $FormController->searchPrechargeFields($formId)->getData();
         $fileInfo['prechargables'] = [];
