@@ -243,6 +243,8 @@ class ClientNewController extends Controller
                 foreach ($formAnswer as $answer) {
                     if ($field->id == $answer->id) {
                         $fields[$key]->value = $answer->value;
+                    } else {
+                        $fields[$key]->value = 'No registra';
                     }
                 }
             }
