@@ -8,7 +8,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Carbon;
 
 class CreateClients extends Job implements ShouldQueue
 {
@@ -31,6 +30,5 @@ class CreateClients extends Job implements ShouldQueue
     public function handle()
     {
         (new DataBaseManager)->createClients();
-        // dispatch($this)->onQueue('create-clients')->delay(Carbon::now()->addSeconds(10));
     }
 }

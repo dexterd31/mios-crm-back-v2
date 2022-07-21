@@ -19,7 +19,7 @@ class Section extends Model
         return $this->hasMany('App\Models\Parameter','form_id');
     }
 
-    public static function  getFields($formId,$keysToSave){
+    public static function getFields($formId,$keysToSave){
 
         // $keysToSave = ['firstName','first_lastname','phone','email','source_data_crm_account_id','placa'];
          $sql = Section::where('form_id', $formId);
@@ -42,5 +42,12 @@ class Section extends Model
          }
 
          return $fields->all();
-     }
+    }
+
+    public function scopeFormFilter($query, $form)
+    {
+        if ($form) {
+            return $query->where('form_id', $form);
+        }
+    }
 }

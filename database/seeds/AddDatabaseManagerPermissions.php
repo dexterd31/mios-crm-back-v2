@@ -3,7 +3,7 @@
 use App\Models\ModuleCrm;
 use Illuminate\Database\Seeder;
 
-class add_database_manager_permissions extends Seeder
+class AddDatabaseManagerPermissions extends Seeder
 {
     /**
      * Run the database seeds.
