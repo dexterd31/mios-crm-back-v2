@@ -10,6 +10,6 @@ class Channel extends Model
 
     public function scopeNameFilter($query, $name)
     {
-        if ($name) return $query->where('name', 'LIKE', "%$name%");
+        if ($name) return $query->where('name_channel', 'LIKE', "%$name%");
     }
 }
