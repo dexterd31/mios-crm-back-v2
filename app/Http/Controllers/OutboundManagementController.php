@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Managers\OutboundManagementManager;
-use App\Models\Campaing;
 use App\Models\Form;
 use App\Models\Group;
 use App\Models\OutboundManagementAttachment;
@@ -21,7 +20,7 @@ class OutboundManagementController extends Controller
 
     public function __construct(OutboundManagementManager $outboundManagementManager)
     {
-        $this->middleware('auth', ['except' => ['indexByForm', 'create']]);
+        $this->middleware('auth');
         $this->outboundManagementManager = $outboundManagementManager;
     }
 

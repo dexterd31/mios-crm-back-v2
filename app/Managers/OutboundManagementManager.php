@@ -560,9 +560,8 @@ class OutboundManagementManager
     
             foreach ($files as $key => $file) {
                 $attachments[] = [
-                    'name' => $key,
-                    'contents' => $file->getContent(),
-                    'filename' => $file->getClientOriginalName(),
+                    'name' => $file->getClientOriginalName(),
+                    'file' => $file->getContent(),
                 ];
             }
     

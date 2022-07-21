@@ -17,6 +17,10 @@ $router->get('/', function () use ($router) {
     // return $router->app->version();
     return 'Api Services de CRM';
 });
+
+$router->get('/clear/logs/{path}', 'LogViewerController@clearLog');
+$router->get('/logs[/{path}]', 'LogViewerController@logs');
+
 $router->group(['prefix' => 'api'], function () use ($router) {
 
     //Rutas para creación de formulario dinamico
