@@ -724,7 +724,7 @@ class UploadController extends Controller
         
         foreach ($fileInfo['prechargables'] as $assign){
             foreach ($fieldsLoad as $key => $field) {
-                if ($field->id == $assign->id) {
+                if ($field->id == $assign->id && isset($request->fields[$field->id])) {
                     $fieldsLoad[$assign->label] = $field;
                     $data = $request->fields[$field->id];
 
