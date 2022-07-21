@@ -85,7 +85,7 @@ class Form extends Model
      */
     public function tags()
     {
-        return $this->hasMany(Tags::class);
+        return $this->hasMany(Tag::class);
     }
 
     /**
@@ -97,5 +97,22 @@ class Form extends Model
     public function cutomFields()
     {
         return $this->hasOne(CustomField::class);
+    }
+
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'form_product');
+    }
+
+    public function whatsappAccounts()
+    {
+        return $this->belongsToMany(WhatsappAccount::class, 'form_whatsapp_account');
+    }
+
+    //? Filters --------------------------------------------------------------------------------------------------------
+
+    public function scopeGroupInFilter($query, array $ids)
+    {
+        return $query->whereIn('group_id', $ids);
     }
 }

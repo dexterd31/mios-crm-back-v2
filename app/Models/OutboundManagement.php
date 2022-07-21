@@ -1,0 +1,77 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class OutboundManagement extends Model
+{
+    protected $fillable = [
+        'form_id',
+        'name',
+        'channel',
+        'settings',
+        'total',
+        'status',
+    ];
+
+    //? Retaltions -----------------------------------------------------------------------------------------------------
+
+    public function form()
+    {
+        return $this->belongsTo(Form::class);
+    }
+
+    public function tags()
+    {
+        return $this->belongsToMany(Tag::class, 'outbound_management_tags');
+    }
+
+    public function attachments()
+    {
+        return $this->hasMany(OutboundManagementAttachment::class);
+    }
+
+    public function clients()
+    {
+        return $this->belongsToMany(ClientNew::class, 'outbound_management_client_new');
+    }
+
+    //? Filters --------------------------------------------------------------------------------------------------------
+
+    public function scopeFormFilter($query, $form)
+    {
+        if ($form) {
+            return $query->where('form_id', $form);
+        }
+    }
+
+    /**
+     * Filtra la fecha de actualiazción entre un lapso de fechas dadas.
+     *
+     * @param Illuminate\Database\Query\Builder $query
+     * @param string $from Fecha inicial
+     * @param string $to Fecha final
+     * @return Illuminate\Database\Query\Builder
+     */
+    public function scopeUpdatedAtBetweenFilter($query, $from, $to)
+    {
+        if ($from && $to) {
+            return $query->whereDate('outbound_management.updated_at', '>=', $from)->whereDate('outbound_management.updated_at', '<=', $to);
+        }
+    }
+
+    //? Accessors ------------------------------------------------------------------------------------------------------
+
+    public function getSettingsAttribute($value)
+    {
+        return json_decode($value);
+    }
+
+    //? Mutators -------------------------------------------------------------------------------------------------------
+
+    public function setSettingsAttribute($value)
+    {
+        $this->attributes['settings'] = json_encode($value);
+    }
+}
