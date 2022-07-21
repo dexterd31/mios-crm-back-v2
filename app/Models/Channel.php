@@ -6,5 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Channel extends Model
 {
-    //
+    //? Filters --------------------------------------------------------------------------------------------------------
+
+    public function scopeNameFilter($query, $name)
+    {
+        if ($name) return $query->where('name', 'LIKE', "%$name%");
+    }
 }
