@@ -9,7 +9,7 @@ use App\Models\Group;
 use App\Models\OutboundManagementAttachment;
 use App\Models\Product;
 use App\Models\Server;
-use App\Services\NominaService;
+use App\Models\WhatsappAccount;
 use App\Services\NotificationsService;
 use Exception;
 use Illuminate\Http\Request;
@@ -74,13 +74,18 @@ class OutboundManagementController extends Controller
             $products = Product::join('form_product', 'form_product.product_id', 'products.id')
             ->whereIn('form_product.form_id', $forms)->distinct()->get(['products.id', 'products.name']);
 
+            $whatsappAccounts = WhatsappAccount::whereIn('form_whatsapp_account.form_id', $forms)
+            ->join('form_whatsapp_account', 'form_whatsapp_account.whatsapp_account_id', 'whatsapp_accounts.id')
+            ->distinct()->get(['whatsapp_accounts.id', 'whatsapp_accounts.name', 'whatsapp_accounts.source']);
+
             return response()->json([
                 'tags' => $tags,
                 'fields' => $fields,
                 'emails' => $emails,
                 'servers' => $servers,
                 // 'campaing' => $campaing,
-                'products' => $products
+                'products' => $products,
+                'whatsappAccounts' => $whatsappAccounts
             ]);
 
         } catch (Exception $e) {

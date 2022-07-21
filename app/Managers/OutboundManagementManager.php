@@ -4,12 +4,18 @@ namespace App\Managers;
 
 use App\Jobs\DiffusionByEmail;
 use App\Jobs\DiffusionBySMS;
+use App\Jobs\DiffusionByVoice;
+use App\Jobs\DiffusionByWhatsapp;
 use App\Models\FormAnswer;
 use App\Models\OutboundManagement;
 use App\Models\OutboundManagementAttachment;
 use App\Models\Product;
 use App\Models\Section;
+use App\Models\WhatsappAccount;
+use App\Services\LeadService;
 use App\Services\NotificationsService;
+use App\Services\VicidialService;
+use App\Services\WhatsappService;
 use Exception;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -138,16 +144,26 @@ class OutboundManagementManager
         try {
             $formAnswers = FormAnswer::formFilter($outboundManagement->form_id)
             ->join('client_tag', 'client_tag.client_new_id', 'form_answers.client_new_id')
-            ->whereIn('client_tag.tag_id', $outboundManagement->tags)->get(['structure_answer']);
+            ->whereIn('client_tag.tag_id', $outboundManagement->tags)->get(['structure_answer', 'client_new_id']);
     
             $startDiffusionDateTime = "{$outboundManagement->settings->start_diffusion_date} {$outboundManagement->settings->start_diffusion_time}";
     
-            if ($outboundManagement->channel == 'SMS') {
-                $this->diffusionBySMS($formAnswers, $outboundManagement, $startDiffusionDateTime);
-            } else if ($outboundManagement->channel == 'Email') {
-                $this->diffusionByEmail($formAnswers, $outboundManagement, $startDiffusionDateTime);
-            } else if ($outboundManagement->channel == 'Email') {
+            switch ($outboundManagement->channel) {
+                case 'SMS':
+                    $this->diffusionBySMS($formAnswers, $outboundManagement, $startDiffusionDateTime);
+                    break;
+                
+                case 'Email':
+                    $this->diffusionByEmail($formAnswers, $outboundManagement, $startDiffusionDateTime);
+                    break;
 
+                case 'Voice':
+                    $this->diffusionByVoice($formAnswers, $outboundManagement, $startDiffusionDateTime);
+                    break;
+                    
+                case 'Whatsapp':
+                    $this->diffusionByWhatsapp($formAnswers, $outboundManagement, $startDiffusionDateTime);
+                    break;
             }
         } catch (Exception $e) {
             Log::error("OutboundManagement@createDiffusion: {$e->getMessage()}");
@@ -162,14 +178,17 @@ class OutboundManagementManager
             $formAnswers->each(function ($answer) use ($outboundManagement, &$clients) {
                 $fields = json_decode($answer->structure_answer);
                 $messageContent = $outboundManagement->settings->sms->message_content;
+
                 foreach ($fields as $field) {
                     if ($field->id == $outboundManagement->settings->diffusion_field) {
-                        $diffusion = $field->value;
+                        $destination = $field->value;
                     }
                     $messageContent = str_replace("[[$field->id]]", $field->value,$messageContent);
                 }
+
                 $clients[] = [
-                    'diffusion' => $diffusion,
+                    'id' => $answer->client_new_id,
+                    'destination' => $destination,
                     'message' => $messageContent
                 ];
             });
@@ -199,17 +218,20 @@ class OutboundManagementManager
                 $fields = json_decode($answer->structure_answer);
                 $body = $outboundManagement->settings->email->body;
                 $subject = $outboundManagement->settings->email->subject;
+
                 foreach ($fields as $field) {
                     if ($field->id == $outboundManagement->settings->diffusion_field) {
-                        $diffusion = $field->value;
+                        $destination = $field->value;
                     }
                     $body = str_replace("[[$field->id]]", $field->value, $body);
                     $subject = str_replace("[[$field->id]]", $field->value, $subject);
                 }
+
                 $clients[] = [
+                    'id' => $answer->client_new_id,
                     'body' => $body,
                     'subject' => $subject,
-                    'to' => $diffusion,
+                    'to' => $destination,
                     'attatchment' => [],
                     'cc' => [],
                     'cco' => [],
@@ -254,7 +276,7 @@ class OutboundManagementManager
                 $fields = json_decode($answer->structure_answer);
                 foreach ($fields as $field) {
                     if ($field->id == $outboundManagement->settings->diffusion_field) {
-                        $clients[] = $field->value;
+                        $clients[] = ['destination' => $field->value, 'id' => $answer->client_new_id,];
                         break;
                     }
                 }
@@ -273,11 +295,56 @@ class OutboundManagementManager
                 'product' => $product->name,
             ];
     
-            dispatch((new DiffusionByEmail($outboundManagement->id, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
+            dispatch((new DiffusionByVoice($outboundManagement->id, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
             ->onQueue('diffusions');
         } catch (Exception $e) {
             Log::error("OutboundManagement@diffusionByEmail: {$e->getMessage()}");
             throw new Exception("Error al crear la difución por Email, por favor comuniquese con el adminstrador del sistema.");
+        }
+    }
+
+    public function diffusionByWhatsapp($formAnswers, $outboundManagement, $startDiffusionDateTime)
+    {
+        try {
+            $clients = [];
+            $formAnswers->each(function ($answer) use ($outboundManagement, &$clients) {
+                $fields = json_decode($answer->structure_answer);
+                $messageContent = $outboundManagement->settings->sms->message_content;
+
+                foreach ($fields as $field) {
+                    if ($field->id == $outboundManagement->settings->diffusion_field) {
+                        $destination = $field->value;
+                    }
+                    $messageContent = str_replace("[[$field->id]]", $field->value,$messageContent);
+                }
+
+                $clients[] = [
+                    'id' => $answer->client_new_id,
+                    'destination' => $destination,
+                    'message' => $messageContent
+                ];
+            });
+            
+
+            $outboundManagement->total = count($clients);
+            $outboundManagement->save();
+
+            $whatsappAccount = WhatsappAccount::find($outboundManagement->settings->whatsapp->source)
+            ->only('token', 'source');
+    
+            $options = [
+                'startHour' => $outboundManagement->settings->start_delivery_schedule_time,
+                'endHour' => $outboundManagement->settings->end_delivery_schedule_time,
+                'days' => $outboundManagement->settings->delivery_schedule_days,
+                'token' => $whatsappAccount->token,
+                'source' => $whatsappAccount->source
+            ];
+    
+            dispatch((new DiffusionBySMS($outboundManagement->id, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
+            ->onQueue('diffusions');
+        } catch (Exception $e) {
+            Log::error("OutboundManagement@diffusionBySMS: {$e->getMessage()}");
+            throw new Exception("Error al crear la difución por SMS, por favor comuniquese con el adminstrador del sistema.");
         }
     }
 
@@ -290,12 +357,13 @@ class OutboundManagementManager
                 $now = Carbon::now('America/Bogota');
                 $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
                 $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
+                $outboundManagement = OutboundManagement::find($outboundManagementId);
                 
                 if ($isGreaterThanOrEqualTo && $isLessThan) {
-                    $notificationsService->sendSMS($client['message'], [$client['diffusion']]);
+                    $notificationsService->sendSMS($client['message'], [$client['destination']]);
+                    $outboundManagement->clients()->attach($client['id']);
                     unset($clients[$key]);
                 } else {
-                    $outboundManagement = OutboundManagement::find($outboundManagementId);
                     $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
                     if (!is_null($nextExecution) && count($clients)) {
                         $outboundManagement->status = 'En proceso...';
@@ -313,7 +381,9 @@ class OutboundManagementManager
             Log::error("OutboundManagement@sendDiffusionBySMS: {$e->getMessage()}");
             throw new Exception("Ocurrio un error al notificar por SMS, por favor comuniquese con el administrador del sistema.");
         } finally {
-            dispatch((new DiffusionBySMS($outboundManagementId, $clients, $options)))->onQueue('diffusions');
+            dispatch(
+                (new DiffusionBySMS($outboundManagementId, $clients, $options))->delay(Carbon::now()->addMinute())
+            )->onQueue('diffusions');
         }
     }
 
@@ -326,12 +396,13 @@ class OutboundManagementManager
                 $now = Carbon::now('America/Bogota');
                 $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
                 $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
+                $outboundManagement = OutboundManagement::find($outboundManagementId);
                 
                 if ($isGreaterThanOrEqualTo && $isLessThan) {
                     $notificationsService->sendEmail($client['body'], $client['subject'], [$client['to']], $options['attachments'],$client['cc'], $client['cco'], $options['sender_email']);
+                    $outboundManagement->clients()->attach($client['id']);
                     unset($clients[$key]);
                 } else {
-                    $outboundManagement = OutboundManagement::find($outboundManagementId);
                     $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
                     if (!is_null($nextExecution) && count($clients)) {
                         $outboundManagement->status = 'En proceso...';
@@ -349,9 +420,92 @@ class OutboundManagementManager
             Log::error("OutboundManagement@sendDiffusionByEmail: {$e->getMessage()}");
             throw new Exception("Ocurrio un error al notificar por Email, por favor comuniquese con el administrador del sistema.");
         } finally {
-            dispatch((new DiffusionByEmail($outboundManagementId, $clients, $options)))->onQueue('diffusions');
+            dispatch(
+                (new DiffusionByEmail($outboundManagementId, $clients, $options))->delay(Carbon::now()->addMinute())
+            )->onQueue('diffusions');
         }
+    }
 
+    public function sendDiffusionByVoice(int $outboundManagementId, array $clients, array $options)
+    {
+        try {
+            $vicidialService = new VicidialService;
+            
+            foreach ($clients as $key => $client) {
+                $now = Carbon::now('America/Bogota');
+                $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
+                $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
+                $outboundManagement = OutboundManagement::find($outboundManagementId);
+                
+                if ($isGreaterThanOrEqualTo && $isLessThan) {
+                    $vicidialService->sendLead([
+                        'producto' => $options['product'],
+                        'token' => $options['token'],
+                        'telefono' => $client['destination'],
+                    ]);
+                    $outboundManagement->clients()->attach($client['id']);
+                    unset($clients[$key]);
+                } else {
+                    $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
+                    if (!is_null($nextExecution) && count($clients)) {
+                        $outboundManagement->status = 'En proceso...';
+                        $outboundManagement->save();
+                        dispatch((new DiffusionByVoice($outboundManagementId, $clients, $options))->delay($nextExecution))
+                        ->onQueue('diffusions');
+                    } else {
+                        $outboundManagement->status = 'Entregado';
+                        $outboundManagement->save();
+                    }
+                    break;
+                }
+            }
+        } catch (Exception $e) {
+            Log::error("OutboundManagement@sendDiffusionByEmail: {$e->getMessage()}");
+            throw new Exception("Ocurrio un error al notificar por Email, por favor comuniquese con el administrador del sistema.");
+        } finally {
+            dispatch(
+                (new DiffusionByVoice($outboundManagementId, $clients, $options))->delay(Carbon::now()->addMinute())
+            )->onQueue('diffusions');
+        }
+    }
+
+    public function sendDiffusionByWhatsapp(int $outboundManagementId, array $clients, array $options)
+    {
+        try {
+            $whatsappService = new WhatsappService;
+            
+            foreach ($clients as $key => $client) {
+                $now = Carbon::now('America/Bogota');
+                $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
+                $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
+                $outboundManagement = OutboundManagement::find($outboundManagementId);
+                
+                if ($isGreaterThanOrEqualTo && $isLessThan) {
+                    $whatsappService->sendMenssage($options['apikey'], $options['source'], $client['destination'], $client['message']);
+                    $outboundManagement->clients()->attach($client['id']);
+                    unset($clients[$key]);
+                } else {
+                    $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
+                    if (!is_null($nextExecution) && count($clients)) {
+                        $outboundManagement->status = 'En proceso...';
+                        $outboundManagement->save();
+                        dispatch((new DiffusionByWhatsapp($outboundManagementId, $clients, $options))->delay($nextExecution))
+                        ->onQueue('diffusions');
+                    } else {
+                        $outboundManagement->status = 'Entregado';
+                        $outboundManagement->save();
+                    }
+                    break;
+                }
+            }
+        } catch (Exception $e) {
+            Log::error("OutboundManagement@sendDiffusionByEmail: {$e->getMessage()}");
+            throw new Exception("Ocurrio un error al notificar por Email, por favor comuniquese con el administrador del sistema.");
+        } finally {
+            dispatch(
+                (new DiffusionByWhatsapp($outboundManagementId, $clients, $options))->delay(Carbon::now()->addMinute())
+            )->onQueue('diffusions');
+        }
     }
 
     public function showOutboundManagement($id)

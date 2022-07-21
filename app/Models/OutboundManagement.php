@@ -32,6 +32,11 @@ class OutboundManagement extends Model
         return $this->hasMany(OutboundManagementAttachment::class);
     }
 
+    public function clients()
+    {
+        return $this->belongsToMany(ClientNew::class, 'outbound_management_client_new');
+    }
+
     //? Filters --------------------------------------------------------------------------------------------------------
 
     public function scopeFormFilter($query, $form)
