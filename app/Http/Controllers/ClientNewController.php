@@ -234,6 +234,8 @@ class ClientNewController extends Controller
         $client->tags = $client->tags()->get(['tags.id', 'tags.name'])->makeHidden('pivot');
         $client->field_data = $client->customFieldData->field_data ?? [];
         $formAnswer = $client->formanswer()->latest()->first() ?? json_decode($client->directory()->latest()->first()->data ?? '[]');
+
+        $formAnswer = json_decode($formAnswer->structure_answer);
         
         $sections = $client->form->section()->get(['name_section', 'fields'])
         ->map(function ($section) use ($formAnswer) {
@@ -243,8 +245,6 @@ class ClientNewController extends Controller
                 foreach ($formAnswer as $answer) {
                     if ($field->id == $answer->id) {
                         $fields[$key]->value = $answer->value;
-                    } else {
-                        $fields[$key]->value = 'No registra';
                     }
                 }
             }
