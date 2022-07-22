@@ -2,12 +2,12 @@
 
 namespace App\Imports;
 
+use App\Http\Controllers\UploadController;
 use App\Models\Attachment;
 use App\Models\CustomerDataPreload;
 use App\Models\Section;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;

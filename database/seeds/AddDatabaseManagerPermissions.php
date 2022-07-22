@@ -15,7 +15,7 @@ class AddDatabaseManagerPermissions extends Seeder
         $module = new ModuleCrm;
         $module->name = 'database_manager';
         $module->menu_ciu_id = 0;
-        $module->statis = 1;
+        $module->status = 1;
         $module->label = 'Gestionador de base de datos';
         $module->save();
     }

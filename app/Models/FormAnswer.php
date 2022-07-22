@@ -47,6 +47,8 @@ class FormAnswer extends Model
         return $this->hasMany(FormAnswersTray::class);
     }
 
+    //? Filters --------------------------------------------------------------------------------------------------------
+
     public function scopeFormFilter($query, $form)
     {
         if ($form) {

@@ -34,7 +34,7 @@ class ClientNew extends Model
 
     public function formanswer()
     {
-        return $this->hasMany(FormAnswer::class, 'client_id');
+        return $this->hasMany(FormAnswer::class, 'client_new_id');
     }
 
     /**

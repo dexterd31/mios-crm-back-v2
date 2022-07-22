@@ -910,7 +910,7 @@ class UploadController extends Controller
         
         foreach ($fileInfo['prechargables'] as $assign){
             foreach ($fieldsLoad as $key => $field) {
-                if ($field->id == $assign->id) {
+                if ($field->id == $assign->id && isset($request->fields[$field->id])) {
                     $fieldsLoad[$assign->label] = $field;
                     $data = $request->fields[$field->id];
 
@@ -1015,33 +1015,8 @@ class UploadController extends Controller
             $structureAnswer[] = $answer;
         }
 
-        $sections = Form::find($formId)->section()->get([
-            'id',
-            'name_section',
-            'type_section',
-            'fields',
-            'collapse',
-            'duplicate',
-            'state',
-        ]);
-
-        $sections->map(function ($section) use ($formAnswerAux) {
-            $section->fields = json_decode($section->fields);
-            return $section;
-        });
-
-        foreach ($sections as $index => $section) {
-            $fields = $section->fields;
-            foreach ($fields as $key => $field) {
-                if (isset($formAnswerAux[$field->id])) {
-                    $fields[$key]->value = $formAnswerAux[$field->id];
-                }
-            }
-            $sections[$index]->fields = $fields;
-        }
-
         $formAnswer = FormAnswer::formFilter($formId)->clientFilter($client->id)->first();
-        $chanel = Channel::nameFilter('Email')->first();
+        $chanel = Channel::nameFilter('VideoChat')->first();
 
         if (!$formAnswer) {
             $formAnswer = FormAnswer::create([
@@ -1055,8 +1030,6 @@ class UploadController extends Controller
         }
 
         return response()->json([
-            'form_answer_id' => $formAnswer->id,
-            'preguntas' => json_encode((Object) ['sections' => $sections]),
             'client_id' => $client->id
         ], 200);
     }
