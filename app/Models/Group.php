@@ -29,4 +29,13 @@ class Group extends Model
         return $this->belongsTo('App\Models\GroupUser','group_id');
 
     }
+
+    //? Filters --------------------------------------------------------------------------------------------------------
+
+    public function scopeCampaingFilter($query, $campaing)
+    {
+        if ($campaing) {
+            return $query->where('campaign_id', $campaing);
+        }
+    }
 }

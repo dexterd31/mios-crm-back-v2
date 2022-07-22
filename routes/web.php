@@ -1,4 +1,6 @@
 <?php
+
+use App\Managers\LogsManager;
 use App\Models\FormAnswer;
 /*
 |--------------------------------------------------------------------------
@@ -15,6 +17,10 @@ $router->get('/', function () use ($router) {
     // return $router->app->version();
     return 'Api Services de CRM';
 });
+
+$router->get('/clear/logs/{path}', 'LogViewerController@clearLog');
+$router->get('/logs[/{path}]', 'LogViewerController@logs');
+
 $router->group(['prefix' => 'api'], function () use ($router) {
 
     //Rutas para creación de formulario dinamico
@@ -140,6 +146,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
         $router->get('/changeState/{id}','TrayController@changeState');
         $router->get('/duplicatedSection/{idFormAnswer}','TrayController@sectionsDuplicated');
         $router->put('/{id}','TrayController@update');
+        $router->post('/cero', 'FormAnswerController@formAnswerFilterFromCeroTray');
 
         //semaforización de bandejas
         $router->group(['prefix' => 'traffic'], function() use ($router){
@@ -228,4 +235,28 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->get('online-users/report/{formId}/role/{roleId}','OnlineUserStatusController@onlineUserReportByForm');
 
       $router->post('upload/from-email', 'UploadController@uploadClientDataFromEmail');
-    });
+      
+      $router->post('upload/client/videochat', 'UploadController@uploadClientFromVideoChat');
+
+      $router->group(['prefix' => 'managements'], function () use($router) {
+        $router->post('/outbound/save/', 'OutboundManagementController@save');
+        $router->post('/outbound/send/', 'OutboundManagementController@sendDiffusion');
+        $router->post('/outbound/send/email/test', 'OutboundManagementController@sendEmailTest');
+        $router->get('/database/{formId}', 'ManagementController@indexDataBaseManagement');
+        $router->post('/database/{formId}', 'ManagementController@indexDataBaseManagement');
+        $router->get('/outbound/{formId}', 'OutboundManagementController@indexByForm');
+        $router->post('/outbound/{formId}', 'OutboundManagementController@indexByForm');
+        $router->get('/outbound/create/{formId}', 'OutboundManagementController@create');
+        $router->get('/outbound/show/{outboundManagementId}', 'OutboundManagementController@show');
+        $router->delete('/outbound/attachments/delete/{id}', 'OutboundManagementController@deleteAttachment');
+        $router->get('/outbound/attachments/download/{id}', 'OutboundManagementController@downloadAttachment');
+      });
+
+      $router->group(['prefix' => 'clients'], function () use ($router) {
+        $router->get('/{clietId}', 'ClientNewController@show');
+      });
+
+      $router->group(['prefix' => 'forms'], function () use ($router) {
+        $router->get('/byAdviser', 'FormController@indexFormsByAdviser');
+      });
+});

@@ -18,8 +18,12 @@ use App\Services\CiuService;
 use App\Imports\ClientNewImport;
 use App\Managers\ClientsManager;
 use App\Models\Channel;
+use App\Models\CustomerDataPreload;
+use App\Models\CustomField;
 use App\Models\Form;
 use App\Models\FormAnswer;
+use App\Models\ImportedFile;
+use App\Models\Tag;
 use App\Traits\FieldsForSection;
 use App\Traits\FindAndFormatValues;
 use stdClass;
@@ -41,8 +45,7 @@ class UploadController extends Controller
     public function __construct()
     {
         ini_set('max_execution_time', 300);
-        $this->middleware('auth', ['except' => 'uploadClientDataFromEmail']);
-        $this->ciuService = new CiuService();
+        $this->middleware('auth', ['except' => ['uploadClientFromVideoChat', 'uploadClientDataFromEmail']]);
     }
 
     /**
@@ -88,7 +91,8 @@ class UploadController extends Controller
     public function extractColumnsNames(Request $request, MiosHelper $miosHelper)
     {
         $this->validate($request, [
-            'excel' => 'required|file'
+            'excel' => 'required|file',
+            'form_id' => 'required|exists:forms,id'
         ]);
 
         try {
@@ -114,6 +118,9 @@ class UploadController extends Controller
                 }
 
                 $data = $miosHelper->jsonResponse(true,200,"data",$fileInfo);
+                $data['tags'] = Tag::formFilter($request->form_id)->get(['id', 'name']);
+                $customFields = CustomField::formFilter($request->form_id)->first();
+                $data['custom_fields'] = $customFields ? $customFields->fields : [];
             }else{
                 $data = $miosHelper->jsonResponse(false,406,"message","El archivo cargado no tiene datos para cargar, recuerde que en la primera fila se debe utilizar para identificar los datos asignados a cada columna.");
             }
@@ -142,6 +149,29 @@ class UploadController extends Controller
             'rows_file' => 'required'
         ]);
 
+        // Creacion de los tags
+        $tags = json_decode($request->tags);
+        $tagsIds = [];
+        if (count($tags)) {
+            foreach ($tags as $tag) {
+                if ($tag->id) {
+                    $tagsIds[] = $tag->id;
+                } else {
+                    $tag = Tag::create([
+                        'name' => $tag->name,
+                        'form_id' => $request->form_id
+                    ]);
+                    $tagsIds[] = $tag->id;
+                }
+            }
+        } else {
+            $tag = Tag::create([
+                'name' => Carbon::now('America/Bogota')->toDateTimeString(),
+                'form_id' => $request->form_id
+            ]);
+            $tagsIds[] = $tag->id;
+        }
+
         $assignUsers = filter_var($request->assign_users,FILTER_VALIDATE_BOOLEAN);
 
         if($assignUsers){
@@ -151,25 +181,75 @@ class UploadController extends Controller
         $userRrhhId = auth()->user()->rrhh_id;
         $file = $request->file('excel');
 
+        $importedFile = ImportedFile::create(['name' => $file->getClientOriginalName()]);
 
+        // Creacion de los campos personalizados
+        $customFieldsIds = [];
+
+        $custom_fields = json_decode($request->custom_fields);
+        if (count($custom_fields)) {
+            foreach ($custom_fields as $key => $field) {
+                $customFieldsIds[] = $field->id;
+                //Reemplaza todos los acentos o tildes de la cadena
+                $fieldKey = $miosHelper->replaceAccents($field->label);
+                //Reemplaza todos los caracteres extraños
+                $fieldKey = preg_replace('([^A-Za-z0-9 ])', '', $fieldKey);
+                //Convertimos a minusculas y Remplazamos espacios por el simbolo -
+                $fieldKey = strtolower( str_replace(array(' ', '  '), '-', $fieldKey));
+                //Concatenamos el resultado del label transformado con la variable $cadena
+                $custom_fields[$key]->key = "$fieldKey-$field->id";
+            }
+            
+            $customField = CustomField::formFilter($request->form_id)->first();
+
+            if ($customField) {
+                $fields = $customField->fields;
+                foreach ($custom_fields as $field) {
+                    $found = false;
+                    foreach ($fields as $existingField) {
+                        if ($existingField->id == $field->id) {
+                            $found = true;
+                            break;
+                        }
+                    }
+                    if (!$found) {
+                        $fields[] = $field;
+                    }
+                }
+                $customField->fields = $fields;
+                $customField->save();
+            } else {
+                CustomField::create([
+                    'form_id' => $request->form_id,
+                    'fields' => $custom_fields
+                ]);
+            }
+        }
+
+        $customFields = [];
         $fieldsLoad = $this->getSpecificFieldForSection(json_decode($request->assigns), $request->form_id);
-        foreach (json_decode($request->assigns) as $assign){
+        foreach (json_decode($request->assigns) as $assign) {
+            $found = false;
             foreach ($fieldsLoad as $key => $field) {
                 if ($field->id == $assign->id) {
+                    $found = true;
                     $fieldsLoad[$assign->columnName] = $field;
                     unset($fieldsLoad[$key]);
+                    break;
+                }
+            }
+            if (!$found) {
+                $customFields[$assign->columnName] = $assign->id;
+            }
+            if (count($customFieldsIds)) {
+                if (in_array($assign->id, $customFieldsIds)) {
+                    $customFields[$assign->columnName] = $assign->id;
                 }
             }
         }
 
         if (count($fieldsLoad)) {
-            $clientNewImport = new ClientNewImport(
-                $request->form_id,
-                filter_var($request->action, FILTER_VALIDATE_BOOLEAN),
-                $fieldsLoad,
-                $assignUsersObject ?? null
-            );
-
+            $clientNewImport = new ClientNewImport($this, $request->form_id, filter_var($request->action, FILTER_VALIDATE_BOOLEAN), $fieldsLoad, $assignUsersObject ?? null, $tagsIds, $customFields, $importedFile->id);
             Excel::import($clientNewImport, $file);
 
             $resume = $clientNewImport->getResume();
@@ -621,7 +701,6 @@ class UploadController extends Controller
         ]);
 
         $formId = $request->form_id;
-
         $FormController = new FormController();
         $prechargables = $FormController->searchPrechargeFields($formId)->getData();
         $fileInfo['prechargables'] = [];
@@ -656,6 +735,189 @@ class UploadController extends Controller
                     $field->value=$data;
                     $answer=new stdClass();
                     $answer->in=[];
+
+                    if(isset($field->isClientInfo) && $field->isClientInfo){
+                        $answer->informationClient= (object)[
+                            "id" => $field->id,
+                            "value" => $field->value
+                        ];
+                        array_push($answer->in,'informationClient');
+                    }
+
+                    if(isset($field->client_unique) && $field->client_unique){
+                        $answer->uniqueIdentificator = (Object)[
+                            "id" => $field->id,
+                            "key" => $field->key,
+                            "preloaded" => $field->preloaded,
+                            "label" => $field->label,
+                            "isClientInfo" => $field->isClientInfo,
+                            "client_unique" => $field->client_unique,
+                            "value" => $field->value
+                        ];
+                        array_push($answer->in,'uniqueIdentificator');
+                    }
+
+                    if(isset($field->preloaded) && $field->preloaded){
+                        $answer->preload=[
+                            "id" => $field->id,
+                            "key" => $field->key,
+                            "value" => $field->value
+                        ];
+                        array_push($answer->in,'preload');
+                    }
+
+                    $answer->formAnswer = (Object)[
+                        "id" => $field->id,
+                        "key" => $field->key,
+                        "preloaded" => $field->preloaded,
+                        "label" => $field->label,
+                        "isClientInfo" => $field->isClientInfo,
+                        "client_unique" => isset($field->client_unique) ? $field->client_unique : false,
+                        "value" => gettype($field->value) !=="string" ?  strval($field->value) : $field->value,
+                        "controlType" => $field->controlType,
+                        "type" => $field->type
+                    ];
+
+                    $answer->formAnswerIndex = (Object)[
+                        "id" => $field->id,
+                        "value" => gettype($field->value) !=="string" ?  strval($field->value) : $field->value
+                    ];
+
+                    $answer->success=true;
+                    $answer->Originalfield=$field;
+
+                    foreach ($answer->in as $in) {
+                        if (!isset($answerFields->$in)) {
+                            $answerFields->$in = [];
+                        }
+                        
+                        array_push($answerFields->$in, $answer->$in);
+                    }
+                    array_push($formAnswerClient, $answer->formAnswer);
+                }
+            }
+        }
+
+        $clientsManager = new ClientsManager;
+
+        $data = [
+            "form_id" => $formId,
+            "unique_indentificator" => $answerFields->uniqueIdentificator[0],
+        ];
+
+        $client = $clientsManager->findClient($data);
+
+        if(empty($client)){
+            $data['information_data'] = $answerFields->informationClient;
+    
+            $client = $clientsManager->updateOrCreateClient($data);
+    
+            if(isset($client->id)){
+                $saveDirectories = $this->addToDirectories($formAnswerClient, $formId, $client->id, $data['information_data']);
+            }
+        }
+
+        $structureAnswer = [];
+        $formAnswerIndexData = [];
+        $formAnswerAux = [];
+
+        foreach ($formAnswerClient as $answer) {
+            $formAnswerIndexData[] = [
+                'id' => $answer->id,
+                'value' => $answer->value
+            ];
+            $formAnswerAux[$answer->id] = $answer->value;
+            unset($answer->type);
+            unset($answer->controlType);
+            $structureAnswer[] = $answer;
+        }
+
+        $sections = Form::find($formId)->section()->get([
+            'id',
+            'name_section',
+            'type_section',
+            'fields',
+            'collapse',
+            'duplicate',
+            'state',
+        ]);
+
+        $sections->map(function ($section) use ($formAnswerAux) {
+            $section->fields = json_decode($section->fields);
+            return $section;
+        });
+
+        foreach ($sections as $index => $section) {
+            $fields = $section->fields;
+            foreach ($fields as $key => $field) {
+                if (isset($formAnswerAux[$field->id])) {
+                    $fields[$key]->value = $formAnswerAux[$field->id];
+                }
+            }
+            $sections[$index]->fields = $fields;
+        }
+
+        $formAnswer = FormAnswer::formFilter($formId)->clientFilter($client->id)->first();
+        $chanel = Channel::nameFilter('Email')->first();
+
+        if (!$formAnswer) {
+            $formAnswer = FormAnswer::create([
+                'structure_answer' => json_encode($structureAnswer),
+                'form_id' => $formId,
+                'channel_id' => $chanel->id,
+                'rrhh_id' => $request->rrhh_id,
+                'client_new_id' => $client->id,
+                'form_answer_index_data' => json_encode($formAnswerIndexData),
+            ]);
+        }
+
+        return response()->json([
+            'form_answer_id' => $formAnswer->id,
+            'preguntas' => json_encode((Object) ['sections' => $sections]),
+            'client_id' => $client->id
+        ], 200);
+    }
+
+    public function uploadClientFromVideoChat(Request $request)
+    {
+        $this->validate($request, [
+            'form_id' => 'required|integer|exists:forms,id',
+            'fields'   => 'required|array',
+            'rrhh_id' => 'required|integer'
+        ]);
+
+        $formId = $request->form_id;
+        
+        $FormController = new FormController();
+        $prechargables = $FormController->searchPrechargeFields($formId)->getData();
+        $fileInfo['prechargables'] = [];
+        
+        foreach($prechargables->section as $section){
+            foreach($section->fields as $field){
+                if($field){
+                    $prechargedField = new stdClass();
+                    $prechargedField->id = $field->id;
+                    $prechargedField->label = $field->label;
+                    array_push($fileInfo['prechargables'], $prechargedField);
+                }
+            }
+        }
+        
+        $fieldsLoad = $this->getSpecificFieldForSection($fileInfo['prechargables'], $formId);
+        
+        $answerFields = (Object)[];
+        $formAnswerClient=[];
+        
+        foreach ($fileInfo['prechargables'] as $assign){
+            foreach ($fieldsLoad as $key => $field) {
+                if ($field->id == $assign->id) {
+                    $fieldsLoad[$assign->label] = $field;
+                    $data = $request->fields[$field->id];
+
+                    unset($fieldsLoad[$key]);
+                    $field->value = $data;
+                    $answer = new stdClass();
+                    $answer->in = [];
 
                     if(isset($field->isClientInfo) && $field->isClientInfo){
                         $answer->informationClient= (object)[

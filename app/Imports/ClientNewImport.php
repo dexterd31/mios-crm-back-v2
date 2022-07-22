@@ -21,18 +21,23 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
     private $toUpdate;
     private $assignUsers;
     private $fieldsLoad;
-    private $validator;
-    private $resume = ['cargados' => 0, 'errores' => [], 'nocargados' => 0, 'totalRegistros' => 0];
-    private $chunkCounter = 1;
+    private $resume;
+    private $uploadController;
+    private $tags;
+    private $customFields;
+    private $importedFileId;
 
-    public function __construct($formId = 0, $toUpdate = false, $fieldsLoad = [], $assignUsers = null)
+    public function __construct(UploadController $uploadController = null, $formId = 0, $toUpdate = false, $fieldsLoad = [], $assignUsers = null, $tags = [], $customFields = [], $importedFileId = 0)
     {
         HeadingRowFormatter::default('none');
         $this->formId = $formId;
         $this->toUpdate = $toUpdate;
         $this->fieldsLoad = $fieldsLoad;
         $this->assignUsers = $assignUsers;
-        $this->validator = new Validator;
+        $this->resume = ['cargados' => 0, 'errores' => [], 'nocargados' => 0, 'totalRegistros' => 0];
+        $this->tags = $tags;
+        $this->customFields = $customFields;
+        $this->importedFileId = $importedFileId;
     }
 
     public function collection(Collection $rows)
@@ -45,61 +50,33 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
             $answerFields = (Object)[];
             $errorAnswers = [];
             $formAnswerClient=[];
-            $rowErrorMessage = 'Error en la fila ' . strval(intval($rowIndex) + 1);
+            $customFieldData = [];
     
-            foreach ($row as $fieldIndex => $fieldValue) {
-                $fieldLoad = $this->fieldsLoad[$fieldIndex];
-
-                if ($this->chunkCounter == 1 && $rowIndex == 0) {
-                    $foundField = $this->findFieldStructure($this->formId, $fieldLoad->id);
-    
-                    if ($foundField) {
-                        $foundFields[$fieldIndex] = $foundField;
-                        [$fieldValidator, $rules] = $this->makeValidation($fieldLoad);
+            foreach ($row as $fieldIndex => $field) {
+                if (isset($this->fieldsLoad[$fieldIndex])) {
+                    $dataValidate = $this->uploadController->validateClientDataUpload($this->fieldsLoad[$fieldIndex], $field, $this->formId);
         
-                        $fieldsToValidator[$fieldIndex] = $fieldValidator;
-                        $fieldRules[$fieldIndex] = $rules;
-                        $fieldTypes[$fieldIndex] = $fieldLoad->type;
-
+                    if ($dataValidate->success) {
+                        foreach ($dataValidate->in as $in) {
+                            if (!isset($answerFields->$in)) {
+                                $answerFields->$in = [];
+                            }
+                            
+                            array_push($answerFields->$in, $dataValidate->$in);
+                        }
+                        
+                        array_push($formAnswerClient, $dataValidate->formAnswer);
                     } else {
-                        $errorAnswers[] = [$rowErrorMessage, "field not found in {$fieldLoad->label}"];
+                        $fila = strval(intval($rowIndex) + 1);
+                        $columnErrorMessage = "Error en la Fila $fila";
+                        array_push($dataValidate->message, $columnErrorMessage);
+                        array_push($errorAnswers, $dataValidate->message);
                     }
                 }
 
-                if (isset($foundFields[$fieldIndex])) {
-                    [$isValid, $fieldValue, $message] = $this->verifyValueInFieldParameters($foundFields[$fieldIndex], $fieldValue);
-    
-                    if ($isValid) {
-                        $castedData = $this->castData($fieldLoad->type, $fieldValue);
-                        $validated = $this->validator::make(
-                            [$fieldsToValidator[$fieldIndex] => $castedData],
-                            [$fieldsToValidator[$fieldIndex] => $fieldRules[$fieldIndex]]
-                        );
-    
-                        if ($validated->fails()) {
-                            $errors = [];
-                            $errors[] = $rowErrorMessage;
-                            foreach ($validated->errors()->all() as $message) {
-                                $errors[] = "$message in {$fieldLoad->label}";
-                            }
-    
-                            $errorAnswers[] = $errors;
-    
-                        } else {
-                            $formattedData = $this->structureCustomerData($fieldLoad, $castedData);
-    
-                            foreach ($formattedData->in as $in) {
-                                if (!isset($answerFields->$in)) {
-                                    $answerFields->$in = [];
-                                }
-                                
-                                array_push($answerFields->$in, $formattedData->$in);
-                            }
-    
-                            array_push($formAnswerClient, $formattedData->formAnswer);
-                        }
-                    } else {
-                        $errorAnswers[] = [$rowErrorMessage, "$message in {$fieldLoad->label}"];
+                if (count($this->customFields)) {
+                    if (isset($this->customFields[$fieldIndex])) {
+                        $customFieldData[] = ['id' => $this->customFields[$fieldIndex], 'value' => $field];
                     }
                 }
             }
@@ -120,6 +97,9 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
                     'adviser' => $rrhhId,
                     'unique_identificator' => $uniqueIdentificator,
                     'form_answer' => $formAnswerClient,
+                    'custom_field_data' => count($this->customFields) ? $customFieldData : [],
+                    'tags' => $this->tags,
+                    'imported_file_id' => $this->importedFileId
                 ]);
     
                 $this->resume['cargados']++;
