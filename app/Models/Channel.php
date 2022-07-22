@@ -8,6 +8,7 @@ class Channel extends Model
 {
     protected $table = 'channels';
     protected $PrimaryKey = 'id';
+    
     public function scopeNameFilter($query, $name)
     {
         if ($name) {
