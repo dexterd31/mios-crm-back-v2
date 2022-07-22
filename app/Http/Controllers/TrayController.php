@@ -3,15 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Form;
-use App\Managers\TrafficTrayManager;
-use App\Models\FormAnswer;
-use App\Models\FormAnswerLog;
 use App\Models\Tray;
 use App\Models\Section;
-use App\Models\FormAnswersTray;
+use App\Models\FormAnswer;
 use App\Support\Collection;
-use App\Traits\CheckDuplicateSections;
 use Illuminate\Http\Request;
+use App\Models\FormAnswerLog;
+use App\Managers\TrafficTrayManager;
+use App\Traits\CheckDuplicateSections;
 
 class TrayController extends Controller
 {
@@ -78,7 +77,7 @@ class TrayController extends Controller
             $trays = Tray::where('form_id', $id)->get();
         }
 
-        
+
         foreach($trays as $tray){
             $formAnswers = FormAnswer::join('form_answers_trays', "form_answers.id", 'form_answers_trays.form_answer_id')
             ->join('trays', "trays.id", 'form_answers_trays.tray_id')
@@ -87,7 +86,7 @@ class TrayController extends Controller
             if($tray->advisor_manage == 1){
                 $formAnswersIds = clone $formAnswers;
                 $formsAnswersIds = $formAnswersIds->pluck('form_answers.id');
-        
+
                 $formAnswerLogIds = FormAnswerLog::whereIn('form_answer_id', $formsAnswersIds)
                 ->where('rrhh_id', auth()->user()->rrhh_id)->distinct()->pluck('form_answer_id');
 
@@ -263,7 +262,7 @@ class TrayController extends Controller
     {
         return $formsAnswers->filter(function ($answer) use ($filteredFields, $sought) {
             $found = false;
-            
+
             foreach ($answer->structure_answer as $field) {
                 if (in_array($field['id'], $filteredFields)) {
                     $found = str_contains(strtolower((string) $field['value']), $sought);
@@ -287,7 +286,7 @@ class TrayController extends Controller
     private function answersSort($formsAnswers, string $columnToSort, string $orientation) : array
     {
         $formsAnswers = $formsAnswers->toArray();
-        
+
         usort($formsAnswers, function ($answerA, $answerB) use ($columnToSort, $orientation) {
             $isNumeric = false;
             $values = [];
@@ -309,7 +308,7 @@ class TrayController extends Controller
             if ($isNumeric) {
                 if ($orientation == 'DESC') {
                     $result = $values[0] < $values[1] ? 1 : -1;
-                } 
+                }
                 $result = $values[0] < $values[1] ? -1 : 1;
             } else {
                 $result = strcasecmp(...$values);
