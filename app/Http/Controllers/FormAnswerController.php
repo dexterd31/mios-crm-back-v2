@@ -276,8 +276,7 @@ class FormAnswerController extends Controller
         $files = [];
         $replace["form_id"] = $request->form_id;
 
-        $clientNewController = new ClientNewController();
-        $clientNewData = new Request();
+        $clientsManager = new ClientsManager;
         
         if(isset($dataFilters["isClientInfo"]))
         {
@@ -286,14 +285,13 @@ class FormAnswerController extends Controller
         
         if(isset($dataFilters["client_unique"]))
         {
-            $this->processPreloadedData($replace["form_id"], (object) $dataFilters["client_unique"][0]);
+            // $this->processPreloadedData($replace["form_id"], (object) $dataFilters["client_unique"][0]);
             $replace["unique_indentificator"] = json_encode($dataFilters["client_unique"][0]);
         }
 
         if(isset($replace["form_id"]) && (isset($replace["information_data"]) || isset($replace["unique_indentificator"]))){
-            $clientNewData->replace($replace);
             $clientNew = [];
-            $clientNew = $clientNewController->index($clientNewData);
+            $clientNew = $clientsManager->findClient($replace);
         }else{
             $clientNew = [];
         }
