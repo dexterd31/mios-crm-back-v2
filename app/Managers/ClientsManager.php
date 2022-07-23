@@ -21,9 +21,10 @@ class ClientsManager
                 $isMatchUniqueIdentificator = false;
                 $isMatchInformationData = false;
                 $uniqueIdentificator = json_decode($client->unique_indentificator);
-
-                if ($uniqueIdentificator->id == $data['unique_indentificator']->id) {
-                    if ($uniqueIdentificator->value == $data['unique_indentificator']->value) {
+                $dataUniqueIdentificator = json_decode($data['unique_indentificator']);
+                
+                if ($uniqueIdentificator->id == $dataUniqueIdentificator->id) {
+                    if ($uniqueIdentificator->value == $dataUniqueIdentificator->value) {
                         $isMatchUniqueIdentificator = true;
                     }
                 }
@@ -34,6 +35,7 @@ class ClientsManager
 
                 foreach ($informationData as $field) {
                     foreach ($data['information_data'] as $preloadField) {
+                        $preloadField = (object) $preloadField;
                         if ($field->id == $preloadField->id) {
                             if ($field->value == $preloadField->value) {
                                 $countMatchInformationData++;
