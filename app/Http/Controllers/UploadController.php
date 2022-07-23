@@ -1041,13 +1041,13 @@ class UploadController extends Controller
         }
 
         $formAnswer = FormAnswer::formFilter($formId)->clientFilter($client->id)->first();
-        $chanel = Channel::nameFilter('Email')->first();
+        $channel = Channel::nameFilter('Videollamada')->first();
 
         if (!$formAnswer) {
             $formAnswer = FormAnswer::create([
                 'structure_answer' => json_encode($structureAnswer),
                 'form_id' => $formId,
-                'channel_id' => $chanel->id,
+                'channel_id' => $channel->id,
                 'rrhh_id' => $request->rrhh_id,
                 'client_new_id' => $client->id,
                 'form_answer_index_data' => json_encode($formAnswerIndexData),
