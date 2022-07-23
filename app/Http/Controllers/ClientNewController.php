@@ -15,6 +15,12 @@ class ClientNewController extends Controller
 {
     private $clientNewModel;
 
+    public function __construct()
+    {
+        // $this->middleware('auth');
+        $this->middleware('auth', ['except' => ['show']]);
+    }
+
     public function setClientNewModel($clientNewModel)
 	{
 		$this->clientNewModel = $clientNewModel;
@@ -210,13 +216,60 @@ class ClientNewController extends Controller
 
     /**
      * Display the specified resource.
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.com.co>
      *
-     * @param  \App\Models\ClientNew  $clientNew
+     * @param  int  $clietId
      * @return \Illuminate\Http\Response
      */
-    public function show(ClientNew $clientNew)
+    public function show($clietId)
     {
-        //
+        $client = ClientNew::find($clietId);
+        $uniqueIndentificator = json_decode($client->unique_indentificator);
+
+        $client->unique_indentificator = (object) [
+            'label' => $uniqueIndentificator->label,
+            'value' => $uniqueIndentificator->value
+        ];
+
+        $client->tags = $client->tags()->get(['tags.id', 'tags.name'])->makeHidden('pivot');
+        $client->field_data = $client->customFieldData->field_data ?? [];
+        $formAnswer = $client->formanswer()->latest()->first() ?? json_decode($client->directory()->latest()->first()->data ?? '[]');
+        
+        $sections = $client->form->section()->get(['name_section', 'fields'])
+        ->map(function ($section) use ($formAnswer) {
+            $fields = json_decode($section->fields);
+
+            foreach ($fields as $key => $field) {
+                foreach ($formAnswer as $answer) {
+                    if ($field->id == $answer->id) {
+                        $fields[$key]->value = $answer->value;
+                    }
+                }
+            }
+
+            $section->fields = $fields;
+            return $section;
+        });
+        
+        $customFields = $client->form->cutomFields->fields ?? [];
+
+        foreach($customFields as $key => $customField) {
+            $found = false;
+            foreach ($client->field_data as $data) {
+                if ($data->id == $customField->id) {
+                    $found = true;
+                    $customFields[$key]->value = $data->value;
+                }
+            }
+
+            if (!$found) {
+                unset($customFields[$key]);
+            }
+        }
+
+        $client = $client->only('tags', 'id', 'unique_indentificator');
+
+        return response()->json(['client' => $client, 'custom_fields' => $customFields, 'sections' => $sections]);
     }
 
     /**

@@ -8,9 +8,11 @@ use App\Models\CustomerDataPreload;
 use App\Models\Form;
 use App\Models\FormLog;
 use App\Models\FormType;
+use App\Models\GroupUser;
 use App\Models\RelAdvisorClientNew;
 use App\Models\Section;
 use App\Models\Tray;
+use App\Models\User;
 use App\Services\RrhhService;
 use App\Traits\deletedFieldChecker;
 use App\Traits\FindAndFormatValues;
@@ -430,7 +432,24 @@ class FormController extends Controller
                     $respuestas['updated_at'] = $answer->updated_at;
                 }
                 if(isset($request->include_tipification_time) && $request->include_tipification_time){
-                    $respuestas['tipification_time'] = $answer->tipification_time;
+                    $chronometer = $answer->tipification_time;
+                    if($chronometer != "upload"){
+                        $tipification_time = explode(':', $chronometer);
+                        if(count($tipification_time) <= 2){
+                          $tipification_time[2] = $tipification_time[1];
+                          $tipification_time[1] = strlen($tipification_time[0]) >= 2 ? $tipification_time[0] : "0" . $tipification_time[0];
+                          $tipification_time[2] = strlen($tipification_time[2]) >= 2 ? $tipification_time[2] : "0" . $tipification_time[2];
+                          $tipification_time[0] = '00';
+                        }else{
+                          $tipification_time[0] = strlen($tipification_time[0]) >= 2 ? $tipification_time[0] : "0" . $tipification_time[0];
+                          $tipification_time[1] = strlen($tipification_time[1]) >= 2 ? $tipification_time[1] : "0" . $tipification_time[1];
+                          $tipification_time[2] = strlen($tipification_time[2]) >= 2 ? $tipification_time[2]: "0" . $tipification_time[2];
+                        }
+                
+                        $chronometer = implode(":", $tipification_time);
+                        }
+                    
+                    $respuestas['tipification_time'] = $chronometer;
                 }
                 $rows[$r]=$respuestas;
                 $r++;
@@ -681,6 +700,18 @@ class FormController extends Controller
         unset($formsSections->tipification_time);
 
         return response()->json($formsSections);
+    }
+
+    public function indexFormsByAdviser(Request $request)
+    {
+        $forms = Form::join('form_types', 'forms.form_type_id', '=', 'form_types.id')
+            ->join("groups", "groups.id", "forms.group_id")
+            ->join('group_users', 'group_users.group_id', 'groups.id')
+            ->join('tags', 'tags.form_id', 'forms.id')
+            ->select('name_form', 'forms.id', 'name_type', 'forms.state', 'seeRoles', 'forms.updated_at')
+            ->where('group_users.rrhh_id', auth()->user()->rrhh_id)->get();
+
+       return response()->json($forms);
     }
 }
 
