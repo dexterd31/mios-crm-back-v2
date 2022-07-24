@@ -15,6 +15,7 @@ $router->get('/', function () use ($router) {
     // return $router->app->version();
     return 'Api Services de CRM';
 });
+
 $router->group(['prefix' => 'api'], function () use ($router) {
 
     //Rutas para creación de formulario dinamico
@@ -228,4 +229,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->get('online-users/report/{formId}/role/{roleId}','OnlineUserStatusController@onlineUserReportByForm');
 
       $router->post('upload/from-email', 'UploadController@uploadClientDataFromEmail');
-    });
+      
+      $router->post('upload/client/videochat', 'ExternalController@uploadClientFromVideoChat');
+});
+    
