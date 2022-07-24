@@ -6,6 +6,7 @@ use App\Models\FormAnswer;
 use App\Models\Client;
 use App\Models\Directory;
 use App\Models\ApiConnection;
+use App\Support\Collection;
 use PhpParser\Node\Stmt\Foreach_;
 
 class FilterHelper
@@ -93,7 +94,13 @@ class FilterHelper
                 $formAnswersQuery = $formAnswersQuery->whereRaw("json_contains(data, lower('$filterData'))");
             }
         }
-        return $formAnswersQuery->paginate(5);
+        
+        $formAnswersQuery = $formAnswersQuery->get()->map(function ($answer) {
+            $answer = $answer->name_channel = 'Llamada';
+            return $answer;
+        });
+
+        return (new Collection($formAnswersQuery))->paginate(5);
     }
 
     // Funcion para buscar por api
