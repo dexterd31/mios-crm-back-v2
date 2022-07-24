@@ -20,6 +20,7 @@ use App\Managers\ClientsManager;
 use App\Models\Channel;
 use App\Models\Form;
 use App\Models\FormAnswer;
+use App\Models\FormAnswerLog;
 use App\Traits\FieldsForSection;
 use App\Traits\FindAndFormatValues;
 use stdClass;
@@ -804,7 +805,8 @@ class UploadController extends Controller
         $this->validate($request, [
             'form_id' => 'required|integer|exists:forms,id',
             'fields'   => 'required|array',
-            'rrhh_id' => 'required|integer'
+            'rrhh_id' => 'required|integer',
+            'canal' => 'required|string'
         ]);
 
         $formId = $request->form_id;
@@ -937,7 +939,7 @@ class UploadController extends Controller
         }
 
         $formAnswer = FormAnswer::formFilter($formId)->clientFilter($client->id)->first();
-        $channel = Channel::nameFilter('Videollamada')->first();
+        $channel = Channel::nameFilter($request->canal)->first();
 
         if (!$formAnswer) {
             $formAnswer = FormAnswer::create([
@@ -948,7 +950,16 @@ class UploadController extends Controller
                 'client_new_id' => $client->id,
                 'form_answer_index_data' => json_encode($formAnswerIndexData),
             ]);
+        } else {
+            $formAnswer->structure_answer = json_encode($structureAnswer);
+            $formAnswer->save();
         }
+
+        $log = new FormAnswerLog();
+        $log->form_answer_id = $formAnswer->id;
+        $log->structure_answer = $formAnswer->structure_answer;
+        $log->rrhh_id = $formAnswer->rrhh_id;
+        $log->save();
 
         return response()->json([
             'client_id' => $client->id
