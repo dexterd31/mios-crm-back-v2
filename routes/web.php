@@ -18,9 +18,12 @@ $router->get('/', function () use ($router) {
     return 'Api Services de CRM';
 });
 
+<<<<<<< HEAD
 $router->get('/clear/logs/{path}', 'LogViewerController@clearLog');
 $router->get('/logs[/{path}]', 'LogViewerController@logs');
 
+=======
+>>>>>>> air-e-sprint-1-master
 $router->group(['prefix' => 'api'], function () use ($router) {
 
     //Rutas para creación de formulario dinamico
@@ -236,7 +239,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
       $router->post('upload/from-email', 'UploadController@uploadClientDataFromEmail');
       
-      $router->post('upload/client/videochat', 'UploadController@uploadClientFromVideoChat');
+      $router->post('upload/client/videochat', 'ExternalController@uploadClientFromVideoChat');
 
       $router->group(['prefix' => 'managements'], function () use($router) {
         $router->post('/outbound/save/', 'OutboundManagementController@save');

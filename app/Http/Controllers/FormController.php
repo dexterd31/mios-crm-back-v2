@@ -30,7 +30,7 @@ class FormController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth', ['excep' => 'searchPrechargeFields']);
+        $this->middleware('auth');
     }
 
     /**
