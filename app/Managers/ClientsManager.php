@@ -16,7 +16,6 @@ class ClientsManager
      */
     public function findClient(array $data)
     {
-        
         $clientNew = new ClientNew;
         
         if (isset($data['client_new_id'])){
@@ -28,16 +27,18 @@ class ClientsManager
                 $found = false;
                 $isMatchUniqueIdentificator = false;
                 $isMatchInformationData = false;
-                $uniqueIdentificator = json_decode($client->unique_indentificator);
-                if (gettype($data['unique_indentificator']) == 'string') {
-                    $dataUniqueIdentificator = json_decode($data['unique_indentificator']);
-                } else {
-                    $dataUniqueIdentificator = $data['unique_indentificator'];
-                }
-                
-                if ($uniqueIdentificator->id == $dataUniqueIdentificator->id) {
-                    if ($uniqueIdentificator->value == $dataUniqueIdentificator->value) {
-                        $isMatchUniqueIdentificator = true;
+                if (isset($data['unique_indentificator'])) {
+                    $uniqueIdentificator = json_decode($client->unique_indentificator);
+                    if (gettype($data['unique_indentificator']) == 'string') {
+                        $dataUniqueIdentificator = json_decode($data['unique_indentificator']);
+                    } else {
+                        $dataUniqueIdentificator = $data['unique_indentificator'];
+                    }
+                    
+                    if ($uniqueIdentificator->id == $dataUniqueIdentificator->id) {
+                        if ($uniqueIdentificator->value == $dataUniqueIdentificator->value) {
+                            $isMatchUniqueIdentificator = true;
+                        }
                     }
                 }
 

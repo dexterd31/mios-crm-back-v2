@@ -781,6 +781,8 @@ class FormAnswerController extends Controller
 
         $answer = [];
 
+        $clientData = '';
+
         if($formAnswer && $directory) {
             $clientData = $formAnswer->structure_answer;
 
