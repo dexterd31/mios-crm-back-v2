@@ -8,49 +8,60 @@ class ClientsManager
 {
     public function findClient(array $data)
     {
+        
         $clientNew = new ClientNew;
         
         if (isset($data['client_new_id'])){
             $clientNew = $clientNew->find($data['client_new_id']);
 
         } else {
-            $clientNew = $clientNew::where("form_id", $data['form_id']);
-
-            if (isset($data['information_data'])) {
-                foreach($data['information_data'] as $informationData) {
-                    $informationDataJson = json_encode([
-                        "id"=> $informationData["id"],
-                        "value"=> $informationData["value"]
-                    ]);
-    
-                    $clientNew = $clientNew->whereRaw("json_contains(lower(information_data), lower('$informationDataJson'))");
-                }
-            }
-
-            if (isset($data['unique_indentificator'])) {
-                $unique_indentificator = $data['unique_indentificator'];
-                $clientNew = $clientNew->whereJsonContains("unique_indentificator",[
-                    "id" => $unique_indentificator->id
-                ]);
-
-                $uniqueValueInt=intval($unique_indentificator->value);
-
-                if (gettype($uniqueValueInt) == 'integer') {
-                    $clientNew = $clientNew->where(function ($query) use ($uniqueValueInt, $unique_indentificator) {
-                        $query->whereJsonContains("unique_indentificator",[
-                            "value" => $unique_indentificator->value
-                        ])
-                        ->orWhereJsonContains("unique_indentificator",["value" => $uniqueValueInt]);
-                    });
-
+            $clientNew = $clientNew::where("form_id", $data['form_id'])->get()
+            ->filter(function ($client) use ($data) {
+                $found = false;
+                $isMatchUniqueIdentificator = false;
+                $isMatchInformationData = false;
+                $uniqueIdentificator = json_decode($client->unique_indentificator);
+                if (gettype($data['unique_indentificator']) == 'string') {
+                    $dataUniqueIdentificator = json_decode($data['unique_indentificator']);
                 } else {
-                    $clientNew = $clientNew->whereJsonContains("unique_indentificator",[
-                        "value" => $unique_indentificator->value
-                    ]);
+                    $dataUniqueIdentificator = $data['unique_indentificator'];
                 }
-            }
+                
+                if ($uniqueIdentificator->id == $dataUniqueIdentificator->id) {
+                    if ($uniqueIdentificator->value == $dataUniqueIdentificator->value) {
+                        $isMatchUniqueIdentificator = true;
+                    }
+                }
 
-            $clientNew = $clientNew->first();
+                $informationData = json_decode($client->information_data);
+                $countPreloadData = count($data['information_data']);
+                $countMatchInformationData = 0;
+
+                foreach ($informationData as $field) {
+                    foreach ($data['information_data'] as $preloadField) {
+                        $preloadField = (object) $preloadField;
+                        if ($field->id == $preloadField->id) {
+                            if ($field->value == $preloadField->value) {
+                                $countMatchInformationData++;
+                                break;
+                            } else {
+                                continue;
+                            }
+                        } else {
+                            continue;
+                        }
+                    }
+                }
+                if ($countMatchInformationData == $countPreloadData) {
+                    $isMatchInformationData = true;
+                }
+
+                if ($isMatchUniqueIdentificator || $isMatchInformationData) {
+                    $found = true;
+                }
+
+                return $found;
+            })->first();
         }
 
         return $clientNew;
