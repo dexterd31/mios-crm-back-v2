@@ -33,27 +33,29 @@ class ClientsManager
                     }
                 }
 
-                $informationData = json_decode($client->information_data);
-                $countPreloadData = count($data['information_data']);
-                $countMatchInformationData = 0;
-
-                foreach ($informationData as $field) {
-                    foreach ($data['information_data'] as $preloadField) {
-                        $preloadField = (object) $preloadField;
-                        if ($field->id == $preloadField->id) {
-                            if ($field->value == $preloadField->value) {
-                                $countMatchInformationData++;
-                                break;
+                if (isset($data['information_data'])) {
+                    $informationData = json_decode($client->information_data);
+                    $countInformationData = count($data['information_data']);
+                    $countMatchInformationData = 0;
+    
+                    foreach ($informationData as $field) {
+                        foreach ($data['information_data'] as $preloadField) {
+                            $preloadField = (object) $preloadField;
+                            if ($field->id == $preloadField->id) {
+                                if ($field->value == $preloadField->value) {
+                                    $countMatchInformationData++;
+                                    break;
+                                } else {
+                                    continue;
+                                }
                             } else {
                                 continue;
                             }
-                        } else {
-                            continue;
                         }
                     }
-                }
-                if ($countMatchInformationData == $countPreloadData) {
-                    $isMatchInformationData = true;
+                    if ($countMatchInformationData == $countInformationData) {
+                        $isMatchInformationData = true;
+                    }
                 }
 
                 if ($isMatchUniqueIdentificator || $isMatchInformationData) {
