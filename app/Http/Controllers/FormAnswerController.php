@@ -313,16 +313,16 @@ class FormAnswerController extends Controller
                     $formAnswersData = $formAnswers->getCollection();
                 }
             }
-
+            
             if(count($formAnswersData) > 0)
             {
                 if(!$clientNewId)
                 {
                     $clientNewId = $formAnswersData[0]->client_new_id;
                 }
-
+                
                 $data = $this->setNewStructureAnswer($formAnswersData, $request->form_id);
-
+                
                 $formAnswersData = $data["formAnswers"];
                 $files = $data["files"];
             }
@@ -337,7 +337,7 @@ class FormAnswerController extends Controller
                 $data["duplicate_sections"] = !is_null($formAnswer) ?
                 $this->checkDuplicateSections($formAnswer->id) : [];
             }
-
+            
             return response()->json($data, $data['code']);
         }
         return $this->errorResponse('Error al buscar la gestion', 500);
@@ -911,7 +911,7 @@ class FormAnswerController extends Controller
     {
         $customerDataPreload = CustomerDataPreload::where('form_id', $formId)
         ->whereJsonContains("unique_identificator",["id" => $uniqueIdentificator->id]);
-
+        
         $uniqueValueInt = intval($uniqueIdentificator->value);
         
         if (gettype($uniqueValueInt) == 'integer') {
@@ -924,41 +924,40 @@ class FormAnswerController extends Controller
         }
         
         $customerDataPreload = $customerDataPreload->first();
-
+        
         if (!is_null($customerDataPreload)) {
             $clientsManager = new ClientsManager;
-
+            
             $data = [
                 "form_id" => $formId,
                 "unique_indentificator" => $customerDataPreload->unique_identificator,
             ];
-
+            
             $client = $clientsManager->findClient($data);
             $updateExisting = true;
-
+            
             if(!empty($client) && !$customerDataPreload->to_update){
                 $updateExisting = false;
             }
             
             if ($updateExisting) {
                 $data['information_data'] = $customerDataPreload->customer_data;
-    
+                
                 $client = $clientsManager->updateOrCreateClient($data);
-    
+                
                 if(isset($client->id)){
                     $saveDirectories = $this->addToDirectories($customerDataPreload->form_answer, $formId, $client->id,$customerDataPreload->customer_data);
-                    $customerDataPreload->delete();
                 }
             }
-
+            
             if (isset($client->id) && $customerDataPreload->adviser) {
                 RelAdvisorClientNew::create([
                     'client_new_id' => $client->id,
                     'rrhh_id' => $customerDataPreload->adviser
                 ]);
-                
-                $customerDataPreload->delete();
             }
+
+            CustomerDataPreload::destroy($customerDataPreload->id);
         }
     }
 
