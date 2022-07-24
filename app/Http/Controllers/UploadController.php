@@ -913,14 +913,12 @@ class UploadController extends Controller
 
         $client = $clientsManager->findClient($data);
 
-        if(empty($client)){
-            $data['information_data'] = $answerFields->informationClient;
-    
-            $client = $clientsManager->updateOrCreateClient($data);
-    
-            if(isset($client->id)){
-                $saveDirectories = $this->addToDirectories($formAnswerClient, $formId, $client->id, $data['information_data']);
-            }
+        $data['information_data'] = $answerFields->informationClient;
+
+        $client = $clientsManager->updateOrCreateClient($data);
+
+        if(isset($client->id)){
+            $saveDirectories = $this->addToDirectories($formAnswerClient, $formId, $client->id, $data['information_data']);
         }
 
         $structureAnswer = [];
