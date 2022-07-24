@@ -407,7 +407,7 @@ class FormAnswerController extends Controller
 
     private function filterFormAnswer($formId, $filters, $clientNewId)
     {
-        $formAnswersQuery = FormAnswer::where('form_id', $formId);
+        $formAnswersQuery = FormAnswer::with('channel')->where('form_id', $formId);
         foreach ($filters as $filter) {
             $filterData = [
                 'id' => $filter['id'],
