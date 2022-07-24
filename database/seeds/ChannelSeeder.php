@@ -17,13 +17,13 @@ class ChannelSeeder extends Seeder
                 'name_channel' => 'Llamada'
             ],
             [
-                'name_channel' => 'Chat'
+                'name_channel' => 'Widget'
             ],
             [
-                'name_channel' => 'Videollamada'
+                'name_channel' => 'Whatsapp'
             ],
             [
-                'name_channel' => 'Redes Sociales'
+                'name_channel' => 'Messenger'
             ]
         );
 

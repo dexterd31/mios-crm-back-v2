@@ -26,13 +26,13 @@ class FormAnswer extends Model
     public function client(){
         return $this->belongsTo('App\Models\Client', 'client_id');
     }
-
+ 
     public function ClientNew(){
         return $this->belongsTo(ClientNew::class, 'client_new_id');
     }
 
     public function channel(){
-        return $this->hasMany('App\Models\Channel', 'id');
+        return $this->belongsTo('App\Models\Channel', 'channel_id'); 
     }
 
     public function atachments(){
