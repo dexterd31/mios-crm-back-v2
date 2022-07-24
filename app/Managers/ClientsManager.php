@@ -21,7 +21,11 @@ class ClientsManager
                 $isMatchUniqueIdentificator = false;
                 $isMatchInformationData = false;
                 $uniqueIdentificator = json_decode($client->unique_indentificator);
-                $dataUniqueIdentificator = json_decode($data['unique_indentificator']);
+                if (gettype($data['unique_indentificator']) == 'string') {
+                    $dataUniqueIdentificator = json_decode($data['unique_indentificator']);
+                } else {
+                    $dataUniqueIdentificator = $data['unique_indentificator'];
+                }
                 
                 if ($uniqueIdentificator->id == $dataUniqueIdentificator->id) {
                     if ($uniqueIdentificator->value == $dataUniqueIdentificator->value) {
