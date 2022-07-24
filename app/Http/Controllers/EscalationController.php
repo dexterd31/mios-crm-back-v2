@@ -159,7 +159,7 @@ class EscalationController extends Controller
 
                     $form_data = (object) ['sections' => json_decode($request->form)];
 
-                    $this->pqrsService->createEscalation($scalation->asunto_id, $scalation->estado_id, $client_json, 1, json_encode($form_data), null, 'hola');
+                    $this->pqrsService->createEscalation($scalation->asunto_id, $scalation->estado_id, $client_json, 'Llamada', json_encode($form_data), null, 'hola');
                     // return $this->successResponse('Peticion escalada');
                 }
             }

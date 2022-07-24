@@ -38,7 +38,7 @@ class PqrsService
             'asunto_id' => $asunto_id,
             'estado_id' => $estado_id,
             'cliente_json' => $cliente_json,
-            'canal_id' => $canal,
+            'canal' => $canal,
             'preguntas' => $preguntas,
             'radicado_ext' => $radicado_ext,
             'solicitud' => $solicitud
