@@ -13,6 +13,7 @@ use App\Models\Section;
 use App\Models\Tray;
 use App\Models\Attachment;
 use App\Models\ClientNew;
+use App\Models\Channel;
 use App\Models\CustomerDataPreload;
 use App\Models\CustomFieldData;
 use App\Models\FormAnswerLog;
@@ -208,10 +209,13 @@ class FormAnswerController extends Controller
             //Evita otro llamado a el back para saber si la tipificación realizada debe escalarse o no.
             $scalationController = new EscalationController();
             $scalationRequest = new Request();
+            $channel = Channel::find($form_answer->channel_id)->name_channel;
+            
             $scalationRequest->replace([
                 "form" => $request['sections'],
                 "form_id" => $request->form_id,
-                "client_id" => $clientNew->id
+                "client_id" => $clientNew->id,
+                'channel' => $channel
             ]);
             $scalationController->validateScalation($scalationRequest);
 
