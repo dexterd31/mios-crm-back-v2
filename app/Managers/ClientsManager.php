@@ -14,7 +14,7 @@ class ClientsManager
             $clientNew = $clientNew->find($data['client_new_id']);
 
         } else {
-            $clientNew = $clientNew::where("form_id", $data['form_id'])->get()
+            $clientNew = $clientNew::where("form_id", $data['form_id'])->latest()->get()
             ->filter(function ($client) use ($data) {
                 $found = false;
                 $isMatchUniqueIdentificator = false;
