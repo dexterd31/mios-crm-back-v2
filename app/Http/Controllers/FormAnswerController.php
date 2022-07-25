@@ -13,6 +13,7 @@ use App\Models\Section;
 use App\Models\Tray;
 use App\Models\Attachment;
 use App\Models\ClientNew;
+use App\Models\Channel;
 use App\Models\CustomerDataPreload;
 use App\Models\CustomFieldData;
 use App\Models\FormAnswerLog;
@@ -207,10 +208,13 @@ class FormAnswerController extends Controller
             //Evita otro llamado a el back para saber si la tipificación realizada debe escalarse o no.
             $scalationController = new EscalationController();
             $scalationRequest = new Request();
+            $channel = Channel::find($form_answer->channel_id)->name_channel;
+            
             $scalationRequest->replace([
                 "form" => $request['sections'],
                 "form_id" => $request->form_id,
-                "client_id" => $clientNew->id
+                "client_id" => $clientNew->id,
+                'channel' => $channel
             ]);
             $scalationController->validateScalation($scalationRequest);
 
@@ -285,7 +289,7 @@ class FormAnswerController extends Controller
         
         if(isset($dataFilters["client_unique"]))
         {
-            // $this->processPreloadedData($replace["form_id"], (object) $dataFilters["client_unique"][0]);
+            $this->processPreloadedData($replace["form_id"], (object) $dataFilters["client_unique"][0]);
             $replace["unique_indentificator"] = json_encode($dataFilters["client_unique"][0]);
         }
 
@@ -315,16 +319,16 @@ class FormAnswerController extends Controller
                     $formAnswersData = $formAnswers->getCollection();
                 }
             }
-
+            
             if(count($formAnswersData) > 0)
             {
                 if(!$clientNewId)
                 {
                     $clientNewId = $formAnswersData[0]->client_new_id;
                 }
-
+                
                 $data = $this->setNewStructureAnswer($formAnswersData, $request->form_id);
-
+                
                 $formAnswersData = $data["formAnswers"];
                 $files = $data["files"];
             }
@@ -339,7 +343,7 @@ class FormAnswerController extends Controller
                 $data["duplicate_sections"] = !is_null($formAnswer) ?
                 $this->checkDuplicateSections($formAnswer->id) : [];
             }
-
+            
             return response()->json($data, $data['code']);
         }
         return $this->errorResponse('Error al buscar la gestion', 500);
@@ -781,6 +785,8 @@ class FormAnswerController extends Controller
 
         $answer = [];
 
+        $clientData = '';
+
         if($formAnswer && $directory) {
             $clientData = $formAnswer->structure_answer;
 
@@ -911,7 +917,7 @@ class FormAnswerController extends Controller
     {
         $customerDataPreload = CustomerDataPreload::where('form_id', $formId)
         ->whereJsonContains("unique_identificator",["id" => $uniqueIdentificator->id]);
-
+        
         $uniqueValueInt = intval($uniqueIdentificator->value);
         
         if (gettype($uniqueValueInt) == 'integer') {
@@ -924,41 +930,40 @@ class FormAnswerController extends Controller
         }
         
         $customerDataPreload = $customerDataPreload->first();
-
+        
         if (!is_null($customerDataPreload)) {
             $clientsManager = new ClientsManager;
-
+            
             $data = [
                 "form_id" => $formId,
                 "unique_indentificator" => $customerDataPreload->unique_identificator,
             ];
-
+            
             $client = $clientsManager->findClient($data);
             $updateExisting = true;
-
+            
             if(!empty($client) && !$customerDataPreload->to_update){
                 $updateExisting = false;
             }
             
             if ($updateExisting) {
                 $data['information_data'] = $customerDataPreload->customer_data;
-    
+                
                 $client = $clientsManager->updateOrCreateClient($data);
-    
+                
                 if(isset($client->id)){
                     $saveDirectories = $this->addToDirectories($customerDataPreload->form_answer, $formId, $client->id,$customerDataPreload->customer_data);
-                    $customerDataPreload->delete();
                 }
             }
-
+            
             if (isset($client->id) && $customerDataPreload->adviser) {
                 RelAdvisorClientNew::create([
                     'client_new_id' => $client->id,
                     'rrhh_id' => $customerDataPreload->adviser
                 ]);
-                
-                $customerDataPreload->delete();
             }
+
+            CustomerDataPreload::destroy($customerDataPreload->id);
         }
     }
 
