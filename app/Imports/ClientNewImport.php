@@ -61,12 +61,6 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
                         array_push($errorAnswers, $dataValidate->message);
                     }
                 }
-
-                if (count($this->customFields)) {
-                    if (isset($this->customFields[$fieldIndex])) {
-                        $customFieldData[] = ['id' => $this->customFields[$fieldIndex], 'value' => $field];
-                    }
-                }
             }
     
             if (!count($errorAnswers)) {
