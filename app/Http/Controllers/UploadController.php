@@ -45,7 +45,7 @@ class UploadController extends Controller
     public function __construct()
     {
         ini_set('max_execution_time', 300);
-        $this->middleware('auth', ['except' => ['uploadClientFromVideoChat', 'uploadClientDataFromEmail']]);
+        $this->middleware('auth', ['except' => 'uploadClientDataFromEmail']);
     }
 
     /**
@@ -701,6 +701,7 @@ class UploadController extends Controller
         ]);
 
         $formId = $request->form_id;
+        
         $FormController = new FormController();
         $prechargables = $FormController->searchPrechargeFields($formId)->getData();
         $fileInfo['prechargables'] = [];
