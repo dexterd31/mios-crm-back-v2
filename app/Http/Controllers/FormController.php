@@ -108,7 +108,7 @@ class FormController extends Controller
         ->formFilter($id)->managedFilter(false)->get(['id'])->count();
         $formsSections->count_assigned_clients += RelAdvisorClientNew::rrhhFilter(auth()->user()->rrhh_id)
         ->join('client_news', 'client_news.id', 'rel_advisor_client_new.client_new_id')
-        ->where('client_news.form_id', $id)->where('rel_advisor_client_new.managed', false)->get(['rel_advisor_client_new.id'])->count();
+        ->where('client_news.form_id', $id)->managedFilter(false)->get(['rel_advisor_client_new.id'])->count();
         unset($formsSections->tipification_time);
         return response()->json($formsSections);
     }
@@ -432,7 +432,24 @@ class FormController extends Controller
                     $respuestas['updated_at'] = $answer->updated_at;
                 }
                 if(isset($request->include_tipification_time) && $request->include_tipification_time){
-                    $respuestas['tipification_time'] = $answer->tipification_time;
+                    $chronometer = $answer->tipification_time;
+                    if($chronometer != "upload"){
+                        $tipification_time = explode(':', $chronometer);
+                        if(count($tipification_time) <= 2){
+                          $tipification_time[2] = $tipification_time[1];
+                          $tipification_time[1] = strlen($tipification_time[0]) >= 2 ? $tipification_time[0] : "0" . $tipification_time[0];
+                          $tipification_time[2] = strlen($tipification_time[2]) >= 2 ? $tipification_time[2] : "0" . $tipification_time[2];
+                          $tipification_time[0] = '00';
+                        }else{
+                          $tipification_time[0] = strlen($tipification_time[0]) >= 2 ? $tipification_time[0] : "0" . $tipification_time[0];
+                          $tipification_time[1] = strlen($tipification_time[1]) >= 2 ? $tipification_time[1] : "0" . $tipification_time[1];
+                          $tipification_time[2] = strlen($tipification_time[2]) >= 2 ? $tipification_time[2]: "0" . $tipification_time[2];
+                        }
+                
+                        $chronometer = implode(":", $tipification_time);
+                        }
+                    
+                    $respuestas['tipification_time'] = $chronometer;
                 }
                 $rows[$r]=$respuestas;
                 $r++;

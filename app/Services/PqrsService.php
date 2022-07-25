@@ -33,15 +33,16 @@ class PqrsService
         return $this->jsonRequest('POST', '/api/usuario/'.$rrhh_id.'/updateState', $body);
     }
 
-    public function createEscalation($asunto_id, $estado_id, $cliente_json, $canal, $preguntas, $radicado_ext, $solicitud){
+    public function createEscalation($asunto_id, $estado_id, $cliente_json, $canal, $preguntas, $radicado_ext, $solicitud, $formId){
         $requestBody = [
             'asunto_id' => $asunto_id,
             'estado_id' => $estado_id,
             'cliente_json' => $cliente_json,
-            'canal_id' => $canal,
+            'canal' => $canal,
             'preguntas' => $preguntas,
             'radicado_ext' => $radicado_ext,
-            'solicitud' => $solicitud
+            'solicitud' => $solicitud,
+            'form_id' => $formId
     ];
         return $this->request('POST', '/api/PQRS/', $requestBody);
     }
