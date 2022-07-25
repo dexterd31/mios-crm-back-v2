@@ -26,7 +26,6 @@ use Carbon\Carbon;
 use App\Models\FormAnswersTray;
 use App\Models\RelAdvisorClientNew;
 use App\Models\RelTrayUser;
-use App\Support\Collection;
 use App\Traits\CheckDuplicateSections;
 use App\Traits\deletedFieldChecker;
 use App\Traits\FieldsForSection;
@@ -421,13 +420,7 @@ class FormAnswerController extends Controller
         {
             $formAnswersQuery = $formAnswersQuery->where("client_new_id", $clientNewId);
         }
-        
-        $formAnswersQuery = $formAnswersQuery->get()->map(function ($answer) {
-            $answer->name_channel = $answer->channel->name_channel;
-            return $answer;
-        });
-
-        return (new Collection($formAnswersQuery))->paginate(5);
+        return $formAnswersQuery->paginate(5);
     }
 
     /**
