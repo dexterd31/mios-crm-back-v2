@@ -11,7 +11,6 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 
-
 class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading, WithBatchInserts
 {
     private $formId;
