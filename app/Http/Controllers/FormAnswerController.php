@@ -13,6 +13,7 @@ use App\Models\Section;
 use App\Models\Tray;
 use App\Models\Attachment;
 use App\Models\ClientNew;
+use App\Models\Channel;
 use App\Models\CustomerDataPreload;
 use App\Models\CustomFieldData;
 use App\Models\FormAnswerLog;
@@ -28,6 +29,7 @@ use Carbon\Carbon;
 use App\Models\FormAnswersTray;
 use App\Models\RelAdvisorClientNew;
 use App\Models\RelTrayUser;
+use App\Support\Collection;
 use App\Traits\CheckDuplicateSections;
 use App\Traits\deletedFieldChecker;
 use App\Traits\FieldsForSection;
@@ -207,10 +209,13 @@ class FormAnswerController extends Controller
             //Evita otro llamado a el back para saber si la tipificación realizada debe escalarse o no.
             $scalationController = new EscalationController();
             $scalationRequest = new Request();
+            $channel = Channel::find($form_answer->channel_id)->name_channel;
+            
             $scalationRequest->replace([
                 "form" => $request['sections'],
                 "form_id" => $request->form_id,
-                "client_id" => $clientNew->id
+                "client_id" => $clientNew->id,
+                'channel' => $channel
             ]);
             $scalationController->validateScalation($scalationRequest);
 
@@ -276,8 +281,7 @@ class FormAnswerController extends Controller
         $files = [];
         $replace["form_id"] = $request->form_id;
 
-        $clientNewController = new ClientNewController();
-        $clientNewData = new Request();
+        $clientsManager = new ClientsManager;
         
         if(isset($dataFilters["isClientInfo"]))
         {
@@ -291,9 +295,8 @@ class FormAnswerController extends Controller
         }
 
         if(isset($replace["form_id"]) && (isset($replace["information_data"]) || isset($replace["unique_indentificator"]))){
-            $clientNewData->replace($replace);
             $clientNew = [];
-            $clientNew = $clientNewController->index($clientNewData);
+            $clientNew = $clientsManager->findClient($replace);
         }else{
             $clientNew = [];
         }
@@ -317,16 +320,16 @@ class FormAnswerController extends Controller
                     $formAnswersData = $formAnswers->getCollection();
                 }
             }
-
+            
             if(count($formAnswersData) > 0)
             {
                 if(!$clientNewId)
                 {
                     $clientNewId = $formAnswersData[0]->client_new_id;
                 }
-
+                
                 $data = $this->setNewStructureAnswer($formAnswersData, $request->form_id);
-
+                
                 $formAnswersData = $data["formAnswers"];
                 $files = $data["files"];
             }
@@ -341,7 +344,7 @@ class FormAnswerController extends Controller
                 $data["duplicate_sections"] = !is_null($formAnswer) ?
                 $this->checkDuplicateSections($formAnswer->id) : [];
             }
-
+            
             return response()->json($data, $data['code']);
         }
         return $this->errorResponse('Error al buscar la gestion', 500);
@@ -411,7 +414,7 @@ class FormAnswerController extends Controller
 
     private function filterFormAnswer($formId, $filters, $clientNewId)
     {
-        $formAnswersQuery = FormAnswer::with('channel')->where('form_id', $formId);
+        $formAnswersQuery = FormAnswer::where('form_id', $formId);
         foreach ($filters as $filter) {
             $filterData = [
                 'id' => $filter['id'],
@@ -424,7 +427,13 @@ class FormAnswerController extends Controller
         {
             $formAnswersQuery = $formAnswersQuery->where("client_new_id", $clientNewId);
         }
-        return $formAnswersQuery->paginate(5);
+
+        $formAnswersQuery = $formAnswersQuery->get()->map(function ($answer) {
+            $answer->name_channel = $answer->channel->name_channel;
+            return $answer;
+        });
+
+        return (new Collection($formAnswersQuery))->paginate(5);
     }
 
     /**
@@ -783,6 +792,8 @@ class FormAnswerController extends Controller
 
         $answer = [];
 
+        $clientData = '';
+
         if($formAnswer && $directory) {
             $clientData = $formAnswer->structure_answer;
 
@@ -913,7 +924,7 @@ class FormAnswerController extends Controller
     {
         $customerDataPreload = CustomerDataPreload::where('form_id', $formId)
         ->whereJsonContains("unique_identificator",["id" => $uniqueIdentificator->id]);
-
+        
         $uniqueValueInt = intval($uniqueIdentificator->value);
         
         if (gettype($uniqueValueInt) == 'integer') {
@@ -926,41 +937,40 @@ class FormAnswerController extends Controller
         }
         
         $customerDataPreload = $customerDataPreload->first();
-
+        
         if (!is_null($customerDataPreload)) {
             $clientsManager = new ClientsManager;
-
+            
             $data = [
                 "form_id" => $formId,
                 "unique_indentificator" => $customerDataPreload->unique_identificator,
             ];
-
+            
             $client = $clientsManager->findClient($data);
             $updateExisting = true;
-
+            
             if(!empty($client) && !$customerDataPreload->to_update){
                 $updateExisting = false;
             }
             
             if ($updateExisting) {
                 $data['information_data'] = $customerDataPreload->customer_data;
-    
+                
                 $client = $clientsManager->updateOrCreateClient($data);
-    
+                
                 if(isset($client->id)){
                     $saveDirectories = $this->addToDirectories($customerDataPreload->form_answer, $formId, $client->id,$customerDataPreload->customer_data);
-                    $customerDataPreload->delete();
                 }
             }
-
+            
             if (isset($client->id) && $customerDataPreload->adviser) {
                 RelAdvisorClientNew::create([
                     'client_new_id' => $client->id,
                     'rrhh_id' => $customerDataPreload->adviser
                 ]);
-                
-                $customerDataPreload->delete();
             }
+
+            CustomerDataPreload::destroy($customerDataPreload->id);
         }
     }
 

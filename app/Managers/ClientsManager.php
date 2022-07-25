@@ -22,46 +22,57 @@ class ClientsManager
             $clientNew = $clientNew->find($data['client_new_id']);
 
         } else {
-            $clientNew = $clientNew::where("form_id", $data['form_id']);
-
-            if (isset($data['information_data'])) {
-                foreach($data['information_data'] as $informationData) {
-                    if (gettype($informationData) == 'object') {
-                        $informationData = (array) $informationData;
+            $clientNew = $clientNew::where("form_id", $data['form_id'])->latest()->get()
+            ->filter(function ($client) use ($data) {
+                $found = false;
+                $isMatchUniqueIdentificator = false;
+                $isMatchInformationData = false;
+                if (isset($data['unique_indentificator'])) {
+                    $uniqueIdentificator = json_decode($client->unique_indentificator);
+                    if (gettype($data['unique_indentificator']) == 'string') {
+                        $dataUniqueIdentificator = json_decode($data['unique_indentificator']);
+                    } else {
+                        $dataUniqueIdentificator = $data['unique_indentificator'];
                     }
-                    $informationDataJson = json_encode([
-                        "id"=> $informationData["id"],
-                        "value"=> $informationData["value"]
-                    ]);
+                    
+                    if ($uniqueIdentificator->id == $dataUniqueIdentificator->id) {
+                        if ($uniqueIdentificator->value == $dataUniqueIdentificator->value) {
+                            $isMatchUniqueIdentificator = true;
+                        }
+                    }
+                }
+
+                if (isset($data['information_data'])) {
+                    $informationData = json_decode($client->information_data);
+                    $countInformationData = count($data['information_data']);
+                    $countMatchInformationData = 0;
     
-                    $clientNew = $clientNew->whereRaw("json_contains(lower(information_data), lower('$informationDataJson'))");
+                    foreach ($informationData as $field) {
+                        foreach ($data['information_data'] as $preloadField) {
+                            $preloadField = (object) $preloadField;
+                            if ($field->id == $preloadField->id) {
+                                if ($field->value == $preloadField->value) {
+                                    $countMatchInformationData++;
+                                    break;
+                                } else {
+                                    continue;
+                                }
+                            } else {
+                                continue;
+                            }
+                        }
+                    }
+                    if ($countMatchInformationData == $countInformationData) {
+                        $isMatchInformationData = true;
+                    }
                 }
-            }
 
-            if (isset($data['unique_indentificator'])) {
-                $unique_indentificator = $data['unique_indentificator'];
-                $clientNew = $clientNew->whereJsonContains("unique_indentificator",[
-                    "id" => $unique_indentificator->id
-                ]);
-
-                $uniqueValueInt=intval($unique_indentificator->value);
-
-                if (gettype($uniqueValueInt) == 'integer') {
-                    $clientNew = $clientNew->where(function ($query) use ($uniqueValueInt, $unique_indentificator) {
-                        $query->whereJsonContains("unique_indentificator",[
-                            "value" => $unique_indentificator->value
-                        ])
-                        ->orWhereJsonContains("unique_indentificator",["value" => $uniqueValueInt]);
-                    });
-
-                } else {
-                    $clientNew = $clientNew->whereJsonContains("unique_indentificator",[
-                        "value" => $unique_indentificator->value
-                    ]);
+                if ($isMatchUniqueIdentificator || $isMatchInformationData) {
+                    $found = true;
                 }
-            }
 
-            $clientNew = $clientNew->first();
+                return $found;
+            })->first();
         }
 
         return $clientNew;
