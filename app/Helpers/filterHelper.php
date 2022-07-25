@@ -8,6 +8,7 @@ use App\Models\Directory;
 use App\Models\ApiConnection;
 use App\Support\Collection;
 use PhpParser\Node\Stmt\Foreach_;
+use stdClass;
 
 class FilterHelper
 {
@@ -94,8 +95,10 @@ class FilterHelper
                 $formAnswersQuery = $formAnswersQuery->whereRaw("json_contains(data, lower('$filterData'))");
             }
         }
+        
         $formAnswersQuery = $formAnswersQuery->get()->map(function ($answer) {
-            $answer = $answer->name_channel = 'Llamada';
+            $answer->channel = new stdClass;
+            $answer->channel->name_channel = 'Llamada';
             return $answer;
         });
 
