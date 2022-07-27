@@ -20,11 +20,11 @@ trait RequestService
                 $headers['Authorization'] = 'Bearer '.$this->secret;
             }
             $response = $client->request($method, env('LOCAL') ? 'public/'.$requestUrl : $requestUrl,
-                [
-                    'form_params' => $formParams,
-                    'headers' => $headers,
-                    'timeout' => 10,
-                    'connect_timeout' => 10
+            [
+                'form_params' => $formParams,
+                'headers' => $headers,
+                'timeout' => 10,
+                'connect_timeout' => 10
                 ]
             );
 
@@ -32,7 +32,7 @@ trait RequestService
         }
         catch (Exception $e){
             Log::info($e->getMessage());
-            // throw new \Exception($e->getMessage());
+            return $e->getMessage();
         }
     }
 

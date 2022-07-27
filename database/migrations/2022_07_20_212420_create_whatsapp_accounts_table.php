@@ -15,7 +15,7 @@ class CreateWhatsappAccountsTable extends Migration
     {
         Schema::create('whatsapp_accounts', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->comment('Nombre de la cuenta.');
+            $table->string('app_name')->comment('Nombre de la cuenta.');
             $table->string('source')->comment('Número de la cuenta.');
             $table->string('token')->comment('Token de la cuenta.');
             $table->timestamps();
