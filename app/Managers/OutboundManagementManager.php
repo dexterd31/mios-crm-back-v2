@@ -37,32 +37,27 @@ class OutboundManagementManager
      */
     public function listManagement(int $formId, array $filterOptions = [])
     {
-        try {
-            $outboundManagement = OutboundManagement::formFilter($formId);
-    
-            if (isset($filterOptions['from_date']) && isset($filterOptions['to_date'])) {
-                $outboundManagement->updatedAtBetweenFilter($filterOptions['from_date'], $filterOptions['to_date']);
-            }
-            if (isset($filterOptions['tags']) && count($filterOptions['tags'])) {
-                $outboundManagement->join('outbound_management_tags', 'outbound_management_tags.outbound_management_id', 'outbound_management.id')->whereIn('outbound_management_tags.tag_id', $filterOptions['tags']);
-            }
+        $outboundManagement = OutboundManagement::formFilter($formId);
 
-            $outboundManagement =  $outboundManagement->get([
-                'outbound_management.id',
-                'outbound_management.status',
-                'outbound_management.name',
-                'outbound_management.channel',
-                'outbound_management.total'
-            ])->map(function ($outbound) {
-                $outbound->tags = join(', ', $outbound->tags()->pluck('name')->toArray());
-                return $outbound;
-            });
-    
-            return $outboundManagement;
-        } catch (Exception $e) {
-            Log::error("OutboundManagement@listManagement: {$e->getMessage()}");
-            throw new Exception("Error al buscar las gestiones, por favor comuniquese con el adminstrador del sistema.");
+        if (isset($filterOptions['from_date']) && isset($filterOptions['to_date'])) {
+            $outboundManagement->updatedAtBetweenFilter($filterOptions['from_date'], $filterOptions['to_date']);
         }
+        if (isset($filterOptions['tags']) && count($filterOptions['tags'])) {
+            $outboundManagement->join('outbound_management_tags', 'outbound_management_tags.outbound_management_id', 'outbound_management.id')->whereIn('outbound_management_tags.tag_id', $filterOptions['tags']);
+        }
+
+        $outboundManagement =  $outboundManagement->get([
+            'outbound_management.id',
+            'outbound_management.status',
+            'outbound_management.name',
+            'outbound_management.channel',
+            'outbound_management.total'
+        ])->map(function ($outbound) {
+            $outbound->tags = join(', ', $outbound->tags()->pluck('name')->toArray());
+            return $outbound;
+        });
+
+        return $outboundManagement;
     }
 
     public function save(array $data, array $files = [])
@@ -129,235 +124,207 @@ class OutboundManagementManager
 
     public function destroyAttachment($id)
     {
-        try {
-            $outboundManagementAttachment = OutboundManagementAttachment::find($id);
-            Storage::delete($outboundManagementAttachment->path);
-            OutboundManagementAttachment::destroy($outboundManagementAttachment->id);
-        } catch (Exception $e) {
-            Log::error("OutboundManagement@destroyAttachment: {$e->getMessage()}");
-            throw new Exception("Error al eliminar archivo adjunto, por favor comuniquese con el adminstrador del sistema.");
-        }
+        $outboundManagementAttachment = OutboundManagementAttachment::find($id);
+        Storage::delete($outboundManagementAttachment->path);
+        OutboundManagementAttachment::destroy($outboundManagementAttachment->id);
     }
 
     public function createDiffusion($outboundManagement)
     {
-        try {
-            $formAnswers = FormAnswer::formFilter($outboundManagement->form_id)
-            ->join('client_tag', 'client_tag.client_new_id', 'form_answers.client_new_id')
-            ->whereIn('client_tag.tag_id', $outboundManagement->tags)->get(['structure_answer', 'client_new_id']);
-    
-            $startDiffusionDateTime = "{$outboundManagement->settings->start_diffusion_date} {$outboundManagement->settings->start_diffusion_time}";
-    
-            switch ($outboundManagement->channel) {
-                case 'SMS':
-                    $this->diffusionBySMS($formAnswers, $outboundManagement, $startDiffusionDateTime);
-                    break;
-                
-                case 'Email':
-                    $this->diffusionByEmail($formAnswers, $outboundManagement, $startDiffusionDateTime);
-                    break;
+        $formAnswers = FormAnswer::formFilter($outboundManagement->form_id)
+        ->join('client_tag', 'client_tag.client_new_id', 'form_answers.client_new_id')
+        ->whereIn('client_tag.tag_id', $outboundManagement->tags)->get(['structure_answer', 'client_new_id']);
 
-                case 'Voice':
-                    $this->diffusionByVoice($formAnswers, $outboundManagement, $startDiffusionDateTime);
-                    break;
-                    
-                case 'Whatsapp':
-                    $this->diffusionByWhatsapp($formAnswers, $outboundManagement, $startDiffusionDateTime);
-                    break;
-            }
-        } catch (Exception $e) {
-            Log::error("OutboundManagement@createDiffusion: {$e->getMessage()}");
-            throw new Exception("Error al crear la difución, por favor comuniquese con el adminstrador del sistema.");
+        $startDiffusionDateTime = "{$outboundManagement->settings->start_diffusion_date} {$outboundManagement->settings->start_diffusion_time}";
+
+        switch ($outboundManagement->channel) {
+            case 'SMS':
+                $this->diffusionBySMS($formAnswers, $outboundManagement, $startDiffusionDateTime);
+                break;
+            
+            case 'Email':
+                $this->diffusionByEmail($formAnswers, $outboundManagement, $startDiffusionDateTime);
+                break;
+
+            case 'Voice':
+                $this->diffusionByVoice($formAnswers, $outboundManagement, $startDiffusionDateTime);
+                break;
+                
+            case 'Whatsapp':
+                $this->diffusionByWhatsapp($formAnswers, $outboundManagement, $startDiffusionDateTime);
+                break;
         }
     }
 
     public function diffusionBySMS($formAnswers, $outboundManagement, $startDiffusionDateTime)
     {
-        try {
-            $clients = [];
-            $formAnswers->each(function ($answer) use ($outboundManagement, &$clients) {
-                $fields = json_decode($answer->structure_answer);
-                $messageContent = $outboundManagement->settings->sms->message_content;
+        $clients = [];
+        $formAnswers->each(function ($answer) use ($outboundManagement, &$clients) {
+            $fields = json_decode($answer->structure_answer);
+            $messageContent = $outboundManagement->settings->sms->message_content;
 
-                foreach ($fields as $field) {
-                    if ($field->id == $outboundManagement->settings->diffusion_field) {
-                        $destination = $field->value;
-                    }
-                    $messageContent = str_replace("[[$field->id]]", $field->value,$messageContent);
+            foreach ($fields as $field) {
+                if ($field->id == $outboundManagement->settings->diffusion_field) {
+                    $destination = $field->value;
                 }
+                $messageContent = str_replace("[[$field->id]]", $field->value,$messageContent);
+            }
 
-                $clients[] = [
-                    'id' => $answer->client_new_id,
-                    'destination' => $destination,
-                    'message' => $messageContent
-                ];
-            });
-
-            $outboundManagement->total = count($clients);
-            $outboundManagement->save();
-    
-            $options = [
-                'startHour' => $outboundManagement->settings->start_delivery_schedule_time,
-                'endHour' => $outboundManagement->settings->end_delivery_schedule_time,
-                'days' => $outboundManagement->settings->delivery_schedule_days
+            $clients[] = [
+                'id' => $answer->client_new_id,
+                'destination' => $destination,
+                'message' => $messageContent
             ];
-    
-            dispatch((new DiffusionBySMS($outboundManagement->id, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
-            ->onQueue('diffusions');
-        } catch (Exception $e) {
-            Log::error("OutboundManagement@diffusionBySMS: {$e->getMessage()}");
-            throw new Exception("Error al crear la difución por SMS, por favor comuniquese con el adminstrador del sistema.");
-        }
+        });
+
+        $outboundManagement->total = count($clients);
+        $outboundManagement->save();
+
+        $options = [
+            'startHour' => $outboundManagement->settings->start_delivery_schedule_time,
+            'endHour' => $outboundManagement->settings->end_delivery_schedule_time,
+            'days' => $outboundManagement->settings->delivery_schedule_days
+        ];
+
+        dispatch((new DiffusionBySMS($outboundManagement->id, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
+        ->onQueue('diffusions');
     }
 
     public function diffusionByEmail($formAnswers, $outboundManagement, $startDiffusionDateTime)
     {
-        try {
-            $clients = [];
-            $formAnswers->each(function ($answer) use ($outboundManagement, &$clients) {
-                $fields = json_decode($answer->structure_answer);
-                $body = $outboundManagement->settings->email->body;
-                $subject = $outboundManagement->settings->email->subject;
+        $clients = [];
+        $formAnswers->each(function ($answer) use ($outboundManagement, &$clients) {
+            $fields = json_decode($answer->structure_answer);
+            $body = $outboundManagement->settings->email->body;
+            $subject = $outboundManagement->settings->email->subject;
 
-                foreach ($fields as $field) {
-                    if ($field->id == $outboundManagement->settings->diffusion_field) {
-                        $destination = $field->value;
-                    }
-                    $body = str_replace("[[$field->id]]", $field->value, $body);
-                    $subject = str_replace("[[$field->id]]", $field->value, $subject);
+            foreach ($fields as $field) {
+                if ($field->id == $outboundManagement->settings->diffusion_field) {
+                    $destination = $field->value;
                 }
+                $body = str_replace("[[$field->id]]", $field->value, $body);
+                $subject = str_replace("[[$field->id]]", $field->value, $subject);
+            }
 
-                $clients[] = [
-                    'id' => $answer->client_new_id,
-                    'body' => $body,
-                    'subject' => $subject,
-                    'to' => $destination,
-                    'attatchment' => [],
-                    'cc' => [],
-                    'cco' => [],
-                ];
-            });
-
-            $outboundManagement->total = count($clients);
-            $outboundManagement->save();
-    
-            $attachments = [];
-    
-            $outboundManagement->attachments->each(function ($attachment) use (&$attachments) {
-                $attachments[] = [
-                    'name' => $attachment->name,
-                    'contents' => file_get_contents(storage_path("app/$attachment->path")),
-                    'filename' => $attachment->name,
-                ];
-            });
-    
-            $options = [
-                'startHour' => $outboundManagement->settings->start_delivery_schedule_time,
-                'endHour' => $outboundManagement->settings->end_delivery_schedule_time,
-                'days' => $outboundManagement->settings->delivery_schedule_days,
-                'attachments' => $attachments,
-                'sender_email' => $outboundManagement->settings->email->sender_email,
-                'replay_email' => $outboundManagement->settings->email->replay_email
+            $clients[] = [
+                'id' => $answer->client_new_id,
+                'body' => $body,
+                'subject' => $subject,
+                'to' => $destination,
+                'attatchment' => [],
+                'cc' => [],
+                'cco' => [],
             ];
-    
-            dispatch((new DiffusionByEmail($outboundManagement->id, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
-            ->onQueue('diffusions');
-        } catch (Exception $e) {
-            Log::error("OutboundManagement@diffusionByEmail: {$e->getMessage()}");
-            throw new Exception("Error al crear la difución por Email, por favor comuniquese con el adminstrador del sistema.");
-        }
+        });
+
+        $outboundManagement->total = count($clients);
+        $outboundManagement->save();
+
+        $attachments = [];
+
+        $outboundManagement->attachments->each(function ($attachment) use (&$attachments) {
+            $attachments[] = [
+                'name' => $attachment->name,
+                'contents' => file_get_contents(storage_path("app/$attachment->path")),
+                'filename' => $attachment->name,
+            ];
+        });
+
+        $options = [
+            'startHour' => $outboundManagement->settings->start_delivery_schedule_time,
+            'endHour' => $outboundManagement->settings->end_delivery_schedule_time,
+            'days' => $outboundManagement->settings->delivery_schedule_days,
+            'attachments' => $attachments,
+            'sender_email' => $outboundManagement->settings->email->sender_email,
+            'replay_email' => $outboundManagement->settings->email->replay_email
+        ];
+
+        dispatch((new DiffusionByEmail($outboundManagement->id, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
+        ->onQueue('diffusions');
     }
 
     public function diffusionByVoice($formAnswers, $outboundManagement, $startDiffusionDateTime)
     {
-        try {
-            $clients = [];
-            $formAnswers->each(function ($answer) use ($outboundManagement, &$clients) {
-                $fields = json_decode($answer->structure_answer);
-                foreach ($fields as $field) {
-                    if ($field->id == $outboundManagement->settings->diffusion_field) {
-                        $clients[] = ['destination' => $field->value, 'id' => $answer->client_new_id,];
-                        break;
-                    }
+        $clients = [];
+        $formAnswers->each(function ($answer) use ($outboundManagement, &$clients) {
+            $fields = json_decode($answer->structure_answer);
+            foreach ($fields as $field) {
+                if ($field->id == $outboundManagement->settings->diffusion_field) {
+                    $clients[] = ['destination' => $field->value, 'id' => $answer->client_new_id,];
+                    break;
                 }
-            });
+            }
+        });
 
-            $outboundManagement->total = count($clients);
-            $outboundManagement->save();
+        $outboundManagement->total = count($clients);
+        $outboundManagement->save();
 
-            $product = Product::find($outboundManagement->settings->voice->product);
-    
-            $options = [
-                'startHour' => $outboundManagement->settings->start_delivery_schedule_time,
-                'endHour' => $outboundManagement->settings->end_delivery_schedule_time,
-                'days' => $outboundManagement->settings->delivery_schedule_days,
-                'token' => $product->token,
-                'product' => $product->name,
-            ];
-    
-            dispatch((new DiffusionByVoice($outboundManagement->id, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
-            ->onQueue('diffusions');
-        } catch (Exception $e) {
-            Log::error("OutboundManagement@diffusionByEmail: {$e->getMessage()}");
-            throw new Exception("Error al crear la difución por Email, por favor comuniquese con el adminstrador del sistema.");
-        }
+        $product = Product::find($outboundManagement->settings->voice->product);
+
+        $options = [
+            'startHour' => $outboundManagement->settings->start_delivery_schedule_time,
+            'endHour' => $outboundManagement->settings->end_delivery_schedule_time,
+            'days' => $outboundManagement->settings->delivery_schedule_days,
+            'token' => $product->token,
+            'product' => $product->name,
+        ];
+
+        dispatch((new DiffusionByVoice($outboundManagement->id, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
+        ->onQueue('diffusions');
     }
 
     public function diffusionByWhatsapp($formAnswers, $outboundManagement, $startDiffusionDateTime)
     {
-        try {
-            $clients = [];
-            $formAnswers->each(function ($answer) use ($outboundManagement, &$clients) {
-                $fields = json_decode($answer->structure_answer);
-                $messageContent = $outboundManagement->settings->sms->message_content;
+        $clients = [];
+        $formAnswers->each(function ($answer) use ($outboundManagement, &$clients) {
+            $fields = json_decode($answer->structure_answer);
+            $whatsappFields = $outboundManagement->settings->whatsapp->fields;
+            $messageParams = [];
 
+            foreach ($whatsappFields as $key => $wField) {
                 foreach ($fields as $field) {
                     if ($field->id == $outboundManagement->settings->diffusion_field) {
                         $destination = $field->value;
                     }
-                    $messageContent = str_replace("[[$field->id]]", $field->value,$messageContent);
+                    if ($field->id == $wField) {
+                        $messageParams[$key] = $field->value;
+                    }
                 }
+            }
 
-                $clients[] = [
-                    'id' => $answer->client_new_id,
-                    'destination' => $destination,
-                    'message' => $messageContent
-                ];
-            });
-            
-
-            $outboundManagement->total = count($clients);
-            $outboundManagement->save();
-
-            $whatsappAccount = WhatsappAccount::find($outboundManagement->settings->whatsapp->source)
-            ->only('token', 'source');
-    
-            $options = [
-                'startHour' => $outboundManagement->settings->start_delivery_schedule_time,
-                'endHour' => $outboundManagement->settings->end_delivery_schedule_time,
-                'days' => $outboundManagement->settings->delivery_schedule_days,
-                'token' => $whatsappAccount->token,
-                'source' => $whatsappAccount->source
+            $clients[] = [
+                'id' => $answer->client_new_id,
+                'destination' => $destination,
+                'messageParams' => $messageParams
             ];
-    
-            dispatch((new DiffusionBySMS($outboundManagement->id, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
-            ->onQueue('diffusions');
-        } catch (Exception $e) {
-            Log::error("OutboundManagement@diffusionBySMS: {$e->getMessage()}");
-            throw new Exception("Error al crear la difución por SMS, por favor comuniquese con el adminstrador del sistema.");
-        }
+        });
+        
+
+        $outboundManagement->total = count($clients);
+        $outboundManagement->save();
+
+        $options = [
+            'startHour' => $outboundManagement->settings->start_delivery_schedule_time,
+            'endHour' => $outboundManagement->settings->end_delivery_schedule_time,
+            'days' => $outboundManagement->settings->delivery_schedule_days,
+            'whatsappAccountId' => $outboundManagement->settings->whatsapp->source,
+            'templateId' => $outboundManagement->settings->whatsapp->templateId
+        ];
+
+        dispatch((new DiffusionByWhatsapp($outboundManagement->id, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
+        ->onQueue('diffusions');
     }
 
     public function sendDiffusionBySMS(int $outboundManagementId, array $clients, array $options)
     {
         try {
             $notificationsService = new NotificationsService;
+            $outboundManagement = OutboundManagement::find($outboundManagementId);
             
             foreach ($clients as $key => $client) {
                 $now = Carbon::now('America/Bogota');
                 $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
                 $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
-                $outboundManagement = OutboundManagement::find($outboundManagementId);
                 
                 if ($isGreaterThanOrEqualTo && $isLessThan) {
                     $notificationsService->sendSMS($client['message'], [$client['destination']]);
@@ -391,12 +358,12 @@ class OutboundManagementManager
     {
         try {
             $notificationsService = new NotificationsService;
+            $outboundManagement = OutboundManagement::find($outboundManagementId);
             
             foreach ($clients as $key => $client) {
                 $now = Carbon::now('America/Bogota');
                 $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
                 $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
-                $outboundManagement = OutboundManagement::find($outboundManagementId);
                 
                 if ($isGreaterThanOrEqualTo && $isLessThan) {
                     $notificationsService->sendEmail($client['body'], $client['subject'], [$client['to']], $options['attachments'],$client['cc'], $client['cco'], $options['sender_email']);
@@ -430,12 +397,12 @@ class OutboundManagementManager
     {
         try {
             $vicidialService = new VicidialService;
+            $outboundManagement = OutboundManagement::find($outboundManagementId);
             
             foreach ($clients as $key => $client) {
                 $now = Carbon::now('America/Bogota');
                 $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
                 $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
-                $outboundManagement = OutboundManagement::find($outboundManagementId);
                 
                 if ($isGreaterThanOrEqualTo && $isLessThan) {
                     $vicidialService->sendLead([
@@ -472,16 +439,17 @@ class OutboundManagementManager
     public function sendDiffusionByWhatsapp(int $outboundManagementId, array $clients, array $options)
     {
         try {
-            $whatsappService = new WhatsappService;
+            $outboundManagement = OutboundManagement::find($outboundManagementId);
+            $whatsappAccount = WhatsappAccount::find($options['whatsappAccountId']);
+            $whatsappService = new WhatsappService($whatsappAccount);
             
             foreach ($clients as $key => $client) {
                 $now = Carbon::now('America/Bogota');
                 $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
                 $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
-                $outboundManagement = OutboundManagement::find($outboundManagementId);
                 
                 if ($isGreaterThanOrEqualTo && $isLessThan) {
-                    $whatsappService->sendMenssage($options['apikey'], $options['source'], $client['destination'], $client['message']);
+                    $whatsappService->sendTemplateMenssage($client['destination'], $options['templateId'], $client['messageParams']);
                     $outboundManagement->clients()->attach($client['id']);
                     unset($clients[$key]);
                 } else {
@@ -510,65 +478,77 @@ class OutboundManagementManager
 
     public function showOutboundManagement($id)
     {
-        try {
-            $outboundManagement = OutboundManagement::find($id);
-            
-            if ($outboundManagement->channel == 'Email') {
-                $outboundManagement->attachments = $outboundManagement->attachments()->get(['id', 'name']);
-            }
-    
-            $outboundManagement->tags = $outboundManagement->tags()->pluck('tags.id');
-            $outboundManagement = $outboundManagement->only('id', 'name', 'attachments', 'tags', 'settings', 'form_id', 'channel');
-
-            return $outboundManagement;
-        } catch (Exception $e) {
-            Log::error("OutboundManagement@showOutboundManagement: {$e->getMessage()}");
-            throw new Exception("Ocurrio un error al buscar la gestión, por favor comuniquese con el administrador del sistema.");
+        $outboundManagement = OutboundManagement::find($id);
+        
+        if ($outboundManagement->channel == 'Email') {
+            $outboundManagement->attachments = $outboundManagement->attachments()->get(['id', 'name']);
         }
+
+        $outboundManagement->tags = $outboundManagement->tags()->pluck('tags.id');
+        $outboundManagement = $outboundManagement->only('id', 'name', 'attachments', 'tags', 'settings', 'form_id', 'channel');
+
+        return $outboundManagement;
     }
 
     private function calculateNextExecution(int $numberOfClients, array $daysOfExecution, Carbon $now)
     {
-        try {
-            $todaysNumber = Carbon::now('America/Bogota')->dayOfWeekIso;
-            $nextExecution = null;
-    
-            foreach ($daysOfExecution as $day) {
-                if ($todaysNumber < $day) {
-                    $nextExecutionDay = $day - $todaysNumber; 
-                    $nextExecution = $now->addDays($nextExecutionDay);
-                    break;
-                }
-            }
-    
-            if (is_null($nextExecution) && $numberOfClients) {
-                $nextExecutionDay = 7 - $todaysNumber + $daysOfExecution;
+        $todaysNumber = Carbon::now('America/Bogota')->dayOfWeekIso;
+        $nextExecution = null;
+
+        foreach ($daysOfExecution as $day) {
+            if ($todaysNumber < $day) {
+                $nextExecutionDay = $day - $todaysNumber; 
                 $nextExecution = $now->addDays($nextExecutionDay);
+                break;
             }
-    
-            return $nextExecution;
-        } catch (Exception $e) {
-            Log::error("OutboundManagement@calculateNextExecution: {$e->getMessage()}");
-            throw new Exception("Ocurrio un error al calcular la próxima ejecución, por favor comuniquese con el administrador del sistema.");
         }
+
+        if (is_null($nextExecution) && $numberOfClients) {
+            $nextExecutionDay = 7 - $todaysNumber + $daysOfExecution;
+            $nextExecution = $now->addDays($nextExecutionDay);
+        }
+
+        return $nextExecution;
     }
 
     public function sendTestMail(array $data, array $files)
     {
-        try {
-            $attachments = [];
-    
-            foreach ($files as $key => $file) {
-                $attachments[] = [
-                    'name' => $file->getClientOriginalName(),
-                    'file' => $file->getContent(),
+        $attachments = [];
+
+        foreach ($files as $key => $file) {
+            $attachments[] = [
+                'name' => $file->getClientOriginalName(),
+                'file' => $file->getContent(),
+            ];
+        }
+
+        (new NotificationsService)->sendEmail($data['body'], $data['subject'], [$data['to']], $attachments, [], [], $data['sender_email']);
+    }
+
+    public function listWhatsappTemplates($whatsappAccountId)
+    {
+        $whatsappAccount = WhatsappAccount::find($whatsappAccountId);
+        $response = (new WhatsappService($whatsappAccount))->getTemplates();
+        $templates = [];
+        
+        if ($response->status == 'success') {
+            foreach ($response->templates as $template) {
+                $countFields = 0;
+
+                do {
+                    $toSearch = '/\{\{' . ($countFields + 1) . '\}\}/';
+                    $found = preg_match($toSearch, $template->data);
+                    if ($found) $countFields++;
+                } while ($found);
+
+                $templates[] = [
+                    'id' => $template->id,
+                    'template' => $template->data,
+                    'number_of_fields' => $countFields
                 ];
             }
-    
-            (new NotificationsService)->sendEmail($data['body'], $data['subject'], [$data['to']], $attachments, [], [], $data['sender_email']);
-        } catch (Exception $e) {
-            Log::error("OutboundManagement@sendTestMail: {$e->getMessage()}");
-            throw new Exception("Ocurrio un error al enviar el correo de prueba, por favor comuniquese con el administrador del sistema.");
         }
+
+        return $templates;
     }
 }

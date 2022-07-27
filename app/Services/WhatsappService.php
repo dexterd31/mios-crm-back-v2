@@ -2,40 +2,51 @@
 
 namespace App\Services;
 
+use App\Models\WhatsappAccount;
 use App\Traits\RequestService;
 
 class WhatsappService
 {
     use RequestService;
+
     public $baseUri;
     public $secret;
+    public $whatsappAccount;
+    public $source;
 
-    public function __construct()
+    public function __construct(WhatsappAccount $whatsappAccount)
     {
         $this->baseUri = config('services.whatsapp.base_uri');
+        $this->whatsappAccount = $whatsappAccount;
     }
 
-    public function sendMenssage(string $apikey, string $source, string $destination, string $message, array $options = [])
+    public function sendTemplateMenssage(string $destination, string $templateId, array $messageParams)
     {
         $headers = [
             'Content-type' => 'application/x-www-form-urlencoded',
-            'apikey' => $apikey
+            'apikey' => $this->whatsappAccount->apikey
         ];
 
         $data = [
             'channel' => 'whatsapp',
             'destination' => $destination,
-            'source' => $source,
-            'message' => [
-                'type' => 'text',
-                'text' => $message
+            'source' => $this->whatsappAccount->source,
+            'template' => [
+                'id' => $templateId,
+                'params' => $messageParams
             ],
         ];
 
-        if (isset($options['src.name'])) $data['src.name'] = $options['src.name'];
+        $this->request('POST', '/template/msg', $data, $headers);
+    }
+    
+    public function getTemplates()
+    {
+        $headers = [
+            'Content-type' => 'application/x-www-form-urlencoded',
+            'apikey' => $this->whatsappAccount->token
+        ];
 
-        if (isset($options['disablePreview'])) $data['disablePreview'] = $options['disablePreview'];
-
-        $this->request('POST', '/msg', $data, $headers);
+        return $this->request('GET', "/sm/api/v1/template/list/{$this->whatsappAccount->app_name}", [], $headers);
     }
 }

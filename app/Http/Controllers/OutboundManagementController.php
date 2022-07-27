@@ -20,7 +20,7 @@ class OutboundManagementController extends Controller
 
     public function __construct(OutboundManagementManager $outboundManagementManager)
     {
-        $this->middleware('auth');
+        $this->middleware('auth', ['except' => ['getWhatsappTemplates']]);
         $this->outboundManagementManager = $outboundManagementManager;
     }
 
@@ -33,6 +33,7 @@ class OutboundManagementController extends Controller
     
             return response()->json($outboundManagement);
         } catch (Exception $e) {
+            Log::error("OutboundManagementController@create:" . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -75,7 +76,7 @@ class OutboundManagementController extends Controller
 
             $whatsappAccounts = WhatsappAccount::whereIn('form_whatsapp_account.form_id', $forms)
             ->join('form_whatsapp_account', 'form_whatsapp_account.whatsapp_account_id', 'whatsapp_accounts.id')
-            ->distinct()->get(['whatsapp_accounts.id', 'whatsapp_accounts.name', 'whatsapp_accounts.source']);
+            ->distinct()->get(['whatsapp_accounts.id', 'whatsapp_accounts.app_name', 'whatsapp_accounts.source']);
 
             return response()->json([
                 'tags' => $tags,
@@ -88,8 +89,8 @@ class OutboundManagementController extends Controller
             ]);
 
         } catch (Exception $e) {
-            Log::error("OutboundManagementController@create: {$e->getMessage()}");
-            return response()->json(['error' => 'Ocurrio un error al traer la informacion para crear la gestion, por favor comuniquese con el administrador del sistema.'], 500);
+            Log::error("OutboundManagementController@create:" . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
         }
 
     }
@@ -101,6 +102,7 @@ class OutboundManagementController extends Controller
     
             return response()->json($outboundManagement, 200);
         } catch (Exception $e) {
+            Log::error("OutboundManagementController@show:" . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -120,6 +122,7 @@ class OutboundManagementController extends Controller
     
             return response()->json(['success' => 'OK'], 200);
         } catch (Exception $e) {
+            Log::error("OutboundManagementController@save:" . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -133,6 +136,7 @@ class OutboundManagementController extends Controller
             
             return response()->json(['success' => 'OK'], 200);
         } catch (Exception $e) {
+            Log::error("OutboundManagementController@sendDiffusion:" . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -141,7 +145,9 @@ class OutboundManagementController extends Controller
     {
         try {
             $this->outboundManagementManager->destroyAttachment($id);
+            return response()->json(['success' => 'Ok'], 200);
         } catch (Exception $e) {
+            Log::error("OutboundManagementController@deleteAttachment:" . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -151,9 +157,9 @@ class OutboundManagementController extends Controller
         try {
             $outboundManagementAttachment = OutboundManagementAttachment::find($id);
             return response()->download(storage_path("app/$outboundManagementAttachment->path"), $outboundManagementAttachment->name);
-        } catch (\Throwable $th) {
-            Log::error("OutboundManagementController@downloadAttachment: {$th->getMessage()}");
-            return response()->json(['error' => 'Error al descargar el adjunto, por favor comuniquese con el administrador.'], 500);
+        } catch (Exception $e) {
+            Log::error("OutboundManagementController@downloadAttachment:" . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
@@ -172,6 +178,19 @@ class OutboundManagementController extends Controller
 
             return response()->json(['success' => 'OK'], 200);
         } catch (Exception $e) {
+            Log::error("OutboundManagementController@sendEmailTest:" . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function getWhatsappTemplates($whatsappAccountId)
+    {
+        try {
+            $templates = $this->outboundManagementManager->listWhatsappTemplates($whatsappAccountId);
+
+            return response()->json(compact('templates'), 200);
+        } catch (Exception $e) {
+            Log::error("OutboundManagementController@getWhatsappTemplates:" . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
