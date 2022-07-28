@@ -133,7 +133,7 @@ class OutboundManagementManager
     {
         $formAnswers = FormAnswer::formFilter($outboundManagement->form_id)
         ->join('client_tag', 'client_tag.client_new_id', 'form_answers.client_new_id')
-        ->whereIn('client_tag.tag_id', $outboundManagement->tags)->get(['structure_answer', 'client_new_id']);
+        ->whereIn('client_tag.tag_id', $outboundManagement->tags)->get(['form_answers.structure_answer', 'form_answers.client_new_id']);
 
         $startDiffusionDateTime = "{$outboundManagement->settings->start_diffusion_date} {$outboundManagement->settings->start_diffusion_time}";
 
