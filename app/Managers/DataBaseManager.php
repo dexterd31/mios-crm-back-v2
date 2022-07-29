@@ -75,7 +75,6 @@ class DataBaseManager
             $customerDataPreload = CustomerDataPreload::take(200);
             $customerDataPreloadIds = clone $customerDataPreload->pluck('id');
             $customerDataPreload = $customerDataPreload->get();
-    
             
             foreach ($customerDataPreload as $customerData) {
                 $data = [
@@ -113,8 +112,8 @@ class DataBaseManager
                     }
                 }
     
-                if (count($customerData->tags)) {
-                    $clientTags = $client->tags()->pluck('tags.id');
+                if (!is_null($customerData->tags) && count($customerData->tags)) {
+                    $clientTags = $client->tags()->pluck('tags.id')->toArray();
                     if (count($clientTags)) {
                         foreach ($customerData->tags as $tag) {
                             if (!in_array($tag, $clientTags)) {
@@ -159,7 +158,7 @@ class DataBaseManager
                 }
             }
     
-            CustomerDataPreload::destroy($customerDataPreloadIds);
+            CustomerDataPreload::destroy($customerDataPreloadIds->toArray());
 
             DB::commit();
             

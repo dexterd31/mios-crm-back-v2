@@ -6,6 +6,7 @@ use App\Jobs\DiffusionByEmail;
 use App\Jobs\DiffusionBySMS;
 use App\Jobs\DiffusionByVoice;
 use App\Jobs\DiffusionByWhatsapp;
+use App\Models\Directory;
 use App\Models\FormAnswer;
 use App\Models\OutboundManagement;
 use App\Models\OutboundManagementAttachment;
@@ -131,9 +132,16 @@ class OutboundManagementManager
 
     public function createDiffusion($outboundManagement)
     {
+        $tags = $outboundManagement->tags()->pluck('tags.id')->toArray();
         $formAnswers = FormAnswer::formFilter($outboundManagement->form_id)
         ->join('client_tag', 'client_tag.client_new_id', 'form_answers.client_new_id')
         ->whereIn('client_tag.tag_id', $outboundManagement->tags)->get(['form_answers.structure_answer', 'form_answers.client_new_id']);
+
+        if (!$formAnswers->count()) {
+            $formAnswers = Directory::formFilter($outboundManagement->form_id)
+            ->join('client_tag', 'client_tag.client_new_id', 'directories.client_new_id')
+            ->whereIn('client_tag.tag_id', $tags)->distinct()->get(['directories.data AS structure_answer', 'directories.client_new_id']);
+        }
 
         $startDiffusionDateTime = "{$outboundManagement->settings->start_diffusion_date} {$outboundManagement->settings->start_diffusion_time}";
 
@@ -186,8 +194,13 @@ class OutboundManagementManager
             'days' => $outboundManagement->settings->delivery_schedule_days
         ];
 
-        dispatch((new DiffusionBySMS($outboundManagement->id, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
-        ->onQueue('diffusions');
+        $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], Carbon::now('America/Bogota'), $startDiffusionDateTime);
+
+        dd($outboundManagement->id, $clients, $options);
+        if (count($clients)) {
+            dispatch((new DiffusionBySMS($outboundManagement->id, $clients, $options))->delay($nextExecution))
+            ->onQueue('diffusions');
+        }
     }
 
     public function diffusionByEmail($formAnswers, $outboundManagement, $startDiffusionDateTime)
@@ -239,8 +252,12 @@ class OutboundManagementManager
             'replay_email' => $outboundManagement->settings->email->replay_email
         ];
 
-        dispatch((new DiffusionByEmail($outboundManagement->id, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
-        ->onQueue('diffusions');
+        $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], Carbon::now('America/Bogota'), $startDiffusionDateTime);
+    
+        if (count($clients)) {
+            dispatch((new DiffusionByEmail($outboundManagement->id, $clients, $options))->delay($nextExecution))
+            ->onQueue('diffusions');
+        }
     }
 
     public function diffusionByVoice($formAnswers, $outboundManagement, $startDiffusionDateTime)
@@ -269,8 +286,12 @@ class OutboundManagementManager
             'product' => $product->name,
         ];
 
-        dispatch((new DiffusionByVoice($outboundManagement->id, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
-        ->onQueue('diffusions');
+        $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], Carbon::now('America/Bogota'), $startDiffusionDateTime);
+    
+        if (count($clients)) {
+            dispatch((new DiffusionByVoice($outboundManagement->id, $clients, $options))->delay($nextExecution))
+            ->onQueue('diffusions');
+        }
     }
 
     public function diffusionByWhatsapp($formAnswers, $outboundManagement, $startDiffusionDateTime)
@@ -311,8 +332,12 @@ class OutboundManagementManager
             'templateId' => $outboundManagement->settings->whatsapp->templateId
         ];
 
-        dispatch((new DiffusionByWhatsapp($outboundManagement->id, $clients, $options))->delay(Carbon::createFromFormat('Y-m-d H:i', "$startDiffusionDateTime")))
-        ->onQueue('diffusions');
+        $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], Carbon::now('America/Bogota'), $startDiffusionDateTime);
+
+        if (count($clients)) {
+            dispatch((new DiffusionByWhatsapp($outboundManagement->id, $clients, $options))->delay($nextExecution))
+            ->onQueue('diffusions');
+        }
     }
 
     public function sendDiffusionBySMS(int $outboundManagementId, array $clients, array $options)
@@ -325,29 +350,28 @@ class OutboundManagementManager
                 $now = Carbon::now('America/Bogota');
                 $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
                 $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
-                
                 if ($isGreaterThanOrEqualTo && $isLessThan) {
+                    $outboundManagement->status = 'En proceso...';
+                    $outboundManagement->save();
                     $notificationsService->sendSMS($client['message'], [$client['destination']]);
                     $outboundManagement->clients()->attach($client['id']);
                     unset($clients[$key]);
                 } else {
                     $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
                     if (!is_null($nextExecution) && count($clients)) {
-                        $outboundManagement->status = 'En proceso...';
-                        $outboundManagement->save();
                         dispatch((new DiffusionBySMS($outboundManagementId, $clients, $options))->delay($nextExecution))
                         ->onQueue('diffusions');
-                    } else {
-                        $outboundManagement->status = 'Entregado';
-                        $outboundManagement->save();
                     }
                     break;
                 }
             }
+
+            if (!count($clients)) {
+                $outboundManagement->status = 'Entregado';
+                $outboundManagement->save();
+            }
         } catch (Exception $e) {
             Log::error("OutboundManagement@sendDiffusionBySMS: {$e->getMessage()}");
-            throw new Exception("Ocurrio un error al notificar por SMS, por favor comuniquese con el administrador del sistema.");
-        } finally {
             dispatch(
                 (new DiffusionBySMS($outboundManagementId, $clients, $options))->delay(Carbon::now()->addMinute())
             )->onQueue('diffusions');
@@ -366,27 +390,27 @@ class OutboundManagementManager
                 $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
                 
                 if ($isGreaterThanOrEqualTo && $isLessThan) {
+                    $outboundManagement->status = 'En proceso...';
+                    $outboundManagement->save();
                     $notificationsService->sendEmail($client['body'], $client['subject'], [$client['to']], $options['attachments'],$client['cc'], $client['cco'], $options['sender_email']);
                     $outboundManagement->clients()->attach($client['id']);
                     unset($clients[$key]);
                 } else {
                     $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
                     if (!is_null($nextExecution) && count($clients)) {
-                        $outboundManagement->status = 'En proceso...';
-                        $outboundManagement->save();
                         dispatch((new DiffusionByEmail($outboundManagementId, $clients, $options))->delay($nextExecution))
                         ->onQueue('diffusions');
-                    } else {
-                        $outboundManagement->status = 'Entregado';
-                        $outboundManagement->save();
                     }
                     break;
                 }
             }
+
+            if (!count($clients)) {
+                $outboundManagement->status = 'Entregado';
+                $outboundManagement->save();
+            }
         } catch (Exception $e) {
             Log::error("OutboundManagement@sendDiffusionByEmail: {$e->getMessage()}");
-            throw new Exception("Ocurrio un error al notificar por Email, por favor comuniquese con el administrador del sistema.");
-        } finally {
             dispatch(
                 (new DiffusionByEmail($outboundManagementId, $clients, $options))->delay(Carbon::now()->addMinute())
             )->onQueue('diffusions');
@@ -405,6 +429,8 @@ class OutboundManagementManager
                 $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
                 
                 if ($isGreaterThanOrEqualTo && $isLessThan) {
+                    $outboundManagement->status = 'En proceso...';
+                    $outboundManagement->save();
                     $vicidialService->sendLead([
                         'producto' => $options['product'],
                         'token' => $options['token'],
@@ -415,21 +441,19 @@ class OutboundManagementManager
                 } else {
                     $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
                     if (!is_null($nextExecution) && count($clients)) {
-                        $outboundManagement->status = 'En proceso...';
-                        $outboundManagement->save();
                         dispatch((new DiffusionByVoice($outboundManagementId, $clients, $options))->delay($nextExecution))
                         ->onQueue('diffusions');
-                    } else {
-                        $outboundManagement->status = 'Entregado';
-                        $outboundManagement->save();
                     }
                     break;
                 }
             }
+
+            if (!count($clients)) {
+                $outboundManagement->status = 'Entregado';
+                $outboundManagement->save();
+            }
         } catch (Exception $e) {
             Log::error("OutboundManagement@sendDiffusionByEmail: {$e->getMessage()}");
-            throw new Exception("Ocurrio un error al notificar por Email, por favor comuniquese con el administrador del sistema.");
-        } finally {
             dispatch(
                 (new DiffusionByVoice($outboundManagementId, $clients, $options))->delay(Carbon::now()->addMinute())
             )->onQueue('diffusions');
@@ -449,27 +473,22 @@ class OutboundManagementManager
                 $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
                 
                 if ($isGreaterThanOrEqualTo && $isLessThan) {
+                    $outboundManagement->status = 'En proceso...';
+                    $outboundManagement->save();
                     $whatsappService->sendTemplateMenssage($client['destination'], $options['templateId'], $client['messageParams']);
                     $outboundManagement->clients()->attach($client['id']);
                     unset($clients[$key]);
                 } else {
                     $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
                     if (!is_null($nextExecution) && count($clients)) {
-                        $outboundManagement->status = 'En proceso...';
-                        $outboundManagement->save();
                         dispatch((new DiffusionByWhatsapp($outboundManagementId, $clients, $options))->delay($nextExecution))
                         ->onQueue('diffusions');
-                    } else {
-                        $outboundManagement->status = 'Entregado';
-                        $outboundManagement->save();
                     }
                     break;
                 }
             }
         } catch (Exception $e) {
             Log::error("OutboundManagement@sendDiffusionByEmail: {$e->getMessage()}");
-            throw new Exception("Ocurrio un error al notificar por Email, por favor comuniquese con el administrador del sistema.");
-        } finally {
             dispatch(
                 (new DiffusionByWhatsapp($outboundManagementId, $clients, $options))->delay(Carbon::now()->addMinute())
             )->onQueue('diffusions');
@@ -490,22 +509,32 @@ class OutboundManagementManager
         return $outboundManagement;
     }
 
-    private function calculateNextExecution(int $numberOfClients, array $daysOfExecution, Carbon $now)
+    private function calculateNextExecution(int $numberOfClients, array $daysOfExecution, Carbon $now, string $startDate = '')
     {
-        $todaysNumber = Carbon::now('America/Bogota')->dayOfWeekIso;
-        $nextExecution = null;
-
-        foreach ($daysOfExecution as $day) {
-            if ($todaysNumber < $day) {
-                $nextExecutionDay = $day - $todaysNumber; 
-                $nextExecution = $now->addDays($nextExecutionDay);
-                break;
-            }
+        if ($startDate != '') {
+            $startDate = Carbon::createFromFormat('Y-m-d H:i', $startDate);
         }
 
-        if (is_null($nextExecution) && $numberOfClients) {
-            $nextExecutionDay = 7 - $todaysNumber + $daysOfExecution;
-            $nextExecution = $now->addDays($nextExecutionDay);
+        if ($startDate != '' && $startDate->lessThanOrEqualTo($now)) {
+            $nextExecution = $now->addMinutes(5);
+        }
+
+        if ($startDate == '' || !$startDate->lessThanOrEqualTo($now)) {
+            $todaysNumber = Carbon::now('America/Bogota')->dayOfWeekIso;
+            $nextExecution = null;
+    
+            foreach ($daysOfExecution as $day) {
+                if ($todaysNumber < $day) {
+                    $nextExecutionDay = $day - $todaysNumber; 
+                    $nextExecution = $now->addDays($nextExecutionDay);
+                    break;
+                }
+            }
+    
+            if (is_null($nextExecution) && $numberOfClients) {
+                $nextExecutionDay = 7 - $todaysNumber + $daysOfExecution;
+                $nextExecution = $now->addDays($nextExecutionDay);
+            }
         }
 
         return $nextExecution;
