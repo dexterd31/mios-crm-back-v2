@@ -8,9 +8,11 @@ use App\Models\CustomerDataPreload;
 use App\Models\Form;
 use App\Models\FormLog;
 use App\Models\FormType;
+use App\Models\GroupUser;
 use App\Models\RelAdvisorClientNew;
 use App\Models\Section;
 use App\Models\Tray;
+use App\Models\User;
 use App\Services\RrhhService;
 use App\Traits\deletedFieldChecker;
 use App\Traits\FindAndFormatValues;
@@ -698,6 +700,18 @@ class FormController extends Controller
         unset($formsSections->tipification_time);
 
         return response()->json($formsSections);
+    }
+
+    public function indexFormsByAdviser()
+    {
+        $forms = Form::join('form_types', 'forms.form_type_id', '=', 'form_types.id')
+            ->join("groups", "groups.id", "forms.group_id")
+            ->join('group_users', 'group_users.group_id', 'groups.id')
+            ->join('tags', 'tags.form_id', 'forms.id')
+            ->where('group_users.rrhh_id', auth()->user()->rrhh_id)->distinct()
+            ->get(['name_form', 'forms.id', 'name_type', 'forms.state', 'seeRoles', 'forms.updated_at']);
+
+       return response()->json($forms);
     }
 }
 

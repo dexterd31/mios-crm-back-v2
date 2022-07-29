@@ -11,7 +11,6 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 
-
 class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading, WithBatchInserts
 {
     private $formId;
@@ -20,8 +19,11 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
     private $fieldsLoad;
     private $resume;
     private $uploadController;
+    private $tags;
+    private $customFields;
+    private $importedFileId;
 
-    public function __construct(UploadController $uploadController = null, $formId = 0, $toUpdate = false, $fieldsLoad = [], $assignUsers = null)
+    public function __construct(UploadController $uploadController = null, $formId = 0, $toUpdate = false, $fieldsLoad = [], $assignUsers = null, $tags = [], $customFields = [], $importedFileId = 0)
     {
         HeadingRowFormatter::default('none');
         $this->uploadController = $uploadController;
@@ -30,6 +32,9 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
         $this->fieldsLoad = $fieldsLoad;
         $this->assignUsers = $assignUsers;
         $this->resume = ['cargados' => 0, 'errores' => [], 'nocargados' => 0, 'totalRegistros' => 0];
+        $this->tags = $tags;
+        $this->customFields = $customFields;
+        $this->importedFileId = $importedFileId;
     }
 
     public function collection(Collection $rows)
@@ -61,6 +66,12 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
                         array_push($errorAnswers, $dataValidate->message);
                     }
                 }
+
+                if (count($this->customFields)) {
+                    if (isset($this->customFields[$fieldIndex])) {
+                        $customFieldData[] = ['id' => $this->customFields[$fieldIndex], 'value' => $field];
+                    }
+                }
             }
     
             if (!count($errorAnswers)) {
@@ -78,7 +89,10 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
                     'to_update' => filter_var($this->toUpdate, FILTER_VALIDATE_BOOLEAN),
                     'adviser' => $rrhhId,
                     'unique_identificator' => $uniqueIdentificator,
-                    'form_answer' => $formAnswerClient
+                    'form_answer' => $formAnswerClient,
+                    'custom_field_data' => count($this->customFields) ? $customFieldData : [],
+                    'tags' => $this->tags,
+                    'imported_file_id' => $this->importedFileId
                 ]);
     
                 $this->resume['cargados']++;

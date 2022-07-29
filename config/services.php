@@ -16,5 +16,11 @@ return [
     ],
     'notifications' => [
         'base_uri' => env('NOTIFICATION_SERVICES_BASE_URI'),
-    ]
+    ],
+    'vicidial' => [
+        'base_uri' => env('SERVICE_SYNC_VICIDIAL'),
+    ],
+    'whatsapp' => [
+        'base_uri' => env('WHATSAPP_SERVICES_BASE_URI'),
+    ],
 ];
