@@ -245,7 +245,6 @@ class OutboundManagementManager
         $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], Carbon::now('America/Bogota'), $startDiffusionDateTime);
     
         if (count($clients)) {
-            dd($outboundManagement->id, $clients, $options);
             dispatch((new DiffusionByEmail($outboundManagement->id, $clients, $options))->delay($nextExecution))
             ->onQueue('diffusions');
             $outboundManagement->status = 'En proceso...';
