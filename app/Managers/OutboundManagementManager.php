@@ -196,7 +196,6 @@ class OutboundManagementManager
 
         $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], Carbon::now('America/Bogota'), $startDiffusionDateTime);
 
-        dd($outboundManagement->id, $clients, $options);
         if (count($clients)) {
             dispatch((new DiffusionBySMS($outboundManagement->id, $clients, $options))->delay($nextExecution))
             ->onQueue('diffusions');
@@ -233,21 +232,10 @@ class OutboundManagementManager
         $outboundManagement->total = count($clients);
         $outboundManagement->save();
 
-        $attachments = [];
-
-        $outboundManagement->attachments->each(function ($attachment) use (&$attachments) {
-            $attachments[] = [
-                'name' => $attachment->name,
-                'contents' => file_get_contents(storage_path("app/$attachment->path")),
-                'filename' => $attachment->name,
-            ];
-        });
-
         $options = [
             'startHour' => $outboundManagement->settings->start_delivery_schedule_time,
             'endHour' => $outboundManagement->settings->end_delivery_schedule_time,
             'days' => $outboundManagement->settings->delivery_schedule_days,
-            'attachments' => $attachments,
             'sender_email' => $outboundManagement->settings->email->sender_email,
             'replay_email' => $outboundManagement->settings->email->replay_email ?? ''
         ];
@@ -383,6 +371,16 @@ class OutboundManagementManager
         try {
             $notificationsService = new NotificationsService;
             $outboundManagement = OutboundManagement::find($outboundManagementId);
+
+            $attachments = [];
+
+            $outboundManagement->attachments->each(function ($attachment) use (&$attachments) {
+                $attachments[] = [
+                    'name' => $attachment->name,
+                    'contents' => file_get_contents(storage_path("app/$attachment->path")),
+                    'filename' => $attachment->name,
+                ];
+            });
             
             foreach ($clients as $key => $client) {
                 $now = Carbon::now('America/Bogota');
@@ -392,7 +390,7 @@ class OutboundManagementManager
                 if ($isGreaterThanOrEqualTo && $isLessThan) {
                     $outboundManagement->status = 'En proceso...';
                     $outboundManagement->save();
-                    $notificationsService->sendEmail($client['body'], $client['subject'], [$client['to']], $options['attachments'],$client['cc'], $client['cco'], $options['sender_email']);
+                    $notificationsService->sendEmail($client['body'], $client['subject'], [$client['to']], $attachments,$client['cc'], $client['cco'], $options['sender_email']);
                     $outboundManagement->clients()->attach($client['id']);
                     unset($clients[$key]);
                 } else {
