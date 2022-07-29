@@ -249,7 +249,7 @@ class OutboundManagementManager
             'days' => $outboundManagement->settings->delivery_schedule_days,
             'attachments' => $attachments,
             'sender_email' => $outboundManagement->settings->email->sender_email,
-            'replay_email' => $outboundManagement->settings->email->replay_email
+            'replay_email' => $outboundManagement->settings->email->replay_email ?? ''
         ];
 
         $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], Carbon::now('America/Bogota'), $startDiffusionDateTime);
