@@ -147,29 +147,46 @@ class OutboundManagementController extends Controller
         return response()->json(compact('templates'), 200);
     }
 
-    public function testDiffusion()
-    {
-        $this->outboundManagementManager->sendDiffusionBySMS(20, [
-                [
-                    "id" => 3729,
-                    "destination" => "3123365936",
-                    "message" => "Prueba envío de mensaje de texto",
-                ],
-                [
-                    "id" => 3730,
-                    "destination" => "3144901466",
-                    "message" => "Prueba envío de mensaje de texto",
-                ]
-            ], [
-            "startHour" => "08:00",
-            "endHour" => "23:59",
-            "days" => [
-                0 => 1,
-                1 => 2,
-                2 => 3,
-                3 => 4,
-                4 => 5
-            ]
-        ]);
-    }
+    // public function testDiffusion()
+    // {
+    //     $this->outboundManagementManager->sendDiffusionByEmail(21, [
+    //             [
+    //                 "id" => 3729,
+    //                 "body" => [
+    //                     1659023882269 => "Miguel",
+    //                     1659024046021 => "3123365936",
+    //                     1659024094337 => "miguel.s@montechelo.online",
+    //                 ],
+    //                 "subject" => "Este es un asunto ejemplo para {Nombre completo} 🤖🐺",
+    //                 "to" => "miguel.s@montechelo.online",
+    //                 "cc" => [],
+    //                 "cco" => []
+    //             ],
+    //             [
+    //                 "id" => 3730,
+    //                 "body" => [
+    //                     1659023882269 => "David",
+    //                     1659024046021 => "3208803093",
+    //                     1659024094337 => "e.sanchez@montechelo.online",
+    //                 ],
+    //                 "subject" => "Este es un asunto ejemplo para {Nombre completo} 🤖🐺",
+    //                 "to" => "e.sanchez@montechelo.online",
+    //                 "cc" => [],
+    //                 "cco" => []
+    //             ]
+    //         ], [
+    //         "startHour" => "08:00",
+    //         "endHour" => "22:00",
+    //         "days" => [
+    //             0 => 1,
+    //             1 => 2,
+    //             2 => 3,
+    //             3 => 4,
+    //             4 => 5,
+    //             5 => 6
+    //         ],
+    //         "sender_email" => "DEFAULT_AIRE",
+    //         "replay_email" => ""
+    //     ]);
+    // }
 }

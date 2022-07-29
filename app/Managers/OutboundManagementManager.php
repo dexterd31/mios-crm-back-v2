@@ -226,7 +226,6 @@ class OutboundManagementManager
                 'body' => $body,
                 'subject' => $subject,
                 'to' => $destination,
-                'attatchment' => [],
                 'cc' => [],
                 'cco' => [],
             ];
@@ -246,6 +245,7 @@ class OutboundManagementManager
         $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], Carbon::now('America/Bogota'), $startDiffusionDateTime);
     
         if (count($clients)) {
+            dd($outboundManagement->id, $clients, $options);
             dispatch((new DiffusionByEmail($outboundManagement->id, $clients, $options))->delay($nextExecution))
             ->onQueue('diffusions');
             $outboundManagement->status = 'En proceso...';
@@ -339,164 +339,140 @@ class OutboundManagementManager
 
     public function sendDiffusionBySMS(int $outboundManagementId, array $clients, array $options)
     {
-        try {
-            $notificationsService = new NotificationsService;
-            $outboundManagement = OutboundManagement::find($outboundManagementId);
-            
-            foreach ($clients as $key => $client) {
-                $now = Carbon::now('America/Bogota');
-                $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
-                $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
-                if ($isGreaterThanOrEqualTo && $isLessThan) {
-                    $notificationsService->sendSMS($client['message'], [$client['destination']]);
-                    $outboundManagement->clients()->attach($client['id']);
-                    unset($clients[$key]);
-                } else {
-                    $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
-                    if (!is_null($nextExecution) && count($clients)) {
-                        dispatch((new DiffusionBySMS($outboundManagementId, $clients, $options))->delay($nextExecution))
-                        ->onQueue('diffusions');
-                    }
-                    break;
+        $notificationsService = new NotificationsService;
+        $outboundManagement = OutboundManagement::find($outboundManagementId);
+        
+        foreach ($clients as $key => $client) {
+            $now = Carbon::now('America/Bogota');
+            $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
+            $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
+            if ($isGreaterThanOrEqualTo && $isLessThan) {
+                $notificationsService->sendSMS($client['message'], [$client['destination']]);
+                $outboundManagement->clients()->attach($client['id']);
+                unset($clients[$key]);
+            } else {
+                $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
+                if (!is_null($nextExecution) && count($clients)) {
+                    dispatch((new DiffusionBySMS($outboundManagementId, $clients, $options))->delay($nextExecution))
+                    ->onQueue('diffusions');
                 }
+                break;
             }
+        }
 
-            if (!count($clients)) {
-                $outboundManagement->status = 'Entregado';
-                $outboundManagement->save();
-            }
-        } catch (Exception $e) {
-            Log::error("OutboundManagement@sendDiffusionBySMS: {$e->getMessage()}");
-            dispatch(
-                (new DiffusionBySMS($outboundManagementId, $clients, $options))->delay(Carbon::now()->addMinute())
-            )->onQueue('diffusions');
+        if (!count($clients)) {
+            $outboundManagement->status = 'Entregado';
+            $outboundManagement->save();
         }
     }
 
     public function sendDiffusionByEmail(int $outboundManagementId, array $clients, array $options)
     {
-        try {
-            $notificationsService = new NotificationsService;
-            $outboundManagement = OutboundManagement::find($outboundManagementId);
+        $notificationsService = new NotificationsService;
+        $outboundManagement = OutboundManagement::find($outboundManagementId);
 
-            $attachments = [];
+        $attachments = [];
 
-            $outboundManagement->attachments->each(function ($attachment) use (&$attachments) {
-                $attachments[] = [
-                    'name' => $attachment->name,
-                    'contents' => file_get_contents(storage_path("app/$attachment->path")),
-                    'filename' => $attachment->name,
-                ];
-            });
+        $outboundManagement->attachments->each(function ($attachment) use (&$attachments) {
+            $attachments[] = [
+                'name' => $attachment->name,
+                'file' => file_get_contents(storage_path("app/$attachment->path")),
+            ];
+        });
+        
+        foreach ($clients as $key => $client) {
+            $now = Carbon::now('America/Bogota');
+            $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
+            $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
             
-            foreach ($clients as $key => $client) {
-                $now = Carbon::now('America/Bogota');
-                $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
-                $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
-                
-                if ($isGreaterThanOrEqualTo && $isLessThan) {
-                    $bodyHTML = $body = $outboundManagement->settings->email->body;
+            if ($isGreaterThanOrEqualTo && $isLessThan) {
+                $bodyHTML = $outboundManagement->settings->email->body;
 
-                    foreach ($client['body'] as $key => $field) {
-                        $body = str_replace("[[$key]]", $field->value, $body);
-                    }
-
-                    $notificationsService->sendEmail($bodyHTML, $client['subject'], [$client['to']], $attachments, $client['cc'], $client['cco'], $options['sender_email']);
-                    $outboundManagement->clients()->attach($client['id']);
-                    unset($clients[$key]);
-                } else {
-                    $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
-                    if (!is_null($nextExecution) && count($clients)) {
-                        dispatch((new DiffusionByEmail($outboundManagementId, $clients, $options))->delay($nextExecution))
-                        ->onQueue('diffusions');
-                    }
-                    break;
+                foreach ($client['body'] as $field => $value) {
+                    $bodyHTML = str_replace("[[$field]]", $value, $bodyHTML);
                 }
-            }
 
-            if (!count($clients)) {
-                $outboundManagement->status = 'Entregado';
-                $outboundManagement->save();
+                $notificationsService->sendEmail($bodyHTML, $client['subject'], [$client['to']], $attachments, $client['cc'], $client['cco'], $options['sender_email']);
+                $outboundManagement->clients()->attach($client['id']);
+                unset($clients[$key]);
+            } else {
+                $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
+                if (!is_null($nextExecution) && count($clients)) {
+                    dispatch((new DiffusionByEmail($outboundManagementId, $clients, $options))->delay($nextExecution))
+                    ->onQueue('diffusions');
+                }
+                break;
             }
-        } catch (Exception $e) {
-            Log::error("OutboundManagement@sendDiffusionByEmail: {$e->getMessage()}");
-            dispatch(
-                (new DiffusionByEmail($outboundManagementId, $clients, $options))->delay(Carbon::now()->addMinute())
-            )->onQueue('diffusions');
+        }
+
+        if (!count($clients)) {
+            $outboundManagement->status = 'Entregado';
+            $outboundManagement->save();
         }
     }
 
     public function sendDiffusionByVoice(int $outboundManagementId, array $clients, array $options)
     {
-        try {
-            $vicidialService = new VicidialService;
-            $outboundManagement = OutboundManagement::find($outboundManagementId);
+        $vicidialService = new VicidialService;
+        $outboundManagement = OutboundManagement::find($outboundManagementId);
+        
+        foreach ($clients as $key => $client) {
+            $now = Carbon::now('America/Bogota');
+            $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
+            $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
             
-            foreach ($clients as $key => $client) {
-                $now = Carbon::now('America/Bogota');
-                $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
-                $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
-                
-                if ($isGreaterThanOrEqualTo && $isLessThan) {
-                    $vicidialService->sendLead([
-                        'producto' => $options['product'],
-                        'token' => $options['token'],
-                        'telefono' => $client['destination'],
-                    ]);
-                    $outboundManagement->clients()->attach($client['id']);
-                    unset($clients[$key]);
-                } else {
-                    $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
-                    if (!is_null($nextExecution) && count($clients)) {
-                        dispatch((new DiffusionByVoice($outboundManagementId, $clients, $options))->delay($nextExecution))
-                        ->onQueue('diffusions');
-                    }
-                    break;
+            if ($isGreaterThanOrEqualTo && $isLessThan) {
+                $vicidialService->sendLead([
+                    'producto' => $options['product'],
+                    'token' => $options['token'],
+                    'telefono' => $client['destination'],
+                ]);
+                $outboundManagement->clients()->attach($client['id']);
+                unset($clients[$key]);
+            } else {
+                $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
+                if (!is_null($nextExecution) && count($clients)) {
+                    dispatch((new DiffusionByVoice($outboundManagementId, $clients, $options))->delay($nextExecution))
+                    ->onQueue('diffusions');
                 }
+                break;
             }
+        }
 
-            if (!count($clients)) {
-                $outboundManagement->status = 'Entregado';
-                $outboundManagement->save();
-            }
-        } catch (Exception $e) {
-            Log::error("OutboundManagement@sendDiffusionByEmail: {$e->getMessage()}");
-            dispatch(
-                (new DiffusionByVoice($outboundManagementId, $clients, $options))->delay(Carbon::now()->addMinute())
-            )->onQueue('diffusions');
+        if (!count($clients)) {
+            $outboundManagement->status = 'Entregado';
+            $outboundManagement->save();
         }
     }
 
     public function sendDiffusionByWhatsapp(int $outboundManagementId, array $clients, array $options)
     {
-        try {
-            $outboundManagement = OutboundManagement::find($outboundManagementId);
-            $whatsappAccount = WhatsappAccount::find($options['whatsappAccountId']);
-            $whatsappService = new WhatsappService($whatsappAccount);
+        $outboundManagement = OutboundManagement::find($outboundManagementId);
+        $whatsappAccount = WhatsappAccount::find($options['whatsappAccountId']);
+        $whatsappService = new WhatsappService($whatsappAccount);
+        
+        foreach ($clients as $key => $client) {
+            $now = Carbon::now('America/Bogota');
+            $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
+            $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
             
-            foreach ($clients as $key => $client) {
-                $now = Carbon::now('America/Bogota');
-                $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
-                $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
-                
-                if ($isGreaterThanOrEqualTo && $isLessThan) {
-                    $whatsappService->sendTemplateMenssage($client['destination'], $options['templateId'], $client['messageParams']);
-                    $outboundManagement->clients()->attach($client['id']);
-                    unset($clients[$key]);
-                } else {
-                    $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
-                    if (!is_null($nextExecution) && count($clients)) {
-                        dispatch((new DiffusionByWhatsapp($outboundManagementId, $clients, $options))->delay($nextExecution))
-                        ->onQueue('diffusions');
-                    }
-                    break;
+            if ($isGreaterThanOrEqualTo && $isLessThan) {
+                $whatsappService->sendTemplateMenssage($client['destination'], $options['templateId'], $client['messageParams']);
+                $outboundManagement->clients()->attach($client['id']);
+                unset($clients[$key]);
+            } else {
+                $nextExecution = $this->calculateNextExecution(count($clients), $options['days'], $now);
+                if (!is_null($nextExecution) && count($clients)) {
+                    dispatch((new DiffusionByWhatsapp($outboundManagementId, $clients, $options))->delay($nextExecution))
+                    ->onQueue('diffusions');
                 }
+                break;
             }
-        } catch (Exception $e) {
-            Log::error("OutboundManagement@sendDiffusionByEmail: {$e->getMessage()}");
-            dispatch(
-                (new DiffusionByWhatsapp($outboundManagementId, $clients, $options))->delay(Carbon::now()->addMinute())
-            )->onQueue('diffusions');
+        }
+
+        if (!count($clients)) {
+            $outboundManagement->status = 'Entregado';
+            $outboundManagement->save();
         }
     }
 
