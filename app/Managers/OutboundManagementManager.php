@@ -199,6 +199,8 @@ class OutboundManagementManager
         if (count($clients)) {
             dispatch((new DiffusionBySMS($outboundManagement->id, $clients, $options))->delay($nextExecution))
             ->onQueue('diffusions');
+            $outboundManagement->status = 'En proceso...';
+            $outboundManagement->save();
         }
     }
 
@@ -207,14 +209,15 @@ class OutboundManagementManager
         $clients = [];
         $formAnswers->each(function ($answer) use ($outboundManagement, &$clients) {
             $fields = json_decode($answer->structure_answer);
-            $body = $outboundManagement->settings->email->body;
+            $body = [];
             $subject = $outboundManagement->settings->email->subject;
 
             foreach ($fields as $field) {
                 if ($field->id == $outboundManagement->settings->diffusion_field) {
                     $destination = $field->value;
                 }
-                $body = str_replace("[[$field->id]]", $field->value, $body);
+
+                $body[$field->id] = $field->value;
                 $subject = str_replace("[[$field->id]]", $field->value, $subject);
             }
 
@@ -245,6 +248,8 @@ class OutboundManagementManager
         if (count($clients)) {
             dispatch((new DiffusionByEmail($outboundManagement->id, $clients, $options))->delay($nextExecution))
             ->onQueue('diffusions');
+            $outboundManagement->status = 'En proceso...';
+            $outboundManagement->save();
         }
     }
 
@@ -279,6 +284,8 @@ class OutboundManagementManager
         if (count($clients)) {
             dispatch((new DiffusionByVoice($outboundManagement->id, $clients, $options))->delay($nextExecution))
             ->onQueue('diffusions');
+            $outboundManagement->status = 'En proceso...';
+            $outboundManagement->save();
         }
     }
 
@@ -325,6 +332,8 @@ class OutboundManagementManager
         if (count($clients)) {
             dispatch((new DiffusionByWhatsapp($outboundManagement->id, $clients, $options))->delay($nextExecution))
             ->onQueue('diffusions');
+            $outboundManagement->status = 'En proceso...';
+            $outboundManagement->save();
         }
     }
 
@@ -339,8 +348,6 @@ class OutboundManagementManager
                 $isGreaterThanOrEqualTo = $now->greaterThanOrEqualTo(Carbon::createFromTimeString($options['startHour'], 'America/Bogota'));
                 $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
                 if ($isGreaterThanOrEqualTo && $isLessThan) {
-                    $outboundManagement->status = 'En proceso...';
-                    $outboundManagement->save();
                     $notificationsService->sendSMS($client['message'], [$client['destination']]);
                     $outboundManagement->clients()->attach($client['id']);
                     unset($clients[$key]);
@@ -388,9 +395,13 @@ class OutboundManagementManager
                 $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
                 
                 if ($isGreaterThanOrEqualTo && $isLessThan) {
-                    $outboundManagement->status = 'En proceso...';
-                    $outboundManagement->save();
-                    $notificationsService->sendEmail($client['body'], $client['subject'], [$client['to']], $attachments,$client['cc'], $client['cco'], $options['sender_email']);
+                    $bodyHTML = $body = $outboundManagement->settings->email->body;
+
+                    foreach ($client['body'] as $key => $field) {
+                        $body = str_replace("[[$key]]", $field->value, $body);
+                    }
+
+                    $notificationsService->sendEmail($bodyHTML, $client['subject'], [$client['to']], $attachments, $client['cc'], $client['cco'], $options['sender_email']);
                     $outboundManagement->clients()->attach($client['id']);
                     unset($clients[$key]);
                 } else {
@@ -427,8 +438,6 @@ class OutboundManagementManager
                 $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
                 
                 if ($isGreaterThanOrEqualTo && $isLessThan) {
-                    $outboundManagement->status = 'En proceso...';
-                    $outboundManagement->save();
                     $vicidialService->sendLead([
                         'producto' => $options['product'],
                         'token' => $options['token'],
@@ -471,8 +480,6 @@ class OutboundManagementManager
                 $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
                 
                 if ($isGreaterThanOrEqualTo && $isLessThan) {
-                    $outboundManagement->status = 'En proceso...';
-                    $outboundManagement->save();
                     $whatsappService->sendTemplateMenssage($client['destination'], $options['templateId'], $client['messageParams']);
                     $outboundManagement->clients()->attach($client['id']);
                     unset($clients[$key]);
