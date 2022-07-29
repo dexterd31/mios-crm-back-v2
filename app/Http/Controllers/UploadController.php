@@ -44,7 +44,7 @@ class UploadController extends Controller
     public function __construct()
     {
         ini_set('max_execution_time', 300);
-        $this->middleware('auth', ['except' => 'uploadClientDataFromEmail']);
+        $this->middleware('auth', ['except' => ['uploadClientDataFromEmail']]);
     }
 
     /**

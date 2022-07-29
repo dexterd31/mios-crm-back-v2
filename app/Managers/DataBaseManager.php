@@ -41,7 +41,7 @@ class DataBaseManager
         }
         
         $tableColumns = [];
-        $clients = $clients->get(['client_news.id', 'client_news.updated_at', 'information_data', 'unique_indentificator'])
+        $clients = $clients->distinct()->get(['client_news.id', 'client_news.updated_at', 'information_data', 'unique_indentificator'])
         ->map(function ($client) use (&$tableColumns) {
             $informationData = json_decode($client->information_data);
             $uniqueIndentificator = json_decode($client->unique_indentificator);
@@ -75,7 +75,6 @@ class DataBaseManager
             $customerDataPreload = CustomerDataPreload::take(200);
             $customerDataPreloadIds = clone $customerDataPreload->pluck('id');
             $customerDataPreload = $customerDataPreload->get();
-    
             
             foreach ($customerDataPreload as $customerData) {
                 $data = [
@@ -113,8 +112,8 @@ class DataBaseManager
                     }
                 }
     
-                if (count($customerData->tags)) {
-                    $clientTags = $client->tags()->pluck('tags.id');
+                if (!is_null($customerData->tags) && count($customerData->tags)) {
+                    $clientTags = $client->tags()->pluck('tags.id')->toArray();
                     if (count($clientTags)) {
                         foreach ($customerData->tags as $tag) {
                             if (!in_array($tag, $clientTags)) {
@@ -159,7 +158,7 @@ class DataBaseManager
                 }
             }
     
-            CustomerDataPreload::destroy($customerDataPreloadIds);
+            CustomerDataPreload::destroy($customerDataPreloadIds->toArray());
 
             DB::commit();
             

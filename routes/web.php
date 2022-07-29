@@ -260,4 +260,6 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->group(['prefix' => 'forms'], function () use ($router) {
         $router->get('/byAdviser', 'FormController@indexFormsByAdviser');
       });
+
+    //   $router->get('test/sms', 'OutboundManagementController@testDiffusion');
 });

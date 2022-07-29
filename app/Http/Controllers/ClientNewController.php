@@ -233,9 +233,18 @@ class ClientNewController extends Controller
 
         $client->tags = $client->tags()->get(['tags.id', 'tags.name'])->makeHidden('pivot');
         $client->field_data = $client->customFieldData->field_data ?? [];
-        $formAnswer = $client->formanswer()->latest()->first() ?? json_decode($client->directory()->latest()->first()->data ?? '[]');
+        $formAnswer = $client->formanswer()->latest()->first();
 
-        $formAnswer = json_decode($formAnswer->structure_answer);
+        if(is_null($formAnswer)) {
+            $formAnswer = $client->directory()->latest()->first();
+            if (is_null($formAnswer)) {
+                $formAnswer = [];
+            } else {
+                $formAnswer = json_decode($formAnswer->data);
+            }
+        } else {
+            $formAnswer = json_decode($formAnswer->structure_answer);
+        }
         
         $sections = $client->form->section()->get(['name_section', 'fields'])
         ->map(function ($section) use ($formAnswer) {
