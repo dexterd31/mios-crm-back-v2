@@ -41,7 +41,7 @@ class DataBaseManager
         }
         
         $tableColumns = [];
-        $clients = $clients->get(['client_news.id', 'client_news.updated_at', 'information_data', 'unique_indentificator'])
+        $clients = $clients->distinct()->get(['client_news.id', 'client_news.updated_at', 'information_data', 'unique_indentificator'])
         ->map(function ($client) use (&$tableColumns) {
             $informationData = json_decode($client->information_data);
             $uniqueIndentificator = json_decode($client->unique_indentificator);
