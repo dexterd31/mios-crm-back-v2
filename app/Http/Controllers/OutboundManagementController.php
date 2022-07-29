@@ -18,7 +18,8 @@ class OutboundManagementController extends Controller
 
     public function __construct(OutboundManagementManager $outboundManagementManager)
     {
-        $this->middleware('auth', ['except' => ['testDiffusion']]);
+        // $this->middleware('auth', ['except' => ['testDiffusion']]);
+        $this->middleware('auth');
         $this->outboundManagementManager = $outboundManagementManager;
     }
 
@@ -149,34 +150,18 @@ class OutboundManagementController extends Controller
 
     // public function testDiffusion()
     // {
-    //     $this->outboundManagementManager->sendDiffusionByEmail(21, [
+    //     $this->outboundManagementManager->sendDiffusionByVoice(21, [
     //             [
+    //                 "destination" => "3123365936",
     //                 "id" => 3729,
-    //                 "body" => [
-    //                     1659023882269 => "Miguel",
-    //                     1659024046021 => "3123365936",
-    //                     1659024094337 => "miguel.s@montechelo.online",
-    //                 ],
-    //                 "subject" => "Este es un asunto ejemplo para {Nombre completo} 🤖🐺",
-    //                 "to" => "miguel.s@montechelo.online",
-    //                 "cc" => [],
-    //                 "cco" => []
     //             ],
     //             [
+    //                 "destination" => "3208803093",
     //                 "id" => 3730,
-    //                 "body" => [
-    //                     1659023882269 => "David",
-    //                     1659024046021 => "3208803093",
-    //                     1659024094337 => "e.sanchez@montechelo.online",
-    //                 ],
-    //                 "subject" => "Este es un asunto ejemplo para {Nombre completo} 🤖🐺",
-    //                 "to" => "e.sanchez@montechelo.online",
-    //                 "cc" => [],
-    //                 "cco" => []
     //             ]
     //         ], [
-    //         "startHour" => "08:00",
-    //         "endHour" => "22:00",
+    //         "startHour" => "19:59",
+    //         "endHour" => "21:05",
     //         "days" => [
     //             0 => 1,
     //             1 => 2,
@@ -185,8 +170,8 @@ class OutboundManagementController extends Controller
     //             4 => 5,
     //             5 => 6
     //         ],
-    //         "sender_email" => "DEFAULT_AIRE",
-    //         "replay_email" => ""
+    //         "token" => "NJ9spTb2sR",
+    //         "product" => "AIRSMS"
     //     ]);
     // }
 }
