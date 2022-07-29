@@ -17,7 +17,8 @@ class VicidialService
         $this->secret = JWTAuth::getToken();
     }
 
-    public function sendLead(array $data){
-        return $this->request('POST', '/webservice-dinamico/montechelo/', $data);
+    public function sendLead(array $data)
+    {
+        return $this->request('POST', '/webservice-dinamico/montechelo/services', $data);
     }
 }

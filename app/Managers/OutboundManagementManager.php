@@ -11,9 +11,7 @@ use App\Models\FormAnswer;
 use App\Models\OutboundManagement;
 use App\Models\OutboundManagementAttachment;
 use App\Models\Product;
-use App\Models\Section;
 use App\Models\WhatsappAccount;
-use App\Services\LeadService;
 use App\Services\NotificationsService;
 use App\Services\VicidialService;
 use App\Services\WhatsappService;
@@ -421,9 +419,9 @@ class OutboundManagementManager
             $isLessThan = $now->lessThan(Carbon::createFromTimeString($options['endHour'], 'America/Bogota'));
             
             if ($isGreaterThanOrEqualTo && $isLessThan) {
-                $vicidialService->sendLead([
+                $response = $vicidialService->sendLead([
                     'producto' => $options['product'],
-                    'token' => $options['token'],
+                    'token_key' => $options['token'],
                     'telefono' => $client['destination'],
                 ]);
                 $outboundManagement->clients()->attach($client['id']);
