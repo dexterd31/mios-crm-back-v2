@@ -12,7 +12,6 @@ use App\Models\ImportedFileClient;
 use App\Models\RelAdvisorClientNew;
 use Exception;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class DataBaseManager
@@ -69,14 +68,29 @@ class DataBaseManager
      */
     public function createClients()
     {
-        DB::beginTransaction();
-        try {
-            $clientsManager = new ClientsManager;
-            $customerDataPreload = CustomerDataPreload::take(200);
+        $clientsManager = new ClientsManager;
+        $customerDataPreload = CustomerDataPreload::take(1000);
+        if ($customerDataPreload) {
             $customerDataPreloadIds = clone $customerDataPreload->pluck('id');
             $customerDataPreload = $customerDataPreload->get();
             
             foreach ($customerDataPreload as $customerData) {
+
+                $formAnswer = (array) $customerData->form_answer;
+                $sections = $customerData->form->section;
+                $formAnswers = [];
+
+                foreach ($sections as $section) {
+                    foreach (json_decode($section->fields) as $field) {
+                        if (isset($formAnswer[$field->id])) {
+                            $field->value = $formAnswer[$field->id];
+                            $formAnswers[] = $field; 
+                        }
+                    }
+                }
+
+                $customerData->form_answer = $formAnswers;
+
                 $data = [
                     "form_id" => $customerData->form_id,
                     "unique_indentificator" => $customerData->unique_identificator,
@@ -159,14 +173,10 @@ class DataBaseManager
             }
     
             CustomerDataPreload::destroy($customerDataPreloadIds->toArray());
-
-            DB::commit();
-            
-            dispatch((new CreateClients)->delay(Carbon::now()->addSeconds(10)))->onQueue('create-clients');
-        } catch (Exception $e) {
-            Log::error("Client Masive Creator: {$e->getMessage()}");
-            DB::rollBack();
         }
+
+        dispatch((new CreateClients)->delay(Carbon::now()->addSeconds(1)))->onQueue('create-clients');
+
     }
 
     /**

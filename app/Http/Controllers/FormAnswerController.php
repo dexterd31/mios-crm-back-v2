@@ -930,6 +930,21 @@ class FormAnswerController extends Controller
         }
         
         $customerDataPreload = $customerDataPreload->first();
+
+        $formAnswer = (array) $customerDataPreload->form_answer;
+        $sections = $customerDataPreload->form->section;
+        $formAnswers = [];
+
+        foreach ($sections as $section) {
+            foreach (json_decode($section->fields) as $field) {
+                if (isset($formAnswer[$field->id])) {
+                    $field->value = $formAnswer[$field->id];
+                    $formAnswers[] = $field; 
+                }
+            }
+        }
+
+        $customerDataPreload->form_answer = $formAnswers;
         
         if (!is_null($customerDataPreload)) {
             $clientsManager = new ClientsManager;
