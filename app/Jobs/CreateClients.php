@@ -8,6 +8,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class CreateClients extends Job implements ShouldQueue
 {
@@ -15,7 +17,7 @@ class CreateClients extends Job implements ShouldQueue
 
     public $timeout = 9999999;
 
-    public $tries = 100;
+    // public $tries = 100;
     /**
      * Create a new job instance.
      *
@@ -23,8 +25,8 @@ class CreateClients extends Job implements ShouldQueue
      */
     public function __construct()
     {
-        ini_set('max_execution_time', 0);
-        set_time_limit(0);
+        // ini_set('max_execution_time', 0);
+        // set_time_limit(0);
     }
 
     /**
@@ -34,6 +36,7 @@ class CreateClients extends Job implements ShouldQueue
      */
     public function handle()
     {
+        Log::info("Comienza ejecucion en: " . Carbon::now('america/Bogota')->toDateTimeString());
         (new DataBaseManager)->createClients();
     }
 }

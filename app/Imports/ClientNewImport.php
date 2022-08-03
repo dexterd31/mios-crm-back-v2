@@ -216,19 +216,28 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
             $answer->in=[];
             if(isset($field->isClientInfo) && $field->isClientInfo){
                 $answer->informationClient= (object)[
-                    $field->id => $field->value
+                    "id" => $field->id,
+                    "value" => $field->value
                 ];
                 array_push($answer->in,'informationClient');
             }
             if(isset($field->client_unique) && $field->client_unique){
                 $answer->uniqueIdentificator = (Object)[
-                    $field->id => $field->value
+                    "id" => $field->id,
+                    "key" => $field->key,
+                    "preloaded" => $field->preloaded,
+                    "label" => $field->label,
+                    "isClientInfo" => $field->isClientInfo,
+                    "client_unique" => $field->client_unique,
+                    "value" => $field->value
                 ];
                 array_push($answer->in,'uniqueIdentificator');
             }
             if(isset($field->preloaded) && $field->preloaded){
                 $answer->preload=[
-                    $field->id => $field->value
+                    "id" => $field->id,
+                    "key" => $field->key,
+                    "value" => $field->value
                 ];
                 array_push($answer->in,'preload');
             }
