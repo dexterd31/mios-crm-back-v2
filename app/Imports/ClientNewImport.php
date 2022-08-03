@@ -2,17 +2,21 @@
 
 namespace App\Imports;
 
-use App\Http\Controllers\UploadController;
 use App\Models\CustomerDataPreload;
+use App\Traits\FindAndFormatValues;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
+use stdClass;
 
 class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading, WithBatchInserts
 {
+    use FindAndFormatValues;
+
     private $formId;
     private $toUpdate;
     private $assignUsers;
@@ -23,10 +27,9 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
     private $customFields;
     private $importedFileId;
 
-    public function __construct(UploadController $uploadController = null, $formId = 0, $toUpdate = false, $fieldsLoad = [], $assignUsers = null, $tags = [], $customFields = [], $importedFileId = 0)
+    public function __construct($formId = 0, $toUpdate = false, $fieldsLoad = [], $assignUsers = null, $tags = [], $customFields = [], $importedFileId = 0)
     {
         HeadingRowFormatter::default('none');
-        $this->uploadController = $uploadController;
         $this->formId = $formId;
         $this->toUpdate = $toUpdate;
         $this->fieldsLoad = $fieldsLoad;
@@ -47,7 +50,7 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
     
             foreach ($row as $fieldIndex => $field) {
                 if (isset($this->fieldsLoad[$fieldIndex])) {
-                    $dataValidate = $this->uploadController->validateClientDataUpload($this->fieldsLoad[$fieldIndex], $field, $this->formId);
+                    $dataValidate = $this->validateClientDataUpload($this->fieldsLoad[$fieldIndex], $field, $this->formId);
         
                     if ($dataValidate->success) {
                         foreach ($dataValidate->in as $in) {
@@ -165,5 +168,103 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
         }
 
         return [$assignUsersObject, $rrhhId];
+    }
+
+    public function validateClientDataUpload($field,$data,$formId = null){
+        $answer=new stdClass();
+        $answer->success=false;
+        $answer->message=[];
+        if($formId != null){
+            $formatValue = $this->findAndFormatValues($formId,$field->id,$data);
+            if($formatValue->valid){
+                $data = $formatValue->value;
+            }else{
+                array_push($answer->message,$formatValue->message." in ".$field->label);
+                return $answer;
+            }
+        }
+        $rules = '';
+        $validationType = $this->kindOfValidationType($field->type,$data);
+        if(isset($field->required) && $field->required){
+            $rules = 'required';
+            if(isset($field->minLength) && isset($field->maxLength)){
+                $minLength = $field->minLength;
+                $maxLength = $field->maxLength;
+                if($field->type == 'number'){
+                    $minLen = "0";
+                    $maxLen = "";
+                    $minLen .= str_repeat("0", intval($field->minLength) - 1);
+                    $maxLen .= str_repeat("9", intval($field->maxLength));
+                    $minLength = $minLen;
+                    $maxLength = $maxLen;
+                }
+                $rules.= '|min:'.$minLength;
+                $rules.= '|max:'.$maxLength;
+            }
+            $rules.= '|'.$validationType->type;
+        }
+        $fieldValidator = str_replace(['.','-','*',','],'',$field->label);
+        $validator = Validator::make([$fieldValidator=>$validationType->formatedData], [
+            $fieldValidator => $rules
+        ]);
+        if ($validator->fails()){
+            foreach ($validator->errors()->all() as $message) {
+                array_push($answer->message,$message." in ".$field->label);
+            }
+        }else{
+            $field->value=$validationType->formatedData;
+            $answer->in=[];
+            if(isset($field->isClientInfo) && $field->isClientInfo){
+                $answer->informationClient= (object)[
+                    $field->id => $field->value
+                ];
+                array_push($answer->in,'informationClient');
+            }
+            if(isset($field->client_unique) && $field->client_unique){
+                $answer->uniqueIdentificator = (Object)[
+                    $field->id => $field->value
+                ];
+                array_push($answer->in,'uniqueIdentificator');
+            }
+            if(isset($field->preloaded) && $field->preloaded){
+                $answer->preload=[
+                    $field->id => $field->value
+                ];
+                array_push($answer->in,'preload');
+            }
+            $answer->formAnswer = (Object)[
+                $field->id => gettype($field->value) !=="string" ?  strval($field->value) : $field->value
+            ];
+            $answer->formAnswerIndex = (Object)[
+                $field->id => gettype($field->value) !=="string" ?  strval($field->value) : $field->value
+            ];
+            $answer->success=true;
+            $answer->Originalfield=$field;
+        }
+        return $answer;
+    }
+
+    private function kindOfValidationType($type,$data){
+        $answer = new stdClass();
+        $answer->formatedData = $data;
+        switch($type){
+            case "email":
+                $answer->type = "email";
+                break;
+            case "options":
+            case "number":
+                $answer->type = "numeric";
+                $answer->formatedData = intval(trim($data));
+                break;
+            case "date":
+                $answer->type = "date|date_format:Y-m-d";
+                break;
+            default:
+                $answer->type = "string";
+                $answer->formatedData = strval($data);
+                break;
+
+        }
+        return $answer;
     }
 }

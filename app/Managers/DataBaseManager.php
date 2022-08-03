@@ -10,10 +10,7 @@ use App\Models\CustomFieldData;
 use App\Models\Directory;
 use App\Models\ImportedFileClient;
 use App\Models\RelAdvisorClientNew;
-use Exception;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class DataBaseManager
 {
@@ -67,16 +64,31 @@ class DataBaseManager
      *
      * @return void
      */
-    public function createClients()
+    public function createClients($count = 0)
     {
-        DB::beginTransaction();
-        try {
-            $clientsManager = new ClientsManager;
-            $customerDataPreload = CustomerDataPreload::take(200);
+        $clientsManager = new ClientsManager;
+        $customerDataPreload = CustomerDataPreload::take(100);
+        if ($customerDataPreload) {
             $customerDataPreloadIds = clone $customerDataPreload->pluck('id');
             $customerDataPreload = $customerDataPreload->get();
             
             foreach ($customerDataPreload as $customerData) {
+
+                $formAnswer = (array) $customerData->form_answer;
+                $sections = $customerData->form->section;
+                $formAnswers = [];
+
+                foreach ($sections as $section) {
+                    foreach ($section->fields as $field) {
+                        if (isset($formAnswer[$field->id])) {
+                            $field->value = $formAnswer[$field->id];
+                            $formAnswers[] = $field; 
+                        }
+                    }
+                }
+
+                $customerData->form_answer = (object) $formAnswers;
+
                 $data = [
                     "form_id" => $customerData->form_id,
                     "unique_indentificator" => $customerData->unique_identificator,
@@ -159,14 +171,19 @@ class DataBaseManager
             }
     
             CustomerDataPreload::destroy($customerDataPreloadIds->toArray());
+            error_log(json_encode($customerDataPreloadIds->toArray()));
+            sleep(3);
 
-            DB::commit();
-            
-            dispatch((new CreateClients)->delay(Carbon::now()->addSeconds(10)))->onQueue('create-clients');
-        } catch (Exception $e) {
-            Log::error("Client Masive Creator: {$e->getMessage()}");
-            DB::rollBack();
+            if ($count < 1000) {
+                $count++;
+                $this->createClients($count);
+            } else {
+                dd($count * 100);
+            }
+            // dd($customerDataPreloadIds->toArray());
         }
+
+        // dispatch((new CreateClients)->delay(Carbon::now()->addSeconds(10)))->onQueue('create-clients');
     }
 
     /**

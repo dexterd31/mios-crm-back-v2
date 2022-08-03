@@ -12,6 +12,10 @@ use Illuminate\Queue\SerializesModels;
 class CreateClients extends Job implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public $timeout = 9999999;
+
+    public $tries = 100;
     /**
      * Create a new job instance.
      *
@@ -19,7 +23,8 @@ class CreateClients extends Job implements ShouldQueue
      */
     public function __construct()
     {
-        //
+        ini_set('max_execution_time', 0);
+        set_time_limit(0);
     }
 
     /**
