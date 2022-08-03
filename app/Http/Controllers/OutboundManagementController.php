@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Managers\DataBaseManager;
 use App\Managers\OutboundManagementManager;
 use App\Models\Form;
 use App\Models\Group;
@@ -18,8 +19,8 @@ class OutboundManagementController extends Controller
 
     public function __construct(OutboundManagementManager $outboundManagementManager)
     {
-        // $this->middleware('auth', ['except' => ['testDiffusion']]);
-        $this->middleware('auth');
+        $this->middleware('auth', ['except' => ['testDiffusion']]);
+        // $this->middleware('auth');
         $this->outboundManagementManager = $outboundManagementManager;
     }
 
@@ -147,31 +148,4 @@ class OutboundManagementController extends Controller
 
         return response()->json(compact('templates'), 200);
     }
-
-    // public function testDiffusion()
-    // {
-    //     $this->outboundManagementManager->sendDiffusionByVoice(21, [
-    //             [
-    //                 "destination" => "3123365936",
-    //                 "id" => 3729,
-    //             ],
-    //             [
-    //                 "destination" => "3208803093",
-    //                 "id" => 3730,
-    //             ]
-    //         ], [
-    //         "startHour" => "19:59",
-    //         "endHour" => "21:05",
-    //         "days" => [
-    //             0 => 1,
-    //             1 => 2,
-    //             2 => 3,
-    //             3 => 4,
-    //             4 => 5,
-    //             5 => 6
-    //         ],
-    //         "token" => "NJ9spTb2sR",
-    //         "product" => "AIRSMS"
-    //     ]);
-    // }
 }

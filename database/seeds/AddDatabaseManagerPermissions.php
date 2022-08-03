@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\CreateClients;
 use App\Models\ModuleCrm;
 use Illuminate\Database\Seeder;
 
