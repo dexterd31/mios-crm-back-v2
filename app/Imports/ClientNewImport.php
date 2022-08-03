@@ -45,7 +45,7 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
         foreach ($rows as $rowIndex => $row) {
             $answerFields = (Object)[];
             $errorAnswers = [];
-            $formAnswerClient=[];
+            $formAnswerClient = [];
             $customFieldData = [];
     
             foreach ($row as $fieldIndex => $field) {
@@ -61,7 +61,7 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
                             array_push($answerFields->$in, $dataValidate->$in);
                         }
                         
-                        array_push($formAnswerClient, $dataValidate->formAnswer);
+                        $formAnswerClient[$dataValidate->formAnswer->id] = $dataValidate->formAnswer->value;
                     } else {
                         $fila = strval(intval($rowIndex) + 1);
                         $columnErrorMessage = "Error en la Fila $fila";
@@ -242,7 +242,8 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
                 array_push($answer->in,'preload');
             }
             $answer->formAnswer = (Object)[
-                $field->id => gettype($field->value) !=="string" ?  strval($field->value) : $field->value
+                'id' => $field->id,
+                'value' => gettype($field->value) !=="string" ?  strval($field->value) : $field->value
             ];
             $answer->formAnswerIndex = (Object)[
                 $field->id => gettype($field->value) !=="string" ?  strval($field->value) : $field->value
