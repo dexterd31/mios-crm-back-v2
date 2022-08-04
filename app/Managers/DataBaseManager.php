@@ -67,12 +67,32 @@ class DataBaseManager
      *
      * @return void
      */
-    public function createClients()
+    public function createClients($formId)
     {
             $clientsManager = new ClientsManager;
-            
-            CustomerDataPreload::chunk(500, function ($customerDataPreload) use ($clientsManager){
+
+            CustomerDataPreload::whereIn('form_id', $formId)->chunk(100, function ($customerDataPreload) use ($clientsManager) {
                 foreach ($customerDataPreload as $customerData) {
+                    $formAnswer = $customerData->form_answer;
+                    $sections = $customerData->form->section;
+                    $formAnswers = [];
+                    
+                    foreach ($sections as $section) {
+                        foreach (json_decode($section->fields) as $field) {
+                            foreach ($formAnswer as $key => $fieldData) {
+                                if (isset($fieldData[$field->id])) {
+                                    $field->value = $fieldData[$field->id];
+                                    $formAnswers[] = $field;
+                                } else if ($field->id == $key) {
+                                    $field->value = $fieldData;
+                                    $formAnswers[] = $field;
+                                }
+                            }
+                        }
+                    }
+                    
+                    $customerData->form_answer = $formAnswers;
+
                     $data = [
                         "form_id" => $customerData->form_id,
                         "unique_indentificator" => $customerData->unique_identificator,
@@ -156,11 +176,6 @@ class DataBaseManager
                     $is_deleted = $customerData->delete();
                 }
             });
-            
-    
-            // CustomerDataPreload::destroy($customerDataPreloadIds->toArray());
-
-            // dispatch((new CreateClients)->delay(Carbon::now()->addSeconds(10)))->onQueue('create-clients');
     }
 
     /**

@@ -16,6 +16,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FormReportExport;
 use App\Services\CiuService;
 use App\Imports\ClientNewImport;
+use App\Jobs\CreateClients;
 use App\Managers\ClientsManager;
 use App\Models\Channel;
 use App\Models\CustomField;
@@ -250,6 +251,8 @@ class UploadController extends Controller
         if (count($fieldsLoad)) {
             $clientNewImport = new ClientNewImport($request->form_id, filter_var($request->action, FILTER_VALIDATE_BOOLEAN), $fieldsLoad, $assignUsersObject ?? null, $tagsIds, $customFields, $importedFile->id);
             Excel::import($clientNewImport, $file);
+
+            dispatch((new CreateClients([$request->form_id]))->delay(Carbon::now()->addSeconds(1)))->onQueue('create-clients');
 
             $resume = $clientNewImport->getResume();
             $informe = new stdClass();
