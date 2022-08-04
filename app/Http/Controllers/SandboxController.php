@@ -56,7 +56,6 @@ class SandboxController extends Controller
 
 
         //campaignid
-        Log::info($arr);
         return;
 
         $requestBody = array(

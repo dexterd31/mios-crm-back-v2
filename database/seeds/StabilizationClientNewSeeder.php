@@ -28,8 +28,6 @@ class StabilizationClientNewSeeder extends Seeder
         $a = 0;
         $clientNewId = ClientNew::max('id') ? ClientNew::max('id') + 1 : 1;
 
-        
-        \Log::info("ulyimo Id: === ". $clientNewId);
         $total = count($formAnswer);
         foreach ($formAnswer as &$answer)
         {
