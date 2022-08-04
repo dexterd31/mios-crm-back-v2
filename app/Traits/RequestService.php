@@ -44,7 +44,6 @@ trait RequestService
     public function jsonRequest($method, $requestUrl, $formParams = [], $headers = [])
     {
         try{
-            Log::info($this->baseUri);
             $client = new Client([
                 'verify' => false,
                 'base_uri' => $this->baseUri

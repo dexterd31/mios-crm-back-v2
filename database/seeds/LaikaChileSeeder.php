@@ -50,7 +50,6 @@ class LaikaChileSeeder extends Seeder
         foreach(json_decode($answer) as $answerItem){
             $this->structureCollection->each(function ($item) use (&$answerItem, &$newAnswer, $id){
                 if($answerItem->id === $item->id){
-                    Log::info("SE MODIFICA ID $id");
                     $answerItem->id = $item->replace->id;
                     $answerItem->key = $item->replace->key;
                     foreach($item->replace->values as $value){

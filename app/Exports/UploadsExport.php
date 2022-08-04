@@ -68,7 +68,6 @@ class UploadsExport implements WithHeadings, WithMapping, FromQuery
     }
 
     private function getErrors(array $arraySearch,array $arrayRecipe = []){
-        Log::info(count(array_keys($arraySearch)));
         if(count(array_keys($arraySearch)) > 0){
             foreach ($arraySearch as $a){
                 $this->getErrors($a,$arrayRecipe);
