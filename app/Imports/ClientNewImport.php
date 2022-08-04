@@ -61,7 +61,10 @@ class ClientNewImport implements ToCollection, WithHeadingRow, WithChunkReading,
                             array_push($answerFields->$in, $dataValidate->$in);
                         }
                         
-                        $formAnswerClient[$dataValidate->formAnswer->id] = $dataValidate->formAnswer->value;
+                        $formAnswerClient[] = (object) [
+                            $dataValidate->formAnswer->id => $dataValidate->formAnswer->value
+                        ];
+
                     } else {
                         $fila = strval(intval($rowIndex) + 1);
                         $columnErrorMessage = "Error en la Fila $fila";

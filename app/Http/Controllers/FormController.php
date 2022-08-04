@@ -312,6 +312,8 @@ class FormController extends Controller
      * Se cambia la funcion reportes evalua primero los campos que se deben reportar y despues compara con las respuestas
      */
     public function report(Request $request, MiosHelper $miosHelper){
+        set_time_limit(0);
+        ini_set('max_execution_time', 0);
         $char="";
         $rrhhService = new RrhhService();
         $trayHistoric = Tray::select('id')->where('form_id',$request->formId)->whereNotNull('save_historic')->get();

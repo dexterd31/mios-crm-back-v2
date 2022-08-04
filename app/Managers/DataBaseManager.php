@@ -76,15 +76,17 @@ class DataBaseManager
             
             foreach ($customerDataPreload as $customerData) {
 
-                $formAnswer = (array) $customerData->form_answer;
-                $sections = $customerData->form->section;
+                $formAnswer = $customerDataPreload->form_answer;
+                $sections = $customerDataPreload->form->section;
                 $formAnswers = [];
 
                 foreach ($sections as $section) {
                     foreach (json_decode($section->fields) as $field) {
-                        if (isset($formAnswer[$field->id])) {
-                            $field->value = $formAnswer[$field->id];
-                            $formAnswers[] = $field; 
+                        foreach ($formAnswer as $fieldData) {
+                            if (isset($fieldData[$field->id])) {
+                                $field->value = $fieldData[$field->id];
+                                $formAnswers[] = $field; 
+                            }
                         }
                     }
                 }
