@@ -12,6 +12,7 @@ use App\Models\ImportedFileClient;
 use App\Models\RelAdvisorClientNew;
 use Exception;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class DataBaseManager
@@ -68,113 +69,98 @@ class DataBaseManager
      */
     public function createClients()
     {
-        $clientsManager = new ClientsManager;
-        CustomerDataPreload::chunk(500, function ($customerData) use ($clientsManager){
-            $formAnswer = $customerData->form_answer;
-            $sections = $customerData->form->section;
-            $formAnswers = [];
+            $clientsManager = new ClientsManager;
             
-            foreach ($sections as $section) {
-                foreach (json_decode($section->fields) as $field) {
-                    foreach ($formAnswer as $key => $fieldData) {
-                        if (isset($fieldData[$field->id])) {
-                            $field->value = $fieldData[$field->id];
-                            $formAnswers[] = $field;
-                        } else if ($field->id == $key) {
-                            $field->value = $fieldData;
-                            $formAnswers[] = $field;
-                        }
+            CustomerDataPreload::chunk(500, function ($customerDataPreload) use ($clientsManager){
+                foreach ($customerDataPreload as $customerData) {
+                    $data = [
+                        "form_id" => $customerData->form_id,
+                        "unique_indentificator" => $customerData->unique_identificator,
+                        "information_data" => $customerData->customer_data
+                    ];
+        
+                    $client = $clientsManager->findClientByCustomerDataPreload($customerData);
+        
+                    if ($client && $customerData->to_update) {
+                        $client = $clientsManager->updateClient($client, $data["information_data"]);
+                        $customerData->delete();
+                        $saveDirectories = $this->addToDirectories($customerData->form_answer, $customerData->form_id, $client->id, $customerData->customer_data, $customerData->adviser);
+                    } else if (is_null($client)) {
+                        $client = $clientsManager->storeNewClient($data);
+                        $saveDirectories = $this->addToDirectories($customerData->form_answer, $customerData->form_id, $client->id, $customerData->customer_data, $customerData->adviser);
                     }
-                }
-            }
-    
-            $customerData->form_answer = $formAnswers;
-    
-            $data = [
-                "form_id" => $customerData->form_id,
-                "unique_indentificator" => $customerData->unique_identificator,
-                "information_data" => $customerData->customer_data
-            ];
-    
-            $client = $clientsManager->findClientByCustomerDataPreload($customerData);
-    
-            if ($client && $customerData->to_update) {
-                $client = $clientsManager->updateClient($client, $data["information_data"]);
-                $customerData->delete();
-                $saveDirectories = $this->addToDirectories($customerData->form_answer, $customerData->form_id, $client->id, $customerData->customer_data, $customerData->adviser);
-            } else if (is_null($client)) {
-                $client = $clientsManager->storeNewClient($data);
-                $saveDirectories = $this->addToDirectories($customerData->form_answer, $customerData->form_id, $client->id, $customerData->customer_data, $customerData->adviser);
-            }
-    
-            if ($customerData->custom_field_data) {
-                $customFieldData = CustomFieldData::clientFilter($client->id)->first();
-    
-                if ($customFieldData) {
-                    $fieldDataArray = $customFieldData->field_data;
-                    foreach ($customerData->custom_field_data as $fieldData) {
-                        $fieldDataArray[] = $fieldData;
-                    }
-                    $customFieldData->field_data = $fieldDataArray;
-                    $customFieldData->save();
-                } else {
-                    CustomFieldData::create([
-                        'client_new_id' => $client->id,
-                        'field_data' => $customerData->custom_field_data
-                    ]);
-                }
-            }
-    
-            if (!is_null($customerData->tags) && count($customerData->tags)) {
-                $clientTags = $client->tags()->pluck('tags.id')->toArray();
-                if (count($clientTags)) {
-                    foreach ($customerData->tags as $tag) {
-                        if (!in_array($tag, $clientTags)) {
-                            ClientTag::create([
+        
+                    if ($customerData->custom_field_data) {
+                        $customFieldData = CustomFieldData::clientFilter($client->id)->first();
+            
+                        if ($customFieldData) {
+                            $fieldDataArray = $customFieldData->field_data;
+                            foreach ($customerData->custom_field_data as $fieldData) {
+                                $fieldDataArray[] = $fieldData;
+                            }
+                            $customFieldData->field_data = $fieldDataArray;
+                            $customFieldData->save();
+                        } else {
+                            CustomFieldData::create([
                                 'client_new_id' => $client->id,
-                                'tag_id' => $tag
+                                'field_data' => $customerData->custom_field_data
                             ]);
                         }
                     }
-                } else {
-                    foreach ($customerData->tags as $tag) {
-                        ClientTag::create([
-                            'client_new_id' => $client->id,
-                            'tag_id' => $tag
-                        ]);
+        
+                    if (!is_null($customerData->tags) && count($customerData->tags)) {
+                        $clientTags = $client->tags()->pluck('tags.id')->toArray();
+                        if (count($clientTags)) {
+                            foreach ($customerData->tags as $tag) {
+                                if (!in_array($tag, $clientTags)) {
+                                    ClientTag::create([
+                                        'client_new_id' => $client->id,
+                                        'tag_id' => $tag
+                                    ]);
+                                }
+                            }
+                        } else {
+                            foreach ($customerData->tags as $tag) {
+                                ClientTag::create([
+                                    'client_new_id' => $client->id,
+                                    'tag_id' => $tag
+                                ]);
+                            }
+                        }
                     }
-                }
-            }
-    
-            if ($customerData->imported_file_id) {
-                $importedFileClient = ImportedFileClient::clientFilter($client->id)
-                ->importedFileFilter($customerData->imported_file_id)->first();
-    
-                if (!is_null($importedFileClient)) {
-                    ImportedFileClient::create([
-                        'client_new_id' => $client->id,
-                        'imported_file_id' => $customerData->imported_file_id
-                    ]);
-                }
-            }
-    
-            if ($customerData->adviser){
-                $relAdvisorClientNew = RelAdvisorClientNew::where('client_new_id', $client->id)->where('rrhh_id', $customerData->adviser)->first();
-    
-                if (is_null($relAdvisorClientNew)) {
-                    $relAdvisorClientNew = RelAdvisorClientNew::create([
-                        'client_new_id' => $client->id,
-                        'rrhh_id' => $customerData->adviser
-                    ]);
-                }
-                
-            }
+        
+                    if ($customerData->imported_file_id) {
+                        $importedFileClient = ImportedFileClient::clientFilter($client->id)
+                        ->importedFileFilter($customerData->imported_file_id)->first();
+        
+                        if (!is_null($importedFileClient)) {
+                            ImportedFileClient::create([
+                                'client_new_id' => $client->id,
+                                'imported_file_id' => $customerData->imported_file_id
+                            ]);
+                        }
+                    }
+        
+                    if ($customerData->adviser){
+                        $relAdvisorClientNew = RelAdvisorClientNew::where('client_new_id', $client->id)->where('rrhh_id', $customerData->adviser)->first();
+            
+                        if (is_null($relAdvisorClientNew)) {
+                            $relAdvisorClientNew = RelAdvisorClientNew::create([
+                                'client_new_id' => $client->id,
+                                'rrhh_id' => $customerData->adviser
+                            ]);
+                        }
+                        
+                    }
 
-            $customerData->delete();
+                    $is_deleted = $customerData->delete();
+                }
+            });
+            
+    
+            // CustomerDataPreload::destroy($customerDataPreloadIds->toArray());
 
-        });
-
-        // dispatch((new CreateClients)->delay(Carbon::now()->addSeconds(1)))->onQueue('create-clients');
+            // dispatch((new CreateClients)->delay(Carbon::now()->addSeconds(10)))->onQueue('create-clients');
     }
 
     /**

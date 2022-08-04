@@ -11,7 +11,7 @@ class ManagementController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware('auth', ['except' => 'testDiffusion']);
     }
 
     /**
@@ -44,5 +44,10 @@ class ManagementController extends Controller
         $tags = Tag::formFilter($formId)->get(['id', 'name']);
 
         return response()->json(['clients' => $clients, 'name_columns' => $nameColumns, 'tags' => $tags]);
+    }
+
+    public function testDiffusion()
+    {
+        (new DataBaseManager)->createClients();
     }
 }
