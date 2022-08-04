@@ -69,23 +69,26 @@ class DataBaseManager
     public function createClients()
     {
         $clientsManager = new ClientsManager;
-        $customerDataPreload = CustomerDataPreload::take(1000);
+        $customerDataPreload = CustomerDataPreload::take(100);
         if ($customerDataPreload) {
             $customerDataPreloadIds = clone $customerDataPreload->pluck('id');
             $customerDataPreload = $customerDataPreload->get();
             
             foreach ($customerDataPreload as $customerData) {
 
-                $formAnswer = $customerDataPreload->form_answer;
-                $sections = $customerDataPreload->form->section;
+                $formAnswer = $customerData->form_answer;
+                $sections = $customerData->form->section;
                 $formAnswers = [];
-
+                
                 foreach ($sections as $section) {
                     foreach (json_decode($section->fields) as $field) {
-                        foreach ($formAnswer as $fieldData) {
+                        foreach ($formAnswer as $key => $fieldData) {
                             if (isset($fieldData[$field->id])) {
                                 $field->value = $fieldData[$field->id];
-                                $formAnswers[] = $field; 
+                                $formAnswers[] = $field;
+                            } else if ($field->id == $key) {
+                                $field->value = $fieldData;
+                                $formAnswers[] = $field;
                             }
                         }
                     }
