@@ -34,7 +34,6 @@ class CleanDataEstabilitationSeeder extends Seeder
 
             }
             $section->fields = json_encode($fields);
-            \Log::info($section->fields);
             $section->save();
         }
 

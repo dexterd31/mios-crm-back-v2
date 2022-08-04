@@ -36,7 +36,6 @@ class CreateClients extends Job implements ShouldQueue
      */
     public function handle()
     {
-        Log::info("Comienza ejecucion en: " . Carbon::now('america/Bogota')->toDateTimeString());
         (new DataBaseManager)->createClients();
     }
 }
