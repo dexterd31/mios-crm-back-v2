@@ -914,7 +914,7 @@ class FormAnswerController extends Controller
      * @return void
      */
     private function processPreloadedData($formId, $uniqueIdentificator)
-    {
+    {   
         $customerDataPreload = CustomerDataPreload::where('form_id', $formId)
         ->whereJsonContains("unique_identificator",["id" => $uniqueIdentificator->id]);
         
@@ -930,8 +930,28 @@ class FormAnswerController extends Controller
         }
         
         $customerDataPreload = $customerDataPreload->first();
+
         
         if (!is_null($customerDataPreload)) {
+            $formAnswer = $customerDataPreload->form_answer;
+            $sections = $customerDataPreload->form->section;
+            $formAnswers = [];
+            
+            foreach ($sections as $section) {
+                foreach (json_decode($section->fields) as $field) {
+                    foreach ($formAnswer as $key => $fieldData) {
+                        if (isset($fieldData[$field->id])) {
+                            $field->value = $fieldData[$field->id];
+                            $formAnswers[] = $field;
+                        } else if ($field->id == $key) {
+                            $field->value = $fieldData;
+                            $formAnswers[] = $field;
+                        }
+                    }
+                }
+            }
+            
+            $customerDataPreload->form_answer = $formAnswers;
             $clientsManager = new ClientsManager;
             
             $data = [
