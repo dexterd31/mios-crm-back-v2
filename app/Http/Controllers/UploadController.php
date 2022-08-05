@@ -251,6 +251,8 @@ class UploadController extends Controller
             $clientNewImport = new ClientNewImport($request->form_id, filter_var($request->action, FILTER_VALIDATE_BOOLEAN), $fieldsLoad, $assignUsersObject ?? null, $tagsIds, $customFields, $importedFile->id);
             Excel::import($clientNewImport, $file);
 
+            dispatch((new CreateClients($request->form_id))->delay(Carbon::now()->addSeconds(1)))->onQueue('create-clients');
+
             $resume = $clientNewImport->getResume();
             $informe = new stdClass();
             $informe->totalArchivo = $resume->totalRegistros;

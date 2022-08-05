@@ -66,16 +66,17 @@ class DataBaseManager
      *
      * @return void
      */
-    public function createClients()
+    public function createClients($formId)
     {
         $clientsManager = new ClientsManager;
-        $customerDataPreload = CustomerDataPreload::take(100);
-        if ($customerDataPreload) {
-            $customerDataPreloadIds = clone $customerDataPreload->pluck('id');
-            $customerDataPreload = $customerDataPreload->get();
-            
-            foreach ($customerDataPreload as $customerData) {
 
+        $customerDataPreload = CustomerDataPreload::where('form_id', $formId)->where('managed', false)->take(100);
+        $customerDataPreloadUpdateManagedColumn = clone $customerDataPreload;
+        $customerDataPreload = $customerDataPreload->get();
+        $customerDataPreloadUpdateManagedColumn->update(['managed' => 1]);
+
+        if ($customerDataPreload->count()) {
+            foreach ($customerDataPreload as $customerData) {
                 $formAnswer = $customerData->form_answer;
                 $sections = $customerData->form->section;
                 $formAnswers = [];
@@ -93,9 +94,9 @@ class DataBaseManager
                         }
                     }
                 }
-
+                
                 $customerData->form_answer = $formAnswers;
-
+    
                 $data = [
                     "form_id" => $customerData->form_id,
                     "unique_indentificator" => $customerData->unique_identificator,
@@ -175,13 +176,12 @@ class DataBaseManager
                     }
                     
                 }
-            }
     
-            CustomerDataPreload::destroy($customerDataPreloadIds->toArray());
+                $is_deleted = $customerData->delete();
+            }
+            
+            dispatch((new CreateClients($formId))->delay(Carbon::now()->addSeconds(1)))->onQueue('create-clients');
         }
-
-        dispatch((new CreateClients)->delay(Carbon::now()->addSeconds(1)))->onQueue('create-clients');
-
     }
 
     /**
