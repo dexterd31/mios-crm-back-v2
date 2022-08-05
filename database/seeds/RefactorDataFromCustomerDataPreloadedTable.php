@@ -30,6 +30,9 @@ class RefactorDataFromCustomerDataPreloadedTable extends Seeder
         //     }
         // });
 
-        dispatch((new CreateClients([45,91,92,93,95,96,97,98,99, 105,109,106,110,111,112,133,114,115]))->delay(Carbon::now()->addSeconds(1)))->onQueue('create-clients');
+        foreach ([45,91,92,93,95,96,97,98,99,105,109,106,110,111,112,133,114,115] as $formId) {
+            dispatch((new CreateClients($formId))->delay(Carbon::now()->addSeconds(1)))->onQueue('create-clients');
+            sleep(1);
+        }
     }
 }

@@ -69,35 +69,54 @@ class DataBaseManager
      */
     public function createClients($formId)
     {
-            $clientsManager = new ClientsManager;
+        $clientsManager = new ClientsManager;
 
-            CustomerDataPreload::whereIn('form_id', $formId)->chunk(100, function ($customerDataPreload) use ($clientsManager) {
-                foreach ($customerDataPreload as $customerData) {
-                    $formAnswer = $customerData->form_answer;
-                    $sections = $customerData->form->section;
-                    $formAnswers = [];
-                    
-                    foreach ($sections as $section) {
-                        foreach (json_decode($section->fields) as $field) {
-                            foreach ($formAnswer as $key => $fieldData) {
-                                if (isset($fieldData[$field->id])) {
-                                    $field->value = $fieldData[$field->id];
-                                    $formAnswers[] = $field;
-                                } else if ($field->id == $key) {
-                                    $field->value = $fieldData;
-                                    $formAnswers[] = $field;
-                                }
+        $customerDataPreload = CustomerDataPreload::where('form_id', $formId)->where('managed', false)->take(100);
+        $customerDataPreloadUpdateManagedColumn = clone $customerDataPreload;
+        $customerDataPreload = $customerDataPreload->get();
+        $customerDataPreloadUpdateManagedColumn->update(['managed' => 1]);
+
+        if ($customerDataPreload->count()) {
+            foreach ($customerDataPreload as $customerData) {
+                $formAnswer = $customerData->form_answer;
+                $sections = $customerData->form->section;
+                $formAnswers = [];
+                
+                foreach ($sections as $section) {
+                    foreach (json_decode($section->fields) as $field) {
+                        foreach ($formAnswer as $key => $fieldData) {
+                            if (isset($fieldData[$field->id])) {
+                                $field->value = $fieldData[$field->id];
+                                $formAnswers[] = $field;
+                            } else if ($field->id == $key) {
+                                $field->value = $fieldData;
+                                $formAnswers[] = $field;
                             }
                         }
                     }
-                    
-                    $customerData->form_answer = $formAnswers;
-
-                    $data = [
-                        "form_id" => $customerData->form_id,
-                        "unique_indentificator" => $customerData->unique_identificator,
-                        "information_data" => $customerData->customer_data
-                    ];
+                }
+                
+                $customerData->form_answer = $formAnswers;
+    
+                $data = [
+                    "form_id" => $customerData->form_id,
+                    "unique_indentificator" => $customerData->unique_identificator,
+                    "information_data" => $customerData->customer_data
+                ];
+    
+                $client = $clientsManager->findClientByCustomerDataPreload($customerData);
+    
+                if ($client && $customerData->to_update) {
+                    $client = $clientsManager->updateClient($client, $data["information_data"]);
+                    $customerData->delete();
+                    $saveDirectories = $this->addToDirectories($customerData->form_answer, $customerData->form_id, $client->id, $customerData->customer_data, $customerData->adviser);
+                } else if (is_null($client)) {
+                    $client = $clientsManager->storeNewClient($data);
+                    $saveDirectories = $this->addToDirectories($customerData->form_answer, $customerData->form_id, $client->id, $customerData->customer_data, $customerData->adviser);
+                }
+    
+                if ($customerData->custom_field_data) {
+                    $customFieldData = CustomFieldData::clientFilter($client->id)->first();
         
                     $client = $clientsManager->findClientByCustomerDataPreload($customerData);
         
@@ -172,10 +191,14 @@ class DataBaseManager
                         }
                         
                     }
-
-                    $is_deleted = $customerData->delete();
+                    
                 }
-            });
+    
+                $is_deleted = $customerData->delete();
+            }
+            
+            dispatch((new CreateClients($formId))->delay(Carbon::now()->addSeconds(1)))->onQueue('create-clients');
+        }
     }
 
     /**
