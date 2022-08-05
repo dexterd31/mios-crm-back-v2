@@ -10,6 +10,7 @@ use App\Models\CustomFieldData;
 use App\Models\Directory;
 use App\Models\ImportedFileClient;
 use App\Models\RelAdvisorClientNew;
+use App\Support\Collection;
 use Exception;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -57,6 +58,8 @@ class DataBaseManager
 
             return $client;
         });
+
+        $clients = (new Collection($clients))->paginate(100);
 
         return [$clients, $tableColumns];
     }
@@ -197,7 +200,7 @@ class DataBaseManager
                 $is_deleted = $customerData->delete();
             }
             
-            dispatch((new CreateClients($formId))->delay(Carbon::now()->addSeconds(1)))->onQueue('create-clients');
+            dispatch((new CreateClients($formId)))->onQueue('create-clients');
         }
     }
 
