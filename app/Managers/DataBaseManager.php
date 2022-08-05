@@ -29,7 +29,7 @@ class DataBaseManager
      *  - toDate: fecha final.
      * @return array
      */
-    public function listManagement(int $formId, array $filterOptions = []) : array
+    public function listManagement(int $formId, array $filterOptions = [], $paginate = 50) : array
     {
         $clients = ClientNew::formFilter($formId);
         
@@ -59,7 +59,7 @@ class DataBaseManager
             return $client;
         });
 
-        $clients = (new Collection($clients))->paginate(100);
+        $clients = (new Collection($clients))->paginate($paginate);
 
         return [$clients, $tableColumns];
     }

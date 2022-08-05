@@ -21,6 +21,7 @@ use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use stdClass;
 
 
@@ -318,19 +319,19 @@ class FormController extends Controller
         $rrhhService = new RrhhService();
         $trayHistoric = Tray::select('id')->where('form_id',$request->formId)->whereNotNull('save_historic')->get();
         $formAnswers = DB::table('form_answer_logs')
-            ->join('form_answers','form_answer_logs.form_answer_id', 'form_answers.id')
-            ->where('form_answers.form_id', $request->formId)
-            ->where('form_answers.tipification_time', '!=', 'upload')
-            ->whereBetween('form_answer_logs.updated_at', ["$request->date1 00:00:00", "$request->date2 00:00:00"])
-            ->select('form_answer_logs.form_answer_id as id', 'form_answer_logs.structure_answer', 'form_answers.created_at', 'form_answer_logs.updated_at','form_answer_logs.rrhh_id as id_rhh', 'form_answers.tipification_time')
-            ->get();
+        ->join('form_answers','form_answer_logs.form_answer_id', 'form_answers.id')
+        ->where('form_answers.form_id', $request->formId)
+        ->where('form_answers.tipification_time', '!=', 'upload')
+        ->whereBetween('form_answer_logs.updated_at', ["$request->date1 00:00:00", "$request->date2 00:00:00"])
+        ->orWhereBetween('form_answers.updated_at', ["$request->date1 00:00:00", "$request->date2 00:00:00"])
+        ->select('form_answer_logs.form_answer_id as id', 'form_answer_logs.structure_answer', 'form_answers.created_at', 'form_answer_logs.updated_at','form_answer_logs.rrhh_id as id_rhh', 'form_answers.tipification_time')
+        ->get();
+            
         if(count($formAnswers)==0){
             // 406 Not Acceptable
             // se envia este error ya que no esta mapeado en interceptor angular.
             return $this->errorResponse('No se encontraron datos en el rango de fecha suministrado', 406);
-        } else if(count($formAnswers)>5000){
-            return $this->errorResponse('El rango de fechas supera a los 5000 records', 413);
-        } else {
+        }  else {
             $inputReport=[];
             $titleHeaders=['Id'];
             $dependencies=[];
@@ -344,6 +345,8 @@ class FormController extends Controller
             $usersInfo=$rrhhService->fetchUsers($useString);
             //Organizamos la información del usuario en un array asociativo con la información necesaria
             $adviserInfo=[];
+
+            // dd($usersInfo);
             foreach($usersInfo as $info){
                 if(in_array($info->id,$userIds)){
                     if(!isset($adviserInfo[$info->id])){
@@ -460,10 +463,12 @@ class FormController extends Controller
             if(isset($request->include_tipification_time) && $request->include_tipification_time){
                 array_push($titleHeaders,'Tiempo de tipificación');
             }else{
-                \Log::warning("Parametro include_tipification_time ".isset($request->include_tipification_time)."para generar el reporte");
+                Log::warning("Parametro include_tipification_time ".isset($request->include_tipification_time)."para generar el reporte");
             }
         }
-        return Excel::download(new FormReportExport($rows, $titleHeaders), 'ReporteFormulario.xlsx');
+
+        (new FormReportExport($rows, $titleHeaders))->download('reporte.xlsx');
+        return response()->json(['success' => 'Tu reporte se está generando... te notificaremos cuando esté disponible.']);
     }
 
     /**

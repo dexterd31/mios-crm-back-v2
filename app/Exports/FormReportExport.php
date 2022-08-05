@@ -2,17 +2,14 @@
 
 namespace App\Exports;
 
-use App\Models\FormAnswer;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
-
 $headers2 = [];
 
-class FormReportExport implements FromCollection, WithHeadings
+class FormReportExport implements FromCollection, WithHeadings, ShouldQueue
 {
 
   use Exportable;
