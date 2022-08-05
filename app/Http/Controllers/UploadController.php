@@ -16,6 +16,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FormReportExport;
 use App\Services\CiuService;
 use App\Imports\ClientNewImport;
+use App\Jobs\CreateClients;
 use App\Managers\ClientsManager;
 use App\Models\Channel;
 use App\Models\CustomField;
