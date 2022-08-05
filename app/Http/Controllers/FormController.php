@@ -342,11 +342,11 @@ class FormController extends Controller
             $userIds=$miosHelper->getArrayValues('id_rhh',$formAnswers);
             $useString=implode(',',array_values(array_unique($userIds)));
             //Traemos los datos de rrhh de los usuarios
+            dd($useString, $userIds);
             $usersInfo=$rrhhService->fetchUsers($useString);
             //Organizamos la información del usuario en un array asociativo con la información necesaria
             $adviserInfo=[];
 
-            // dd($usersInfo);
             foreach($usersInfo as $info){
                 if(in_array($info->id,$userIds)){
                     if(!isset($adviserInfo[$info->id])){
