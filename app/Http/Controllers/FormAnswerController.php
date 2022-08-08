@@ -14,6 +14,7 @@ use App\Models\Tray;
 use App\Models\Attachment;
 use App\Models\ClientNew;
 use App\Models\Channel;
+use App\Models\ClientTag;
 use App\Models\CustomerDataPreload;
 use App\Models\CustomFieldData;
 use App\Models\FormAnswerLog;
@@ -27,6 +28,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\FormAnswersTray;
+use App\Models\ImportedFileClient;
 use App\Models\RelAdvisorClientNew;
 use App\Models\RelTrayUser;
 use App\Traits\CheckDuplicateSections;
@@ -973,6 +975,57 @@ class FormAnswerController extends Controller
                 
                 if(isset($client->id)){
                     $saveDirectories = $this->addToDirectories($customerDataPreload->form_answer, $formId, $client->id,$customerDataPreload->customer_data);
+                }
+            }
+
+            if ($customerDataPreload->custom_field_data) {
+                $customFieldData = CustomFieldData::clientFilter($client->id)->first();
+    
+                if ($customFieldData) {
+                    $fieldDataArray = $customFieldData->field_data;
+                    foreach ($customerDataPreload->custom_field_data as $fieldData) {
+                        $fieldDataArray[] = $fieldData;
+                    }
+                    $customFieldData->field_data = $fieldDataArray;
+                    $customFieldData->save();
+                } else {
+                    CustomFieldData::create([
+                        'client_new_id' => $client->id,
+                        'field_data' => $customerDataPreload->custom_field_data
+                    ]);
+                }
+            }
+
+            if (!is_null($customerDataPreload->tags) && count($customerDataPreload->tags)) {
+                $clientTags = $client->tags()->pluck('tags.id')->toArray();
+                if (count($clientTags)) {
+                    foreach ($customerDataPreload->tags as $tag) {
+                        if (!in_array($tag, $clientTags)) {
+                            ClientTag::create([
+                                'client_new_id' => $client->id,
+                                'tag_id' => $tag
+                            ]);
+                        }
+                    }
+                } else {
+                    foreach ($customerDataPreload->tags as $tag) {
+                        ClientTag::create([
+                            'client_new_id' => $client->id,
+                            'tag_id' => $tag
+                        ]);
+                    }
+                }
+            }
+
+            if ($customerDataPreload->imported_file_id) {
+                $importedFileClient = ImportedFileClient::clientFilter($client->id)
+                ->importedFileFilter($customerDataPreload->imported_file_id)->first();
+
+                if (!is_null($importedFileClient)) {
+                    ImportedFileClient::create([
+                        'client_new_id' => $client->id,
+                        'imported_file_id' => $customerDataPreload->imported_file_id
+                    ]);
                 }
             }
             
