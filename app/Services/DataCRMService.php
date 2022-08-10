@@ -454,7 +454,6 @@ class DataCRMService
             'sessionName' => $this->getSessionName(),
             'element' => $merged->toJson()
         );
-        if(env('APP_ENV') == 'local' ||env('APP_ENV') == 'dev') Log::info( $requestBody );
         $this->post('/webservice.php', http_build_query($requestBody));
         return;
     }
@@ -473,7 +472,6 @@ class DataCRMService
             'sessionName' => $this->getSessionName(),
             'element' => $merged->toJson()
         );
-        if(env('APP_ENV') == 'local' ||env('APP_ENV') == 'dev') Log::info( $requestBody );
         $this->post('/webservice.php', http_build_query($requestBody));
         return;
 
@@ -515,7 +513,6 @@ class DataCRMService
         ));
 
         $response = curl_exec($curl);
-        //Log::info($response);
         curl_close($curl);
 
         $responseJson = json_decode($response);

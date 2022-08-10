@@ -33,7 +33,6 @@ class Kernel extends ConsoleKernel
             foreach ($formsDataCRM as $key => $value) {
                 $dataService->getAccounts($value->form_id);
             }
-            Log::info('Ejecutandose minuto a minuto');
             })->everyMinute();
     }
 }

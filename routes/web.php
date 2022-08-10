@@ -250,6 +250,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
         $router->get('/outbound/show/{outboundManagementId}', 'OutboundManagementController@show');
         $router->delete('/outbound/attachments/delete/{id}', 'OutboundManagementController@deleteAttachment');
         $router->get('/outbound/attachments/download/{id}', 'OutboundManagementController@downloadAttachment');
+        $router->get('/outbound/whatsapp/{whatsappAccountId}/templates', 'OutboundManagementController@getWhatsappTemplates');
       });
 
       $router->group(['prefix' => 'clients'], function () use ($router) {
@@ -259,5 +260,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->group(['prefix' => 'forms'], function () use ($router) {
         $router->get('/byAdviser', 'FormController@indexFormsByAdviser');
       });
+
+      $router->get('reports/download/{filename}', 'FormController@downloadReport');
+      $router->get('reports/delete/{filename}', 'FormController@deleteReport');
 });
     

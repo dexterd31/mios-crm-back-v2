@@ -139,7 +139,7 @@ class CustomerDataPreload extends Model
      */
     public function getFormAnswerAttribute($value)
     {
-        return json_decode($value);
+        return json_decode($value, true);
     }
 
     /**
