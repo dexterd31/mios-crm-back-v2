@@ -186,9 +186,9 @@ class ReportManager
             $fileName = Carbon::now('America/Bogota')->getTimestamp();
             (new FormReportExport($rows, $titleHeaders))->store("reports/$fileName.xlsx");
 
-            (new NotificationsService)->sendNotification('Reportes',"/mios/crm/forms/report-download/$fileName", $rrhhIdToNotify, 'Tu reporte esta disponible, descarga dando click aquí.');
+            (new NotificationsService)->sendNotification('',"/mios/crm/forms/report-download/$fileName", $rrhhIdToNotify, 'Tu reporte esta disponible, descarga dando click aquí.');
         } else {
-            (new NotificationsService)->sendNotification('Reportes','/mios/ciu', $rrhhIdToNotify, 'No se encontraron registros para crear el reporte.');
+            (new NotificationsService)->sendNotification('','/mios/ciu', $rrhhIdToNotify, 'No se encontraron registros para crear el reporte.');
         }
     }
 }
