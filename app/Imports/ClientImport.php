@@ -68,7 +68,6 @@ class ClientImport implements ToModel, WithBatchInserts, WithValidation, WithHea
             "unique_indentificator" => json_encode($uniqueIdentificator),
         ]);
         $client=$clientController->create($newRequest);
-        \Log::info($client);
         return $client;
 
     }

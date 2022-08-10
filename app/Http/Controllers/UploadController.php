@@ -16,14 +16,16 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FormReportExport;
 use App\Services\CiuService;
 use App\Imports\ClientNewImport;
+use App\Jobs\CreateClients;
 use App\Managers\ClientsManager;
 use App\Models\Channel;
-use App\Models\CustomerDataPreload;
 use App\Models\CustomField;
 use App\Models\Form;
 use App\Models\FormAnswer;
 use App\Models\ImportedFile;
 use App\Models\Tag;
+use App\Models\Form;
+use App\Models\FormAnswer;
 use App\Models\FormAnswerLog;
 use App\Traits\FieldsForSection;
 use App\Traits\FindAndFormatValues;
@@ -46,7 +48,7 @@ class UploadController extends Controller
     public function __construct()
     {
         ini_set('max_execution_time', 300);
-        $this->middleware('auth', ['except' => 'uploadClientDataFromEmail']);
+        $this->middleware('auth', ['except' => 'uploadClientFromVideoChat']);
     }
 
     /**
@@ -250,8 +252,10 @@ class UploadController extends Controller
         }
 
         if (count($fieldsLoad)) {
-            $clientNewImport = new ClientNewImport($this, $request->form_id, filter_var($request->action, FILTER_VALIDATE_BOOLEAN), $fieldsLoad, $assignUsersObject ?? null, $tagsIds, $customFields, $importedFile->id);
+            $clientNewImport = new ClientNewImport($request->form_id, filter_var($request->action, FILTER_VALIDATE_BOOLEAN), $fieldsLoad, $assignUsersObject ?? null, $tagsIds, $customFields, $importedFile->id);
             Excel::import($clientNewImport, $file);
+
+            dispatch((new CreateClients($request->form_id)))->onQueue('create-clients');
 
             $resume = $clientNewImport->getResume();
             $informe = new stdClass();

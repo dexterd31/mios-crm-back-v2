@@ -24,4 +24,11 @@ class Directory extends Model
     {
         return $this->belongsTo(ClientNew::class, 'client_new_id');
     }
+
+    //? Filters --------------------------------------------------------------------------------------------------------
+
+    public function scopeFormFilter($query, $form)
+    {
+        if ($form) return $query->where('form_id', $form);
+    }
 }

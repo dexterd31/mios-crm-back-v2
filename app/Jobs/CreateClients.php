@@ -8,18 +8,26 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class CreateClients extends Job implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public $timeout = 9999999;
+
+    protected $formId;
+
+    // public $tries = 100;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct($formId)
     {
-        //
+        $this->formId = $formId;
     }
 
     /**
@@ -29,6 +37,6 @@ class CreateClients extends Job implements ShouldQueue
      */
     public function handle()
     {
-        (new DataBaseManager)->createClients();
+        (new DataBaseManager)->createClients($this->formId);
     }
 }
