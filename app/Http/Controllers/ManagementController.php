@@ -24,8 +24,9 @@ class ManagementController extends Controller
     public function indexDataBaseManagement($formId, Request $request)
     {
         $filterOptions = $request->filter_options ?? [];
+        $paginate = $request->paginate ?? 50;
 
-        [$clients, $tableColumns] = (new DataBaseManager)->listManagement($formId, (array) $filterOptions);
+        [$clients, $tableColumns] = (new DataBaseManager)->listManagement($formId, (array) $filterOptions, $paginate);
 
         $nameColumns = ['updated_at' => 'Actualizado por última vez'];
 

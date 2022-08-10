@@ -10,8 +10,10 @@ use App\Models\CustomFieldData;
 use App\Models\Directory;
 use App\Models\ImportedFileClient;
 use App\Models\RelAdvisorClientNew;
+use App\Support\Collection;
 use Exception;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class DataBaseManager
@@ -27,7 +29,7 @@ class DataBaseManager
      *  - toDate: fecha final.
      * @return array
      */
-    public function listManagement(int $formId, array $filterOptions = []) : array
+    public function listManagement(int $formId, array $filterOptions = [], $paginate = 50) : array
     {
         $clients = ClientNew::formFilter($formId);
         
@@ -57,6 +59,8 @@ class DataBaseManager
             return $client;
         });
 
+        $clients = (new Collection($clients))->paginate($paginate);
+
         return [$clients, $tableColumns];
     }
 
@@ -66,33 +70,37 @@ class DataBaseManager
      *
      * @return void
      */
-    public function createClients()
+    public function createClients($formId)
     {
         $clientsManager = new ClientsManager;
-        $customerDataPreload = CustomerDataPreload::take(1000);
-        if ($customerDataPreload) {
-            $customerDataPreloadIds = clone $customerDataPreload->pluck('id');
-            $customerDataPreload = $customerDataPreload->get();
-            
+
+        $customerDataPreload = CustomerDataPreload::where('form_id', $formId)->where('managed', false)->take(100);
+        $customerDataPreloadUpdateManagedColumn = clone $customerDataPreload;
+        $customerDataPreload = $customerDataPreload->get();
+        $customerDataPreloadUpdateManagedColumn->update(['managed' => 1]);
+
+        if ($customerDataPreload->count()) {
             foreach ($customerDataPreload as $customerData) {
-
-                $formAnswer = $customerDataPreload->form_answer;
-                $sections = $customerDataPreload->form->section;
+                $formAnswer = $customerData->form_answer;
+                $sections = $customerData->form->section;
                 $formAnswers = [];
-
+                
                 foreach ($sections as $section) {
                     foreach (json_decode($section->fields) as $field) {
-                        foreach ($formAnswer as $fieldData) {
+                        foreach ($formAnswer as $key => $fieldData) {
                             if (isset($fieldData[$field->id])) {
                                 $field->value = $fieldData[$field->id];
-                                $formAnswers[] = $field; 
+                                $formAnswers[] = $field;
+                            } else if ($field->id == $key) {
+                                $field->value = $fieldData;
+                                $formAnswers[] = $field;
                             }
                         }
                     }
                 }
-
+                
                 $customerData->form_answer = $formAnswers;
-
+    
                 $data = [
                     "form_id" => $customerData->form_id,
                     "unique_indentificator" => $customerData->unique_identificator,
@@ -109,7 +117,7 @@ class DataBaseManager
                     $client = $clientsManager->storeNewClient($data);
                     $saveDirectories = $this->addToDirectories($customerData->form_answer, $customerData->form_id, $client->id, $customerData->customer_data, $customerData->adviser);
                 }
-    
+
                 if ($customerData->custom_field_data) {
                     $customFieldData = CustomFieldData::clientFilter($client->id)->first();
         
@@ -160,25 +168,29 @@ class DataBaseManager
                         ]);
                     }
                 }
-    
-                if ($customerData->adviser){
-                    $relAdvisorClientNew = RelAdvisorClientNew::where('client_new_id', $client->id)->where('rrhh_id', $customerData->adviser)->first();
+
+                if ($customerData->custom_field_data) {
+                    $customFieldData = CustomFieldData::clientFilter($client->id)->first();
         
-                    if (is_null($relAdvisorClientNew)) {
-                        $relAdvisorClientNew = RelAdvisorClientNew::create([
-                            'client_new_id' => $client->id,
-                            'rrhh_id' => $customerData->adviser
-                        ]);
+                    if ($customerData->adviser){
+                        $relAdvisorClientNew = RelAdvisorClientNew::where('client_new_id', $client->id)->where('rrhh_id', $customerData->adviser)->first();
+            
+                        if (is_null($relAdvisorClientNew)) {
+                            $relAdvisorClientNew = RelAdvisorClientNew::create([
+                                'client_new_id' => $client->id,
+                                'rrhh_id' => $customerData->adviser
+                            ]);
+                        }
+                        
                     }
                     
                 }
-            }
     
-            CustomerDataPreload::destroy($customerDataPreloadIds->toArray());
+                $is_deleted = $customerData->delete();
+            }
+            
+            dispatch((new CreateClients($formId)))->onQueue('create-clients');
         }
-
-        dispatch((new CreateClients)->delay(Carbon::now()->addSeconds(1)))->onQueue('create-clients');
-
     }
 
     /**

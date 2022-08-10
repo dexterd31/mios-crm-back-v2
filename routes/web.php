@@ -260,4 +260,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->group(['prefix' => 'forms'], function () use ($router) {
         $router->get('/byAdviser', 'FormController@indexFormsByAdviser');
       });
+
+      $router->get('reports/download/{filename}', 'FormController@downloadReport');
+      $router->get('reports/delete/{filename}', 'FormController@deleteReport');
 });
