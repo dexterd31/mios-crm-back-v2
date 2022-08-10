@@ -2,14 +2,13 @@
 
 namespace App\Exports;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
 $headers2 = [];
 
-class FormReportExport implements FromCollection, WithHeadings, ShouldQueue
+class FormReportExport implements FromCollection, WithHeadings
 {
 
   use Exportable;
