@@ -97,7 +97,7 @@ class ClientNew extends Model
     public function scopeUpdatedAtBetweenFilter($query, $from, $to)
     {
         if ($from && $to) {
-            return $query->whereDate('updated_at', '>=', $from)->whereDate('updated_at', '<=', $to);
+            return $query->whereDate('client_news.updated_at', '>=', $from)->whereDate('client_news.updated_at', '<=', $to);
         }
     }
 }

@@ -56,4 +56,15 @@ class NotificationsService{
         return $this->request('GET', "/api/campaings/emails/$id");
     }
 
+    /**
+     * Metodo para el envio de notificaciones al front
+     * @param $idNotification, $app, $user , $message
+     * @return request
+     */
+    public function sendNotification($idNotification ,$app, $user, $message)
+    {
+        $requestBody = ['idNotification' => $idNotification,'app' => $app, 'user' => $user,'message'=>$message];
+        return $this->request('post', '/api/testPusher?'.http_build_query($requestBody));
+    }
+
 }

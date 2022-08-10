@@ -163,7 +163,9 @@ class ExternalController extends Controller
                 'client_new_id' => $client->id,
                 'form_answer_index_data' => json_encode($formAnswerIndexData),
             ]);
+            $formAnswer->channel_id = $channel->id;
         } else {
+            $formAnswer->channel_id = $channel->id;
             $formAnswer->structure_answer = json_encode($structureAnswer);
             $formAnswer->save();
         }

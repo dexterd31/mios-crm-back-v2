@@ -17,16 +17,17 @@ class CreateClients extends Job implements ShouldQueue
 
     public $timeout = 9999999;
 
+    protected $formId;
+
     // public $tries = 100;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct($formId)
     {
-        // ini_set('max_execution_time', 0);
-        // set_time_limit(0);
+        $this->formId = $formId;
     }
 
     /**
@@ -36,6 +37,6 @@ class CreateClients extends Job implements ShouldQueue
      */
     public function handle()
     {
-        (new DataBaseManager)->createClients();
+        (new DataBaseManager)->createClients($this->formId);
     }
 }
