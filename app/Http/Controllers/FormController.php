@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\FormReportExport;
+use App\Jobs\DeleteReport;
 use App\Jobs\FormReport;
 use App\Managers\ReportManager;
 use App\Models\ApiConnection;
@@ -329,20 +330,12 @@ class FormController extends Controller
     public function downloadReport($filename)
     {
         try{
-            return response()->download(storage_path("app/reports/$filename.xlsx")); 
+            dispatch((new DeleteReport($filename))->delay(Carbon::now('America/Bogota')->addHour()))->onQueue('delete-report');
+            return response()->download(storage_path("app/reports/$filename.xlsx"));
         }catch(Exception $ex){
             Log::info("Ha ocurrido un error al consultar el archivo: " . $ex->getMessage());
             return $this->errorResponse('Ocurrio un error al intentar descargar el archivo', 500);
         }
-    }
-
-    public function deleteReport($filename)
-    {
-        try{
-            $eliminado = Storage::delete("reports/$filename.xlsx");
-         }catch(Exception $ex){
-             Log::error("Error al eliminar el adjunto del escalamiento: " . $ex->getMessage());
-         }
     }
 
     /**

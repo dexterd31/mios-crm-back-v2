@@ -3,16 +3,16 @@
 namespace App\Managers;
 
 use App\Exports\FormReportExport;
+use App\Models\Form;
 use App\Models\Section;
 use App\Models\Tray;
 use App\Services\NotificationsService;
 use App\Services\RrhhService;
 use App\Traits\FindAndFormatValues;
 use Helpers\MiosHelper;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Storage;
 
 class ReportManager
 {
@@ -186,9 +186,16 @@ class ReportManager
             $fileName = Carbon::now('America/Bogota')->getTimestamp();
             (new FormReportExport($rows, $titleHeaders))->store("reports/$fileName.xlsx");
 
-            (new NotificationsService)->sendNotification('',"/mios/crm/forms/report-download/$fileName", $rrhhIdToNotify, 'Tu reporte esta disponible, descarga dando click aquí.');
+            $formName = Form::find($data['formId'])->name_form;
+
+            (new NotificationsService)->sendNotification('',"/mios/crm/forms/report-download/$fileName", $rrhhIdToNotify, "Tu reporte del formulario $formName estara disponible durante 1 hora, descarga dando click aquí.");
         } else {
             (new NotificationsService)->sendNotification('','/mios/ciu', $rrhhIdToNotify, 'No se encontraron registros para crear el reporte.');
         }
+    }
+
+    public function deleteReport($filename)
+    {
+        $eliminado = Storage::delete("reports/$filename.xlsx");
     }
 }
