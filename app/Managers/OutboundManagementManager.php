@@ -187,7 +187,7 @@ class OutboundManagementManager
                 $messageContent = str_replace("[[$field->id]]", $field->value, $messageContent);
             }
 
-            $customFieldData = CustomFieldData::clientFilter()->first();
+            $customFieldData = CustomFieldData::clientFilter($answer->client_new_id)->first();
 
             if ($customFieldData) {
                 foreach ($customFieldData->field_data as $fileData) {
@@ -238,7 +238,7 @@ class OutboundManagementManager
                 $subject = str_replace("[[$field->id]]", $field->value, $subject);
             }
 
-            $customFieldData = CustomFieldData::clientFilter()->first();
+            $customFieldData = CustomFieldData::clientFilter($answer->client_new_id)->first();
             
             if ($customFieldData) {
                 foreach ($customFieldData->field_data as $fileData) {
@@ -333,7 +333,7 @@ class OutboundManagementManager
                 }
             }
 
-            $customFieldData = CustomFieldData::clientFilter()->first();
+            $customFieldData = CustomFieldData::clientFilter($answer->client_new_id)->first();
             
             if ($customFieldData) {
                 foreach ($whatsappFields as $key => $wField) {
