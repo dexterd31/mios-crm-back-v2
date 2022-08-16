@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\FormReport;
+use App\Jobs\DeleteReport;
+use App\Managers\ReportManager;
 use App\Models\ApiConnection;
 use App\Models\CustomerDataPreload;
 use App\Models\Form;
@@ -15,8 +16,8 @@ use App\Traits\FindAndFormatValues;
 use Helpers\MiosHelper;
 use Illuminate\Http\Request;
 use Exception;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use stdClass;
 
 
@@ -312,7 +313,7 @@ class FormController extends Controller
         ini_set('memory_limit', '1000M');
         set_time_limit(0);
 
-        dispatch(new FormReport($request->all(), auth()->user()->rrhh_id))->onQueue('form-report');
+        (new ReportManager)->consultReportData($request->all(), auth()->user()->rrhh_id);
 
         return response()->json(['success' => 'Tu reporte se está generando... te notificaremos cuando esté disponible.']);
     }
@@ -320,20 +321,12 @@ class FormController extends Controller
     public function downloadReport($filename)
     {
         try{
-            return response()->download(storage_path("app/reports/$filename.xlsx")); 
+            dispatch((new DeleteReport($filename))->delay(Carbon::now('America/Bogota')->addHour()))->onQueue('delete-report');
+            return response()->download(storage_path("app/reports/$filename.xlsx"));
         }catch(Exception $ex){
             Log::info("Ha ocurrido un error al consultar el archivo: " . $ex->getMessage());
             return $this->errorResponse('Ocurrio un error al intentar descargar el archivo', 500);
         }
-    }
-
-    public function deleteReport($filename)
-    {
-        try{
-            $eliminado = Storage::delete("reports/$filename.xlsx");
-         }catch(Exception $ex){
-             Log::error("Error al eliminar el adjunto del escalamiento: " . $ex->getMessage());
-         }
     }
 
     /**
