@@ -19,7 +19,7 @@ class OutboundManagementController extends Controller
 
     public function __construct(OutboundManagementManager $outboundManagementManager)
     {
-        $this->middleware('auth', ['except' => ['testDiffusion']]);
+        $this->middleware('auth', ['except' => ['getWhatsappTemplates']]);
         // $this->middleware('auth');
         $this->outboundManagementManager = $outboundManagementManager;
     }
