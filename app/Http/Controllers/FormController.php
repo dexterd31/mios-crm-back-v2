@@ -322,7 +322,7 @@ class FormController extends Controller
         ini_set('memory_limit', '1000M');
         set_time_limit(0);
 
-        dispatch(new FormReport($request->all(), auth()->user()->rrhh_id))->onQueue('form-report');
+        (new ReportManager)->consultReportData($request->all(), auth()->user()->rrhh_id);
 
         return response()->json(['success' => 'Tu reporte se está generando... te notificaremos cuando esté disponible.']);
     }
