@@ -37,7 +37,9 @@ class WhatsappService
             ],
         ];
 
-        $this->request('POST', '/template/msg', $data, $headers);
+        if (env('APP_ENV') == 'development') $data['src.name'] = $this->whatsappAccount->app_name;
+
+        $this->request('POST', '/sm/api/v1/template/msg', $data, $headers);
     }
     
     public function getTemplates()
