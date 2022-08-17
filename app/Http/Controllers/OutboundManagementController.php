@@ -108,7 +108,15 @@ class OutboundManagementController extends Controller
 
     public function sendDiffusion(Request $request)
     {
-        $outboundManagement = $this->outboundManagementManager->save($request->all());
+        $fileKeys = array_keys($request->file());
+
+        if (count($fileKeys)) {
+            $input = $request->except(...$fileKeys);
+        } else {
+            $input = $request->all();
+        }
+
+        $outboundManagement = $this->outboundManagementManager->save($input, $request->file());
 
         $this->outboundManagementManager->createDiffusion($outboundManagement);
         
