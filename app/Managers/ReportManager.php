@@ -32,7 +32,8 @@ class ReportManager
         ->whereBetween('form_answer_logs.updated_at', ["{$data['date1']} 00:00:00", "{$data['date2']} 00:00:00"])
         ->orWhereBetween('form_answers.updated_at', ["{$data['date1']} 00:00:00", "{$data['date2']} 00:00:00"]);
 
-        $formAnswerLogsIds = clone $formAnswers->pluck('form_answer_logs.form_answer_id')->toArray();
+        $formAnswerLogsIds = clone $formAnswers->pluck('form_answer_logs.form_answer_id');
+        $formAnswerLogsIds = $formAnswerLogsIds->toArray();
 
         $formAnswers = $formAnswers->get(['form_answer_logs.form_answer_id as id','form_answer_logs.rrhh_id as id_rhh']);
 
