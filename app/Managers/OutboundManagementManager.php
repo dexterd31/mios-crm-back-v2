@@ -323,12 +323,13 @@ class OutboundManagementManager
             $messageParams = [];
 
             foreach ($whatsappFields as $key => $wField) {
+                $wField = (array) $wField;
                 foreach ($fields as $field) {
                     if ($field->id == $outboundManagement->settings->diffusion_field) {
                         $destination = $field->value;
                     }
-                    if ($field->id == $wField) {
-                        $messageParams[$key] = $field->value;
+                    if ($field->id == $wField[$key + 1]) {
+                        $messageParams[$key + 1] = $field->value;
                     }
                 }
             }
