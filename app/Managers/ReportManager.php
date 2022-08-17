@@ -97,7 +97,7 @@ class ReportManager
             $plantillaRespuestas['created_at'] = $char;
             $plantillaRespuestas['updated_at'] = $char;
 
-            dispatch(new FormReport($formAnswerLogsIds, $plantillaRespuestas, $inputReport, $dependencies, $adviserInfo,  $titleHeaders, $data['formId'], $data['include_tipification_time'], $rrhhIdToNotify))->onQueue('form-report');
+            dispatch((new FormReport($formAnswerLogsIds, $plantillaRespuestas, $inputReport, $dependencies, $adviserInfo,  $titleHeaders, $data['formId'], $data['include_tipification_time'], $rrhhIdToNotify))->delay(Carbon::now('America/Bogota')->addMinute()))->onQueue('form-report');
     
             // foreach ($formAnswers as $answer) {
             //     $respuestas = $plantillaRespuestas;
