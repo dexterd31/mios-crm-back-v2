@@ -62,62 +62,62 @@ class OutboundManagementManager
 
     public function save(array $data, array $files = [])
     {
-        DB::beginTransaction();
+        // DB::beginTransaction();
         $tags = json_decode($data['tags']);
         if (isset($data['outbound_management_id'])) {
-                try {
-                    $outboundManagement = OutboundManagement::find($data['outbound_management_id']);
-                    $outboundManagement->name = $data['name'];
-                    $outboundManagement->settings = json_decode($data['settings']);
-                    $outboundManagement->save();
-                    
-                    $outboundManagement->tags()->detach();
-                    $outboundManagement->tags()->attach($tags);
-    
-                    DB::commit();
-                } catch (Exception $e) {
-                    DB::rollBack();
-                    Log::error("OutboundManagement@save: {$e->getMessage()}");
-                    throw new Exception("Error al actualizar la gestión, por favor comuniquese con el adminstrador del sistema.");
-                }
-            } else {
-                try {
-                    $outboundManagement = OutboundManagement::create([
-                        'form_id' => $data['form_id'],
-                        'name' => $data['name'],
-                        'channel' => $data['channel'],
-                        'settings' => json_decode($data['settings']),
-                        'status' => 'Borrador',
-                    ]);
-        
-                    $tags = json_decode($data['tags']);
-                    $outboundManagement->tags()->attach($tags);
-                    DB::commit();
-                } catch (Exception $e) {
-                    DB::rollBack();
-                    Log::error("OutboundManagement@save: {$e->getMessage()}");
-                    throw new Exception("Error al crear la gestión, por favor comuniquese con el adminstrador del sistema.");
-                }
-            }
-    
-            try {
-                DB::beginTransaction();
-                if (count($files)) {
-                    foreach ($files as $file) {
-                        $path = $file->store("outbound_management_attachments/$outboundManagement->id");
-                        OutboundManagementAttachment::create([
-                            'outbound_management_id' => $outboundManagement->id,
-                            'name' => $file->getClientOriginalName(),
-                            'path' => $path
-                        ]);
-                    }
-                }
+            // try {
+                $outboundManagement = OutboundManagement::find($data['outbound_management_id']);
+                $outboundManagement->name = $data['name'];
+                $outboundManagement->settings = json_decode($data['settings']);
+                $outboundManagement->save();
+                
+                $outboundManagement->tags()->detach();
+                $outboundManagement->tags()->attach($tags);
+
                 DB::commit();
-            } catch (Exception $e) {
-                DB::rollBack();
-                Log::error("OutboundManagement@save: {$e->getMessage()}");
-                throw new Exception("Error al guardar los archivos de la gestión, por favor comuniquese con el adminstrador del sistema.");
+            // } catch (Exception $e) {
+            //     DB::rollBack();
+            //     Log::error("OutboundManagement@save: {$e->getMessage()}");
+            //     throw new Exception("Error al actualizar la gestión, por favor comuniquese con el adminstrador del sistema.");
+            // }
+        } else {
+            // try {
+                $outboundManagement = OutboundManagement::create([
+                    'form_id' => $data['form_id'],
+                    'name' => $data['name'],
+                    'channel' => $data['channel'],
+                    'settings' => json_decode($data['settings']),
+                    'status' => 'Borrador',
+                ]);
+    
+                $tags = json_decode($data['tags']);
+                $outboundManagement->tags()->attach($tags);
+                DB::commit();
+            // } catch (Exception $e) {
+            //     DB::rollBack();
+            //     Log::error("OutboundManagement@save: {$e->getMessage()}");
+            //     throw new Exception("Error al crear la gestión, por favor comuniquese con el adminstrador del sistema.");
+            // }
+        }
+    
+        // try {
+            // DB::beginTransaction();
+            if (count($files)) {
+                foreach ($files as $file) {
+                    $path = $file->store("outbound_management_attachments/$outboundManagement->id");
+                    OutboundManagementAttachment::create([
+                        'outbound_management_id' => $outboundManagement->id,
+                        'name' => $file->getClientOriginalName(),
+                        'path' => $path
+                    ]);
+                }
             }
+            // DB::commit();
+        // } catch (Exception $e) {
+        //     DB::rollBack();
+        //     Log::error("OutboundManagement@save: {$e->getMessage()}");
+        //     throw new Exception("Error al guardar los archivos de la gestión, por favor comuniquese con el adminstrador del sistema.");
+        // }
 
         return $outboundManagement->load('attachments');
     }
