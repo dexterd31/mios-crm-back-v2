@@ -37,7 +37,7 @@ class WhatsappService
             ],
         ];
 
-        $this->request('POST', '/template/msg', $data, $headers);
+        $this->request('POST', '/sm/api/v1/template/msg', $data, $headers);
     }
     
     public function getTemplates()
