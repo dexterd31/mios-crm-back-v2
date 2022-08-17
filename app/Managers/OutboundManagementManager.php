@@ -338,9 +338,10 @@ class OutboundManagementManager
             
             if ($customFieldData) {
                 foreach ($whatsappFields as $key => $wField) {
+                    $wField = (array) $wField;
                     foreach ($customFieldData->field_data as $fileData) {
-                        if ($fileData->id == $wField) {
-                            $messageParams[$key] = $fileData->value;
+                        if ($fileData->id == $wField[$key + 1]) {
+                            $messageParams[$key + 1] = $fileData->value;
                         }
                     }                    
                 }
