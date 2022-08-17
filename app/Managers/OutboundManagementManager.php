@@ -6,6 +6,7 @@ use App\Jobs\DiffusionByEmail;
 use App\Jobs\DiffusionBySMS;
 use App\Jobs\DiffusionByVoice;
 use App\Jobs\DiffusionByWhatsapp;
+use App\Models\CustomFieldData;
 use App\Models\Directory;
 use App\Models\FormAnswer;
 use App\Models\OutboundManagement;
@@ -64,59 +65,59 @@ class OutboundManagementManager
         DB::beginTransaction();
         $tags = json_decode($data['tags']);
         if (isset($data['outbound_management_id'])) {
-                try {
-                    $outboundManagement = OutboundManagement::find($data['outbound_management_id']);
-                    $outboundManagement->name = $data['name'];
-                    $outboundManagement->settings = json_decode($data['settings']);
-                    $outboundManagement->save();
-                    
-                    $outboundManagement->tags()->detach();
-                    $outboundManagement->tags()->attach($tags);
-    
-                    DB::commit();
-                } catch (Exception $e) {
-                    DB::rollBack();
-                    Log::error("OutboundManagement@save: {$e->getMessage()}");
-                    throw new Exception("Error al actualizar la gestión, por favor comuniquese con el adminstrador del sistema.");
-                }
-            } else {
-                try {
-                    $outboundManagement = OutboundManagement::create([
-                        'form_id' => $data['form_id'],
-                        'name' => $data['name'],
-                        'channel' => $data['channel'],
-                        'settings' => json_decode($data['settings']),
-                        'status' => 'Borrador',
-                    ]);
-        
-                    $tags = json_decode($data['tags']);
-                    $outboundManagement->tags()->attach($tags);
-                    DB::commit();
-                } catch (Exception $e) {
-                    DB::rollBack();
-                    Log::error("OutboundManagement@save: {$e->getMessage()}");
-                    throw new Exception("Error al crear la gestión, por favor comuniquese con el adminstrador del sistema.");
-                }
-            }
-    
             try {
-                DB::beginTransaction();
-                if (count($files)) {
-                    foreach ($files as $file) {
-                        $path = $file->store("outbound_management_attachments/$outboundManagement->id");
-                        OutboundManagementAttachment::create([
-                            'outbound_management_id' => $outboundManagement->id,
-                            'name' => $file->getClientOriginalName(),
-                            'path' => $path
-                        ]);
-                    }
-                }
+                $outboundManagement = OutboundManagement::find($data['outbound_management_id']);
+                $outboundManagement->name = $data['name'];
+                $outboundManagement->settings = json_decode($data['settings']);
+                $outboundManagement->save();
+                
+                $outboundManagement->tags()->detach();
+                $outboundManagement->tags()->attach($tags);
+
                 DB::commit();
             } catch (Exception $e) {
                 DB::rollBack();
                 Log::error("OutboundManagement@save: {$e->getMessage()}");
-                throw new Exception("Error al guardar los archivos de la gestión, por favor comuniquese con el adminstrador del sistema.");
+                throw new Exception("Error al actualizar la gestión, por favor comuniquese con el adminstrador del sistema.");
             }
+        } else {
+            try {
+                $outboundManagement = OutboundManagement::create([
+                    'form_id' => $data['form_id'],
+                    'name' => $data['name'],
+                    'channel' => $data['channel'],
+                    'settings' => json_decode($data['settings']),
+                    'status' => 'Borrador',
+                ]);
+    
+                $tags = json_decode($data['tags']);
+                $outboundManagement->tags()->attach($tags);
+                DB::commit();
+            } catch (Exception $e) {
+                DB::rollBack();
+                Log::error("OutboundManagement@save: {$e->getMessage()}");
+                throw new Exception("Error al crear la gestión, por favor comuniquese con el adminstrador del sistema.");
+            }
+        }
+    
+        try {
+            DB::beginTransaction();
+            if (count($files)) {
+                foreach ($files as $file) {
+                    $path = $file->store("outbound_management_attachments/$outboundManagement->id");
+                    OutboundManagementAttachment::create([
+                        'outbound_management_id' => $outboundManagement->id,
+                        'name' => $file->getClientOriginalName(),
+                        'path' => $path
+                    ]);
+                }
+            }
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error("OutboundManagement@save: {$e->getMessage()}");
+            throw new Exception("Error al guardar los archivos de la gestión, por favor comuniquese con el adminstrador del sistema.");
+        }
 
         return $outboundManagement->load('attachments');
     }
@@ -133,13 +134,23 @@ class OutboundManagementManager
         $tags = $outboundManagement->tags()->pluck('tags.id')->toArray();
         $formAnswers = FormAnswer::formFilter($outboundManagement->form_id)
         ->join('client_tag', 'client_tag.client_new_id', 'form_answers.client_new_id')
-        ->whereIn('client_tag.tag_id', $outboundManagement->tags)->get(['form_answers.structure_answer', 'form_answers.client_new_id']);
+        ->whereIn('client_tag.tag_id', $outboundManagement->tags);
 
-        if (!$formAnswers->count()) {
-            $formAnswers = Directory::formFilter($outboundManagement->form_id)
-            ->join('client_tag', 'client_tag.client_new_id', 'directories.client_new_id')
-            ->whereIn('client_tag.tag_id', $tags)->distinct()->get(['directories.data AS structure_answer', 'directories.client_new_id']);
-        }
+        $clientsIds = clone $formAnswers;
+        $clientsIds = $clientsIds->pluck('form_answers.client_new_id')->toArray();
+
+        $formAnswers = $formAnswers->get([
+            'form_answers.structure_answer AS structure_answer',
+            'form_answers.client_new_id AS client_new_id'
+        ]);
+
+        $directories = Directory::formFilter($outboundManagement->form_id)
+        ->join('client_tag', 'client_tag.client_new_id', 'directories.client_new_id')
+        ->whereIn('client_tag.tag_id', $tags)->distinct()
+        ->whereNotIn('directories.client_new_id', $clientsIds)
+        ->get(['directories.data AS structure_answer', 'directories.client_new_id AS client_new_id']);
+
+        $formAnswers = $formAnswers->concat($directories);
 
         $startDiffusionDateTime = "{$outboundManagement->settings->start_diffusion_date} {$outboundManagement->settings->start_diffusion_time}";
 
@@ -173,7 +184,15 @@ class OutboundManagementManager
                 if ($field->id == $outboundManagement->settings->diffusion_field) {
                     $destination = $field->value;
                 }
-                $messageContent = str_replace("[[$field->id]]", $field->value,$messageContent);
+                $messageContent = str_replace("[[$field->id]]", $field->value, $messageContent);
+            }
+
+            $customFieldData = CustomFieldData::clientFilter($answer->client_new_id)->first();
+
+            if ($customFieldData) {
+                foreach ($customFieldData->field_data as $fileData) {
+                    $messageContent = str_replace("[[$fileData->id]]", $fileData->value, $messageContent);
+                }
             }
 
             $clients[] = [
@@ -217,6 +236,15 @@ class OutboundManagementManager
 
                 $body[$field->id] = $field->value;
                 $subject = str_replace("[[$field->id]]", $field->value, $subject);
+            }
+
+            $customFieldData = CustomFieldData::clientFilter($answer->client_new_id)->first();
+            
+            if ($customFieldData) {
+                foreach ($customFieldData->field_data as $fileData) {
+                    $subject = str_replace("[[$fileData->id]]", $fileData->value, $subject);
+                    $body[$fileData->id] = $fileData->value;
+                }
             }
 
             $clients[] = [
@@ -295,13 +323,27 @@ class OutboundManagementManager
             $messageParams = [];
 
             foreach ($whatsappFields as $key => $wField) {
+                $wField = (array) $wField;
                 foreach ($fields as $field) {
                     if ($field->id == $outboundManagement->settings->diffusion_field) {
                         $destination = $field->value;
                     }
-                    if ($field->id == $wField) {
-                        $messageParams[$key] = $field->value;
+                    if ($field->id == $wField[$key + 1]) {
+                        $messageParams[$key + 1] = $field->value;
                     }
+                }
+            }
+
+            $customFieldData = CustomFieldData::clientFilter($answer->client_new_id)->first();
+            
+            if ($customFieldData) {
+                foreach ($whatsappFields as $key => $wField) {
+                    $wField = (array) $wField;
+                    foreach ($customFieldData->field_data as $fileData) {
+                        if ($fileData->id == $wField[$key + 1]) {
+                            $messageParams[$key + 1] = $fileData->value;
+                        }
+                    }                    
                 }
             }
 
