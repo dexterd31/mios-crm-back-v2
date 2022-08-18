@@ -23,17 +23,17 @@ class ReportManager
     {
         ini_set('memory_limit', '1000M');
         set_time_limit(0);
-
+        
         $char="";
-
+        
         $formAnswers = FormAnswerLog::join('form_answers', 'form_answer_logs.form_answer_id', 'form_answers.id')
         ->where('form_answers.form_id', $data['formId'])
         ->where('form_answers.tipification_time', '!=', 'upload')
         ->whereBetween('form_answer_logs.updated_at', ["{$data['date1']} 00:00:00", "{$data['date2']} 00:00:00"])
         ->orWhereBetween('form_answers.updated_at', ["{$data['date1']} 00:00:00", "{$data['date2']} 00:00:00"]);
-
-        $formAnswerLogsIds = clone $formAnswers->pluck('form_answer_logs.form_answer_id');
-        $formAnswerLogsIds = $formAnswerLogsIds->toArray();
+        
+        $formAnswerLogsIds = clone $formAnswers;
+        $formAnswerLogsIds = $formAnswerLogsIds->pluck('form_answer_logs.form_answer_id')->toArray();
 
         $formAnswers = $formAnswers->get(['form_answer_logs.form_answer_id as id','form_answer_logs.rrhh_id as id_rhh']);
 
@@ -192,8 +192,10 @@ class ReportManager
             // $formName = Form::find($data['formId'])->name_form;
 
             // (new NotificationsService)->sendNotification('',"/mios/crm/forms/report-download/$fileName", $rrhhIdToNotify, "Tu reporte del formulario $formName estara disponible durante 1 hora, descarga dando click aquí.");
+
+            return ['success' => 'Tu reporte se está generando... te notificaremos cuando esté disponible.'];
         } else {
-            (new NotificationsService)->sendNotification('','/mios/ciu', $rrhhIdToNotify, 'No se encontraron registros para crear el reporte.');
+            return ['error' => 'No se encontraron registros para crear el reporte.'];
         }
     }
 
