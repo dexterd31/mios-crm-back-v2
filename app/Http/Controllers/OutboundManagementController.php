@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Managers\DataBaseManager;
 use App\Managers\OutboundManagementManager;
+use App\Models\ClientTag;
+use App\Models\CustomFieldData;
 use App\Models\Form;
 use App\Models\Group;
 use App\Models\OutboundManagementAttachment;
@@ -19,8 +20,7 @@ class OutboundManagementController extends Controller
 
     public function __construct(OutboundManagementManager $outboundManagementManager)
     {
-        $this->middleware('auth', ['except' => ['getWhatsappTemplates']]);
-        // $this->middleware('auth');
+        $this->middleware('auth');
         $this->outboundManagementManager = $outboundManagementManager;
     }
 
@@ -39,27 +39,9 @@ class OutboundManagementController extends Controller
 
         $tags = $form->tags()->get(['id', 'name']);
 
-        $fields = [];
-
-
-        $form->section()->get('fields')->each(function ($section) use (&$fields) {
-            $sectionFields = json_decode($section->fields);
-            foreach ($sectionFields as $field) {
-                $fields[] = ['id' => $field->id, 'name' => $field->label];
-            }
-        });
-
-        if ($form->cutomFields) {
-            foreach ($form->cutomFields->fields as $field) {
-                $fields[] = ['id' => $field->id, 'name' => $field->label];
-            }
-        }
-
         $emails = (new NotificationsService)->getEmailsByCampaing(auth()->user()->rrhh->campaign_id);
 
         $servers = Server::get(['id', 'name']);
-
-        // $campaing = (new NominaService)->fetchCampaign(auth()->user()->rrhh->campaing_id);
 
         $groups = Group::campaingFilter(auth()->user()->rrhh->campaign_id)->pluck('id')->toArray();
 
@@ -74,10 +56,8 @@ class OutboundManagementController extends Controller
 
         return response()->json([
             'tags' => $tags,
-            'fields' => $fields,
             'emails' => $emails,
             'servers' => $servers,
-            // 'campaing' => $campaing,
             'products' => $products,
             'whatsappAccounts' => $whatsappAccounts
         ]);
@@ -155,5 +135,49 @@ class OutboundManagementController extends Controller
         $templates = $this->outboundManagementManager->listWhatsappTemplates($whatsappAccountId);
 
         return response()->json(compact('templates'), 200);
+    }
+
+    public function getFormFields($formId, Request $request)
+    {
+        $form = Form::find($formId);
+
+        $clients = ClientTag::join('client_news', 'client_news.id', 'client_tag.client_new_id')
+        ->where('client_news.form_id', $formId)->whereIn('client_tag.tag_id', $request->tags)
+        ->distinct()->pluck('client_tag.client_new_id')->toArray();
+
+        $customFields = CustomFieldData::whereIn('client_new_id', $clients)->pluck('field_data')->toArray();
+
+        foreach ($customFields as $key => $fieldsData) {
+            $fieldsIds = [];
+            foreach ($fieldsData as $fieldData) {
+                $fieldsIds[] = $fieldData->id;
+            }
+            $customFields[$key] = $fieldsIds;
+        }
+        
+        $form->section()->get('fields')->each(function ($section) use (&$fields) {
+            $sectionFields = json_decode($section->fields);
+            foreach ($sectionFields as $field) {
+                $fields[] = ['id' => $field->id, 'name' => $field->label];
+            }
+        });
+        
+        if ($form->cutomFields) {
+            $formFieldsIds = [];
+
+            foreach ($form->cutomFields->fields as $field) {
+                $formFieldsIds[] = $field->id;
+            }
+
+            $fieldInCommon = array_intersect($formFieldsIds, ...$customFields);
+
+            foreach ($form->cutomFields->fields as $field) {
+                if (in_array($field->id, $fieldInCommon)) {
+                    $fields[] = ['id' => $field->id, 'name' => $field->label];
+                }
+            }
+        }
+        
+        return response()->json(['fields' => $fields]);
     }
 }
