@@ -23,17 +23,17 @@ class ReportManager
     {
         ini_set('memory_limit', '1000M');
         set_time_limit(0);
-
+        
         $char="";
-
+        
         $formAnswers = FormAnswerLog::join('form_answers', 'form_answer_logs.form_answer_id', 'form_answers.id')
         ->where('form_answers.form_id', $data['formId'])
         ->where('form_answers.tipification_time', '!=', 'upload')
         ->whereBetween('form_answer_logs.updated_at', ["{$data['date1']} 00:00:00", "{$data['date2']} 00:00:00"])
         ->orWhereBetween('form_answers.updated_at', ["{$data['date1']} 00:00:00", "{$data['date2']} 00:00:00"]);
-
-        $formAnswerLogsIds = clone $formAnswers->pluck('form_answer_logs.form_answer_id');
-        $formAnswerLogsIds = $formAnswerLogsIds->toArray();
+        
+        $formAnswerLogsIds = clone $formAnswers;
+        $formAnswerLogsIds = $formAnswerLogsIds->pluck('form_answer_logs.form_answer_id')->toArray();
 
         $formAnswers = $formAnswers->get(['form_answer_logs.form_answer_id as id','form_answer_logs.rrhh_id as id_rhh']);
 
@@ -97,103 +97,12 @@ class ReportManager
             $plantillaRespuestas['created_at'] = $char;
             $plantillaRespuestas['updated_at'] = $char;
 
+            // $this->buildReportDataStructure($formAnswerLogsIds, $plantillaRespuestas, $inputReport, $dependencies, $adviserInfo,  $titleHeaders, $data['formId'], $data['include_tipification_time'], $rrhhIdToNotify);
             dispatch((new FormReport($formAnswerLogsIds, $plantillaRespuestas, $inputReport, $dependencies, $adviserInfo,  $titleHeaders, $data['formId'], $data['include_tipification_time'], $rrhhIdToNotify))->delay(Carbon::now('America/Bogota')->addMinute()))->onQueue('form-report');
-    
-            // foreach ($formAnswers as $answer) {
-            //     $respuestas = $plantillaRespuestas;
-            //     $respuestas['id'] = $answer->id;
-            //     //Evaluamos los campos que deben ir en el reporte contra las respuestas
-            //     foreach ($inputReport as $input) {
-            //         foreach (json_decode($answer->structure_answer) as $field) {
-            //             if (isset($input->dependencies[0]->report)) {
-            //                 if (in_array($field->id,$dependencies[$input->dependencies[0]->report])) {
-            //                     if (isset($field->value)) {
-            //                         $select = $this->findAndFormatValues($data['formId'], $field->id, $field->value);
-            //                         if ($select->valid && isset($select->name)) {
-            //                             $respuestas[$input->dependencies[0]->report] = $select->name;
-            //                         }else{
-            //                             $respuestas[$input->dependencies[0]->report] = $select->value ?? $select->message;
-            //                         }
-            //                     }
 
-            //                     break;
-            //                 }
-            //             } else if ($field->id==$input->id) {
-            //                 $select = $this->findAndFormatValues($data['formId'], $field->id, $field->value);
-            //                 if ($select->valid && isset($select->name)) {
-            //                     $respuestas[$input->id] = $select->name;
-            //                 } elseif ($select->valid && isset($select->value)) {
-            //                     $respuestas[$input->id] = $select->value;
-            //                 } else {
-            //                     $respuestas[$input->id] = json_encode($select);
-            //                 }
-            //                 break;
-            //             }else if($field->key==$input->key){
-            //                 $select = $this->findAndFormatValues($data['formId'], $input->id, $field->value);
-            //                 if($select->valid && isset($select->name)){
-            //                     $respuestas[$input->id] = $select->name;
-            //                 } else {
-            //                     $respuestas[$input->id] = json_encode($select);
-            //                 }
-            //                 break;
-            //             }
-            //         }
-            //     }
-
-            //     $respuestas['user'] = $char;
-            //     $respuestas['docuser'] = $char;
-
-            //     if (isset($adviserInfo[$answer->id_rhh]->name)) {
-            //         $respuestas['user'] = $adviserInfo[$answer->id_rhh]->name;
-            //         $respuestas['docuser'] = $adviserInfo[$answer->id_rhh]->id_number;
-            //     }
-
-            //     if (gettype($answer->created_at) == 'object') {
-            //         $respuestas['created_at'] = Carbon::parse($answer->created_at->format('c'))->setTimezone('America/Bogota');
-            //         $respuestas['updated_at'] = Carbon::parse($answer->updated_at->format('c'))->setTimezone('America/Bogota');
-            //     } else {
-            //         $respuestas['created_at'] = $answer->created_at;
-            //         $respuestas['updated_at'] = $answer->updated_at;
-            //     }
-
-            //     if (isset($data['include_tipification_time']) && $data['include_tipification_time']) {
-            //         $chronometer = $answer->tipification_time;
-            //         if ($chronometer != "upload") {
-            //             $tipification_time = explode(':', $chronometer);
-            //             if (count($tipification_time) <= 2) {
-            //               $tipification_time[2] = $tipification_time[1];
-            //               $tipification_time[1] = strlen($tipification_time[0]) >= 2 ? $tipification_time[0] : "0" . $tipification_time[0];
-            //               $tipification_time[2] = strlen($tipification_time[2]) >= 2 ? $tipification_time[2] : "0" . $tipification_time[2];
-            //               $tipification_time[0] = '00';
-            //             } else {
-            //               $tipification_time[0] = strlen($tipification_time[0]) >= 2 ? $tipification_time[0] : "0" . $tipification_time[0];
-            //               $tipification_time[1] = strlen($tipification_time[1]) >= 2 ? $tipification_time[1] : "0" . $tipification_time[1];
-            //               $tipification_time[2] = strlen($tipification_time[2]) >= 2 ? $tipification_time[2]: "0" . $tipification_time[2];
-            //             }
-                
-            //             $chronometer = implode(":", $tipification_time);
-            //         }
-                    
-            //         $respuestas['tipification_time'] = $chronometer;
-            //     }
-            //     $rows[$r]=$respuestas;
-            //     $r++;
-            // }
-
-            // array_push($titleHeaders,'Asesor','Documento Asesor','Fecha de creación','Fecha de actualización');
-
-            // if(isset($data['include_tipification_time']) && $data['include_tipification_time']){
-            //     array_push($titleHeaders,'Tiempo de tipificación');
-            // }
-
-            // $fileName = Carbon::now('America/Bogota')->getTimestamp();
-            // (new FormReportExport($rows, $titleHeaders))->store("reports/$fileName.xlsx");
-
-            // $formName = Form::find($data['formId'])->name_form;
-
-            // (new NotificationsService)->sendNotification('',"/mios/crm/forms/report-download/$fileName", $rrhhIdToNotify, "Tu reporte del formulario $formName estara disponible durante 1 hora, descarga dando click aquí.");
+            return ['success' => 'Tu reporte se está generando... te notificaremos cuando esté disponible.'];
         } else {
-            (new NotificationsService)->sendNotification('','/mios/ciu', $rrhhIdToNotify, 'No se encontraron registros para crear el reporte.');
+            return ['error' => 'No se encontraron registros para crear el reporte.'];
         }
     }
 
