@@ -313,7 +313,6 @@ class FormController extends Controller
         ini_set('memory_limit', '1000M');
         set_time_limit(0);
 
-        // dd($request->all());
         $response = (new ReportManager)->consultReportData($request->all(), auth()->user()->rrhh_id);
 
         return response()->json($response);
