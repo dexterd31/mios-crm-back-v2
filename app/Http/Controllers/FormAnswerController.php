@@ -51,7 +51,7 @@ class FormAnswerController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth', ['except' => 'listClientsWithFormAnswer']);
+        $this->middleware('auth');
         $this->ciuService = new CiuService();
         $this->nominaService = new NominaService();
         $this->dataCRMServices = new DataCRMService();
@@ -1238,6 +1238,8 @@ class FormAnswerController extends Controller
             if ($adviser != 'ERROR') {
                 $adviser = "{$adviser->rrhh->first_name} {$adviser->rrhh->last_name}";
             }
+            $structure_answer = json_decode($answer->structure_answer);
+            $answer->structure_answer = $structure_answer;
             $answer->adviser = $adviser;
             $answer->form_name = $form->name_form;
 
