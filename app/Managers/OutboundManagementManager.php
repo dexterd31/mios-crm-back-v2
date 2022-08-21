@@ -134,7 +134,8 @@ class OutboundManagementManager
         $tags = $outboundManagement->tags()->pluck('tags.id')->toArray();
         $formAnswers = FormAnswer::formFilter($outboundManagement->form_id)
         ->join('client_tag', 'client_tag.client_new_id', 'form_answers.client_new_id')
-        ->whereIn('client_tag.tag_id', $outboundManagement->tags);
+        ->whereIn('client_tag.tag_id', $outboundManagement->tags)
+        ->where('form_answers.status', 1);
 
         $clientsIds = clone $formAnswers;
         $clientsIds = $clientsIds->pluck('form_answers.client_new_id')->toArray();

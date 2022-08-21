@@ -13,6 +13,7 @@ class ClientNew extends Model
         "form_id",
         "information_data",
         "unique_indentificator",
+        'status'
     ];
 
     //? Relations ------------------------------------------------------------------------------------------------------
