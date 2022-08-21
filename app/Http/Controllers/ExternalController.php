@@ -151,7 +151,7 @@ class ExternalController extends Controller
             $structureAnswer[] = $answer;
         }
 
-        $formAnswer = FormAnswer::formFilter($formId)->clientFilter($client->id)->first();
+        $formAnswer = FormAnswer::formFilter($formId)->clientFilter($client->id)->where('status', 1)->first();
         $channel = Channel::nameFilter($request->canal)->first();
 
         if (!$formAnswer) {

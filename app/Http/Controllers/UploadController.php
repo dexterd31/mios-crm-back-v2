@@ -860,7 +860,7 @@ class UploadController extends Controller
             $sections[$index]->fields = $fields;
         }
 
-        $formAnswer = FormAnswer::formFilter($formId)->clientFilter($client->id)->first();
+        $formAnswer = FormAnswer::formFilter($formId)->clientFilter($client->id)->where('status', 1)->first();
         $chanel = Channel::nameFilter('Email')->first();
 
         if (!$formAnswer) {
