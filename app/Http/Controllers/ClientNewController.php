@@ -233,7 +233,7 @@ class ClientNewController extends Controller
 
         $client->tags = $client->tags()->get(['tags.id', 'tags.name'])->makeHidden('pivot');
         $client->field_data = $client->customFieldData->field_data ?? [];
-        $formAnswer = $client->formanswer()->latest()->first();
+        $formAnswer = $client->formanswer()->where('status', 1)->latest()->first();
 
         if(is_null($formAnswer)) {
             $formAnswer = $client->directory()->latest()->first();

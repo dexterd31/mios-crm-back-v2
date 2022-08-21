@@ -133,7 +133,9 @@ class OutboundManagementManager
         $tags = $outboundManagement->tags()->pluck('tags.id')->toArray();
         $formAnswers = FormAnswer::formFilter($outboundManagement->form_id)
         ->join('client_tag', 'client_tag.client_new_id', 'form_answers.client_new_id')
-        ->whereIn('client_tag.tag_id', $outboundManagement->tags)->get(['form_answers.structure_answer', 'form_answers.client_new_id']);
+        ->whereIn('client_tag.tag_id', $outboundManagement->tags)
+        ->where('form_answers.status', 1)
+        ->get(['form_answers.structure_answer', 'form_answers.client_new_id']);
 
         if (!$formAnswers->count()) {
             $formAnswers = Directory::formFilter($outboundManagement->form_id)

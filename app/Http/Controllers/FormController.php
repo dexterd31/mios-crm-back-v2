@@ -290,11 +290,6 @@ class FormController extends Controller
         // }
     }
 
-
-    public function getStateForms($sectionNames,$id){
-
-    }
-
     /**
      * Nicoll Ramirez
      * 23-02-2021
