@@ -20,6 +20,7 @@ use App\Jobs\CreateClients;
 use App\Managers\ClientsManager;
 use App\Models\Channel;
 use App\Models\CustomField;
+use App\Models\FormAnswerLog;
 use App\Models\ImportedFile;
 use App\Models\Tag;
 use App\Models\Form;
@@ -863,7 +864,7 @@ class UploadController extends Controller
         $formAnswer = FormAnswer::formFilter($formId)->clientFilter($client->id)->where('status', 1)->first();
         $chanel = Channel::nameFilter('Email')->first();
 
-        if (!$formAnswer) {
+        if (is_null($formAnswer)) {
             $formAnswer = FormAnswer::create([
                 'structure_answer' => json_encode($structureAnswer),
                 'form_id' => $formId,
@@ -872,7 +873,17 @@ class UploadController extends Controller
                 'client_new_id' => $client->id,
                 'form_answer_index_data' => json_encode($formAnswerIndexData),
             ]);
+        } else {
+            $formAnswer->structure_answer = json_encode($structureAnswer);
+            $formAnswer->form_answer_index_data = json_encode($formAnswerIndexData);
+            $formAnswer->save();
         }
+
+        $log = new FormAnswerLog();
+        $log->form_answer_id = $formAnswer->id;
+        $log->structure_answer = $formAnswer->structure_answer;
+        $log->rrhh_id = $formAnswer->rrhh_id;
+        $log->save();
 
         return response()->json([
             'form_answer_id' => $formAnswer->id,
