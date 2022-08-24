@@ -32,6 +32,7 @@ use App\Models\FormAnswersTray;
 use App\Models\ImportedFileClient;
 use App\Models\RelAdvisorClientNew;
 use App\Models\RelTrayUser;
+use App\Support\Collection;
 use App\Traits\CheckDuplicateSections;
 use App\Traits\deletedFieldChecker;
 use App\Traits\FieldsForSection;
@@ -1225,15 +1226,25 @@ class FormAnswerController extends Controller
         return response()->json(['success' => 'Datos eliminados exitosamente.'], 200);
     }
 
-    public function listClientsWithFormAnswer($formId)
+    public function listClientsWithFormAnswer($formId, Request $request)
     {
         $form = Form::find($formId);
-        $formAnswers = FormAnswer::where('form_id', $formId)->get([
+
+        $columns = [
             'rrhh_id AS adviser',
             'updated_at AS management_date',
             'structure_answer',
             'id'
-        ])->map(function ($answer) use ($form) {
+        ];
+
+        if ($request->formAnswerId) {
+            $formAnswers = FormAnswer::where('id', $request->formAnswerId)->get($columns);
+        } else {
+            $formAnswers = FormAnswer::formFilter($formId)->rrhhFilter($request->rrhh)
+            ->updatedAtBetweenFilter($request->from, $request->to)->get($columns);
+        }
+
+        $formAnswers = $formAnswers->map(function ($answer) use ($form) {
             $adviser = $this->ciuService->fetchUserByRrhhId($answer->adviser);
             if ($adviser != 'ERROR') {
                 $adviser = "{$adviser->rrhh->first_name} {$adviser->rrhh->last_name}";
@@ -1246,6 +1257,6 @@ class FormAnswerController extends Controller
             return $answer;
         });
 
-        return response()->json(['data' => $formAnswers]);
+        return response()->json((new Collection($formAnswers))->paginate(5));
     }
 }
