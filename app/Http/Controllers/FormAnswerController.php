@@ -1240,8 +1240,7 @@ class FormAnswerController extends Controller
         if ($request->formAnswerId) {
             $formAnswers = FormAnswer::where('id', $request->formAnswerId)->get($columns);
         } else {
-            $formAnswers = FormAnswer::formFilter($formId)->rrhhFilter($request->rrhh)
-            ->updatedAtBetweenFilter($request->from, $request->to)->get($columns);
+            $formAnswers = FormAnswer::formFilter($formId)->get($columns);
         }
 
         $formAnswers = $formAnswers->map(function ($answer) use ($form) {
