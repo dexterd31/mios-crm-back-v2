@@ -73,7 +73,7 @@ class CircuitsController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function importCircuits(Request $request) {
-        //try {
+        try {
             $this->validate($request, [
                 'file' => 'required',
                 'campaign_id' => 'required'
@@ -92,9 +92,9 @@ class CircuitsController extends Controller
                 }
             }
             return $this->successResponse(['msg' => "Proceso realizado correctamente"]);
-/*         } catch (\Throwable $th) {
+        } catch (\Throwable $th) {
             return $this->errorResponse("Error al importar la información.", 500);
-        } */
+        }
     }
 
     public function validateKey ($item){
