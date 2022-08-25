@@ -7,6 +7,7 @@ use App\Models\Circuits;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\CircuitsImport;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 
 class CircuitsController extends Controller
 {
@@ -54,14 +55,17 @@ class CircuitsController extends Controller
             foreach($toReplace as $item) {
                 $key = str_replace($item, '-', $key);
             }
-            $circuit = new Circuits;
-            $circuit->name = $request->name;
-            $circuit->key = $key;
-            $circuit->campaign_id = $request->campaign_id;
-            $circuit->save();
+            $response = $this->validateKey($request->name);
+            if($response !== false) {
+                $circuit = new Circuits;
+                $circuit->name = $request->name;
+                $circuit->key = $response;
+                $circuit->campaign_id = $request->campaign_id;
+                $circuit->save();
+            }
             return $this->successResponse("Circuito guardado con exito");
         } catch (\Throwable $th) {
-            return $this->errorResponse("Error al guardar la información.", $th,500);
+            return $this->errorResponse("Error al guardar la información.".$th,500);
         }
     }
 
@@ -92,7 +96,7 @@ class CircuitsController extends Controller
             }
             return $this->successResponse(['msg' => "Proceso realizado correctamente"]);
         } catch (\Throwable $th) {
-            return $this->errorResponse("Error al importar la información.", 500);
+            return $this->errorResponse("Error al importar la información.".$th, 500);
         }
     }
 
@@ -112,4 +116,54 @@ class CircuitsController extends Controller
         }
 
     }
+
+         /**
+     * Update the specified resource in storage.
+     * @author:  Javier Castañeda
+     * Fecha creación:  2022/08/25
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Room  $Room
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request)
+    {
+        try{
+            $rules= [
+                'id' => 'required'
+            ];
+            $json_body = json_decode($request->getContent(), true);
+            $validator = Validator::make($request->all(), $rules);        
+            
+            if ($validator->fails()){
+                return $this->errorResponse($validator->errors()->first(), 400);
+            } else{
+                $resp = Circuits::where('id', $request->id)->update($request->all());
+                return $this->successResponse("Recurso editado satisfactoriamente", 200);
+            }
+
+        } catch (\Throwable $th) {
+            return $this->errorResponse('Ocurrio un error al intentar crear el recurso. Detalle: '.$th, 500);
+        }
+    }
+
+
+    public function index (Request $request) {
+        try {
+            if(!empty($request->campaign_id)){
+                $circuit = Circuits::where('campaign_id', $request->campaign_id);
+                if(!empty($request->name)) {
+                    $circuit = $circuit->where('name', 'like',"%$request->name%");
+                }
+                if(!empty($request->state)) {
+                    $circuit = $circuit->where('state', $request->state);
+                } 
+                $circuit = $circuit->get();
+
+                return $this->successResponse($circuit, 200);
+            }
+        } catch (\Throwable $th) {
+            return $this->errorResponse('Ocurrio un error al intentar consultar el recurso. Detalle: '.$th, 500);
+        }
+    }
+
 }

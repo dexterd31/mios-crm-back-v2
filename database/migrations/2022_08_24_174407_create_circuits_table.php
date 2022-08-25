@@ -17,8 +17,8 @@ class CreateCircuitsTable extends Migration
             $table->id();
             $table->string('name');
             $table->string('key')->unique();
-            $table->integer('campaign_id')->nullable();
-            $table->integer('state')->nullable()->default(0);
+            $table->unsignedBigInteger('campaign_id')->nullable();
+            $table->unsignedBigInteger('state')->nullable()->default(0);
             $table->timestamps();
         });
     }
