@@ -1240,7 +1240,7 @@ class FormAnswerController extends Controller
         if ($request->formAnswerId) {
             $formAnswers = FormAnswer::where('id', $request->formAnswerId)->get($columns);
         } else {
-            $formAnswers = FormAnswer::formFilter($formId)->get($columns);
+            $formAnswers = FormAnswer::formFilter($formId)->where('status', 1)->get($columns);
         }
 
         $formAnswers = $formAnswers->map(function ($answer) use ($form) {
@@ -1256,6 +1256,6 @@ class FormAnswerController extends Controller
             return $answer;
         });
 
-        return response()->json((new Collection($formAnswers))->paginate(5));
+        return response()->json((new Collection($formAnswers))->paginate($request->perPage));
     }
 }
