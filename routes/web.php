@@ -265,7 +265,11 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->get('reports/delete/{filename}', 'FormController@deleteReport');
 
       //Circuits
-      $router->post('circuit', 'CircuitsController@store');
+      $router->post('circuits', 'CircuitsController@store');
+      $router->get('circuits/{id}', 'CircuitsController@show');
+      $router->post('circuits/upload', 'CircuitsController@importCircuits');
+
+
 
 });
     
