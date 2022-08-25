@@ -82,8 +82,7 @@ class CircuitsController extends Controller
             $excelData = Excel::toArray(new CircuitsImport, $request->file('file'))[0] ?? [];
             foreach ($excelData as $item) {
                 $response = $this->validateKey($item[0]);
-                //dd($response);
-                if($response == false) {
+                if($response !== false) {
                     $circuit = new Circuits;
                     $circuit->name = $item[0];
                     $circuit->key = $response;
@@ -107,9 +106,9 @@ class CircuitsController extends Controller
         }
         $response= Circuits::where('key', Str::lower($key))->get();
         if(!empty($response)){
-            return Str::lower($key);
-        } else {
             return false;
+        } else {
+            return Str::lower($key);
         }
 
     }
