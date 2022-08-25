@@ -61,7 +61,7 @@ class CircuitsController extends Controller
             $circuit->save();
             return $this->successResponse("Circuito guardado con exito");
         } catch (\Throwable $th) {
-            return $this->errorResponse("Error al guardar la información.", 500);
+            return $this->errorResponse("Error al guardar la información.", $th,500);
         }
     }
 
