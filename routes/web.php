@@ -264,4 +264,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
       $router->get('reports/download/{filename}', 'FormController@downloadReport');
       $router->get('reports/delete/{filename}', 'FormController@deleteReport');
+
+      $router->get('form-answers/delete/{formAnswerId}', 'FormAnswerController@deleteFormAnswerAndClient');
+      $router->get('form-answers/list/{formId}', 'FormAnswerController@listClientsWithFormAnswer');
 });

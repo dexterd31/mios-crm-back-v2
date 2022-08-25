@@ -59,7 +59,7 @@ class TrayController extends Controller
             $data['tray_id'] = $tray->id;
             $trafficTrayManager->newTrafficTray($data);
         }
-        $this->matchTrayFields($tray, FormAnswer::all());
+        $this->matchTrayFields($tray, FormAnswer::where('status', 1)->get());
         return $this->successResponse('Bandeja creada con exito');
     }
 
@@ -81,7 +81,7 @@ class TrayController extends Controller
         foreach($trays as $tray){
             $formAnswers = FormAnswer::join('form_answers_trays', "form_answers.id", 'form_answers_trays.form_answer_id')
             ->join('trays', "trays.id", 'form_answers_trays.tray_id')
-            ->where("trays.id", $tray->id);
+            ->where("trays.id", $tray->id)->where('form_answers.status', 1);
 
             if($tray->advisor_manage == 1){
                 $formAnswersIds = clone $formAnswers;
@@ -182,7 +182,7 @@ class TrayController extends Controller
 
         $formsAnswers = FormAnswer::orderBy('form_answers.updated_at', $orientation)->join('form_answers_trays', "form_answers.id", 'form_answers_trays.form_answer_id')
         ->join('trays', "trays.id", 'form_answers_trays.tray_id')
-        ->where("trays.id", $id);        
+        ->where("trays.id", $id)->where('form_answers.status', 1);        
         
         if($tray->advisor_manage == 1){
             $formsAnswersIds = clone $formsAnswers;

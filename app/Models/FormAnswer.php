@@ -13,7 +13,7 @@ class FormAnswer extends Model
 {
     protected $table = 'form_answers';
     protected $PrimaryKey = 'id';
-    protected $fillable = ['form_id','rrhh_id', 'client_id','channel_id','structure_answer', "client_new_id", "form_answer_index_data", "tipification_time", "conversation_id"];
+    protected $fillable = ['form_id','rrhh_id', 'client_id','channel_id','structure_answer', "client_new_id", "form_answer_index_data", "tipification_time", "conversation_id", 'status'];
 
     public function form(){
        return $this->hasMany('App\Models\Form','id');
@@ -60,6 +60,36 @@ class FormAnswer extends Model
     {
         if ($client) {
             return $query->where('client_new_id', $client);
+        }
+    }
+
+    /**
+     * Filtra por id rrhh
+     * @author Edwin David Sanchez Balbin <e.sanchez@montechelo.online>
+     *
+     * @param Illuminate\Database\Query\Builder $query
+     * @param int $rrhh
+     * @return Illuminate\Database\Query\Builder
+     */
+    public function scopeRrhhFilter($query, $rrhh)
+    {
+        if ($rrhh) {
+            $query->where('rrhh_id', $rrhh);
+        }
+    }
+
+    /**
+     * Filtra la fecha de actualiazción entre un lapso de fechas dadas.
+     *
+     * @param Illuminate\Database\Query\Builder $query
+     * @param string $from Fecha inicial
+     * @param string $to Fecha final
+     * @return Illuminate\Database\Query\Builder
+     */
+    public function scopeUpdatedAtBetweenFilter($query, $from, $to)
+    {
+        if ($from && $to) {
+            return $query->whereDate('client_news.updated_at', '>=', $from)->whereDate('client_news.updated_at', '<=', $to);
         }
     }
 }
