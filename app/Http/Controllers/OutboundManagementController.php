@@ -141,6 +141,8 @@ class OutboundManagementController extends Controller
     {
         $form = Form::find($formId);
 
+        $fields = [];
+
         $clients = ClientTag::join('client_news', 'client_news.id', 'client_tag.client_new_id')
         ->where('client_news.form_id', $formId)->whereIn('client_tag.tag_id', $request->tags)
         ->distinct()->pluck('client_tag.client_new_id')->toArray();
@@ -162,7 +164,7 @@ class OutboundManagementController extends Controller
             }
         });
         
-        if ($form->cutomFields) {
+        if ($form->cutomFields && count($customFields)) {
             $formFieldsIds = [];
 
             foreach ($form->cutomFields->fields as $field) {
