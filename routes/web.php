@@ -270,8 +270,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
       
       //Circuits
-      $router->get('circuits/{id}', 'CircuitsController@show');
       $router->get('circuits/all', 'CircuitsController@index');
+      $router->get('circuits/{id}', 'CircuitsController@show');
       $router->post('circuits', 'CircuitsController@store');
       $router->post('circuits/upload', 'CircuitsController@importCircuits');
       $router->put('circuits/edit', 'CircuitsController@update');
