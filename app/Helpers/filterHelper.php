@@ -7,7 +7,6 @@ use App\Models\Client;
 use App\Models\Directory;
 use App\Models\ApiConnection;
 use App\Support\Collection;
-use PhpParser\Node\Stmt\Foreach_;
 use stdClass;
 
 class FilterHelper
@@ -24,7 +23,7 @@ class FilterHelper
         // Se continua la busqueda por gestiones
         // siempre hay al menos un item de filtro
         //dd("json_contains(structure_answer, '{\"key\":\"$item1key\", \"value\":\"$item1value\"}')");
-        $form_answers = FormAnswer::where('form_id', $formId)
+        $form_answers = FormAnswer::where('form_id', $formId)->where('status', 1)
             ->whereRaw("json_contains(lower(structure_answer), lower('{\"key\":\"$item1key\", \"value\":\"$item1value\"}'))");
 
 
@@ -68,7 +67,7 @@ class FilterHelper
     // Funcion para buscar gestion por id del cliente
     function searchGestionByClientId($formId, $clientId)
     {
-        $where = ['form_id' => $formId, 'client_id' => $clientId];
+        $where = ['form_id' => $formId, 'client_id' => $clientId, 'status' => 1];
         $form_answers = FormAnswer::where($where)->with('client')->paginate(5);
         return $form_answers;
     }

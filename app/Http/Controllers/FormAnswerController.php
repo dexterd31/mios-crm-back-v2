@@ -17,6 +17,7 @@ use App\Models\Channel;
 use App\Models\ClientTag;
 use App\Models\CustomerDataPreload;
 use App\Models\CustomFieldData;
+use App\Models\Form;
 use App\Models\FormAnswerLog;
 use App\Models\FormAnswerMiosPhone;
 use App\Services\CiuService;
@@ -31,6 +32,7 @@ use App\Models\FormAnswersTray;
 use App\Models\ImportedFileClient;
 use App\Models\RelAdvisorClientNew;
 use App\Models\RelTrayUser;
+use App\Support\Collection;
 use App\Traits\CheckDuplicateSections;
 use App\Traits\deletedFieldChecker;
 use App\Traits\FieldsForSection;
@@ -338,7 +340,7 @@ class FormAnswerController extends Controller
             $data = $miosHelper->jsonResponse(true, 200, 'result', $formAnswers);
             
             if($clientNewId) {
-                $formAnswer = FormAnswer::where('form_id',$request->form_id)
+                $formAnswer = FormAnswer::where('form_id',$request->form_id)->where('status', 1)
                 ->where('client_new_id', $clientNewId)
                 ->latest()->first();
                 $data["preloaded"] = $this->preloaded($request->form_id, $clientNewId, $files);
@@ -415,7 +417,7 @@ class FormAnswerController extends Controller
 
     private function filterFormAnswer($formId, $filters, $clientNewId)
     {
-        $formAnswersQuery = FormAnswer::with('channel')->where('form_id', $formId);
+        $formAnswersQuery = FormAnswer::with('channel')->where('form_id', $formId)->where('status', 1);
         foreach ($filters as $filter) {
             $filterData = [
                 'id' => $filter['id'],
@@ -428,7 +430,13 @@ class FormAnswerController extends Controller
         {
             $formAnswersQuery = $formAnswersQuery->where("client_new_id", $clientNewId);
         }
-        return $formAnswersQuery->paginate(5);
+
+        $formAnswersQuery = $formAnswersQuery->get()->map(function ($answer) {
+            $answer->name_channel = $answer->channel->name_channel;
+            return $answer;
+        });
+
+        return (new Collection($formAnswersQuery))->paginate(5);
     }
 
     /**
@@ -453,7 +461,7 @@ class FormAnswerController extends Controller
     public function formAnswerHistoric($id, MiosHelper $miosHelper)
     {
         // try {
-            $form_answers = FormAnswer::where('id', $id)->with('channel', 'clientNew')->first();
+            $form_answers = FormAnswer::where('id', $id)->where('status', 1)->with('channel', 'clientNew')->first();
 
             $rrhhId = $form_answers->rrhh_id;
                 $userData     = $this->ciuService->fetchUserByRrhhId($rrhhId);
@@ -600,7 +608,7 @@ class FormAnswerController extends Controller
                 }
             }
         }
-        $form_answer = FormAnswer::where('id', $id)->first();
+        $form_answer = FormAnswer::where('id', $id)->where('status', 1)->first();
         $form_answer->structure_answer = json_encode($formAnswerData);
         $form_answer->form_answer_index_data = json_encode($formAnswerIndexData);
         $form_answer->update();
@@ -779,6 +787,7 @@ class FormAnswerController extends Controller
     {
         $formAnswer = FormAnswer::where('form_id',$form_id)
             ->where('client_new_id', $client_new_id)
+            ->where('status', 1)
             ->latest()->first();
 
         $directory = Directory::where('form_id',$form_id)
@@ -1174,7 +1183,7 @@ class FormAnswerController extends Controller
         }
 
         $clientNewId = $client->id;
-        $formAnswers = FormAnswer::where('form_id', $client->form_id)
+        $formAnswers = FormAnswer::where('form_id', $client->form_id)->where('status', 1)
         ->where('client_new_id', $client->id)->paginate(5);
         $formAnswersData = $formAnswers->getCollection();
 
@@ -1199,7 +1208,7 @@ class FormAnswerController extends Controller
         
         if($clientNewId) {
             $formAnswer = FormAnswer::where('form_id',$client->form_id)
-            ->where('client_new_id', $clientNewId)
+            ->where('client_new_id', $clientNewId)->where('status', 1)
             ->latest()->first();
             $data["preloaded"] = $this->preloaded($client->form_id, $clientNewId, $files ?? []);
             $data["duplicate_sections"] = !is_null($formAnswer) ?
@@ -1207,5 +1216,52 @@ class FormAnswerController extends Controller
         }
 
         return response()->json($data, $data['code']);
+    }
+
+    public function deleteFormAnswerAndClient($formAnswerId)
+    {
+        $formAnswer = FormAnswer::where('id', $formAnswerId)->where('status', 1)->first();
+
+        $client = ClientNew::find($formAnswer->client_new_id);
+        $client->status = 0;
+        $client->save();
+
+        $formAnswer->status = 0;
+        $formAnswer->save();
+
+        return response()->json(['success' => 'Datos eliminados exitosamente.'], 200);
+    }
+
+    public function listClientsWithFormAnswer($formId, Request $request)
+    {
+        $form = Form::find($formId);
+
+        $columns = [
+            'rrhh_id AS adviser',
+            'updated_at AS management_date',
+            'structure_answer',
+            'id'
+        ];
+
+        if ($request->formAnswerId) {
+            $formAnswers = FormAnswer::where('id', $request->formAnswerId)->get($columns);
+        } else {
+            $formAnswers = FormAnswer::formFilter($formId)->where('status', 1)->get($columns);
+        }
+
+        $formAnswers = $formAnswers->map(function ($answer) use ($form) {
+            $adviser = $this->ciuService->fetchUserByRrhhId($answer->adviser);
+            if ($adviser != 'ERROR') {
+                $adviser = "{$adviser->rrhh->first_name} {$adviser->rrhh->last_name}";
+            }
+            $structure_answer = json_decode($answer->structure_answer);
+            $answer->structure_answer = $structure_answer;
+            $answer->adviser = $adviser;
+            $answer->form_name = $form->name_form;
+
+            return $answer;
+        });
+
+        return response()->json((new Collection($formAnswers))->paginate($request->perPage));
     }
 }
