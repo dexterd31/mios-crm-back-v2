@@ -267,5 +267,13 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
       $router->get('form-answers/delete/{formAnswerId}', 'FormAnswerController@deleteFormAnswerAndClient');
       $router->get('form-answers/list/{formId}', 'FormAnswerController@listClientsWithFormAnswer');
+      
+      //Circuits
+      $router->post('circuits', 'CircuitsController@store');
+      $router->get('circuits/{id}', 'CircuitsController@show');
+      $router->post('circuits/upload', 'CircuitsController@importCircuits');
+      $router->put('circuits/edit', 'CircuitsController@update');
+      $router->get('circuits/all', 'CircuitsController@index');
+
 });
     
