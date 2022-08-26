@@ -171,10 +171,16 @@ class OutboundManagementController extends Controller
                 $formFieldsIds[] = $field->id;
             }
 
-            $fieldInCommon = array_intersect($formFieldsIds, ...$customFields);
+            foreach ($customFields as $customFieldsIds) {
+                foreach ($formFieldsIds as $key => $id) {
+                    if (!in_array($id, $customFieldsIds)) {
+                        unset($formFieldsIds[$key]);
+                    }
+                }
+            }
 
             foreach ($form->cutomFields->fields as $field) {
-                if (in_array($field->id, $fieldInCommon)) {
+                if (in_array($field->id, $formFieldsIds)) {
                     $fields[] = ['id' => $field->id, 'name' => $field->label];
                 }
             }
