@@ -21,7 +21,7 @@ class CircuitsController extends Controller
      * Display the specified resource.
      * @author:  Javier Castañeda
      * Fecha creación:  2022/08/24
-     * @param  \App\Models\Circuits  $campaign
+     * @param  \App\Models\Circuits  $id
      * @return \Illuminate\Http\Response
      */
     public function show($id)
