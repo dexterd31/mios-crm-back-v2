@@ -6,14 +6,7 @@ use App\Managers\ReportManager;
 
 class FormReport extends Job
 {
-    protected $formAnswerLogsIds;
-    protected $plantillaRespuestas;
-    protected $inputReport;
-    protected $dependencies;
-    protected $adviserInfo;
-    protected $titleHeaders;
-    protected $formId;
-    protected $includeTipificationTime;
+    protected $data;
     protected $rrhhIdToNotify;
 
     public $timeout = 9999999;
@@ -23,16 +16,9 @@ class FormReport extends Job
      *
      * @return void
      */
-    public function __construct(array $formAnswerLogsIds, array $plantillaRespuestas, array $inputReport, array $dependencies, array $adviserInfo, array $titleHeaders, $formId, $includeTipificationTime, $rrhhIdToNotify)
+    public function __construct(array $data, $rrhhIdToNotify)
     {
-        $this->formAnswerLogsIds = $formAnswerLogsIds;
-        $this->plantillaRespuestas = $plantillaRespuestas;
-        $this->inputReport = $inputReport;
-        $this->dependencies = $dependencies;
-        $this->adviserInfo = $adviserInfo;
-        $this->titleHeaders = $titleHeaders;
-        $this->formId = $formId;
-        $this->includeTipificationTime = $includeTipificationTime;
+        $this->data = $data;
         $this->rrhhIdToNotify = $rrhhIdToNotify;
     }
 
@@ -43,6 +29,6 @@ class FormReport extends Job
      */
     public function handle()
     {
-        (new ReportManager)->buildReportDataStructure($this->formAnswerLogsIds, $this->plantillaRespuestas, $this->inputReport, $this->dependencies, $this->adviserInfo, $this->titleHeaders, $this->formId, $this->includeTipificationTime, $this->rrhhIdToNotify);
+        (new ReportManager)->consultReportData($this->data, $this->rrhhIdToNotify);
     }
 }

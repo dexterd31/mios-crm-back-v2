@@ -262,7 +262,7 @@ class ClientNewController extends Controller
             return $section;
         });
         
-        $customFields = (array) $client->form->cutomFields->fields ?? [];
+        $customFields = $client->form->cutomFields->fields ?? [];
 
         foreach($customFields as $key => $customField) {
             $found = false;
