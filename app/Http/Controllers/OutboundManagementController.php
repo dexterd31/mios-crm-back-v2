@@ -142,12 +142,14 @@ class OutboundManagementController extends Controller
         $form = Form::find($formId);
 
         $fields = [];
+        $customFields = [];
 
         $clients = ClientTag::join('client_news', 'client_news.id', 'client_tag.client_new_id')
         ->where('client_news.form_id', $formId)->whereIn('client_tag.tag_id', $request->tags)
-        ->distinct()->pluck('client_tag.client_new_id')->toArray();
+        ->distinct()->get(['client_tag.client_new_id'])->each(function ($client) use (&$customFields) {
+            $customFields = CustomFieldData::where('client_new_id', $client->client_new_id)->pluck('field_data')->toArray();
+        });
 
-        $customFields = CustomFieldData::whereIn('client_new_id', $clients)->pluck('field_data')->toArray();
 
         foreach ($customFields as $key => $fieldsData) {
             $fieldsIds = [];
