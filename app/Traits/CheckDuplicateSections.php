@@ -10,7 +10,7 @@ trait CheckDuplicateSections
 {
     public function checkDuplicateSections($formAnswerId)
     {
-        $answer=json_decode(FormAnswer::where('id',$formAnswerId)->first()->structure_answer);
+        $answer=json_decode(FormAnswer::where('id',$formAnswerId)->where('status', 1)->first()->structure_answer);
         $seccionesDuplicar=[];
         $indicesDuplicar=[];
         foreach($answer as $fieldAnswer){

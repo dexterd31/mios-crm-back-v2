@@ -112,6 +112,7 @@ class ClientsManager
     public function updateClient($client, array $informationData)
     {
         $client->information_data = $this->formatInformationData($informationData);
+        $client->status = 1;
         $client->save();
 
         return $client;

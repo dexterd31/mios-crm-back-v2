@@ -235,7 +235,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->get('online-users/report/{formId}/role/{roleId}','OnlineUserStatusController@onlineUserReportByForm');
 
       $router->post('upload/from-email', 'UploadController@uploadClientDataFromEmail');
-
+      
       $router->post('upload/client/videochat', 'ExternalController@uploadClientFromVideoChat');
 
       $router->group(['prefix' => 'managements'], function () use($router) {
@@ -246,6 +246,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
         $router->post('/database/{formId}', 'ManagementController@indexDataBaseManagement');
         $router->get('/outbound/{formId}', 'OutboundManagementController@indexByForm');
         $router->post('/outbound/{formId}', 'OutboundManagementController@indexByForm');
+        $router->post('/outbound/{formId}/fields', 'OutboundManagementController@getFormFields');
         $router->get('/outbound/create/{formId}', 'OutboundManagementController@create');
         $router->get('/outbound/show/{outboundManagementId}', 'OutboundManagementController@show');
         $router->delete('/outbound/attachments/delete/{id}', 'OutboundManagementController@deleteAttachment');
@@ -264,11 +265,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->get('reports/download/{filename}', 'FormController@downloadReport');
       $router->get('reports/delete/{filename}', 'FormController@deleteReport');
 
+      $router->get('form-answers/delete/{formAnswerId}', 'FormAnswerController@deleteFormAnswerAndClient');
+      $router->get('form-answers/list/{formId}', 'FormAnswerController@listClientsWithFormAnswer');
 
-
-
-
-      
       //Circuits
       $router->post('circuits', 'CircuitsController@store');
       $router->get('circuits/{id}', 'CircuitsController@show');
@@ -276,6 +275,4 @@ $router->group(['prefix' => 'api'], function () use ($router) {
       $router->put('circuits/edit', 'CircuitsController@update');
       $router->get('circuits/all', 'CircuitsController@index');
 
-
 });
-    
