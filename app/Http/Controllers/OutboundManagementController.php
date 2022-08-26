@@ -172,10 +172,14 @@ class OutboundManagementController extends Controller
             }
 
             foreach ($customFields as $customFieldsIds) {
-                foreach ($formFieldsIds as $key => $id) {
-                    if (!in_array($id, $customFieldsIds)) {
-                        unset($formFieldsIds[$key]);
+                if (count($customFieldsIds)) {
+                    foreach ($formFieldsIds as $key => $id) {
+                        if (!in_array($id, $customFieldsIds)) {
+                            unset($formFieldsIds[$key]);
+                        }
                     }
+                } else {
+                    $formFieldsIds = [];
                 }
             }
 
