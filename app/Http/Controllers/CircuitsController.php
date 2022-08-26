@@ -21,7 +21,7 @@ class CircuitsController extends Controller
      * Display the specified resource.
      * @author:  Javier Castañeda
      * Fecha creación:  2022/08/24
-     * @param  \App\Models\Room  $campaign
+     * @param  \App\Models\Circuits  $campaign
      * @return \Illuminate\Http\Response
      */
     public function show($id)
@@ -122,7 +122,7 @@ class CircuitsController extends Controller
      * @author:  Javier Castañeda
      * Fecha creación:  2022/08/25
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Room  $Room
+     * @param  \App\Models\Circuits  $Circuit
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request)
@@ -146,7 +146,14 @@ class CircuitsController extends Controller
         }
     }
 
-
+    /**
+     * search circuit by campaing, name or state.
+     * @author:  Javier Castañeda
+     * Fecha creación:  2022/08/25
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Circuits  $Circuit
+     * @return \Illuminate\Http\Response
+     */
     public function index (Request $request) {
         try {
             if(!empty($request->campaign_id)){
