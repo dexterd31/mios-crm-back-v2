@@ -180,6 +180,7 @@ class OutboundManagementController extends Controller
                     }
                 } else {
                     $formFieldsIds = [];
+                    break;
                 }
             }
 
