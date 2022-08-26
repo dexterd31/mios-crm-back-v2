@@ -148,6 +148,7 @@ class OutboundManagementController extends Controller
         ->where('client_news.form_id', $formId)->whereIn('client_tag.tag_id', $request->tags)
         ->distinct()->get(['client_tag.client_new_id'])->each(function ($client) use (&$customFields) {
             $customFields = CustomFieldData::where('client_new_id', $client->client_new_id)->pluck('field_data')->toArray();
+            dd($customFields);
         });
 
 
