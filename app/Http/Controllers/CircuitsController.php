@@ -110,9 +110,9 @@ class CircuitsController extends Controller
         }
         $response= Circuits::where('key', Str::lower($key))->get();
         if(!empty($response)){
-            return false;
-        } else {
             return Str::lower($key);
+        } else {
+            return false;
         }
 
     }
