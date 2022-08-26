@@ -1238,7 +1238,7 @@ class FormAnswerController extends Controller
         ];
 
         if ($request->formAnswerId) {
-            $formAnswers = FormAnswer::where('id', $request->formAnswerId)->get($columns);
+            $formAnswers = FormAnswer::where('id', $request->formAnswerId)->where('status', 1)->get($columns);
         } else {
             $formAnswers = FormAnswer::formFilter($formId)->where('status', 1)->get($columns);
         }
