@@ -161,7 +161,8 @@ class CircuitsController extends Controller
                 if(!empty($request->name)) {
                     $circuit = $circuit->where('name', 'like',"%$request->name%");
                 }
-                if(!empty($request->state)) {
+                //dd($request->state);
+                if($request->state == '0' || $request->state == '1') {
                     $circuit = $circuit->where('state', $request->state);
                 } 
                 $circuit = $circuit->get();
