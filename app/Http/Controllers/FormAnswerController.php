@@ -52,7 +52,7 @@ class FormAnswerController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth', ['except' => 'listClientsWithFormAnswer']);
+        $this->middleware('auth');
         $this->ciuService = new CiuService();
         $this->nominaService = new NominaService();
         $this->dataCRMServices = new DataCRMService();
