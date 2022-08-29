@@ -141,11 +141,20 @@ class OutboundManagementController extends Controller
     {
         $form = Form::find($formId);
 
-        $clients = ClientTag::join('client_news', 'client_news.id', 'client_tag.client_new_id')
-        ->where('client_news.form_id', $formId)->whereIn('client_tag.tag_id', $request->tags)
-        ->distinct()->pluck('client_tag.client_new_id')->toArray();
+        $fields = [];
+        $customFields = [];
 
-        $customFields = CustomFieldData::whereIn('client_new_id', $clients)->pluck('field_data')->toArray();
+        ClientTag::join('client_news', 'client_news.id', 'client_tag.client_new_id')
+        ->where('client_news.form_id', $formId)->whereIn('client_tag.tag_id', $request->tags)
+        ->distinct()->get(['client_tag.client_new_id'])->each(function ($client) use (&$customFields) {
+            $customFieldData = CustomFieldData::where('client_new_id', $client->client_new_id)->pluck('field_data')->toArray();
+            if (count($customFieldData)) {
+                $customFields[] = $customFieldData[0];
+            } else {
+                $customFields[] = $customFieldData;
+            }
+        });
+
 
         foreach ($customFields as $key => $fieldsData) {
             $fieldsIds = [];
@@ -162,17 +171,28 @@ class OutboundManagementController extends Controller
             }
         });
         
-        if ($form->cutomFields) {
+        if ($form->cutomFields && count($customFields)) {
             $formFieldsIds = [];
 
             foreach ($form->cutomFields->fields as $field) {
                 $formFieldsIds[] = $field->id;
             }
 
-            $fieldInCommon = array_intersect($formFieldsIds, ...$customFields);
+            foreach ($customFields as $customFieldsIds) {
+                if (count($customFieldsIds)) {
+                    foreach ($formFieldsIds as $key => $id) {
+                        if (!in_array($id, $customFieldsIds)) {
+                            unset($formFieldsIds[$key]);
+                        }
+                    }
+                } else {
+                    $formFieldsIds = [];
+                    break;
+                }
+            }
 
             foreach ($form->cutomFields->fields as $field) {
-                if (in_array($field->id, $fieldInCommon)) {
+                if (in_array($field->id, $formFieldsIds)) {
                     $fields[] = ['id' => $field->id, 'name' => $field->label];
                 }
             }
