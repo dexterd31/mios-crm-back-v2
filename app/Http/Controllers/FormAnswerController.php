@@ -1234,13 +1234,9 @@ class FormAnswerController extends Controller
 
     public function listClientsWithFormAnswer($formId, Request $request)
     {
-        if ($request->formAnswerId) {
-            $formAnswers = FormAnswer::where('id', $request->formAnswerId)->where('status', 1)->get();
-            $form = Form::find($formAnswers[0]->ClientNew->form_id);
-        } else {
-            $form = Form::find($formId);
-            $formAnswers = FormAnswer::formFilter($formId)->where('status', 1)->get();
-        }
+        $form = Form::find($formId);
+        $formAnswers = FormAnswer::formFilter($formId)->updatedAtBetweenFilter($request->from, $request->to)
+        ->where('status', 1)->get();
 
         $formAnswers = $formAnswers->map(function ($answer) use ($form) {
             $adviser = $this->ciuService->fetchUserByRrhhId($answer->rrhh_id);
