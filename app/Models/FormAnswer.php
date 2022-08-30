@@ -89,7 +89,7 @@ class FormAnswer extends Model
     public function scopeUpdatedAtBetweenFilter($query, $from, $to)
     {
         if ($from && $to) {
-            return $query->whereDate('client_news.updated_at', '>=', $from)->whereDate('client_news.updated_at', '<=', $to);
+            return $query->whereDate('form_answers.updated_at', '>=', $from)->whereDate('form_answers.updated_at', '<=', $to);
         }
     }
 }
