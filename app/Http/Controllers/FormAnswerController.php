@@ -1234,31 +1234,25 @@ class FormAnswerController extends Controller
 
     public function listClientsWithFormAnswer($formId, Request $request)
     {
-        $columns = [
-            'rrhh_id AS adviser',
-            'updated_at AS management_date',
-            'structure_answer',
-            'id'
-        ];
-        
         if ($request->formAnswerId) {
-            $formAnswers = FormAnswer::where('id', $request->formAnswerId)->where('status', 1)->get($columns);
+            $formAnswers = FormAnswer::where('id', $request->formAnswerId)->where('status', 1)->get();
             $form = Form::find($formAnswers[0]->ClientNew->form_id);
         } else {
             $form = Form::find($formId);
-            $formAnswers = FormAnswer::formFilter($formId)->where('status', 1)->get($columns);
+            $formAnswers = FormAnswer::formFilter($formId)->where('status', 1)->get();
         }
 
         $formAnswers = $formAnswers->map(function ($answer) use ($form) {
-            $adviser = $this->ciuService->fetchUserByRrhhId($answer->adviser);
+            $adviser = $this->ciuService->fetchUserByRrhhId($answer->rrhh_id);
             if ($adviser != 'ERROR') {
                 $adviser = "{$adviser->rrhh->first_name} {$adviser->rrhh->last_name}";
             }
             $structure_answer = json_decode($answer->structure_answer);
             $answer->structure_answer = $structure_answer;
             $answer->adviser = $adviser;
+            $answer->management_date = $answer->updated_at->toDateTimeString();
             $answer->form_name = $form->name_form;
-
+            $answer = $answer->only('adviser','management_date','structure_answer','id', 'form_name');
             return $answer;
         });
 
