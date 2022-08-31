@@ -142,7 +142,7 @@ class OutboundManagementManager
         ->whereIn('client_tag.tag_id', $outboundManagement->tags)->get(['client_news.id'])
         ->each(function ($client) use (&$formAnswers) {
             $directory = Directory::select('data')->clientNewFilter($client->id)->latest()->first();
-            $formAnswers[] = [
+            $formAnswers[] = (object) [
                 'structure_answer' => $directory->data,
                 'client_new_id' => $client->id
             ];
