@@ -209,8 +209,82 @@ class ClientsManager
         })->first();
     }
 
-    // public function showClientAnswerDataByLastDirectory($id)
-    // {
-    //     return ClientNew
-    // }
+    public function show($clietId, bool $searchInDirectory = false) {
+        $client = ClientNew::find($clietId);
+        $uniqueIndentificator = json_decode($client->unique_indentificator);
+
+        $client->unique_indentificator = (object) [
+            'label' => $uniqueIndentificator->label,
+            'value' => $uniqueIndentificator->value
+        ];
+
+        $client->tags = $client->tags()->get(['tags.id', 'tags.name'])->makeHidden('pivot');
+        $client->field_data = $client->customFieldData->field_data ?? [];
+
+        $formAnswer = $this->showClientAnswer($client, $searchInDirectory);
+        
+        $sections = $client->form->section()->get(['name_section', 'fields'])
+        ->map(function ($section) use ($formAnswer) {
+            $fields = json_decode($section->fields);
+
+            foreach ($fields as $key => $field) {
+                foreach ($formAnswer as $answer) {
+                    if ($field->id == $answer->id) {
+                        $fields[$key]->value = $answer->value;
+                    }
+                }
+            }
+
+            $section->fields = $fields;
+            return $section;
+        });
+        
+        $customFields = (array) $client->form->cutomFields->fields ?? [];
+
+        foreach($customFields as $key => $customField) {
+            $found = false;
+            foreach ($client->field_data as $data) {
+                if ($data->id == $customField->id) {
+                    $found = true;
+                    $customFields[$key]->value = $data->value;
+                }
+            }
+
+            if (!$found) {
+                unset($customFields[$key]);
+            }
+        }
+
+        $client = $client->only('tags', 'id', 'unique_indentificator');
+
+        return ['client' => $client, 'custom_fields' => $customFields, 'sections' => $sections];
+    }
+
+    public function showClientAnswer(ClientNew $client, bool $searchInDirectory = false)
+    {
+        if ($searchInDirectory) {
+            $formAnswer = $client->directory()->latest()->first();
+
+            if (is_null($formAnswer)) {
+                $formAnswer = [];
+            } else {
+                $formAnswer = json_decode($formAnswer->data);
+            }
+        } else {
+            $formAnswer = $client->formanswer()->latest()->first();
+    
+            if(is_null($formAnswer)) {
+                $formAnswer = $client->directory()->latest()->first();
+                if (is_null($formAnswer)) {
+                    $formAnswer = [];
+                } else {
+                    $formAnswer = json_decode($formAnswer->data);
+                }
+            } else {
+                $formAnswer = json_decode($formAnswer->structure_answer);
+            }
+        }
+
+        return $formAnswer;
+    }
 }

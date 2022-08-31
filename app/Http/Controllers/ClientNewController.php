@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Managers\ClientsManager;
 use App\Models\ClientNew;
 use App\Models\Escalation;
 use Illuminate\Http\Request;
@@ -223,64 +224,7 @@ class ClientNewController extends Controller
      */
     public function show($clietId)
     {
-        $client = ClientNew::find($clietId);
-        $uniqueIndentificator = json_decode($client->unique_indentificator);
-
-        $client->unique_indentificator = (object) [
-            'label' => $uniqueIndentificator->label,
-            'value' => $uniqueIndentificator->value
-        ];
-
-        $client->tags = $client->tags()->get(['tags.id', 'tags.name'])->makeHidden('pivot');
-        $client->field_data = $client->customFieldData->field_data ?? [];
-        $formAnswer = $client->formanswer()->latest()->first();
-
-        if(is_null($formAnswer)) {
-            $formAnswer = $client->directory()->latest()->first();
-            if (is_null($formAnswer)) {
-                $formAnswer = [];
-            } else {
-                $formAnswer = json_decode($formAnswer->data);
-            }
-        } else {
-            $formAnswer = json_decode($formAnswer->structure_answer);
-        }
-        
-        $sections = $client->form->section()->get(['name_section', 'fields'])
-        ->map(function ($section) use ($formAnswer) {
-            $fields = json_decode($section->fields);
-
-            foreach ($fields as $key => $field) {
-                foreach ($formAnswer as $answer) {
-                    if ($field->id == $answer->id) {
-                        $fields[$key]->value = $answer->value;
-                    }
-                }
-            }
-
-            $section->fields = $fields;
-            return $section;
-        });
-        
-        $customFields = (array) $client->form->cutomFields->fields ?? [];
-
-        foreach($customFields as $key => $customField) {
-            $found = false;
-            foreach ($client->field_data as $data) {
-                if ($data->id == $customField->id) {
-                    $found = true;
-                    $customFields[$key]->value = $data->value;
-                }
-            }
-
-            if (!$found) {
-                unset($customFields[$key]);
-            }
-        }
-
-        $client = $client->only('tags', 'id', 'unique_indentificator');
-
-        return response()->json(['client' => $client, 'custom_fields' => $customFields, 'sections' => $sections]);
+        return response()->json((new ClientsManager)->show($clietId));
     }
 
     /**
