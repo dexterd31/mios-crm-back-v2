@@ -184,6 +184,9 @@ class OutboundManagementManager
                 if ($field->id == $outboundManagement->settings->diffusion_field) {
                     $destination = $field->value;
                 }
+                if ($field->value == '' || is_null($field->value)) {
+                    $field->value = ' ';
+                }
                 $messageContent = str_replace("[[$field->id]]", $field->value, $messageContent);
             }
 
