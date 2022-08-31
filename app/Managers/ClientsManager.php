@@ -167,46 +167,125 @@ class ClientsManager
     public function findClientByCustomerDataPreload(CustomerDataPreload $customerDataPreload)
     {
         return ClientNew::where('form_id', $customerDataPreload->form_id)->get()
-            ->filter(function ($client) use ($customerDataPreload) {
-                $isMatchUniqueIdentificator = false;
-                $isMatchInformationData = false;
-                $uniqueIdentificator = json_decode($client->unique_indentificator);
+        ->filter(function ($client) use ($customerDataPreload) {
+            $isMatchUniqueIdentificator = false;
+            $isMatchInformationData = false;
+            $uniqueIdentificator = json_decode($client->unique_indentificator);
 
-                if ($uniqueIdentificator->id == $customerDataPreload->unique_identificator->id) {
-                    if ($uniqueIdentificator->value == $customerDataPreload->unique_identificator->value) {
-                        $isMatchUniqueIdentificator = true;
-                    } else {
-                        return false;
-                    }
+            if ($uniqueIdentificator->id == $customerDataPreload->unique_identificator->id) {
+                if ($uniqueIdentificator->value == $customerDataPreload->unique_identificator->value) {
+                    $isMatchUniqueIdentificator = true;
                 } else {
                     return false;
                 }
+            } else {
+                return false;
+            }
 
-                if ($isMatchUniqueIdentificator) {
-                    $informationData = json_decode($client->information_data);
-                    $countPreloadData = count($customerDataPreload->customer_data);
-                    $countMatchInformationData = 0;
+            if ($isMatchUniqueIdentificator) {
+                $informationData = json_decode($client->information_data);
+                $countPreloadData = count($customerDataPreload->customer_data);
+                $countMatchInformationData = 0;
 
-                    foreach ($informationData as $field) {
-                        foreach ($customerDataPreload->customer_data as $preloadField) {
-                            if ($field->id == $preloadField->id) {
-                                if ($field->value == $preloadField->value) {
-                                    $countMatchInformationData++;
-                                    break;
-                                } else {
-                                    continue;
-                                }
+                foreach ($informationData as $field) {
+                    foreach ($customerDataPreload->customer_data as $preloadField) {
+                        if ($field->id == $preloadField->id) {
+                            if ($field->value == $preloadField->value) {
+                                $countMatchInformationData++;
+                                break;
                             } else {
                                 continue;
                             }
+                        } else {
+                            continue;
                         }
                     }
-                    if ($countMatchInformationData == $countPreloadData) {
-                        $isMatchInformationData = true;
+                }
+                if ($countMatchInformationData == $countPreloadData) {
+                    $isMatchInformationData = true;
+                }
+            }
+
+            return $isMatchInformationData;
+        })->first();
+    }
+
+    public function show($clietId, bool $searchInDirectory = false) {
+        $client = ClientNew::find($clietId);
+        $uniqueIndentificator = json_decode($client->unique_indentificator);
+
+        $client->unique_indentificator = (object) [
+            'label' => $uniqueIndentificator->label,
+            'value' => $uniqueIndentificator->value
+        ];
+
+        $client->tags = $client->tags()->get(['tags.id', 'tags.name'])->makeHidden('pivot');
+        $client->field_data = $client->customFieldData->field_data ?? [];
+
+        $formAnswer = $this->showClientAnswer($client, $searchInDirectory);
+        
+        $sections = $client->form->section()->get(['name_section', 'fields'])
+        ->map(function ($section) use ($formAnswer) {
+            $fields = json_decode($section->fields);
+
+            foreach ($fields as $key => $field) {
+                foreach ($formAnswer as $answer) {
+                    if ($field->id == $answer->id) {
+                        $fields[$key]->value = $answer->value;
                     }
                 }
+            }
 
-                return $isMatchInformationData;
-            })->first();
+            $section->fields = $fields;
+            return $section;
+        });
+        
+        $customFields = (array) $client->form->cutomFields->fields ?? [];
+
+        foreach($customFields as $key => $customField) {
+            $found = false;
+            foreach ($client->field_data as $data) {
+                if ($data->id == $customField->id) {
+                    $found = true;
+                    $customFields[$key]->value = $data->value;
+                }
+            }
+
+            if (!$found) {
+                unset($customFields[$key]);
+            }
+        }
+
+        $client = $client->only('tags', 'id', 'unique_indentificator');
+
+        return ['client' => $client, 'custom_fields' => $customFields, 'sections' => $sections];
+    }
+
+    public function showClientAnswer(ClientNew $client, bool $searchInDirectory = false)
+    {
+        if ($searchInDirectory) {
+            $formAnswer = $client->directory()->latest()->first();
+
+            if (is_null($formAnswer)) {
+                $formAnswer = [];
+            } else {
+                $formAnswer = json_decode($formAnswer->data);
+            }
+        } else {
+            $formAnswer = $client->formanswer()->where('status', 1)->latest()->first();
+    
+            if(is_null($formAnswer)) {
+                $formAnswer = $client->directory()->latest()->first();
+                if (is_null($formAnswer)) {
+                    $formAnswer = [];
+                } else {
+                    $formAnswer = json_decode($formAnswer->data);
+                }
+            } else {
+                $formAnswer = json_decode($formAnswer->structure_answer);
+            }
+        }
+
+        return $formAnswer;
     }
 }
