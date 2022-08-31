@@ -248,6 +248,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
         $router->post('/outbound/{formId}', 'OutboundManagementController@indexByForm');
         $router->post('/outbound/{formId}/fields', 'OutboundManagementController@getFormFields');
         $router->get('/outbound/create/{formId}', 'OutboundManagementController@create');
+        $router->get('/outbound/client/show/{clientId}', 'OutboundManagementController@showClient');
         $router->get('/outbound/show/{outboundManagementId}', 'OutboundManagementController@show');
         $router->delete('/outbound/attachments/delete/{id}', 'OutboundManagementController@deleteAttachment');
         $router->get('/outbound/attachments/download/{id}', 'OutboundManagementController@downloadAttachment');
