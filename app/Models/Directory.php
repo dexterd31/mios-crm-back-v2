@@ -31,4 +31,9 @@ class Directory extends Model
     {
         if ($form) return $query->where('form_id', $form);
     }
+
+    public function scopeClientNewFilter($query, $clientNew)
+    {
+        if ($clientNew) return $query->where('client_new_id', $clientNew);
+    }
 }

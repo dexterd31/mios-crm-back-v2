@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Managers\ClientsManager;
 use App\Managers\OutboundManagementManager;
 use App\Models\ClientTag;
 use App\Models\CustomFieldData;
@@ -199,5 +200,10 @@ class OutboundManagementController extends Controller
         }
         
         return response()->json(['fields' => $fields]);
+    }
+
+    public function showClient($clientId)
+    {
+        return response()->json((new ClientsManager)->show($clientId, true));
     }
 }
