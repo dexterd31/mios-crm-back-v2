@@ -6,6 +6,7 @@ use App\Jobs\DiffusionByEmail;
 use App\Jobs\DiffusionBySMS;
 use App\Jobs\DiffusionByVoice;
 use App\Jobs\DiffusionByWhatsapp;
+use App\Models\ClientNew;
 use App\Models\CustomFieldData;
 use App\Models\Directory;
 use App\Models\FormAnswer;
@@ -18,6 +19,7 @@ use App\Services\VicidialService;
 use App\Services\WhatsappService;
 use Exception;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -132,25 +134,21 @@ class OutboundManagementManager
     public function createDiffusion($outboundManagement)
     {
         $tags = $outboundManagement->tags()->pluck('tags.id')->toArray();
-        $formAnswers = FormAnswer::formFilter($outboundManagement->form_id)
-        ->join('client_tag', 'client_tag.client_new_id', 'form_answers.client_new_id')
-        ->whereIn('client_tag.tag_id', $outboundManagement->tags);
 
-        $clientsIds = clone $formAnswers;
-        $clientsIds = $clientsIds->pluck('form_answers.client_new_id')->toArray();
+        $formAnswers = [];
 
-        $formAnswers = $formAnswers->get([
-            'form_answers.structure_answer AS structure_answer',
-            'form_answers.client_new_id AS client_new_id'
-        ]);
+        ClientNew::formFilter($outboundManagement->form_id)
+        ->join('client_tag', 'client_tag.client_new_id', 'client_news.id')
+        ->whereIn('client_tag.tag_id', $outboundManagement->tags)->get(['id'])
+        ->each(function ($client) use (&$formAnswers) {
+            $directory = Directory::select('data')->clientNewFilter($client->id)->latest()->first();
+            $formAnswers[] = [
+                'structure_answer' => $directory->data,
+                'client_new_id' => $client->id
+            ];
+        });
 
-        $directories = Directory::formFilter($outboundManagement->form_id)
-        ->join('client_tag', 'client_tag.client_new_id', 'directories.client_new_id')
-        ->whereIn('client_tag.tag_id', $tags)->distinct()
-        ->whereNotIn('directories.client_new_id', $clientsIds)
-        ->get(['directories.data AS structure_answer', 'directories.client_new_id AS client_new_id']);
-
-        $formAnswers = $formAnswers->concat($directories);
+        $formAnswers = collect($formAnswers);
 
         $startDiffusionDateTime = "{$outboundManagement->settings->start_diffusion_date} {$outboundManagement->settings->start_diffusion_time}";
 
@@ -184,9 +182,7 @@ class OutboundManagementManager
                 if ($field->id == $outboundManagement->settings->diffusion_field) {
                     $destination = $field->value;
                 }
-                // if ($field->value == '' || is_null($field->value)) {
-                //     $field->value = ' ';
-                // }
+
                 $messageContent = str_replace("[[$field->id]]", $field->value, $messageContent);
             }
 
@@ -197,7 +193,7 @@ class OutboundManagementManager
                     $messageContent = str_replace("[[$fileData->id]]", $fileData->value, $messageContent);
                 }
             }
-            
+
             $messageContent = preg_replace('/\[(.*?)\]\]/', '', $messageContent);
             
             $clients[] = [
