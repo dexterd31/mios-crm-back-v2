@@ -248,6 +248,9 @@ class OutboundManagementManager
                 }
             }
 
+            $subject = preg_replace('/\[(.*?)\]\]/', '', $subject);
+            $body = preg_replace('/\[(.*?)\]\]/', '', $body);
+
             $clients[] = [
                 'id' => $answer->client_new_id,
                 'body' => $body,
