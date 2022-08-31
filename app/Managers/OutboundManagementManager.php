@@ -190,7 +190,7 @@ class OutboundManagementManager
                 $messageContent = str_replace("[[$field->id]]", $field->value, $messageContent);
             }
 
-            $messageContent = preg_replace('/\[(.*?)\]\]/', ' ', $messageContent);
+            $messageContent = preg_replace('/\[(.*?)\]\]/', '', $messageContent);
 
             $customFieldData = CustomFieldData::clientFilter($answer->client_new_id)->first();
 
