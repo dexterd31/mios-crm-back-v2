@@ -184,11 +184,13 @@ class OutboundManagementManager
                 if ($field->id == $outboundManagement->settings->diffusion_field) {
                     $destination = $field->value;
                 }
-                if ($field->value == '' || is_null($field->value)) {
-                    $field->value = ' ';
-                }
+                // if ($field->value == '' || is_null($field->value)) {
+                //     $field->value = ' ';
+                // }
                 $messageContent = str_replace("[[$field->id]]", $field->value, $messageContent);
             }
+
+            $messageContent = preg_replace('/\[(.*?)\]\]/', ' ', $messageContent);
 
             $customFieldData = CustomFieldData::clientFilter($answer->client_new_id)->first();
 
