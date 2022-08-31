@@ -190,16 +190,16 @@ class OutboundManagementManager
                 $messageContent = str_replace("[[$field->id]]", $field->value, $messageContent);
             }
 
-            $messageContent = preg_replace('/\[(.*?)\]\]/', '', $messageContent);
-
             $customFieldData = CustomFieldData::clientFilter($answer->client_new_id)->first();
-
+            
             if ($customFieldData) {
                 foreach ($customFieldData->field_data as $fileData) {
                     $messageContent = str_replace("[[$fileData->id]]", $fileData->value, $messageContent);
                 }
             }
-
+            
+            $messageContent = preg_replace('/\[(.*?)\]\]/', '', $messageContent);
+            
             $clients[] = [
                 'id' => $answer->client_new_id,
                 'destination' => $destination,
