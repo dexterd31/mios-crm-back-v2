@@ -139,7 +139,7 @@ class OutboundManagementManager
 
         ClientNew::formFilter($outboundManagement->form_id)
         ->join('client_tag', 'client_tag.client_new_id', 'client_news.id')
-        ->whereIn('client_tag.tag_id', $outboundManagement->tags)->get(['id'])
+        ->whereIn('client_tag.tag_id', $outboundManagement->tags)->get(['client_news.id'])
         ->each(function ($client) use (&$formAnswers) {
             $directory = Directory::select('data')->clientNewFilter($client->id)->latest()->first();
             $formAnswers[] = [

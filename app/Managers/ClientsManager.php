@@ -166,46 +166,51 @@ class ClientsManager
     public function findClientByCustomerDataPreload(CustomerDataPreload $customerDataPreload)
     {
         return ClientNew::where('form_id', $customerDataPreload->form_id)->get()
-            ->filter(function ($client) use ($customerDataPreload) {
-                $isMatchUniqueIdentificator = false;
-                $isMatchInformationData = false;
-                $uniqueIdentificator = json_decode($client->unique_indentificator);
+        ->filter(function ($client) use ($customerDataPreload) {
+            $isMatchUniqueIdentificator = false;
+            $isMatchInformationData = false;
+            $uniqueIdentificator = json_decode($client->unique_indentificator);
 
-                if ($uniqueIdentificator->id == $customerDataPreload->unique_identificator->id) {
-                    if ($uniqueIdentificator->value == $customerDataPreload->unique_identificator->value) {
-                        $isMatchUniqueIdentificator = true;
-                    } else {
-                        return false;
-                    }
+            if ($uniqueIdentificator->id == $customerDataPreload->unique_identificator->id) {
+                if ($uniqueIdentificator->value == $customerDataPreload->unique_identificator->value) {
+                    $isMatchUniqueIdentificator = true;
                 } else {
                     return false;
                 }
+            } else {
+                return false;
+            }
 
-                if ($isMatchUniqueIdentificator) {
-                    $informationData = json_decode($client->information_data);
-                    $countPreloadData = count($customerDataPreload->customer_data);
-                    $countMatchInformationData = 0;
+            if ($isMatchUniqueIdentificator) {
+                $informationData = json_decode($client->information_data);
+                $countPreloadData = count($customerDataPreload->customer_data);
+                $countMatchInformationData = 0;
 
-                    foreach ($informationData as $field) {
-                        foreach ($customerDataPreload->customer_data as $preloadField) {
-                            if ($field->id == $preloadField->id) {
-                                if ($field->value == $preloadField->value) {
-                                    $countMatchInformationData++;
-                                    break;
-                                } else {
-                                    continue;
-                                }
+                foreach ($informationData as $field) {
+                    foreach ($customerDataPreload->customer_data as $preloadField) {
+                        if ($field->id == $preloadField->id) {
+                            if ($field->value == $preloadField->value) {
+                                $countMatchInformationData++;
+                                break;
                             } else {
                                 continue;
                             }
+                        } else {
+                            continue;
                         }
                     }
-                    if ($countMatchInformationData == $countPreloadData) {
-                        $isMatchInformationData = true;
-                    }
                 }
+                if ($countMatchInformationData == $countPreloadData) {
+                    $isMatchInformationData = true;
+                }
+            }
 
-                return $isMatchInformationData;
-            })->first();
+            return $isMatchInformationData;
+        })->first();
     }
+
+    // public function showClientAnswerDataByLastDirectory($id)
+    // {
+    //     return ClientNew
+    // }
 }
